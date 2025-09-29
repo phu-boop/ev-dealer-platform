@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: freelancerhub_user
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 12345678
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # Redis
+  redis-db:
+    image: redis:7
+    container_name: redis-db
+    ports:
+      - "6379:6379"
+    restart: always
+
+  # User Service
+  user-service:
+    build:
+      context: .                 
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/freelancerhub_user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
+      SPRING_REDIS_HOST: redis-db
+      SPRING_REDIS_PORT: 6379
+    depends_on:
+      - db
+      - redis-db
+    volumes:
+      - ./wait-for-it.sh:/wait-for-it.sh
+    restart: always
+
+  # API Gateway
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - freelancer-service
+    restart: always
+
+volumes:
+  db_data:
