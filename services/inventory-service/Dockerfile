@@ -2,6 +2,13 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
+
+
+# Copy file pom.xml và source code của sales-service
+COPY services/inventory-service/pom.xml .
+COPY services/inventory-service/src ./src
+
+
 # Copy toàn bộ source code service vào
 COPY . .
 
@@ -19,3 +26,10 @@ EXPOSE 8084
 
 # Lệnh chạy ứng dụng
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+
+
+
+
+
