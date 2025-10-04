@@ -2,6 +2,10 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
+# Copy file pom.xml và source code của sales-service
+COPY services/customer-service/pom.xml .
+COPY services/customer-service/src ./src
+
 # Copy toàn bộ source code service vào
 COPY . .
 

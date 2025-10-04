@@ -23,7 +23,7 @@ const HeroSection = () => {
               <h3 className="font-semibold text-lg mb-3">Managing contracts</h3>
               <p className="text-gray-600">
                 Automate time tracking & invoicing. Track project progress.
-                Review work, make payments & create reports.
+                Review work, make paymentts & create reports.
               </p>
             </div>
 

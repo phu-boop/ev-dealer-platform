@@ -2,8 +2,9 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy toàn bộ source code service vào
-COPY . .
+# Copy file pom.xml và source code của sales-service
+COPY services/sales-service/pom.xml .
+COPY services/sales-service/src ./src
 
 # Build ứng dụng (tạo file jar)
 RUN mvn clean package -DskipTests

@@ -30,7 +30,7 @@ export default function BillingInfo() {
         const amount = 3000000;
 
         // Redirect tới backend, backend sẽ trả URL VNPay đã encode và có hash
-        window.location.href = `http://localhost:8080/payment/pay?orderId=${orderId}&amount=${amount}`;
+        window.location.href = `http://localhost:8080/paymentt/pay?orderId=${orderId}&amount=${amount}`;
     };
 
 

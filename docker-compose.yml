@@ -12,16 +12,15 @@ services:
       MYSQL_USER: root
       MYSQL_PASSWORD: 12345678
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
 
   # Redis
   redis-db:
     image: redis:7
-    container_name: redis-db
     ports:
-      - "6379:6379"
+      - "6380:6379" 
     restart: always
 
   # API Gateway
@@ -34,7 +33,6 @@ services:
       - "8080:8080"
     depends_on:
       - user-service
-      - freelancer-service
     restart: always
 
 
@@ -45,7 +43,7 @@ services:
   user-service:
     build:
       context: .                 
-      dockerfile: user-service/Dockerfile
+      dockerfile: services/user-service/Dockerfile
     container_name: user-service
     ports:
       - "8081:8081"
@@ -66,7 +64,7 @@ services:
   customer-service:
     build:
       context: .                 
-      dockerfile: customer-service/Dockerfile
+      dockerfile: services/customer-service/Dockerfile
     container_name: customer-service
     ports:
       - "8082:8082"
@@ -81,7 +79,7 @@ services:
   dealer-service:
     build:
       context: .                 
-      dockerfile: dealer-service/Dockerfile
+      dockerfile: services/dealer-service/Dockerfile
     container_name: dealer-service
     ports:
       - "8083:8083"
@@ -96,7 +94,7 @@ services:
   inventory-service:
     build:
       context: .                 
-      dockerfile: inventory-service/Dockerfile
+      dockerfile: services/inventory-service/Dockerfile
     container_name: inventory-service
     ports:
       - "8084:8084"
@@ -106,18 +104,17 @@ services:
       SPRING_DATASOURCE_PASSWORD: 12345678
     depends_on:
       - db
-    volumes:
 
-  # Paymen-service
-  paymen-service:
+  # payment-service
+  payment-service:
     build:
       context: .                 
-      dockerfile: paymen-service/Dockerfile
-    container_name: paymen-service
+      dockerfile: services/payment-service/Dockerfile
+    container_name: payment-service
     ports:
       - "8085:8085"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/paymen_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 12345678
     depends_on:
@@ -127,7 +124,7 @@ services:
   sales-service:
     build:
       context: .                 
-      dockerfile: sales-service/Dockerfile
+      dockerfile: services/sales-service/Dockerfile
     container_name: sales-service
     ports:
       - "8086:8086"
@@ -142,7 +139,7 @@ services:
   vehicle_service:
     build:
       context: .                 
-      dockerfile: vehicle_service/Dockerfile
+      dockerfile: services/vehicle_service/Dockerfile
     container_name: vehicle_service
     ports:
       - "8087:8087"
