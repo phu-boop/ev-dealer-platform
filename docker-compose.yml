@@ -24,6 +24,23 @@ services:
       - "6379:6379"
     restart: always
 
+  # API Gateway
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - freelancer-service
+    restart: always
+
+
+  # All Services
+
+
   # User Service
   user-service:
     build:
@@ -45,18 +62,96 @@ services:
       - ./wait-for-it.sh:/wait-for-it.sh
     restart: always
 
-  # API Gateway
-  gateway:
+  # Customer-service
+  customer-service:
     build:
-      context: ./gateway
-      dockerfile: Dockerfile
-    container_name: api-gateway
+      context: .                 
+      dockerfile: customer-service/Dockerfile
+    container_name: customer-service
     ports:
-      - "8080:8080"
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/customer_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
     depends_on:
-      - user-service
-      - freelancer-service
-    restart: always
+      - db
+  
+  # Dealer-service
+  dealer-service:
+    build:
+      context: .                 
+      dockerfile: dealer-service/Dockerfile
+    container_name: dealer-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/dealer_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
+    depends_on:
+      - db
+      
+  # Inventory-service
+  inventory-service:
+    build:
+      context: .                 
+      dockerfile: inventory-service/Dockerfile
+    container_name: inventory-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
+    depends_on:
+      - db
+    volumes:
+
+  # Paymen-service
+  paymen-service:
+    build:
+      context: .                 
+      dockerfile: paymen-service/Dockerfile
+    container_name: paymen-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/paymen_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
+    depends_on:
+      - db
+      
+  # Sales-service
+  sales-service:
+    build:
+      context: .                 
+      dockerfile: sales-service/Dockerfile
+    container_name: sales-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/sales_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
+    depends_on:
+      - db
+
+  # Vehicle_service
+  vehicle_service:
+    build:
+      context: .                 
+      dockerfile: vehicle_service/Dockerfile
+    container_name: vehicle_service
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/vehicle_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
+    depends_on:
+      - db
 
 volumes:
   db_data:
