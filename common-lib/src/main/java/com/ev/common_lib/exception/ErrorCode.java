@@ -48,7 +48,7 @@ public enum ErrorCode {
     INVALID_PASSWORD("5008", "Invalid password", HttpStatus.BAD_REQUEST),
 
     // ===== 6xxx - Business logic errors =====
-    PAYMENT_FAILED("6001", "Payment failed", HttpStatus.BAD_REQUEST),
+    paymentT_FAILED("6001", "paymentt failed", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_BALANCE("6002", "Insufficient balance", HttpStatus.BAD_REQUEST),
     PRODUCT_OUT_OF_STOCK("6004", "Product out of stock", HttpStatus.CONFLICT);
 

@@ -15,8 +15,8 @@ const ProcessSection = () => {
       description: "Use Upwork to chat or video call, share files, and track project progress right from the app."
     },
     {
-      title: "Payment simplified",
-      description: "Receive invoices and make payments through Upwork. Only pay for work you authorize."
+      title: "paymentt simplified",
+      description: "Receive invoices and make paymentts through Upwork. Only pay for work you authorize."
     }
   ];
 

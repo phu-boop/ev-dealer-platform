@@ -13,8 +13,8 @@ FROM maven:3.9.9-eclipse-temurin-21 AS builder
 WORKDIR /app/user-service
 
 # Copy user-service source
-COPY user-service/pom.xml .
-COPY user-service/src ./src
+COPY services/user-service/pom.xml .
+COPY services/user-service/src ./src
 
 # Copy common-lib jar từ stage trước
 COPY --from=common-lib /root/.m2/repository/com/ev/common-lib/0.0.1-SNAPSHOT/*.jar /root/.m2/repository/com/ev/common-lib/0.0.1-SNAPSHOT/
@@ -30,7 +30,7 @@ WORKDIR /app/user-service
 COPY --from=builder /app/user-service/target/*.jar app.jar
 
 # Copy application.properties vào container
-COPY user-service/src/main/resources/application.properties .
+COPY services/user-service/src/main/resources/application.properties .
 
 # Copy wait-for-it
 COPY wait-for-it.sh /wait-for-it.sh
