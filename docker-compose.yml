@@ -12,7 +12,7 @@ services:
       MYSQL_USER: root
       MYSQL_PASSWORD: 12345678
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
 
@@ -26,8 +26,8 @@ services:
   # API Gateway
   gateway:
     build:
-      context: ./gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: gateway/Dockerfile
     container_name: api-gateway
     ports:
       - "8080:8080"
