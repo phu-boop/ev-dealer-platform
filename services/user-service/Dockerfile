@@ -39,4 +39,4 @@ RUN chmod +x /wait-for-it.sh
 EXPOSE 8081
 
 # Chờ DB và Redis trước khi chạy app
-ENTRYPOINT ["sh", "-c", "sh /wait-for-it.sh db:3306 -- sh /wait-for-it.sh redis-db:6379 -- java -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "sh /wait-for-it.sh db:3307 -- sh /wait-for-it.sh redis-db:6380 -- java -jar app.jar"]
