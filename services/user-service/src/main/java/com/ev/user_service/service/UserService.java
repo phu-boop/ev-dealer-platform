@@ -58,7 +58,7 @@ public class UserService {
         User user = userMapper.userRequesttoUser(userRequest);
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         Set<Role> roles = new HashSet<>();
-        Role userRole = roleRepository.findByName(RoleName.USER.getRoleName())
+        Role userRole = roleRepository.findByName(RoleName.DEALER_MANAGER.getRoleName())
                 .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
         roles.add(userRole);
         user.setRoles(roles);

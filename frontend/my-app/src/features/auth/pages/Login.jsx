@@ -194,13 +194,6 @@ export default function Login() {
                         <FaGithub className="h-5 w-5 text-gray-900"/>
                     </button>
                 </div>
-
-                <p className="text-sm text-center text-slate-500">
-                    Chưa có tài khoản?{" "}
-                    <a href="/register" className="text-sky-600 hover:underline">
-                        Đăng ký
-                    </a>
-                </p>
             </form>
         </div>
     );
