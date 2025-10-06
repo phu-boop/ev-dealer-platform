@@ -1,7 +1,7 @@
 const Dashboard = () => {
     return (
         <div>
-            hihi(đây là page for admin)
+            hihi(đây là page for dealer)
         </div>
     );
 };

@@ -4,18 +4,18 @@ import lombok.Getter;
 
 @Getter
 public enum RoleName {
-    USER("USER"),
-    ADMIN("ADMIN"),
-    MODERATOR("MODERATOR");
+    DEALER_STAFF("DEALER_STAFF"),
+    DEALER_MANAGER("DEALER_MANAGER"),
+    EVM_STAFF("EVM_STAFF"),
+    ADMIN("ADMIN");
 
-    private final String roleName;
+     private final String name;
 
-    RoleName(String roleName) {
-        this.roleName = roleName;
+    RoleName(String name) {
+        this.name = name;
     }
-
-    public String getRoleName() {
-        return roleName;
+     public String getRoleName() {
+        return name;
     }
 }
 

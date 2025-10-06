@@ -8,7 +8,6 @@ import UserLayout from "../layouts/UserLayout";
 // pages
 import Home from "../pages/Home";
 import Login from "../features/auth/pages/Login.jsx";
-import Register from "../features/auth/pages/Register.jsx";
 import Dashboard from "../features/dashboard/pages/Dashboard";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
@@ -17,6 +16,8 @@ import UserManagement from "../features/dashboard/users/pages/UserManagement.jsx
 import ProfilePage from "../features/profile/pages/ProfilePage.jsx";
 import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
+import DealerLayout from "../layouts/DealerLayout.jsx";
+import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 
 export default function AppRoutes() {
     return (
@@ -28,10 +29,26 @@ export default function AppRoutes() {
                 <Route path={"/"} element={<UserLayout/>}>
                     <Route path="" element={<Home/>}/>
                     <Route path="login" element={<Login/>}/>
-                    <Route path="register" element={<Register/>}/>
                     <Route path="oauth-success" element={<OAuthSuccess/>}/>
                     <Route path="reset-password" element={<ResetPassword/>}/>
                 </Route>
+
+
+
+
+
+
+                <Route path="/dealer" element={<DealerLayout/>}>
+                    <Route index element={<DashboardForDealer/>}/>
+                </Route>
+
+
+
+
+
+
+
+
 
 
                 {/* User routes - protected */}
@@ -55,7 +72,7 @@ export default function AppRoutes() {
                 <Route element={<ProtectedRoute allowedRoles={["ADMIN"]}/>}>
                     <Route path="/admin" element={<AdminLayout/>}>
                         <Route index element={<Dashboard/>}/>
-                        <Route path="users" element={<UserManagement />}/>
+                        <Route path="users" element={<UserManagement/>}/>
                         {/* Thêm các route admin khác ở đây */}
                     </Route>
                 </Route>

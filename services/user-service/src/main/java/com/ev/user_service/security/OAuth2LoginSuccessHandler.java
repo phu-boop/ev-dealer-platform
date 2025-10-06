@@ -58,7 +58,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         Set<Role> roles = new HashSet<>();
         User user = userRepository.findByEmail(email).orElseGet(() -> {
-            roles.add(roleRepository.findByName(RoleName.USER.getRoleName())
+            roles.add(roleRepository.findByName(RoleName.EVM_STAFF.getRoleName())
                     .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR)));
             User newUser = User.builder()
                     .email(email)
