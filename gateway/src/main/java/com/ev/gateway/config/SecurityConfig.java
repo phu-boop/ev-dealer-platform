@@ -7,6 +7,9 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.CorsConfiguration;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -17,15 +20,29 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Thêm cấu hình CORS
                 .authorizeExchange(exchanges -> exchanges
                         // Cho phép public routes
-                        .pathMatchers("/", "/error", "/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
+                        .pathMatchers("/", "/error", "/auth/**", "/users/**","/vehicles/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // Cần JWT (đã xác thực qua JwtGlobalFilter)
                         .anyExchange().authenticated()
                 )
                 // Không tạo session
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration corsConfig = new CorsConfiguration();
+        corsConfig.addAllowedOrigin("http://localhost:5173");
+        corsConfig.addAllowedMethod("*"); // Cho phép tất cả phương thức: GET, POST, PUT, DELETE, OPTIONS
+        corsConfig.addAllowedHeader("*"); // Cho phép tất cả header
+        corsConfig.setAllowCredentials(true); // Cho phép gửi cookie/token
+        corsConfig.setMaxAge(3600L); // Cache preflight request trong 1 giờ
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfig);
+        return source;
     }
 }

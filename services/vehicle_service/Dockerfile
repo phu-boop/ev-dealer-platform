@@ -38,5 +38,7 @@ COPY --from=build /app/target/*.jar app.jar
 # Mở port 8087 cho service
 EXPOSE 8087
 
-# Lệnh chạy ứng dụng
-ENTRYPOINT ["java", "-jar", "app.jar"]
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
+
+ENTRYPOINT ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
