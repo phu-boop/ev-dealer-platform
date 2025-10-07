@@ -48,6 +48,12 @@ public class UserController {
                 .body(ApiRespond.success("Create User Successfully", userService.createUser(userRequest)));
     }
 
+    @PostMapping("/register/dealerStaff")
+    public ResponseEntity<ApiRespond<UserRespond>> createUserDealerStaff(@Validated(OnCreate.class) @RequestBody UserRequest userRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiRespond.success("Create User Successfully", userService.createUserDealerStaff(userRequest)));
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiRespond<UserRespond>> updateUser(

@@ -55,13 +55,14 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Login successful", loginRespond));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @GetMapping("/me")
     public ResponseEntity<ApiRespond<LoginRespond>> getCurrentUser() {
         LoginRespond loginRespond = authService.getCurrentUser();
         return ResponseEntity.ok(ApiRespond.success("Get current user successful", loginRespond));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/refresh")
     public ResponseEntity<ApiRespond<?>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         TokenPair tokenPair = authService.newRefreshTokenAndAccessToken(request);
@@ -76,6 +77,7 @@ public class AuthController {
                 ApiRespond.success("RefreshToken successful", tokenPair));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/logout")
     public ResponseEntity<ApiRespond<?>> logout(HttpServletRequest request, HttpServletResponse response) {
         authService.addTokenBlacklist(request);
@@ -90,12 +92,14 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Logout successful", null));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiRespond<?>> forgotPassword(@RequestParam String email) {
         authService.sendOtp(email);
         return ResponseEntity.ok(ApiRespond.success("OTP sent to your email", null));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/reset-password")
     public ResponseEntity<ApiRespond<?>> resetPassword(@RequestParam String email,
                                                        @RequestParam String otp,
@@ -107,7 +111,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Password updated successfully", null));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/change-password")
     public ResponseEntity<ApiRespond<?>> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         authService.changePassword(changePasswordRequest.getEmail(), changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword());

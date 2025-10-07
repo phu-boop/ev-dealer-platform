@@ -13,7 +13,6 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
         country: "",
         birthday: "",
         gender: "MALE",
-        roles: [],
     });
 
     const [errors, setErrors] = useState({});
@@ -35,8 +34,7 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                 city: "",
                 country: "",
                 birthday: "",
-                gender: "MALE",
-                roles: [],
+                gender: "MALE"
             });
         }
         setErrors({});
@@ -62,8 +60,6 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
         } else if (formData.password && formData.password.length < 6) {
             newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
         }
-
-        if (formData.roles.length === 0) newErrors.roles = "Phải chọn ít nhất một role";
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -123,9 +119,9 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
             <div className="bg-white rounded-lg shadow-xl w-full p-2 max-w-xl max-h-[100vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b">
                     <h2 className="text-xl font-bold text-gray-800">
-                        {mode === "add" && "Thêm User mới"}
-                        {mode === "edit" && "Cập nhật User"}
-                        {mode === "view" && "Chi tiết User"}
+                        {mode === "add" && "Thêm nhân viên mới"}
+                        {mode === "edit" && "Cập nhật nhân viên"}
+                        {mode === "view" && "Chi tiết nhân viên"}
                     </h2>
                     <div className="flex items-center gap-2">
                         {isViewMode && (
@@ -363,42 +359,6 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Roles *
-                        </label>
-                        <div className="space-y-2">
-                            <label className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    value="USER"
-                                    checked={formData.roles.includes("USER")}
-                                    onChange={handleChange}
-                                    disabled={isReadOnly}
-                                    className={`rounded text-blue-600 focus:ring-blue-500 ${
-                                        isReadOnly ? "cursor-not-allowed opacity-60" : ""
-                                    }`}
-                                />
-                                <span className="ml-2 text-gray-700">USER</span>
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    value="ADMIN"
-                                    checked={formData.roles.includes("ADMIN")}
-                                    onChange={handleChange}
-                                    disabled={isReadOnly}
-                                    className={`rounded text-blue-600 focus:ring-blue-500 ${
-                                        isReadOnly ? "cursor-not-allowed opacity-60" : ""
-                                    }`}
-                                />
-                                <span className="ml-2 text-gray-700">ADMIN</span>
-                            </label>
-                        </div>
-                        {errors.roles && (
-                            <p className="mt-1 text-sm text-red-600">{errors.roles}</p>
-                        )}
-                    </div>
 
                     <div className="flex justify-end gap-3 pt-4">
                         <button

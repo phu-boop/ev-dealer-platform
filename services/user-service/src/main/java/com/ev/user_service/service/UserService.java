@@ -48,7 +48,6 @@ public class UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         return userMapper.usertoUserRespond(user);
     }
-
     public UserRespond createUser(UserRequest userRequest) {
         if (userRepository.existsByEmail(userRequest.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -57,8 +56,20 @@ public class UserService {
         }
         User user = userMapper.userRequesttoUser(userRequest);
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        userRepository.save(user);
+        return userMapper.usertoUserRespond(user);
+    }
+
+    public UserRespond createUserDealerStaff(UserRequest userRequest) {
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        } else if (userRepository.existsByPhone(userRequest.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
+        }
+        User user = userMapper.userRequesttoUser(userRequest);
+        user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         Set<Role> roles = new HashSet<>();
-        Role userRole = roleRepository.findByName(RoleName.DEALER_MANAGER.getRoleName())
+        Role userRole = roleRepository.findByName(RoleName.DEALER_STAFF.getRoleName())
                 .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
         roles.add(userRole);
         user.setRoles(roles);

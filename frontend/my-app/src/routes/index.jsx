@@ -2,16 +2,15 @@ import {Routes, Route} from "react-router-dom";
 import {AuthProvider} from "../features/auth/AuthProvider";
 
 // layouts
-import AdminLayout from "../layouts/AdminLayout";
+import EvmLayout from "../layouts/EvmLayout.jsx";
 import UserLayout from "../layouts/UserLayout";
 
 // pages
 import Home from "../pages/Home";
-import Login from "../features/auth/pages/Login.jsx";
+import Login from "../pages/Login.jsx";
 import Dashboard from "../features/dashboard/pages/Dashboard";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
-import LearnerHome from "../pages/forLearner/LearnerHome.jsx";
 import UserManagement from "../features/dashboard/users/pages/UserManagement.jsx";
 import ProfilePage from "../features/profile/pages/ProfilePage.jsx";
 import OAuthSuccess from "../pages/OAuthSuccess";
@@ -54,7 +53,6 @@ export default function AppRoutes() {
                 {/* User routes - protected */}
                 <Route element={<ProtectedRoute allowedRoles={["USER"]}/>}>
                     <Route path="/user" element={<UserLayout/>}>
-                        <Route path="home" element={<LearnerHome/>}/>
                     </Route>
                 </Route>
 
@@ -69,10 +67,10 @@ export default function AppRoutes() {
 
 
                 {/* Admin routes - protected */}
-                <Route element={<ProtectedRoute allowedRoles={["ADMIN"]}/>}>
-                    <Route path="/admin" element={<AdminLayout/>}>
+                <Route element={<ProtectedRoute allowedRoles={["ADMIN", "DEALER_STAFF"]}/>}>
+                    <Route path="/admin" element={<EvmLayout/>}>
                         <Route index element={<Dashboard/>}/>
-                        <Route path="users" element={<UserManagement/>}/>
+                        <Route path="system/users" element={<UserManagement/>}/>
                         {/* Thêm các route admin khác ở đây */}
                     </Route>
                 </Route>

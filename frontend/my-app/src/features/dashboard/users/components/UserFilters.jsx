@@ -81,7 +81,7 @@ export default function UserFilters({
           className="w-full lg:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
         >
           <Plus size={20} className="mr-2" />
-          Thêm User
+          Thêm Nhân viên
         </button>
       </div>
     </div>

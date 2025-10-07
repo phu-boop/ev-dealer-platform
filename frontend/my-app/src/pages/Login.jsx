@@ -1,11 +1,11 @@
 import {useState} from "react";
-import Button from "../../../components/ui/Button.jsx";
-import Input from "../../../components/ui/Input.jsx";
-import {loginUser} from "../services/authService.js";
-import Alert from "../../../components/ui/Alert.jsx";
+import Button from "../components/ui/Button.jsx";
+import Input from "../components/ui/Input.jsx";
+import {loginUser} from "../features/auth/services/authService.js";
+import Alert from "../components/ui/Alert.jsx";
 import Swal from "sweetalert2";
 import {useNavigate} from "react-router-dom";
-import {useAuthContext} from "../AuthProvider.jsx";
+import {useAuthContext} from "../features/auth/AuthProvider.jsx";
 import {FcGoogle} from "react-icons/fc";
 import {FaFacebook, FaGithub} from "react-icons/fa";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -61,7 +61,7 @@ export default function Login() {
                     confirmButtonText: "OK",
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        if (rolesArray.includes("ADMIN")) {
+                        if (rolesArray.includes("ADMIN")||rolesArray.includes("DEALER_STAFF")) {
                             navigate("/admin");
                         } else {
                             window.location.href = "/";

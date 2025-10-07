@@ -43,7 +43,6 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
-
             if (roleRepository.findByName(RoleName.ADMIN.getName()).isEmpty()) {
                 // DEALER STAFF role
                 if (roleRepository.findByName(RoleName.DEALER_STAFF.getName()).isEmpty()) {
@@ -133,6 +132,7 @@ public class DataInitializer implements ApplicationRunner {
                 }
 
             }
+            //init admin EVM
             Set<Role> roles = new HashSet<>();
             Role role = roleRepository.findByName(RoleName.ADMIN.getRoleName())
                     .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));

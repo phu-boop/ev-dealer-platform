@@ -1,10 +1,12 @@
 package com.ev.user_service.entity;
 
+import com.ev.user_service.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import com.ev.user_service.enums.Gender;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -54,4 +56,24 @@ public class User {
                 .map(Role::getName)
                 .collect(Collectors.joining());
     }
+    @UpdateTimestamp
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private UserStatus status;
+
+    // Relationships
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private DealerStaffProfile dealerStaffProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private DealerManagerProfile dealerManagerProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private EvmStaffProfile evmStaffProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private AdminProfile adminProfile;
 }
