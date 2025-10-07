@@ -1,0 +1,64 @@
+src/
+├── components/
+│   ├── ui/           # Base components (giữ nguyên)
+│   └── shared/       # Components dùng chung
+│
+├── features/         # Business features (tổ chức lại)
+│   ├── auth/         # ✅ Giữ nguyên
+│   ├── vehicle/      # 🆕 Quản lý xe
+│   │   ├── components/
+│   │   │   ├── VehicleCatalog/
+│   │   │   ├── VehicleComparison/
+│   │   │   └── VehicleSpecs/
+│   │   ├── pages/
+│   │   │   ├── VehicleList.jsx
+│   │   │   ├── VehicleDetail.jsx
+│   │   │   └── VehicleComparison.jsx
+│   │   └── services/
+│   │       └── vehicleService.js
+│   │
+│   ├── dealer/       # 🆕 Quản lý đại lý
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── services/
+│   │
+│   ├── sales/        # 🆕 Quản lý bán hàng
+│   │   ├── components/
+│   │   │   ├── Quotation/
+│   │   │   ├── OrderManagement/
+│   │   │   └── Contract/
+│   │   ├── pages/
+│   │   │   ├── QuotationList.jsx
+│   │   │   ├── CreateOrder.jsx
+│   │   │   └── OrderTracking.jsx
+│   │   └── services/
+│   │
+│   ├── inventory/    # 🆕 Quản lý kho
+│   ├── customer/     # 🆕 Quản lý khách hàng
+│   ├── reporting/    # 🆕 Báo cáo & phân tích
+│   └── dashboard/    # ⚠️ Tách theo role
+│       ├── admin/
+│       ├── evm-staff/
+│       └── dealer/
+│
+├── layouts/          # Simplify layouts
+│   ├── MainLayout.jsx        # Layout chính + role-based sidebar
+│   └── PublicLayout.jsx      # Layout public (login, home)
+│
+├── pages/            # Public pages
+│   ├── Home.jsx
+│   ├── Login.jsx     # ⚠️ Move auth pages ra đây?
+│   └── NotFound.jsx
+│
+├── services/         # API services
+│   ├── authService.js
+│   ├── vehicleService.js
+│   ├── dealerService.js
+│   ├── salesService.js
+│   └── ...
+│
+└── hooks/            # Custom hooks
+    ├── useAuth.js
+    ├── useVehicles.js
+    ├── useDealers.js
+    └── ...

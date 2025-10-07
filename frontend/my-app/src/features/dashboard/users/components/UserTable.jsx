@@ -22,7 +22,7 @@ export default function UserTable({ users, onEdit, onView, onDelete, isLoading }
           <User size={64} className="mx-auto" />
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Không có user nào</h3>
-        <p className="text-gray-500">Hãy thêm user mới để bắt đầu</p>
+        <p className="text-gray-500">Hãy thêm nhân viên mới để bắt đầu</p>
       </div>
     );
   }

@@ -1,0 +1,35 @@
+package com.ev.user_service.entity;
+
+import lombok.*;
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "dealer_manager_profiles")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DealerManagerProfile {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "manager_id")
+    private Long managerId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
+
+    @Column(name = "dealer_id", nullable = false)
+    private Long dealerId;
+
+    @Column(name = "management_level", length = 50)
+    private String managementLevel;
+
+    @Column(name = "approval_limit", precision = 15, scale = 2)
+    private BigDecimal approvalLimit;
+
+    @Column(name = "department", length = 100)
+    private String department;
+}
