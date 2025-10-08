@@ -61,9 +61,12 @@ export default function Login() {
                     confirmButtonText: "OK",
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        if (rolesArray.includes("ADMIN")||rolesArray.includes("DEALER_STAFF")) {
+                        if (rolesArray.includes("ADMIN")||rolesArray.includes("EVM_STAFF")) {
                             navigate("/admin");
-                        } else {
+                        } else if (rolesArray.includes("DEALER_MANAGER")||rolesArray.includes("DEALER_STAFF")) {
+                            navigate("/dealer");
+                        }
+                         else {
                             window.location.href = "/";
                         }
                     }
@@ -103,6 +106,32 @@ export default function Login() {
 
 
     return (
+        <>
+                <thead>
+                    <tr>
+                    <th>Email</th>
+                    <th>                                  Password</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    <td>ManagerDealer@gmail.com</td>
+                    <td>Anhphu2502*</td>
+                    </tr>
+                    <tr>
+                    <td>StafffDealer@gmail.com</td>
+                    <td>Anhphu2502*</td>
+                    </tr>
+                    <tr>
+                    <td>StafffPhu@gmail.com</td>
+                    <td>Anhphu2502*</td>
+                    </tr>
+                    <tr>
+                    <td>admin@gmail.com</td>
+                    <td>123123123</td>
+                    </tr>
+                </tbody>
+
         <div className="flex items-center justify-center min-h-screen bg-slate-100">
             <form
                 onSubmit={handleSubmit}
@@ -196,5 +225,6 @@ export default function Login() {
                 </div>
             </form>
         </div>
+        </>
     );
 }

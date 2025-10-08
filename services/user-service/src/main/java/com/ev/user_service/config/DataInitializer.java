@@ -1,5 +1,6 @@
 package com.ev.user_service.config;
 
+import com.ev.user_service.enums.UserStatus;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -141,6 +142,7 @@ public class DataInitializer implements ApplicationRunner {
             admin.setEmail("admin@gmail.com");
             admin.setPassword(passwordEncoder.encode("123123123"));
             admin.setRoles(roles);
+            admin.setStatus(UserStatus.ACTIVE);
             userRepository.save(admin);
         }
     }
