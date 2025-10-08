@@ -1,5 +1,6 @@
 package com.ev.user_service.service;
 
+import com.ev.user_service.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -73,6 +74,7 @@ public class UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
         roles.add(userRole);
         user.setRoles(roles);
+        user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
         return userMapper.usertoUserRespond(user);
     }

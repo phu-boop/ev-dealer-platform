@@ -37,14 +37,6 @@ export default function AppRoutes() {
 
 
 
-                <Route path="/dealer" element={<DealerLayout/>}>
-                    <Route index element={<DashboardForDealer/>}/>
-                </Route>
-
-
-
-
-
 
 
 
@@ -70,6 +62,15 @@ export default function AppRoutes() {
                 <Route element={<ProtectedRoute allowedRoles={["ADMIN", "DEALER_STAFF"]}/>}>
                     <Route path="/admin" element={<EvmLayout/>}>
                         <Route index element={<Dashboard/>}/>
+                        <Route path="system/users" element={<UserManagement/>}/>
+                        {/* Thêm các route admin khác ở đây */}
+                    </Route>
+                </Route>
+
+                {/* Dealer routes - protected */}
+                <Route element={<ProtectedRoute allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]}/>}>
+                    <Route path="/dealer" element={<DealerLayout/>}>
+                        <Route index element={<DashboardForDealer/>}/>
                         <Route path="system/users" element={<UserManagement/>}/>
                         {/* Thêm các route admin khác ở đây */}
                     </Route>

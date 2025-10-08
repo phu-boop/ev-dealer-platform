@@ -168,10 +168,21 @@ export const dealerStaffMenuItems = [
   }
 ];
 
-const roles = sessionStorage.getItem("roles");
-const menuItems = roles && roles.includes("DEALER_MANAGER")
+
+const rolesString = sessionStorage.getItem("roles");
+let roles = [];
+
+try {
+  roles = rolesString ? JSON.parse(rolesString) : [];
+} catch (error) {
+  console.error("Failed to parse roles:", error);
+}
+
+const menuItems = roles.includes("DEALER_MANAGER")
   ? dealerManagerMenuItems
   : dealerStaffMenuItems;
+
+
 
 const EvmLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
