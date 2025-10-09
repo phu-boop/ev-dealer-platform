@@ -8,10 +8,10 @@
         <version>3.5.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>phunla2784.edu.vn</groupId>
-    <artifactId>website</artifactId>
+    <groupId>com.ev</groupId>
+    <artifactId>user-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>website</name>
+    <name>user-service</name>
     <description>website</description>
     <url/>
     <licenses>
@@ -140,6 +140,12 @@
             <artifactId>common-lib</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <!-- dotenv -->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>3.0.0</version>
+        </dependency>       
     </dependencies>
 
     <build>
