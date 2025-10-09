@@ -1,17 +1,26 @@
+<<<<<<< HEAD
 ### Java & Spring Boot ###
+=======
+############################################
+### 🧩 JAVA / SPRING BOOT ###
+############################################
+
+# Build output
+target/
+build/
+
+>>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
 # Compiled class files
 *.class
 
 # Log files
 *.log
 
-# BlueJ files
-*.ctxt
+# JVM crash logs
+hs_err_pid*
+replay_pid*
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# Archive / Package files
 *.jar
 *.war
 *.nar
@@ -20,6 +29,7 @@
 *.tar.gz
 *.rar
 
+<<<<<<< HEAD
 # JVM crash logs
 hs_err_pid*
 replay_pid*
@@ -29,10 +39,34 @@ target/
 build/
 
 # IDE configs
+=======
+# Spring Boot temp files
+.mvn/
+.mtj.tmp/
+
+# Maven wrapper binaries
+.mvn/wrapper/maven-wrapper.jar
+
+# Ignore custom local config
+application-local.properties
+application-docker.properties
+application-dev.properties
+
+# ⚠️ Cho phép commit template cấu hình
+!application.properties
+!application-example.properties
+
+############################################
+### 💻 IDEs ###
+############################################
+
+# IntelliJ IDEA
+>>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
 .idea/
 *.iml
 *.ipr
 *.iws
+<<<<<<< HEAD
 .vscode/
 .project
 .classpath
@@ -52,21 +86,66 @@ build/
 .env.*.local
 
 # debug logs
+=======
+
+# Eclipse / STS
+.project
+.classpath
+.settings/
+.apt_generated
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+############################################
+### ⚛️ NODE / REACT / VITE ###
+############################################
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug logs
+>>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+<<<<<<< HEAD
 # editor
 .DS_Store
 *.swp
 *.swo
 
 # lock files (tùy team quy định, thường giữ lại)
+=======
+# Optional lock files (bỏ comment nếu muốn ignore)
+>>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
 
+<<<<<<< HEAD
 ### Others ###
 # OS generated
 Thumbs.db
@@ -88,3 +167,30 @@ Thumbs.db
 
 
 
+=======
+# Editor swap files
+*.swp
+*.swo
+
+############################################
+### 🐳 DOCKER ###
+############################################
+
+# Docker
+docker-compose.override.yml
+*.pid
+*.seed
+*.bak
+
+############################################
+### 🧱 OS GENERATED ###
+############################################
+
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+
+# 🧩 Ignore tất cả file .properties
+*.properties
+>>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
