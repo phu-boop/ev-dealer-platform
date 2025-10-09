@@ -1,9 +1,11 @@
 package com.ev.gateway.config;
 
+import com.ev.common_lib.exception.ErrorCode;
 import com.ev.gateway.util.JwtUtil;
 import com.ev.gateway.service.RedisService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.core.Ordered;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.List;
 
 @Component
@@ -21,10 +24,10 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     private final JwtUtil jwtUtil;
     private final RedisService redisService;
 
-    // 🧩 Danh sách path được bỏ qua xác thực
+    //  Danh sách path được bỏ qua xác thực
     private static final List<String> EXCLUDED_PATHS = List.of(
-            "/auth/",       // đăng nhập, đăng ký
-            "/users/"       // public user endpoints
+            "/auth/",
+            "/users/"
     );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {
@@ -36,35 +39,32 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        // ⚡ 1️⃣ Bỏ qua các URL nằm trong danh sách EXCLUDED_PATHS
+        // Ngoại lệ
         if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
             return chain.filter(exchange);
         }
 
-        // ⚡ 2️⃣ Lấy token
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return this.onError(exchange, "Missing Authorization header", HttpStatus.UNAUTHORIZED);
+            return this.onError(exchange, ErrorCode.UNAUTHORIZED.getCode(), ErrorCode.UNAUTHORIZED.getMessage(), HttpStatus.UNAUTHORIZED);
+
         }
 
         String token = authHeader.substring(7);
 
         try {
-            // ⚡ 3️⃣ Kiểm tra token có bị logout trong Redis không
             if (redisService.contains(token)) {
-                return this.onError(exchange, "Token has been logged out", HttpStatus.UNAUTHORIZED);
+            return this.onError(exchange, ErrorCode.TOKEN_LOGGED_OUT.getCode(), ErrorCode.TOKEN_LOGGED_OUT.getMessage(), ErrorCode.TOKEN_LOGGED_OUT.getHttpStatus());
             }
 
-            // ⚡ 4️⃣ Giải mã token
             String email = jwtUtil.extractEmail(token);
             String role = jwtUtil.extractRole(token);
             Long userId = jwtUtil.extractUserId(token);
 
             if (!jwtUtil.isTokenValid(token, email)) {
-                return this.onError(exchange, "Invalid JWT token", HttpStatus.UNAUTHORIZED);
+            return this.onError(exchange, ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage(), ErrorCode.TOKEN_INVALID.getHttpStatus());
             }
 
-            // ⚡ 5️⃣ Thêm thông tin người dùng vào header để gửi xuống service
             ServerWebExchange mutatedExchange = exchange.mutate()
                     .request(r -> r.headers(headers -> {
                         headers.add("X-User-Email", email);
@@ -76,19 +76,26 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(mutatedExchange);
 
         } catch (ExpiredJwtException e) {
-            return this.onError(exchange, "Token expired", HttpStatus.UNAUTHORIZED);
+            return this.onError(exchange, ErrorCode.TOKEN_EXPIRED.getCode(), ErrorCode.TOKEN_EXPIRED.getMessage(), ErrorCode.TOKEN_EXPIRED.getHttpStatus());
         } catch (JwtException e) {
-            return this.onError(exchange, "Invalid token", HttpStatus.UNAUTHORIZED);
+            return this.onError(exchange, ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage(), ErrorCode.TOKEN_INVALID.getHttpStatus());
         }
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
-        exchange.getResponse().setStatusCode(httpStatus);
-        return exchange.getResponse().setComplete();
-    }
 
     @Override
     public int getOrder() {
         return -1; // chạy sớm nhất
     }
+    private Mono<Void> onError(ServerWebExchange exchange, String code, String message, HttpStatus httpStatus) {
+        var response = exchange.getResponse();
+        response.setStatusCode(httpStatus);
+        response.getHeaders().add("Content-Type", "application/json; charset=UTF-8");
+
+        String body = String.format("{\"code\":\"%s\",\"message\":\"%s\",\"data\":null}", code, message);
+        byte[] bytes = body.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+        return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+    }
+
 }
