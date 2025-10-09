@@ -58,8 +58,4 @@ public class GlobalExceptionHandler {
                 .status(ErrorCode.UNAUTHORIZED.getHttpStatus())
                 .body(apiRespond);
     }
-<<<<<<< HEAD
-=======
-
->>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
 }

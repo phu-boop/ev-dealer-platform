@@ -27,11 +27,8 @@ public enum ErrorCode {
     INTERNAL_ERROR("3001", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
     SERVICE_UNAVAILABLE("3002", "Service unavailable", HttpStatus.SERVICE_UNAVAILABLE),
     TIMEOUT("3003", "Request timeout", HttpStatus.REQUEST_TIMEOUT),
-<<<<<<< HEAD
-=======
     DOWNSTREAM_SERVICE_UNAVAILABLE("3004", "A downstream service is currently unavailable", HttpStatus.SERVICE_UNAVAILABLE),
 
->>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
 
     // ===== 4xxx - Auth & Authorization =====
     UNAUTHORIZED("4001", "Unauthorized", HttpStatus.UNAUTHORIZED),
