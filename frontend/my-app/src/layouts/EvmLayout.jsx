@@ -165,13 +165,25 @@ try {
   roles = rolesString ? JSON.parse(rolesString) : [];
 } catch (error) {
   console.error("Failed to parse roles:", error);
+<<<<<<< HEAD
 }
 
+=======
+  roles = []; // fallback
+}
+
+console.log("Roles parsed:", roles);
+
+>>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
 const menuItems = roles.includes("ADMIN")
   ? adminMenuItems
   : evmStaffMenuItems;
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> a38fe336d6a5fd2139ce2949280eb626999a20a9
 const EvmLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
