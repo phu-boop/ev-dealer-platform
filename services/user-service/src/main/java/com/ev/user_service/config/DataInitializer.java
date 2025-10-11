@@ -133,17 +133,57 @@ public class DataInitializer implements ApplicationRunner {
                 }
 
             }
-            //init admin EVM
+            // Init default users for EVM system
             Set<Role> roles = new HashSet<>();
-            Role role = roleRepository.findByName(RoleName.ADMIN.getRoleName())
+
+// ========== ADMIN ==========
+            Role adminRole = roleRepository.findByName(RoleName.ADMIN.getRoleName())
                     .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
-            roles.add(role);
+            roles.clear();
+            roles.add(adminRole);
             User admin = new User();
             admin.setEmail("admin@gmail.com");
             admin.setPassword(passwordEncoder.encode("123123123"));
-            admin.setRoles(roles);
+            admin.setRoles(new HashSet<>(roles));
             admin.setStatus(UserStatus.ACTIVE);
             userRepository.save(admin);
+
+// ========== DEALER_MANAGER ==========
+            Role dealerManagerRole = roleRepository.findByName(RoleName.DEALER_MANAGER.getRoleName())
+                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+            roles.clear();
+            roles.add(dealerManagerRole);
+            User managerDealer = new User();
+            managerDealer.setEmail("ManagerDealer@gmail.com");
+            managerDealer.setPassword(passwordEncoder.encode("123123123"));
+            managerDealer.setRoles(new HashSet<>(roles));
+            managerDealer.setStatus(UserStatus.ACTIVE);
+            userRepository.save(managerDealer);
+
+// ========== DEALER_STAFF ==========
+            Role dealerStaffRole = roleRepository.findByName(RoleName.DEALER_STAFF.getRoleName())
+                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+            roles.clear();
+            roles.add(dealerStaffRole);
+            User staffDealer = new User();
+            staffDealer.setEmail("StafffDealer@gmail.com");
+            staffDealer.setPassword(passwordEncoder.encode("123123123"));
+            staffDealer.setRoles(new HashSet<>(roles));
+            staffDealer.setStatus(UserStatus.ACTIVE);
+            userRepository.save(staffDealer);
+
+// ========== EVM_STAFF ==========
+            Role evmStaffRole = roleRepository.findByName(RoleName.EVM_STAFF.getRoleName())
+                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+            roles.clear();
+            roles.add(evmStaffRole);
+            User staffEvm = new User();
+            staffEvm.setEmail("StafffEVM@gmail.com");
+            staffEvm.setPassword(passwordEncoder.encode("123123123"));
+            staffEvm.setRoles(new HashSet<>(roles));
+            staffEvm.setStatus(UserStatus.ACTIVE);
+            userRepository.save(staffEvm);
+
         }
     }
 }
