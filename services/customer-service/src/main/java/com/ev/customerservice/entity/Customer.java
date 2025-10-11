@@ -23,6 +23,9 @@ public class Customer {
     @Column(name = "customer_id")
     private Long customerId;
 
+    @Column(name = "customer_code", unique = true, length = 20)
+    private String customerCode; // Auto-generated: CUS-YYYYMMDD-XXXX
+
     @Column(name = "first_name", length = 100)
     private String firstName;
 

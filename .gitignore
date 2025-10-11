@@ -83,6 +83,15 @@ Thumbs.db
 *.DS_Store
 Thumbs.db
 
+### Documentation & Testing (Local only) ###
+# Postman testing guides
+**/POSTMAN_TESTING_GUIDE.md
+**/USER_STORY_*.md
+**/*_Postman_Collection.json
+
+# Text files
+*.txt
+
 
 
 

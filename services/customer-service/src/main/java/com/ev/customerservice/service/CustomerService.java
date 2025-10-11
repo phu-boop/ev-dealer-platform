@@ -44,17 +44,43 @@ public class CustomerService {
 
     @Transactional
     public CustomerResponse createCustomer(CustomerRequest request) {
+        // Check email duplication
         if (customerRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Customer with email " + request.getEmail() + " already exists");
         }
 
+        // Check phone duplication
+        if (request.getPhone() != null && !request.getPhone().isEmpty() && 
+            customerRepository.existsByPhone(request.getPhone())) {
+            throw new DuplicateResourceException("Customer with phone " + request.getPhone() + " already exists");
+        }
+
+        // Check ID number duplication
         if (request.getIdNumber() != null && customerRepository.existsByIdNumber(request.getIdNumber())) {
             throw new DuplicateResourceException("Customer with ID number " + request.getIdNumber() + " already exists");
         }
 
         Customer customer = modelMapper.map(request, Customer.class);
+        
+        // Auto-generate customer code: CUS-YYYYMMDD-XXXX
+        customer.setCustomerCode(generateCustomerCode());
+        
         Customer savedCustomer = customerRepository.save(customer);
         return modelMapper.map(savedCustomer, CustomerResponse.class);
+    }
+
+    /**
+     * Generate unique customer code with format: CUS-YYYYMMDD-XXXX
+     */
+    private String generateCustomerCode() {
+        String datePrefix = java.time.LocalDate.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+        
+        // Find the last customer created today
+        long count = customerRepository.count();
+        String sequence = String.format("%04d", (count % 10000) + 1);
+        
+        return "CUS-" + datePrefix + "-" + sequence;
     }
 
     @Transactional
@@ -68,6 +94,13 @@ public class CustomerService {
             throw new DuplicateResourceException("Customer with email " + request.getEmail() + " already exists");
         }
 
+        // Check phone duplication
+        if (request.getPhone() != null && !request.getPhone().isEmpty() &&
+            !request.getPhone().equals(customer.getPhone()) &&
+            customerRepository.existsByPhone(request.getPhone())) {
+            throw new DuplicateResourceException("Customer with phone " + request.getPhone() + " already exists");
+        }
+
         // Check ID number duplication
         if (request.getIdNumber() != null &&
             !request.getIdNumber().equals(customer.getIdNumber()) &&
@@ -75,7 +108,19 @@ public class CustomerService {
             throw new DuplicateResourceException("Customer with ID number " + request.getIdNumber() + " already exists");
         }
 
-        modelMapper.map(request, customer);
+        // Manually update fields to avoid overwriting relationships and managed fields
+        customer.setFirstName(request.getFirstName());
+        customer.setLastName(request.getLastName());
+        customer.setEmail(request.getEmail());
+        customer.setPhone(request.getPhone());
+        customer.setAddress(request.getAddress());
+        customer.setIdNumber(request.getIdNumber());
+        customer.setCustomerType(request.getCustomerType());
+        customer.setRegistrationDate(request.getRegistrationDate());
+        customer.setStatus(request.getStatus());
+        customer.setPreferredDealerId(request.getPreferredDealerId());
+        // Don't update customerCode, customerId, createdAt, updatedAt, or relationships
+        
         Customer updatedCustomer = customerRepository.save(customer);
         return modelMapper.map(updatedCustomer, CustomerResponse.class);
     }

@@ -1,4 +1,4 @@
-package com.ev.gateway;
+package com.freeLanceHub.gateway;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

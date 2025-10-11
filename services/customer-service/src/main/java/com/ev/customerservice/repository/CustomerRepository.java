@@ -26,6 +26,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     boolean existsByIdNumber(String idNumber);
 
+    boolean existsByPhone(String phone);
+
     @Query("SELECT c FROM Customer c WHERE LOWER(c.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(c.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(c.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
