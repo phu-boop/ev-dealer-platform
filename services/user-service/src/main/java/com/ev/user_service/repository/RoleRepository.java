@@ -5,8 +5,9 @@ import org.springframework.stereotype.Repository;
 import com.ev.user_service.entity.Role;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface RoleRepository extends JpaRepository<Role,Long> {
+public interface RoleRepository extends JpaRepository<Role, UUID> {
     public Optional<Role> findByName(String name);
 }
