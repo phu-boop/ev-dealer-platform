@@ -52,8 +52,12 @@ public enum ErrorCode {
     // ===== 6xxx - Business logic errors =====
     paymentT_FAILED("6001", "paymentt failed", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_BALANCE("6002", "Insufficient balance", HttpStatus.BAD_REQUEST),
-    PRODUCT_OUT_OF_STOCK("6004", "Product out of stock", HttpStatus.CONFLICT);
+    PRODUCT_OUT_OF_STOCK("6004", "Product out of stock", HttpStatus.CONFLICT),
 
+    // ===== 7xxx - Vehicle service errors =====
+    VEHICLE_MODEL_NOT_FOUND("7001", "Vehicle model not found", HttpStatus.NOT_FOUND),
+    VEHICLE_MODEL_ALREADY_EXISTS("7002", "A vehicle model with this name and version already exists", HttpStatus.CONFLICT);
+    
     private final String code;
     private final String message;
     private final HttpStatus httpStatus;
