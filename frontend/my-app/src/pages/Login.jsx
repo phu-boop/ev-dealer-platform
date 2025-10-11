@@ -96,15 +96,15 @@ export default function Login() {
                 <tbody>
                     <tr>
                     <td>ManagerDealer@gmail.com</td>
-                    <td>Anhphu2502*</td>
+                    <td>123123123</td>
                     </tr>
                     <tr>
                     <td>StafffDealer@gmail.com</td>
-                    <td>Anhphu2502*</td>
+                    <td>123123123</td>
                     </tr>
                     <tr>
-                    <td>StafffPhu@gmail.com</td>
-                    <td>Anhphu2502*</td>
+                    <td>StafffEVM@gmail.com</td>
+                    <td>123123123</td>
                     </tr>
                     <tr>
                     <td>admin@gmail.com</td>
