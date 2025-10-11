@@ -12,14 +12,10 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class UserServiceApplication {
 
 	public static void main(String[] args) {
-		Dotenv dotenv = Dotenv.configure()
-                              .directory("src/main/resources") //Đường dẫn tới thư mục chứa file .env
-                              .ignoreIfMissing()
-                              .load();
-        
-        dotenv.entries().forEach(entry -> {
-            System.setProperty(entry.getKey(), entry.getValue());
-        });
+		Dotenv.configure()
+              .ignoreIfMissing()
+              .systemProperties()
+              .load();
 		SpringApplication.run(UserServiceApplication.class, args);
 	}
 
