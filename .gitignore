@@ -121,5 +121,20 @@ Thumbs.db
 ehthumbs.db
 Icon?
 
+############################################
+### 📝 DOCUMENTATION & TEXT FILES ###
+############################################
+
+# Ignore all .txt files (ERD, notes, etc.)
+*.txt
+
+# Ignore documentation files with sensitive info
+**/POSTMAN_TESTING_GUIDE.md
+**/USER_STORY_*.md
+
+# Ignore Postman collections (may contain sensitive data)
+**/*Postman*.json
+**/*_Collection.json
+
 # 🧩 Ignore tất cả file .properties
 *.properties
