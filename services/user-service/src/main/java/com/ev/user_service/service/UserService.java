@@ -44,11 +44,12 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public UserRespond getUserById(long id) {
+    public UserRespond getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         return userMapper.usertoUserRespond(user);
     }
+
     public UserRespond createUser(UserRequest userRequest) {
         if (userRepository.existsByEmail(userRequest.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -79,7 +80,7 @@ public class UserService {
         return userMapper.usertoUserRespond(user);
     }
 
-    public UserRespond updateUser(Long id, UserRequest userRequest) {
+    public UserRespond updateUser(UUID id, UserRequest userRequest) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         if (!user.getEmail().equals(userRequest.getEmail())
@@ -95,12 +96,9 @@ public class UserService {
         return userMapper.usertoUserRespond(user);
     }
 
-    public void deleteUser(Long id) {
-        userRepository.delete(getUserById(id));
-    }
-
-    private User getUserById(Long id) {
-        return userRepository.findById(id)
+    public void deleteUser(UUID id) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        userRepository.delete(user);
     }
 }
