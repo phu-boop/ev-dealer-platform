@@ -56,8 +56,11 @@ public enum ErrorCode {
 
     // ===== 7xxx - Vehicle service errors =====
     VEHICLE_MODEL_NOT_FOUND("7001", "Vehicle model not found", HttpStatus.NOT_FOUND),
-    VEHICLE_MODEL_ALREADY_EXISTS("7002", "A vehicle model with this name and version already exists", HttpStatus.CONFLICT);
-    
+    VEHICLE_MODEL_ALREADY_EXISTS("7002", "A vehicle model with this name and version already exists", HttpStatus.CONFLICT),
+    VEHICLE_VARIANT_NOT_FOUND("7003", "Vehicle variant not found", HttpStatus.NOT_FOUND),
+    FEATURE_NOT_FOUND("7004", "Feature not found", HttpStatus.NOT_FOUND),
+    VEHICLE_VARIANT_SKU_ALREADY_EXISTS("7005", "A vehicle variant with this SKU code already exists", HttpStatus.CONFLICT);
+
     private final String code;
     private final String message;
     private final HttpStatus httpStatus;
