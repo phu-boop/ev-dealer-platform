@@ -5,7 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class ModelFeatureRequest {
+public class FeatureRequest {
     @NotNull(message = "Feature ID is required")
     private Long featureId;
 

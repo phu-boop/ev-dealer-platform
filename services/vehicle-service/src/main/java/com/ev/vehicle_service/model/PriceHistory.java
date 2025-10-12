@@ -15,8 +15,8 @@ public class PriceHistory {
     private Long priceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_id", nullable = false)
-    private VehicleModel vehicleModel;
+    @JoinColumn(name = "variant_id", nullable = false)
+    private VehicleVariant vehicleVariant;
 
     @Column(name = "old_price")
     private BigDecimal oldPrice;
@@ -30,5 +30,5 @@ public class PriceHistory {
     private String reason;
     
     @Column(name = "changed_by")
-    private Long changedBy; // Giả sử là ID của User
+    private String changedBy; // Email của người thay đổi
 }
