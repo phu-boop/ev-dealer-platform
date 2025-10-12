@@ -2,8 +2,10 @@ package com.ev.user_service.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
 @Table(name = "dealer_staff_profiles")
@@ -12,11 +14,11 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class DealerStaffProfile {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "staff_id")
-    private Long staffId;
+    private UUID staffId;
+
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
