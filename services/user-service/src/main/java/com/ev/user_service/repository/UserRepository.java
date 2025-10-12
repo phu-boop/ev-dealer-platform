@@ -6,13 +6,13 @@ import com.ev.user_service.entity.User;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Repository
-public interface UserRepository extends JpaRepository<User,Long> {
+public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findAll();
     Boolean existsByEmail(String email);
     Boolean existsByPhone(String phone);
-    Optional<User> getUserById(Long id);
     Optional<User> findByEmail(String email);
 }

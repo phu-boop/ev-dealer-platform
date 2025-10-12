@@ -165,11 +165,15 @@ try {
   roles = rolesString ? JSON.parse(rolesString) : [];
 } catch (error) {
   console.error("Failed to parse roles:", error);
+  roles = []; // fallback
 }
+
+console.log("Roles parsed:", roles);
 
 const menuItems = roles.includes("ADMIN")
   ? adminMenuItems
   : evmStaffMenuItems;
+
 
 
 const EvmLayout = () => {

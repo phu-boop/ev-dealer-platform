@@ -16,6 +16,7 @@ import com.ev.user_service.validation.group.OnCreate;
 import com.ev.user_service.validation.group.OnUpdate;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/users")
@@ -38,7 +39,7 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiRespond<UserRespond>> getUserById(@PathVariable long id) {
+    public ResponseEntity<ApiRespond<UserRespond>> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiRespond.success("Get User Successfully", userService.getUserById(id)));
     }
 
@@ -54,10 +55,11 @@ public class UserController {
                 .body(ApiRespond.success("Create User Successfully", userService.createUserDealerStaff(userRequest)));
     }
 
+
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiRespond<UserRespond>> updateUser(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Validated(OnUpdate.class) @Valid @RequestBody UserRequest userRequest) {
         return ResponseEntity.ok(
                 ApiRespond.success("Update User Successfully", userService.updateUser(id, userRequest))
@@ -66,7 +68,7 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiRespond<Void>> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiRespond<Void>> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiRespond.success("Delete User Successfully", null));
     }
