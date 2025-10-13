@@ -1,5 +1,6 @@
 package com.ev.user_service.controller;
 
+import com.ev.user_service.validation.group.OnCreateEvmStaff;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -53,6 +54,12 @@ public class UserController {
     public ResponseEntity<ApiRespond<UserRespond>> createUserDealerStaff(@Validated(OnCreate.class) @RequestBody UserRequest userRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiRespond.success("Create User Successfully", userService.createUserDealerStaff(userRequest)));
+    }
+
+    @PostMapping("/register/EvmStaff")
+    public ResponseEntity<ApiRespond<UserRespond>> createUserEvmStaff(@Validated(OnCreateEvmStaff.class) @RequestBody UserRequest userRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiRespond.success("Create User Successfully", userService.createUserEvmStaff(userRequest)));
     }
 
 
