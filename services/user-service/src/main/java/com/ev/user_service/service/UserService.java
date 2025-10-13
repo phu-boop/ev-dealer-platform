@@ -1,5 +1,6 @@
 package com.ev.user_service.service;
 
+import com.ev.user_service.entity.EvmStaffProfile;
 import com.ev.user_service.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -26,15 +27,18 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final EvmStaffProfileService evmStaffProfileService;
 
     public UserService(PasswordEncoder passwordEncoder,
                        UserMapper userMapper,
                        UserRepository userRepository,
-                       RoleRepository roleRepository) {
+                       RoleRepository roleRepository,
+                       EvmStaffProfileService evmStaffProfileService ) {
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.evmStaffProfileService = evmStaffProfileService;
     }
 
     public List<UserRespond> getAllUser() {
@@ -77,6 +81,25 @@ public class UserService {
         user.setRoles(roles);
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
+        return userMapper.usertoUserRespond(user);
+    }
+
+    public UserRespond createUserEvmStaff(UserRequest userRequest) {
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        } else if (userRepository.existsByPhone(userRequest.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
+        }
+        User user = userMapper.userRequesttoUser(userRequest);
+        user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        Set<Role> roles = new HashSet<>();
+        Role userRole = roleRepository.findByName(RoleName.EVM_STAFF.getRoleName())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        roles.add(userRole);
+        user.setRoles(roles);
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+        evmStaffProfileService.SaveEvmStaffProfile(user, userRequest.getDepartment(), userRequest.getSpecialization());
         return userMapper.usertoUserRespond(user);
     }
 

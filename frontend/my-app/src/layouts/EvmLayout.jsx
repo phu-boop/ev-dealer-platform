@@ -158,24 +158,6 @@ export const evmStaffMenuItems = [
 ];
 
 
-const rolesString = sessionStorage.getItem("roles");
-let roles = [];
-
-try {
-  roles = rolesString ? JSON.parse(rolesString) : [];
-} catch (error) {
-  console.error("Failed to parse roles:", error);
-  roles = []; // fallback
-}
-
-console.log("Roles parsed:", roles);
-
-const menuItems = roles.includes("ADMIN")
-  ? adminMenuItems
-  : evmStaffMenuItems;
-
-
-
 const EvmLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -186,6 +168,21 @@ const EvmLayout = () => {
     const navigate = useNavigate();
     const sidebarRef = useRef(null);
     const profileDropdownRef = useRef(null);
+    const [menuItems, setMenuItems] = useState([]);
+
+    useEffect(() => {
+        // Nếu chưa đăng nhập thì không load menu
+        if (!roles || roles.length === 0) {
+        return;
+        }
+
+        // Gán menu tùy role
+        if (roles.includes("ADMIN")) {
+        setMenuItems(adminMenuItems);
+        } else {
+        setMenuItems(evmStaffMenuItems);
+        }
+    }, [roles]);
 
     // Xác định đường dẫn hiện tại và mở submenu tương ứng
     useEffect(() => {

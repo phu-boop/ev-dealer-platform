@@ -168,22 +168,6 @@ export const dealerStaffMenuItems = [
   }
 ];
 
-
-const rolesString = sessionStorage.getItem("roles");
-let roles = [];
-
-try {
-  roles = rolesString ? JSON.parse(rolesString) : [];
-} catch (error) {
-  console.error("Failed to parse roles:", error);
-}
-
-const menuItems = roles.includes("DEALER_MANAGER")
-  ? dealerManagerMenuItems
-  : dealerStaffMenuItems;
-
-
-
 const EvmLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -194,6 +178,21 @@ const EvmLayout = () => {
     const navigate = useNavigate();
     const sidebarRef = useRef(null);
     const profileDropdownRef = useRef(null);
+        const [menuItems, setMenuItems] = useState([]);
+    
+        useEffect(() => {
+            // Nếu chưa đăng nhập thì không load menu
+            if (!roles || roles.length === 0) {
+            return;
+            }
+    
+            // Gán menu tùy role
+            if (roles.includes("DEALER_MANAGER")) {
+            setMenuItems(dealerManagerMenuItems);
+            } else {
+            setMenuItems(dealerStaffMenuItems);
+            }
+        }, [roles]);
 
     // Xác định đường dẫn hiện tại và mở submenu tương ứng
     useEffect(() => {
