@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit3, Trash2, Eye } from "lucide-react";
+import { Edit3, Trash2, Eye ,User} from "lucide-react";
 
 export default function UserTable({ users, onEdit, onView, onDelete, isLoading }) {
   if (isLoading) {
