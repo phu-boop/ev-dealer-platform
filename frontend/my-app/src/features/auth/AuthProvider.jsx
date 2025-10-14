@@ -49,12 +49,12 @@ export function AuthProvider({children}) {
     const logout = () => {
         sessionStorage.clear();
         setEmail(null);
-        setToken(null);
         setRoles([]);
         setIdUser(null);
         setName(null);
         setFullName(null);
         setUserData(null);
+        setToken(null);
     };
 
     useEffect(() => {

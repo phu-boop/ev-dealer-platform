@@ -101,10 +101,19 @@ export default function UserManagement() {
         try {
             if (mode === "edit") {
                 await mngUserService.update(editingUser.id, userData);
-                console.log("Updated user data:", userData);
                 showMessage("Cập nhật user thành công");
             } else {
+                if(userData.role === "EVM_STAFF"){
                 await mngUserService.createEvmStaff(userData);
+                }else if(userData.role === "DEALER_MANAGER"){
+                await mngUserService.createDealerManager(userData);
+                }else if(userData.role === "DEALER_STAFF"){
+                await mngUserService.createDealerStaff(userData);
+                }else if(userData.role === "ADMIN"){
+                await mngUserService.createAmind(userData);
+                }else{
+                    throw new Error("Vui lòng chọn vai trò hợp lệ");
+                }
                 showMessage("Thêm user thành công");
             }
             setModalOpen(false);

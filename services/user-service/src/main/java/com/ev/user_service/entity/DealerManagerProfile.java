@@ -22,7 +22,7 @@ public class DealerManagerProfile {
     private User user;
 
     @Column(name = "dealer_id", nullable = false)
-    private Long dealerId;
+    private UUID dealerId;
 
     @Column(name = "management_level", length = 50)
     private String managementLevel;

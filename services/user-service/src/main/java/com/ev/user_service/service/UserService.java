@@ -16,7 +16,10 @@ import com.ev.common_lib.exception.ErrorCode;
 import com.ev.user_service.mapper.UserMapper;
 import com.ev.user_service.repository.RoleRepository;
 import com.ev.user_service.repository.UserRepository;
+import reactor.core.publisher.Sinks;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,12 +31,21 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final EvmStaffProfileService evmStaffProfileService;
+    private final AdminProfileService adminProfileService;
+    private final DealerManagerProfileService dealerManagerProfileService;
+    private final DealerStaffProfileService dealerStaffProfileService;
 
     public UserService(PasswordEncoder passwordEncoder,
                        UserMapper userMapper,
                        UserRepository userRepository,
                        RoleRepository roleRepository,
-                       EvmStaffProfileService evmStaffProfileService ) {
+                       EvmStaffProfileService evmStaffProfileService,
+                       AdminProfileService adminProfileService,
+                       DealerStaffProfileService dealerStaffProfileService,
+                       DealerManagerProfileService dealerManagerProfileService) {
+        this.adminProfileService = adminProfileService;
+        this.dealerManagerProfileService = dealerManagerProfileService;
+        this.dealerStaffProfileService = dealerStaffProfileService;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
         this.userRepository = userRepository;
@@ -81,6 +93,7 @@ public class UserService {
         user.setRoles(roles);
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
+        dealerStaffProfileService.SaveDealerStaffProfile(user, userRequest.getDealerId(), userRequest.getPosition(), userRequest.getDepartment(), userRequest.getHireDate(), userRequest.getSalary(), userRequest.getCommissionRate());
         return userMapper.usertoUserRespond(user);
     }
 
@@ -100,6 +113,47 @@ public class UserService {
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
         evmStaffProfileService.SaveEvmStaffProfile(user, userRequest.getDepartment(), userRequest.getSpecialization());
+        return userMapper.usertoUserRespond(user);
+    }
+
+
+    public UserRespond createUserDealerManager(UserRequest userRequest) {
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        } else if (userRepository.existsByPhone(userRequest.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
+        }
+        User user = userMapper.userRequesttoUser(userRequest);
+        user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        Set<Role> roles = new HashSet<>();
+        Role userRole = roleRepository.findByName(RoleName.DEALER_MANAGER.getRoleName())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        roles.add(userRole);
+        user.setRoles(roles);
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+        dealerManagerProfileService.SaveDealerManagerProfile(user, userRequest
+                .getDealerId(), userRequest.getManagementLevel(), userRequest.getApprovalLimit(), userRequest.getDepartment());
+        return userMapper.usertoUserRespond(user);
+    }
+
+
+    public UserRespond createUserDealerAdmin(UserRequest userRequest) {
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        } else if (userRepository.existsByPhone(userRequest.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
+        }
+        User user = userMapper.userRequesttoUser(userRequest);
+        user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        Set<Role> roles = new HashSet<>();
+        Role userRole = roleRepository.findByName(RoleName.ADMIN.getRoleName())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        roles.add(userRole);
+        user.setRoles(roles);
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+        adminProfileService.SaveAdminProfile(user, "SYSTEM_ADMIN", "Quản lý người dùng", "Regional Admin");
         return userMapper.usertoUserRespond(user);
     }
 

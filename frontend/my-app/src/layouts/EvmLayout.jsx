@@ -33,7 +33,8 @@ import {
     FiActivity,
     FiChevronRight,
     FiHome as FiHomeAlt,
-    FiCreditCard as FiCreditCardAlt
+    FiCreditCard as FiCreditCardAlt,
+    FiUser
 } from 'react-icons/fi';
 
 export const adminMenuItems = [
@@ -484,6 +485,35 @@ const EvmLayout = () => {
                                             ))}
                                         </div>
                                     </div>
+                                                
+
+
+                                    {/* Quick Actions */}
+                                            <div className="px-5 py-3 border-t border-gray-100/80">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            navigate('profile');
+                                                            setIsProfileDropdownOpen(false);
+                                                        }}
+                                                        className="flex items-center justify-center p-3 text-gray-600 hover:bg-blue-50 rounded-xl transition-all duration-300 group"
+                                                    >
+                                                        <FiUser className="w-4 h-4 mr-2 group-hover:scale-110" />
+                                                        <span className="text-sm font-medium">Hồ sơ</span>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            navigate('settings');
+                                                            setIsProfileDropdownOpen(false);
+                                                        }}
+                                                        className="flex items-center justify-center p-3 text-gray-600 hover:bg-blue-50 rounded-xl transition-all duration-300 group"
+                                                    >
+                                                        <FiSettings className="w-4 h-4 mr-2 group-hover:scale-110" />
+                                                        <span className="text-sm font-medium">Bảo mật</span>
+                                                    </button>
+                                                </div>
+                                            </div>
 
                                     <div className="border-t border-gray-100/60 pt-2">
                                         <button
@@ -494,7 +524,9 @@ const EvmLayout = () => {
                                             Đăng xuất
                                         </button>
                                     </div>
+                            
                                 </div>
+                            
                             )}
                         </div>
                     </div>

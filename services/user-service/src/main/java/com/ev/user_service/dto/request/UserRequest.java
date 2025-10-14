@@ -10,6 +10,7 @@ import com.ev.user_service.validation.annotation.PasswordConstraint;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 //@Data
 //public class UserRequest {
@@ -109,7 +110,7 @@ public class UserRequest {
     // ---DEALER MANAGER && DEALER STAFF---
 
     @NotNull(groups = {OnCreateDealerStaff.class, OnCreateDealerManager.class})
-    private Long dealerId;
+    private UUID dealerId;
 
     // --- All ---
 
