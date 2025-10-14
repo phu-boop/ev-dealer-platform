@@ -41,8 +41,10 @@ export default function UserFilters({
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">Tất cả</option>
-            <option value="USER">USER</option>
             <option value="ADMIN">ADMIN</option>
+            <option value="EVM_STAFF">EVM_STAFF</option>
+            <option value="DEALER_MANAGER">DEALER_MANAGER</option>
+            <option value="DEALER_STAFF">DEALER_STAFF</option>
           </select>
         </div>
 

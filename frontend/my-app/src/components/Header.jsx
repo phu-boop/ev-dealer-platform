@@ -66,13 +66,10 @@ const Header = () => {
             <Link to="/" className="text-xl font-bold text-blue-600" style={{fontFamily: 'Montserrat, sans-serif'}}>
                 ev
             </Link>
-
             <nav className="space-x-6">
                 <Link to="/" className="hover:text-blue-500">Home</Link>
                 {token ?
                     (<>
-                        <Link to="/profile" className="hover:text-blue-500">Profile</Link>
-                        <Button onClick={handelOnclickLogout} className="hover:text-blue-500">Logout</Button>
                     </>)
                     :
                     (<>
