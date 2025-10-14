@@ -33,7 +33,8 @@ import {
     FiActivity,
     FiChevronRight,
     FiHome as FiHomeAlt,
-    FiCreditCard as FiCreditCardAlt
+    FiCreditCard as FiCreditCardAlt,
+    FiUser
 } from 'react-icons/fi';
 
 export const adminMenuItems = [
@@ -158,24 +159,6 @@ export const evmStaffMenuItems = [
 ];
 
 
-const rolesString = sessionStorage.getItem("roles");
-let roles = [];
-
-try {
-  roles = rolesString ? JSON.parse(rolesString) : [];
-} catch (error) {
-  console.error("Failed to parse roles:", error);
-  roles = []; // fallback
-}
-
-console.log("Roles parsed:", roles);
-
-const menuItems = roles.includes("ADMIN")
-  ? adminMenuItems
-  : evmStaffMenuItems;
-
-
-
 const EvmLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -186,6 +169,21 @@ const EvmLayout = () => {
     const navigate = useNavigate();
     const sidebarRef = useRef(null);
     const profileDropdownRef = useRef(null);
+    const [menuItems, setMenuItems] = useState([]);
+
+    useEffect(() => {
+        // Nếu chưa đăng nhập thì không load menu
+        if (!roles || roles.length === 0) {
+        return;
+        }
+
+        // Gán menu tùy role
+        if (roles.includes("ADMIN")) {
+        setMenuItems(adminMenuItems);
+        } else {
+        setMenuItems(evmStaffMenuItems);
+        }
+    }, [roles]);
 
     // Xác định đường dẫn hiện tại và mở submenu tương ứng
     useEffect(() => {
@@ -487,6 +485,35 @@ const EvmLayout = () => {
                                             ))}
                                         </div>
                                     </div>
+                                                
+
+
+                                    {/* Quick Actions */}
+                                            <div className="px-5 py-3 border-t border-gray-100/80">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            navigate('profile');
+                                                            setIsProfileDropdownOpen(false);
+                                                        }}
+                                                        className="flex items-center justify-center p-3 text-gray-600 hover:bg-blue-50 rounded-xl transition-all duration-300 group"
+                                                    >
+                                                        <FiUser className="w-4 h-4 mr-2 group-hover:scale-110" />
+                                                        <span className="text-sm font-medium">Hồ sơ</span>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            navigate('settings');
+                                                            setIsProfileDropdownOpen(false);
+                                                        }}
+                                                        className="flex items-center justify-center p-3 text-gray-600 hover:bg-blue-50 rounded-xl transition-all duration-300 group"
+                                                    >
+                                                        <FiSettings className="w-4 h-4 mr-2 group-hover:scale-110" />
+                                                        <span className="text-sm font-medium">Bảo mật</span>
+                                                    </button>
+                                                </div>
+                                            </div>
 
                                     <div className="border-t border-gray-100/60 pt-2">
                                         <button
@@ -497,7 +524,9 @@ const EvmLayout = () => {
                                             Đăng xuất
                                         </button>
                                     </div>
+                            
                                 </div>
+                            
                             )}
                         </div>
                     </div>
