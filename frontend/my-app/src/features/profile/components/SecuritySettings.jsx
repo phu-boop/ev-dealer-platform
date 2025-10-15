@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Shield, CheckCircle, XCircle, User } from 'lucide-react';
 import PasswordChangeForm from './PasswordChangeForm';
 import profileService from '../services/profileService.js';
+import { useAuthContext } from '../../../features/auth/AuthProvider.jsx';
 
 const SecuritySettings = () => {
+  const { logout } = useAuthContext();
   const [activeTab, setActiveTab] = useState('password');
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -65,7 +67,9 @@ const SecuritySettings = () => {
       await profileService.changePassword(sessionStorage.getItem("email"),passwordData.newPassword, passwordData.currentPassword);
       setMessage('Đổi mật khẩu thành công!');
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setTimeout(() => setMessage(''), 3000);
+      setTimeout(() => {setMessage('')
+        logout();
+      }, 3000);
     } catch (error) {
       setMessage('Lỗi khi đổi mật khẩu: ' + (error.response?.data?.message || 'Vui lòng thử lại'));
     } finally {

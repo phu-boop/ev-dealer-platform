@@ -30,9 +30,12 @@ public class VehicleCatalogController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // ==========================================================
+    //                    ENDPOINTS FOR MODELS
+    // ==========================================================
+
     /**
      * Lấy danh sách tóm tắt tất cả các mẫu xe.
-     * Quyền: Public
      */
     @GetMapping("/models")
     public ResponseEntity<ApiRespond<List<ModelSummaryDto>>> getAllModels() {
@@ -42,7 +45,6 @@ public class VehicleCatalogController {
 
     /**
      * Lấy chi tiết một mẫu xe (bao gồm các phiên bản của nó).
-     * Quyền: Public
      */
     @GetMapping("/models/{modelId}")
     public ResponseEntity<ApiRespond<ModelDetailDto>> getModelDetails(@PathVariable Long modelId) {
@@ -51,30 +53,17 @@ public class VehicleCatalogController {
     }
 
     /**
-     * Lấy chi tiết một phiên bản xe cụ thể.
-     * Quyền: Public
-     */
-    @GetMapping("/variants/{variantId}")
-    public ResponseEntity<ApiRespond<VariantDetailDto>> getVariantDetails(@PathVariable Long variantId) {
-        VariantDetailDto variantDto = vehicleCatalogService.getVariantDetails(variantId);
-        return ResponseEntity.ok(ApiRespond.success("Fetched variant details successfully", variantDto));
-    }
-
-    /**
      * Tạo một mẫu xe mới kèm theo các phiên bản ban đầu.
-     * Quyền: EVMStaff/Admin
      */
     @PostMapping("/models")
     public ResponseEntity<ApiRespond<ModelDetailDto>> createModelWithVariants(@Valid @RequestBody CreateModelRequest request) {
         VehicleModel createdModel = vehicleCatalogService.createModelWithVariants(request);
-        // Lấy lại thông tin chi tiết để trả về response đầy đủ
         ModelDetailDto responseDto = vehicleCatalogService.getModelDetails(createdModel.getModelId());
         return new ResponseEntity<>(ApiRespond.success("Model created successfully", responseDto), HttpStatus.CREATED);
     }
 
     /**
      * Cập nhật thông tin chung của một mẫu xe.
-     * Quyền: EVMStaff/Admin
      */
     @PutMapping("/models/{modelId}")
     public ResponseEntity<ApiRespond<ModelDetailDto>> updateModel(
@@ -88,8 +77,47 @@ public class VehicleCatalogController {
     }
     
     /**
+     * Ngừng sản xuất một mẫu xe (deactivate tất cả các phiên bản của nó).
+     */
+    @DeleteMapping("/models/{modelId}")
+    public ResponseEntity<ApiRespond<Void>> deactivateModel(
+            @PathVariable Long modelId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+        String email = jwtUtil.extractEmail(authorizationHeader);
+        vehicleCatalogService.deactivateModel(modelId, email);
+        return ResponseEntity.ok(ApiRespond.success("Model and all its variants have been discontinued", null));
+    }
+
+
+    // ==========================================================
+    //                   ENDPOINTS FOR VARIANTS
+    // ==========================================================
+
+    // <<< ENDPOINT MỚI ĐƯỢC THÊM VÀO ĐÚNG VỊ TRÍ >>>
+    /**
+     * Tìm kiếm các variant theo từ khóa và trả về danh sách ID.
+     * Endpoint này phục vụ cho việc giao tiếp giữa các microservice.
+     */
+    @GetMapping("/variants/search")
+    public ResponseEntity<ApiRespond<List<Long>>> searchVariants(
+        @RequestParam(required = false) String keyword, 
+        @RequestParam(required = false) String color,
+        @RequestParam(required = false) String versionName) {
+        List<Long> variantIds = vehicleCatalogService.searchVariantIdsByCriteria(keyword, color, versionName);
+        return ResponseEntity.ok(ApiRespond.success("Found variant IDs matching keyword", variantIds));
+    }
+
+    /**
+     * Lấy chi tiết một phiên bản xe cụ thể.
+     */
+    @GetMapping("/variants/{variantId}")
+    public ResponseEntity<ApiRespond<VariantDetailDto>> getVariantDetails(@PathVariable Long variantId) {
+        VariantDetailDto variantDto = vehicleCatalogService.getVariantDetails(variantId);
+        return ResponseEntity.ok(ApiRespond.success("Fetched variant details successfully", variantDto));
+    }
+    
+    /**
      * Cập nhật thông tin của một phiên bản xe cụ thể.
-     * Quyền: EVMStaff/Admin
      */
     @PutMapping("/variants/{variantId}")
     public ResponseEntity<ApiRespond<VariantDetailDto>> updateVariant(
@@ -101,23 +129,9 @@ public class VehicleCatalogController {
         VariantDetailDto updatedDto = vehicleCatalogService.getVariantDetails(variantId);
         return ResponseEntity.ok(ApiRespond.success("Variant updated successfully", updatedDto));
     }
-
-    /**
-     * Ngừng sản xuất một mẫu xe (deactivate tất cả các phiên bản của nó).
-     * Quyền: EVMStaff/Admin
-     */
-    @DeleteMapping("/models/{modelId}")
-    public ResponseEntity<ApiRespond<Void>> deactivateModel(
-            @PathVariable Long modelId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String email = jwtUtil.extractEmail(authorizationHeader);
-        vehicleCatalogService.deactivateModel(modelId, email);
-        return ResponseEntity.ok(ApiRespond.success("Model and all its variants have been discontinued", null));
-    }
-
+    
     /**
      * Ngừng sản xuất một phiên bản xe cụ thể.
-     * Quyền: EVMStaff/Admin
      */
     @DeleteMapping("/variants/{variantId}")
     public ResponseEntity<ApiRespond<Void>> deactivateVariant(
