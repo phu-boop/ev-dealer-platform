@@ -54,7 +54,7 @@ export default function PromotionListPage({ onCreate }) {
     const startDate = new Date(promotion.startDate);
     const endDate = new Date(promotion.endDate);
 
-    if (isBefore(now, startDate)) return "UPCOMING";
+    if (isBefore(now, startDate)) return "DRAFT";
     if (isAfter(now, endDate)) return "EXPIRED";
     if (isAfter(now, startDate) && isBefore(now, endDate)) return "ACTIVE";
     return "INACTIVE";
@@ -63,7 +63,7 @@ export default function PromotionListPage({ onCreate }) {
   const calculateStats = () => {
     const stats = {
       total: promotions.length,
-      pending: promotions.filter(p => p.status === "UPCOMING" || p.autoStatus === "UPCOMING").length,
+      pending: promotions.filter(p => p.status === "DRAFT" || p.autoStatus === "DRAFT").length,
       active: promotions.filter(p => p.status === "ACTIVE" || p.autoStatus === "ACTIVE").length,
       expired: promotions.filter(p => p.status === "EXPIRED" || p.autoStatus === "EXPIRED").length,
       inactive: promotions.filter(p => p.status === "INACTIVE").length
@@ -97,10 +97,10 @@ export default function PromotionListPage({ onCreate }) {
   );
 
   const getStatusBadge = (promotion) => {
-    const displayStatus = promotion.status === "UPCOMING" ? "UPCOMING" : promotion.autoStatus;
+    const displayStatus = promotion.status === "DRAFT" ? "DRAFT" : promotion.autoStatus;
     
     const statusConfig = {
-      UPCOMING: { 
+      DRAFT: { 
         color: "bg-yellow-100 text-yellow-800 border-yellow-200", 
         text: "Đang chờ xác thực",
         icon: "⏳"
@@ -161,7 +161,7 @@ export default function PromotionListPage({ onCreate }) {
 
   return (
     <div className="min-h-screen bg-gray-50/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -269,7 +269,7 @@ export default function PromotionListPage({ onCreate }) {
             <div className="flex flex-wrap gap-2">
               {[
                 { value: "ALL", label: "Tất cả", color: "gray" },
-                { value: "UPCOMING", label: "Chờ xác thực", color: "yellow" },
+                { value: "DRAFT", label: "Chờ xác thực", color: "yellow" },
                 { value: "ACTIVE", label: "Đang hoạt động", color: "green" },
                 { value: "EXPIRED", label: "Đã hết hạn", color: "red" },
                 { value: "INACTIVE", label: "Không hoạt động", color: "gray" }

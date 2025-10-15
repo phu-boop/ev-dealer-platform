@@ -22,7 +22,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     startDate: "",
     endDate: "",
     applicableModelsJson: "[]",
-    status: "UPCOMING", // Default value but user can change
+    status: "DRAFT", // Default value but user can change
   });
 
   const [errors, setErrors] = useState({});
@@ -48,7 +48,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
         startDate: formatDateForInput(initialData.startDate),
         endDate: formatDateForInput(initialData.endDate),
         applicableModelsJson: initialData.applicableModelsJson || "[]",
-        status: initialData.status || "UPCOMING", // Use actual status from data
+        status: initialData.status || "DRAFT", // Use actual status from data
       });
     }
   }, [initialData]);
@@ -88,8 +88,8 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       // Auto-detect status based on dates for new promotions
       if (!isEdit) {
         if (start > now) {
-          // If start date is in future, suggest UPCOMING
-          setFormData(prev => ({ ...prev, status: "UPCOMING" }));
+          // If start date is in future, suggest DRAFT
+          setFormData(prev => ({ ...prev, status: "DRAFT" }));
         } else if (start <= now && end >= now) {
           // If currently active, suggest ACTIVE
           setFormData(prev => ({ ...prev, status: "ACTIVE" }));
@@ -124,7 +124,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
         const now = new Date();
         
         if (start > now) {
-          setFormData(prev => ({ ...prev, status: "UPCOMING" }));
+          setFormData(prev => ({ ...prev, status: "DRAFT" }));
         } else if (start <= now && end >= now) {
           setFormData(prev => ({ ...prev, status: "ACTIVE" }));
         } else if (end < now) {
@@ -162,7 +162,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
 
   const getStatusConfig = (status) => {
     const configs = {
-      UPCOMING: {
+      DRAFT: {
         label: "Đang chờ xác thực",
         description: "Chương trình đang chờ được xác thực và kích hoạt",
         color: "text-yellow-600",
@@ -173,7 +173,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       }
     };
     
-    return configs[status] || configs.UPCOMING;
+    return configs[status] || configs.DRAFT;
   };
 
   const calculateDuration = () => {
@@ -195,7 +195,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     const end = new Date(formData.endDate);
     const now = new Date();
     
-    if (start > now) return "UPCOMING";
+    if (start > now) return "DRAFT";
     if (start <= now && end >= now) return "ACTIVE";
     if (end < now) return "EXPIRED";
     return "INACTIVE";
@@ -347,7 +347,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
               {/* Status Buttons */}
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {[
-                  { value: "UPCOMING", label: "Chờ xác thực" }
+                  { value: "DRAFT", label: "Chờ xác thực" }
                 ].map((statusOption) => {
                   const config = getStatusConfig(statusOption.value);
                   const isSelected = formData.status === statusOption.value;
@@ -525,7 +525,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
             ) : (
               <div className="flex items-center">
                 <CheckCircleIcon className="h-4 w-4 mr-2" />
-                {isEdit ? "Cập nhật Khuyến mãi" : "Tạo Khuyến mãi"}
+                {isEdit ? "Cập nhật Khuyến mãi" : "Gửi yêu cầu tạo"}
               </div>
             )}
           </button>

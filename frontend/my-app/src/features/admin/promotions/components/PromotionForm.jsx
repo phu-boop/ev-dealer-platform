@@ -22,7 +22,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     startDate: "",
     endDate: "",
     applicableModelsJson: "[]",
-    status: "UPCOMING",
+    status: "DRAFT",
   });
 
   const [errors, setErrors] = useState({});
@@ -47,7 +47,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
         startDate: formatDateForInput(initialData.startDate),
         endDate: formatDateForInput(initialData.endDate),
         applicableModelsJson: initialData.applicableModelsJson || "[]",
-        status: initialData.status || "UPCOMING",
+        status: initialData.status || "DRAFT",
       });
     }
   }, [initialData]);
@@ -127,7 +127,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
 
   const getStatusConfig = (status) => {
     const configs = {
-      UPCOMING: {
+      DRAFT: {
         label: "Chờ xác thực",
         description: "Chương trình đang chờ được xác thực và kích hoạt",
         color: "text-yellow-600",
@@ -161,7 +161,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       }
     };
     
-    return configs[status] || configs.UPCOMING;
+    return configs[status] || configs.DRAFT;
   };
 
   const calculateDuration = () => {
@@ -285,7 +285,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
               onChange={handleChange}
               className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
             >
-              <option value="UPCOMING">Chờ xác thực</option>
+              <option value="DRAFT">Chờ xác thực</option>
               <option value="ACTIVE">Đang hoạt động</option>
               <option value="INACTIVE">Không hoạt động</option>
               <option value="EXPIRED">Đã hết hạn</option>

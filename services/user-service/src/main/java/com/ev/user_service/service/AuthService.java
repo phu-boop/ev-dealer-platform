@@ -46,12 +46,17 @@ public class AuthService {
     public LoginRespond login(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        UUID memberId = null;
+        UUID memberId;
         switch (user.getRoleToString()) {
-            case "DEALER_MANAGER" -> memberId = user.getDealerManagerProfile().getManagerId();
-            case "DEALER_STAFF" -> memberId = user.getDealerStaffProfile().getStaffId();
-            case "EVM_STAFF" -> memberId = user.getEvmStaffProfile().getEvmStaffId();
-            case "ADMIN" -> memberId = user.getAdminProfile().getAdmin_id();
+            case "DEALER_MANAGER" -> memberId = user.getDealerManagerProfile() != null 
+                ? user.getDealerManagerProfile().getManagerId() : null;
+            case "DEALER_STAFF" -> memberId = user.getDealerStaffProfile() != null 
+                ? user.getDealerStaffProfile().getStaffId() : null;
+            case "EVM_STAFF" -> memberId = user.getEvmStaffProfile() != null 
+                ? user.getEvmStaffProfile().getEvmStaffId() : null;
+            case "ADMIN" -> memberId = user.getAdminProfile() != null 
+                ? user.getAdminProfile().getAdmin_id() : null;
+            default -> memberId = null;
         }
         if (passwordEncoder.matches(password, user.getPassword())) {
             String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString());

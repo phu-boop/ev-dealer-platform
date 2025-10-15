@@ -3,11 +3,13 @@ import React from 'react';
 
 const statusOptions = [
   { value: 'ALL', label: 'Tất cả', color: 'gray' },
-  { value: 'UPCOMING', label: 'Chờ xác thực', color: 'yellow' },
+  { value: 'DRAFT', label: 'Chờ xác thực', color: 'yellow' },
   { value: 'ACTIVE', label: 'Đang hoạt động', color: 'green' },
   { value: 'EXPIRED', label: 'Đã hết hạn', color: 'red' },
-  { value: 'INACTIVE', label: 'Không hoạt động', color: 'gray' }
+  { value: 'INACTIVE', label: 'Không hoạt động', color: 'gray' },
+  { value: 'DELETED', label: 'Đã xoá', color: 'gray' }
 ];
+
 
 export const StatusFilter = ({ selectedStatus, onStatusChange, onClearFilters }) => {
   return (
