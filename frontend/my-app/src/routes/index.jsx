@@ -18,6 +18,9 @@ import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import DealerLayout from "../layouts/DealerLayout.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
+import PromotionCreatePage from "../features/evm/promotions/pages/PromotionCreatePage.jsx";
+import PromotionListPage from "../features/evm/promotions/pages/PromotionListPage.jsx";
+
 
 export default function AppRoutes() {
     return (
@@ -41,6 +44,7 @@ export default function AppRoutes() {
                         <Route path="system/users" element={<UserManagement/>}/>
                         <Route path="profile" element={<ProfileForm/>}/>
                         <Route path="settings" element={<SecuritySettings/>}/>
+                        <Route path="promotions" element={<PromotionListPage/>}/>
                         {/* Thêm các route admin khác ở đây */}
                     </Route>
                 </Route>

@@ -118,7 +118,9 @@ export const evmStaffMenuItems = [
     submenu: [
       { icon: FiList, label: "Danh Mục Xe", path: "/evm/products/catalog" },
       { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/evm/products/variants" },
-      { icon: FiCreditCard, label: "Giá Sỉ & Chiết Khấu", path: "/evm/products/pricing" }
+      { icon: FiCreditCard, label: "Giá Sỉ & Chiết Khấu", path: "/evm/products/pricing" },
+      { icon: FiCreditCard, label: "Giá & Khuyến Mãi", path: "/admin/promotions" }
+
     ]
   },
 

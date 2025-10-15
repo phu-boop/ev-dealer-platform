@@ -1,24 +1,24 @@
-import apiConstUserService from "../../../services/apiConstUserService.js";
+import apiConst from "../../../services/apiConst.js";
 
 export const registerUser = (userData) =>
-    apiConstUserService.post("users/register", userData).then((res) => res.data);
+    apiConst.post("users/register", userData).then((res) => res.data);
 
 export const loginUser = (credentials) =>
-    apiConstUserService.post("auth/login", credentials).then((res) => res.data);
+    apiConst.post("auth/login", credentials).then((res) => res.data);
 
 export const logout = () =>
-    apiConstUserService.post("auth/logout").then((res) => res.data);
+    apiConst.post("auth/logout").then((res) => res.data);
 
 export const getInforMe = () =>
-    apiConstUserService.get("auth/me").then((res) => res.data);
+    apiConst.get("auth/me").then((res) => res.data);
 
 export const forgotPassword = (email) =>
-  apiConstUserService
+  apiConst
     .post(`auth/forgot-password?email=${email}`)
     .then((res) => res.data);
 
 export const resetPassword = (email, otp, newPassword) =>
-  apiConstUserService
+  apiConst
     .post(
       `auth/reset-password?email=${email}&otp=${otp}&newPassword=${newPassword}`
     )

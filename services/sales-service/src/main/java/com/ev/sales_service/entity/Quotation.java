@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "quotations")
@@ -16,19 +17,19 @@ public class Quotation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "quotation_id")
-    private Long quotationId;
+    private UUID quotationId;
 
     @Column(name = "dealer_id", nullable = false)
-    private Long dealerId;
+    private UUID dealerId;
 
     @Column(name = "customer_id", nullable = false)
-    private Long customerId;
+    private UUID customerId;
 
     @Column(name = "model_id", nullable = false)
-    private Long modelId;
+    private UUID modelId;
 
     @Column(name = "staff_id", nullable = false)
-    private Long staffId;
+    private UUID staffId;
 
     @Column(name = "quotation_date")
     private LocalDateTime quotationDate;
