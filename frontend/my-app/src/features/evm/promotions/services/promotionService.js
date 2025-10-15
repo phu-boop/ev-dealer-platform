@@ -1,12 +1,24 @@
-import apiConst from '../../../../services/apiConst.js';
+import apiConstSaleService from '../../../../services/apiConstSaleService.js';
+
+// export const promotionService = {
+//   getAll: () => apiConstSaleService.get('/promotions'),
+//   getById: (id) => apiConstSaleService.get(`/promotions/${id}`),
+//   create: (data) => apiConstSaleService.post('/promotions', data),
+//   update: (id, data) => apiConstSaleService.put(`/promotions/${id}`, data),
+//   delete: (id) => apiConstSaleService.delete(`/promotions/${id}`),
+//   getByStatus: (status) => apiConstSaleService.get(`/promotions/status/${status}`)
+// };
+
+// export default promotionService;
+// services/promotionService.js
 
 export const promotionService = {
-  getAll: () => apiConst.get('/promotions'),
-  getById: (id) => apiConst.get(`/promotions/${id}`),
-  create: (data) => apiConst.post('/promotions', data),
-  update: (id, data) => apiConst.put(`/promotions/${id}`, data),
-  delete: (id) => apiConst.delete(`/promotions/${id}`),
-  getByStatus: (status) => apiConst.get(`/promotions/status/${status}`)
+  getAll: () => apiConstSaleService.get('/promotions'),
+  getById: (id) => apiConstSaleService.get(`/promotions/${id}`),
+  create: (data) => apiConstSaleService.post('/promotions', data),
+  update: (id, data) => apiConstSaleService.put(`/promotions/${id}`, data),
+  delete: (id) => apiConstSaleService.delete(`/promotions/${id}`),
+  getByStatus: (status) => apiConstSaleService.get(`/promotions/status/${status}`)
 };
 
 export default promotionService;

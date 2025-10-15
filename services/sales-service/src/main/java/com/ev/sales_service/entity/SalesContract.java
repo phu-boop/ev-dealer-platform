@@ -1,5 +1,6 @@
 package com.ev.sales_service.entity;
 
+import com.ev.sales_service.enums.ContractStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -12,9 +13,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class SalesContract {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "contract_id")
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "contract_id", columnDefinition = "BINARY(16)")
     private UUID contractId;
 
     @OneToOne
@@ -30,12 +32,13 @@ public class SalesContract {
     @Column(name = "signing_date")
     private LocalDateTime signingDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "contract_status", length = 50)
-    private String contractStatus;
+    private ContractStatus contractStatus;
 
     @Column(name = "digital_signature", columnDefinition = "TEXT")
     private String digitalSignature;
 
-    @Column(name = "contract_file_url")
+    @Column(name = "contract_file_url", length = 500)
     private String contractFileUrl;
 }

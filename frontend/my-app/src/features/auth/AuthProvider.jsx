@@ -1,3 +1,5 @@
+import { set } from "date-fns";
+import { se } from "date-fns/locale";
 import {createContext, useContext, useState, useEffect} from "react";
 
 const AuthContext = createContext();
@@ -18,6 +20,7 @@ export function AuthProvider({children}) {
     const [email, setEmail] = useState(sessionStorage.getItem("email") || null);
     const [name, setName] = useState(sessionStorage.getItem("name") || null);
     const [fullName, setFullName] = useState(sessionStorage.getItem("fullName") || null);
+    const [memberId, setMemberId] = useState(sessionStorage.getItem("memberId") || null);
     const [userData, setUserData] = useState(() => {
         try {
             const storedUserData = sessionStorage.getItem("userData");
@@ -28,7 +31,7 @@ export function AuthProvider({children}) {
         }
     });
 
-    const login = (newToken, newRoles, newId, newEmail, newName, newFullName, newUserData) => {
+    const login = (newToken, newRoles, newId, newEmail, newName, newFullName, newMemberId, newUserData) => {
         sessionStorage.setItem("id_user", newId);
         sessionStorage.setItem("token", newToken);
         sessionStorage.setItem("roles", JSON.stringify(newRoles));
@@ -36,6 +39,7 @@ export function AuthProvider({children}) {
         sessionStorage.setItem("name", newName);
         sessionStorage.setItem("fullName", newFullName);
         sessionStorage.setItem("userData", JSON.stringify(newUserData));
+        sessionStorage.setItem("memberId", newMemberId);
 
         setEmail(newEmail);
         setToken(newToken);
@@ -44,6 +48,7 @@ export function AuthProvider({children}) {
         setName(newName);
         setFullName(newFullName);
         setUserData(newUserData);
+        setMemberId(newMemberId);
     };
 
     const logout = () => {
@@ -53,6 +58,7 @@ export function AuthProvider({children}) {
         setIdUser(null);
         setName(null);
         setFullName(null);
+        setMemberId(null);
         setUserData(null);
         setToken(null);
     };
@@ -64,6 +70,7 @@ export function AuthProvider({children}) {
         const storedId = sessionStorage.getItem("id_user");
         const storedName = sessionStorage.getItem("name");
         const storedFullName = sessionStorage.getItem("fullName");
+        const storedMemberId = sessionStorage.getItem("memberId");
         const storedUserData = sessionStorage.getItem("userData");
 
         if (storedToken) setToken(storedToken);
@@ -71,6 +78,7 @@ export function AuthProvider({children}) {
         if (storedId) setIdUser(storedId);
         if (storedName) setName(storedName);
         if (storedFullName) setFullName(storedFullName);
+        if (storedMemberId) setMemberId(storedMemberId);
 
         if (storedRoles) {
             try {
@@ -100,6 +108,7 @@ export function AuthProvider({children}) {
                 email,
                 name,
                 fullName,
+                memberId,
                 userData,
                 login,
                 logout

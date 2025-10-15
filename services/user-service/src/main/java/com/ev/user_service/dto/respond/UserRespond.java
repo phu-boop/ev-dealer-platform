@@ -19,6 +19,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class UserRespond {
     UUID id;
+    UUID memberId;
     String email;
     String name;
     String fullName;

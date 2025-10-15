@@ -15,12 +15,13 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Promotion {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "promotion_id")
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "promotion_id", columnDefinition = "BINARY(16)")
     private UUID promotionId;
 
-    @Column(name = "promotion_name", length = 255)
+    @Column(name = "promotion_name", length = 255, nullable = false)
     private String promotionName;
 
     @Column(name = "description", columnDefinition = "TEXT")
@@ -38,6 +39,7 @@ public class Promotion {
     @Column(name = "applicable_models_json", columnDefinition = "JSON")
     private String applicableModelsJson;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
     private PromotionStatus status;
 
