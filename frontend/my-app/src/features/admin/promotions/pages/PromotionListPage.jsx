@@ -15,6 +15,8 @@ import StatusFilter from '../components/StatusFilter';
 import PromotionDetailsModal from '../components/PromotionDetailsModal';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import Alert from '../../../../components/ui/Alert';
+import Swal from 'sweetalert2';
 
 export const PromotionListPage = ({ onCreate, onEdit }) => {
   const { 
@@ -31,6 +33,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [alert, setAlert] = useState({ show: false, type: '', message: '' }); // State cho Alert
 
   const filteredPromotions = useMemo(() => {
     let filtered = promotions;
@@ -52,30 +55,68 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
     return filtered;
   }, [promotions, selectedStatus, searchTerm]);
 
+  const showAlert = (type, message) => {
+    setAlert({
+      show: true,
+      type,
+      message
+    });
+    // Kéo lên top khi hiển thị alert
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCloseAlert = () => {
+    setAlert({ show: false, type: '', message: '' });
+  };
+
   const handleApprove = async (id) => {
     setActionLoading(id);
     const result = await approvePromotion(id);
     setActionLoading(null);
     
     if (result.success) {
-      alert('Đã phê duyệt khuyến mãi thành công!');
+      showAlert('success', 'Đã phê duyệt khuyến mãi thành công!');
       setIsDetailsModalOpen(false);
     } else {
-      alert(result.error);
+      showAlert('error', result.error);
     }
   };
 
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Bạn có chắc muốn xóa khuyến mãi "${name}"?`)) {
+    const result = await Swal.fire({
+      title: 'Xác nhận xóa',
+      text: `Bạn có chắc muốn xóa khuyến mãi "${name}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      buttonsStyling: true,
+      customClass: {
+        confirmButton: 'btn btn-danger',
+        cancelButton: 'btn btn-secondary'
+      }
+    });
+
+    if (result.isConfirmed) {
       setActionLoading(id);
-      const result = await deletePromotion(id);
+      const deleteResult = await deletePromotion(id);
       setActionLoading(null);
-      
-      if (result.success) {
-        alert('Đã xóa khuyến mãi thành công!');
+
+      if (deleteResult.success) {
+        await Swal.fire({
+          title: 'Thành công',
+          text: 'Đã xóa khuyến mãi thành công!',
+          icon: 'success',
+          confirmButtonText: 'OK'
+        });
         setIsDetailsModalOpen(false);
       } else {
-        alert(result.error);
+        await Swal.fire({
+          title: 'Lỗi',
+          text: deleteResult.error,
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
       }
     }
   };
@@ -100,7 +141,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      UPCOMING: { 
+      DRAFT: { 
         color: 'bg-yellow-100 text-yellow-800 border-yellow-200', 
         text: 'Chờ xác thực',
         icon: '⏳'
@@ -122,7 +163,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
       }
     };
     
-    const config = statusConfig[status] || statusConfig.UPCOMING;
+    const config = statusConfig[status] || statusConfig.DRAFT;
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${config.color}`}>
         <span className="mr-1">{config.icon}</span>
@@ -150,7 +191,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
 
   return (
     <div className="min-h-screen bg-gray-50/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -198,6 +239,17 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
             />
           </div>
         </div>
+
+        {/* Alert Component */}
+        {alert.show && (
+          <div className="mb-6">
+            <Alert
+              type={alert.type}
+              message={alert.message}
+              onClose={handleCloseAlert}
+            />
+          </div>
+        )}
 
         {/* Promotions Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -285,7 +337,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                                 Xem
                               </button>
                               
-                              {promotion.status === 'UPCOMING' && (
+                              {promotion.status === 'DRAFT' && (
                                 <button
                                   onClick={() => handleApprove(promotion.promotionId)}
                                   disabled={actionLoading === promotion.promotionId}

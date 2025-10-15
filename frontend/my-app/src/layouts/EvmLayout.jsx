@@ -39,17 +39,18 @@ import {
 
 export const adminMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Dashboard", path: "/admin" },
+  { icon: FiHome, label: "Dashboard", path: "/evm/admin" },
 
   // Quản lý sản phẩm
   {
     icon: FiPackage,
     label: "Quản Lý Sản Phẩm",
-    path: "/admin/products",
+    path: "/evm/admin/products",
     submenu: [
-      { icon: FiList, label: "Danh Mục Xe", path: "/admin/products/catalog" },
-      { icon: FiCreditCard, label: "Giá & Khuyến Mãi", path: "/admin/products/pricing" },
-      { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/admin/products/variants" }
+      { icon: FiList, label: "Danh Mục Xe", path: "/evm/admin/products/catalog" },
+      { icon: FiCreditCard, label: "Giá & Khuyến Mãi", path: "/evm/admin/products/pricing" },
+      { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/evm/admin/products/variants" },
+      { icon: FiCreditCard, label: "(DONE)Khuyến Mãi", path: "/evm/admin/products/promotions" }
     ]
   },
 
@@ -57,22 +58,22 @@ export const adminMenuItems = [
   {
     icon: FiTruck,
     label: "Phân Phối & Kho",
-    path: "/admin/distribution",
+    path: "/evm/admin/distribution",
     submenu: [
       {
         icon: FiArchive,
         label: "Kho Trung Tâm",
-        path: "/admin/distribution/warehouse",
+        path: "/evm/admin/distribution/warehouse",
       },
       {
         icon: FiNavigation,
         label: "Điều Phối Xe",
-        path: "/admin/distribution/allocation",
+        path: "/evm/admin/distribution/allocation",
       },
       {
         icon: FiTruck,
         label: "Lịch Sử Phân Phối",
-        path: "/admin/distribution/history",
+        path: "/evm/admin/distribution/history",
       },
     ],
   },
@@ -81,27 +82,27 @@ export const adminMenuItems = [
   {
     icon: FiBriefcase,
     label: "Quản Lý Đại Lý",
-    path: "/admin/dealers",
+    path: "/evm/admin/dealers",
     submenu: [
       {
         icon: FiHomeAlt,
         label: "Danh Sách Đại Lý",
-        path: "/admin/dealers/list",
+        path: "/evm/admin/dealers/list",
       },
       {
         icon: FiFileText,
         label: "Hợp Đồng & Chỉ Tiêu",
-        path: "/admin/dealers/contracts",
+        path: "/evm/admin/dealers/contracts",
       },
       {
         icon: FiCreditCardAlt,
         label: "Công Nợ & Thanh Toán",
-        path: "/admin/dealers/debts",
+        path: "/evm/admin/dealers/debts",
       },
       {
         icon: FiUserPlus,
         label: "Tài Khoản Đại Lý",
-        path: "/admin/dealers/accounts",
+        path: "/evm/admin/dealers/accounts",
       },
     ],
   },
@@ -110,40 +111,40 @@ export const adminMenuItems = [
   {
     icon: FiBarChart2,
     label: "Báo Cáo & Phân Tích",
-    path: "/admin/reports",
+    path: "/evm/admin/reports",
     submenu: [
-      { icon: FiTrendingUp, label: "Doanh Số", path: "/admin/reports/sales" },
-      { icon: FiPieChart, label: "Tồn Kho", path: "/admin/reports/inventory" },
-      { icon: FiCpu, label: "Dự Báo AI", path: "/admin/reports/forecast" },
-      { icon: FiMap, label: "Theo Khu Vực", path: "/admin/reports/regional" },
+      { icon: FiTrendingUp, label: "Doanh Số", path: "/evm/admin/reports/sales" },
+      { icon: FiPieChart, label: "Tồn Kho", path: "/evm/admin/reports/inventory" },
+      { icon: FiCpu, label: "Dự Báo AI", path: "/evm/admin/reports/forecast" },
+      { icon: FiMap, label: "Theo Khu Vực", path: "/evm/admin/reports/regional" },
     ],
   },
 
-  // Quản trị hệ thống (chỉ dành cho Admin)
+  // Quản trị hệ thống (chỉ dành cho evm/Admin)
   {
     icon: FiSettings,
     label: "Quản Trị Hệ Thống",
-    path: "/admin/system",
+    path: "/evm/admin/system",
     submenu: [
       {
         icon: FiUsers,
-        label: "Quản Lý Người Dùng",
-        path: "/admin/system/users",
+        label: "(DONE)Quản Lý Người Dùng",
+        path: "/evm/admin/system/users",
       },
       {
         icon: FiShield,
         label: "Phân Quyền Truy Cập",
-        path: "/admin/system/permissions",
+        path: "/evm/admin/system/permissions",
       },
       {
         icon: FiDatabase,
         label: "Cấu Hình Hệ Thống",
-        path: "/admin/system/config",
+        path: "/evm/admin/system/config",
       },
       {
         icon: FiActivity,
         label: "Nhật Ký Hoạt Động",
-        path: "/admin/system/audit",
+        path: "/evm/admin/system/audit",
       },
     ],
   },
@@ -151,17 +152,17 @@ export const adminMenuItems = [
 
 export const evmStaffMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Dashboard", path: "/evm" },
+  { icon: FiHome, label: "Dashboard", path: "/evm/staff" },
 
   // Quản lý sản phẩm
   {
     icon: FiPackage,
     label: "Quản Lý Sản Phẩm",
-    path: "/evm/products",
+    path: "/evm/staff/products",
     submenu: [
-      { icon: FiList, label: "Danh Mục Xe", path: "/evm/products/catalog" },
-      { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/evm/products/variants" },
-      { icon: FiCreditCard, label: "Giá Sỉ & Chiết Khấu", path: "/evm/products/pricing" }
+      { icon: FiList, label: "Danh Mục Xe", path: "/evm/staff/products/catalog" },
+      { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/evm/staff/products/variants" },
+      { icon: FiCreditCard, label: "(DONE)Giá Sỉ & Chiết Khấu", path: "/evm/staff/products/promotions" },
     ]
   },
 
@@ -169,17 +170,17 @@ export const evmStaffMenuItems = [
   {
     icon: FiTruck,
     label: "Phân Phối & Kho",
-    path: "/evm/distribution",
+    path: "/evm/staff/distribution",
     submenu: [
       {
         icon: FiArchive,
         label: "Kho Trung Tâm",
-        path: "/evm/distribution/warehouse",
+        path: "/evm/staff/distribution/warehouse",
       },
       {
         icon: FiNavigation,
         label: "Điều Phối Xe",
-        path: "/evm/distribution/allocation",
+        path: "/evm/staff/distribution/allocation",
       },
     ],
   },
@@ -188,18 +189,18 @@ export const evmStaffMenuItems = [
   {
     icon: FiBriefcase,
     label: "Quản Lý Đại Lý",
-    path: "/evm/dealers",
+    path: "/evm/staff/dealers",
     submenu: [
-      { icon: FiHomeAlt, label: "Danh Sách Đại Lý", path: "/evm/dealers/list" },
+      { icon: FiHomeAlt, label: "Danh Sách Đại Lý", path: "/evm/staff/dealers/list" },
       {
         icon: FiFileText,
         label: "Hợp Đồng & Chỉ Tiêu",
-        path: "/evm/dealers/contracts",
+        path: "/evm/staff/dealers/contracts",
       },
       {
         icon: FiCreditCardAlt,
         label: "Công Nợ & Thanh Toán",
-        path: "/evm/dealers/debts",
+        path: "/evm/staff/dealers/debts",
       },
     ],
   },
@@ -208,22 +209,22 @@ export const evmStaffMenuItems = [
   {
     icon: FiBarChart2,
     label: "Báo Cáo & Phân Tích",
-    path: "/evm/reports",
+    path: "/evm/staff/reports",
     submenu: [
       {
         icon: FiTrendingUp,
         label: "Doanh Số Theo Đại Lý",
-        path: "/evm/reports/sales",
+        path: "/evm/staff/reports/sales",
       },
       {
         icon: FiPieChart,
         label: "Tồn Kho & Tốc Độ Tiêu Thụ",
-        path: "/evm/reports/inventory",
+        path: "/evm/staff/reports/inventory",
       },
       {
         icon: FiCpu,
         label: "Dự Báo Nhu Cầu (AI)",
-        path: "/evm/reports/forecast",
+        path: "/evm/staff/reports/forecast",
       },
     ],
   },
@@ -647,9 +648,9 @@ const EvmLayout = () => {
 
                 {/* Content Area với khoảng cách và bo tròn */}
                 <main className="flex-1 overflow-y-auto p-6 bg-transparent">
-                    <div className="max-w-8xl mx-auto space-y-6 h-full">
+                    <div className="max-w-8xl mx-auto space-y-6">
                         {/* Content Container với glassmorphism effect */}
-                        <div className="bg-white/80 h-full backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
+                        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
                             <Outlet/>
                         </div>
                     </div>
