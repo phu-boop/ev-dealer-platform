@@ -1,6 +1,7 @@
 package com.ev.user_service.config;
 
 import com.ev.user_service.enums.UserStatus;
+import com.ev.user_service.service.AdminProfileService;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +27,7 @@ public class DataInitializer implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final AdminProfileService adminProfileService;
 
     // Helper method
     private Permission createPermission(PermissionName permissionName) {
@@ -34,11 +36,12 @@ public class DataInitializer implements ApplicationRunner {
         return permission;
     }
 
-    public DataInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, PermissionRepository permissionRepository) {
+    public DataInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, PermissionRepository permissionRepository, AdminProfileService adminProfileService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
+        this.adminProfileService = adminProfileService;
     }
 
     @Override
@@ -147,6 +150,7 @@ public class DataInitializer implements ApplicationRunner {
             admin.setRoles(new HashSet<>(roles));
             admin.setStatus(UserStatus.ACTIVE);
             userRepository.save(admin);
+            adminProfileService.SaveAdminProfile(admin, "SUPER_ADMIN", "Toàn quyền hệ thống", "GLOBAL");
 
 // ========== DEALER_MANAGER ==========
             Role dealerManagerRole = roleRepository.findByName(RoleName.DEALER_MANAGER.getRoleName())

@@ -13,6 +13,7 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
         country: "",
         birthday: "",
         gender: "MALE",
+        role: "",
     });
 
     const [errors, setErrors] = useState({});
@@ -360,24 +361,265 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                     </div>
 
 
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                            {isViewMode && !isEditing ? "Đóng" : "Hủy"}
-                        </button>
+                    <div className="">
 
-                        {(!isViewMode || isEditing) && (
-                            <button
-                                type="submit"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                        {/* Vai trò người dùng */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Vai trò *
+                            </label>
+                            <select
+                                name="role"
+                                value={formData.role || ""}
+                                onChange={handleChange}
+                                disabled={isReadOnly}
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                    isReadOnly ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
+                                }`}
                             >
-                                <Save size={18} className="mr-2"/>
-                                {mode === "add" ? "Thêm mới" : "Cập nhật"}
-                            </button>
+                                <option value="">-- Chọn vai trò --</option>
+                                <option value="EVM_STAFF">EVM Staff</option>
+                                <option value="DEALER_MANAGER">Dealer Manager</option>
+                                <option value="DEALER_STAFF">Dealer Staff</option>
+                                <option value="ADMIN">Admin</option>
+                            </select>
+                        </div>
+
+                        {/* EVM Staff */}
+                        {formData.role === "EVM_STAFF" && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Department *
+                                    </label>
+                                    <input
+                                        name="department"
+                                        placeholder="Phòng ban"
+                                        value={formData.department || ""}
+                                        onChange={handleChange}
+                                        readOnly={isReadOnly}
+                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Specialization *
+                                    </label>
+                                    <input
+                                        name="specialization"
+                                        placeholder="Chuyên môn"
+                                        value={formData.specialization || ""}
+                                        onChange={handleChange}
+                                        readOnly={isReadOnly}
+                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </>
                         )}
+
+                        {/* Dealer Manager */}
+                        {formData.role === "DEALER_MANAGER" && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Dealer ID *
+                                    </label>
+                                    <input
+                                        name="dealerId"
+                                        type="number"
+                                        placeholder="Nhập mã đại lý"
+                                        value={formData.dealerId || ""}
+                                        onChange={handleChange}
+                                        readOnly={isReadOnly}
+                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Department *
+                                    </label>
+                                    <input
+                                        name="department"
+                                        placeholder="Phòng ban"
+                                        value={formData.department || ""}
+                                        onChange={handleChange}
+                                        readOnly={isReadOnly}
+                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Management Level *
+                                    </label>
+                                    <input
+                                        name="managementLevel"
+                                        placeholder="Cấp quản lý (VD: Senior Manager)"
+                                        value={formData.managementLevel || ""}
+                                        onChange={handleChange}
+                                        readOnly={isReadOnly}
+                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Approval Limit *
+                                    </label>
+                                    <input
+                                        name="approvalLimit"
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Giới hạn phê duyệt (VNĐ)"
+                                        value={formData.approvalLimit || ""}
+                                        onChange={handleChange}
+                                        readOnly={isReadOnly}
+                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {/* Dealer Staff */}
+                        {formData.role === "DEALER_STAFF" && (
+                            <div className="space-y-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+                                    Thông tin nhân viên đại lý
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {/* Dealer ID */}
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Mã đại lý *
+                                        </label>
+                                        <input
+                                            name="dealerId"
+                                            type="number"
+                                            placeholder="Nhập mã đại lý"
+                                            value={formData.dealerId || ""}
+                                            onChange={handleChange}
+                                            readOnly={isReadOnly}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white"
+                                        />
+                                    </div>
+
+                                    {/* Department */}
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Phòng ban *
+                                        </label>
+                                        <input
+                                            name="department"
+                                            placeholder="Nhập phòng ban"
+                                            value={formData.department || ""}
+                                            onChange={handleChange}
+                                            readOnly={isReadOnly}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white"
+                                        />
+                                    </div>
+
+                                    {/* Position */}
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Vị trí công việc *
+                                        </label>
+                                        <input
+                                            name="position"
+                                            placeholder="Vị trí công việc (VD: Sales)"
+                                            value={formData.position || ""}
+                                            onChange={handleChange}
+                                            readOnly={isReadOnly}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Hire Date */}
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Ngày vào làm *
+                                        </label>
+                                        <input
+                                            name="hireDate"
+                                            type="date"
+                                            value={formData.hireDate || ""}
+                                            onChange={handleChange}
+                                            readOnly={isReadOnly}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white"
+                                        />
+                                    </div>
+
+                                    {/* Salary */}
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Lương cơ bản *
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                name="salary"
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="0.00"
+                                                value={formData.salary || ""}
+                                                onChange={handleChange}
+                                                readOnly={isReadOnly}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white pr-10"
+                                            />
+                                            <span
+                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                            VND
+                                          </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Commission Rate */}
+                                <div className="space-y-2 max-w-md">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Tỷ lệ hoa hồng *
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            name="commissionRate"
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            value={formData.commissionRate || ""}
+                                            onChange={handleChange}
+                                            readOnly={isReadOnly}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white pr-10"
+                                        />
+                                        <span
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                          %
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end gap-3 pt-4">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                {isViewMode && !isEditing ? "Đóng" : "Hủy"}
+                            </button>
+                            {(!isViewMode || isEditing) && (
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                                >
+                                    <Save size={18} className="mr-2"/>
+                                    {mode === "add" ? "Thêm mới" : "Cập nhật"}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </form>
             </div>
