@@ -14,6 +14,7 @@ import com.ev.user_service.entity.User;
 import com.ev.user_service.mapper.UserMapper;
 import com.ev.user_service.repository.UserRepository;
 import com.ev.user_service.security.JwtUtil;
+import java.util.UUID;
 
 import java.security.SecureRandom;
 
@@ -45,9 +46,22 @@ public class AuthService {
     public LoginRespond login(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        UUID memberId;
+        switch (user.getRoleToString()) {
+            case "DEALER_MANAGER" -> memberId = user.getDealerManagerProfile() != null 
+                ? user.getDealerManagerProfile().getManagerId() : null;
+            case "DEALER_STAFF" -> memberId = user.getDealerStaffProfile() != null 
+                ? user.getDealerStaffProfile().getStaffId() : null;
+            case "EVM_STAFF" -> memberId = user.getEvmStaffProfile() != null 
+                ? user.getEvmStaffProfile().getEvmStaffId() : null;
+            case "ADMIN" -> memberId = user.getAdminProfile() != null 
+                ? user.getAdminProfile().getAdmin_id() : null;
+            default -> memberId = null;
+        }
         if (passwordEncoder.matches(password, user.getPassword())) {
             String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString());
             UserRespond userRespond = userMapper.usertoUserRespond(user);
+            userRespond.setMemberId(memberId);
             return new LoginRespond(userRespond, token);
         } else {
             throw new AppException(ErrorCode.INVALID_PASSWORD);
