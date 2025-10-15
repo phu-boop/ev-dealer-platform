@@ -52,6 +52,7 @@ export default function Login() {
                     userData.email,
                     userData.name,
                     userData.fullName,
+                    userData.memberId,
                     userData
                 );
 
@@ -63,7 +64,7 @@ export default function Login() {
                 }).then((result) => {
                     if (result.isConfirmed) {
                         if (rolesArray.includes("ADMIN")||rolesArray.includes("EVM_STAFF")) {
-                            navigate("/admin");
+                            navigate("/evm");
                         } else if (rolesArray.includes("DEALER_MANAGER")||rolesArray.includes("DEALER_STAFF")) {
                             navigate("/dealer");
                         }

@@ -19,13 +19,14 @@ export const dealerManagerMenuItems = [
   {
     icon: FiPackage,
     label: "Danh Mục Xe & Báo Giá",
-    path: "/dealer/vehicles",
+    path: "/dealer/manager/vehicles",
     submenu: [
-      { icon: FiList, label: "Xe Có Sẵn", path: "/dealer/vehicles/available" },
-      { icon: FiTag, label: "Toàn Bộ Mẫu Xe", path: "/dealer/vehicles/all" },
-      { icon: FiSliders, label: "So Sánh Mẫu Xe", path: "/dealer/vehicles/compare" },
-      { icon: FiFileText, label: "Tạo Báo Giá", path: "/dealer/quotes/create" },
-      { icon: FiCreditCard, label: "In Báo Giá", path: "/dealer/quotes/print" }
+      { icon: FiList, label: "Xe Có Sẵn", path: "/dealer/manager/vehicles/available" },
+      { icon: FiTag, label: "Toàn Bộ Mẫu Xe", path: "/dealer/manager/vehicles/all" },
+      { icon: FiSliders, label: "So Sánh Mẫu Xe", path: "/dealer/manager/vehicles/compare" },
+      { icon: FiFileText, label: "Tạo Báo Giá", path: "/dealer/manager/quotes/create" },
+      { icon: FiCreditCard, label: "In Báo Giá", path: "/dealer/manager/quotes/print" },
+      { icon: FiCreditCard, label: "(DONE)Giá & Khuyến Mãi", path: "/dealer/manager/promotions" }
     ]
   },
 
@@ -33,12 +34,12 @@ export const dealerManagerMenuItems = [
   {
     icon: FiShoppingCart,
     label: "Quy Trình Bán Hàng",
-    path: "/dealer/sales",
+    path: "/dealer/manager/sales",
     submenu: [
-      { icon: FiClipboard, label: "Đơn Hàng Mới", path: "/dealer/orders/create" },
-      { icon: FiList, label: "Danh Sách Đơn Hàng", path: "/dealer/orders" },
-      { icon: FiFileText, label: "Hợp Đồng Mua Bán", path: "/dealer/contracts" },
-      { icon: FiTruck, label: "Theo Dõi Giao Xe", path: "/dealer/delivery" }
+      { icon: FiClipboard, label: "Đơn Hàng Mới", path: "/dealer/manager/orders/create" },
+      { icon: FiList, label: "Danh Sách Đơn Hàng", path: "/dealer/manager/orders" },
+      { icon: FiFileText, label: "Hợp Đồng Mua Bán", path: "/dealer/manager/contracts" },
+      { icon: FiTruck, label: "Theo Dõi Giao Xe", path: "/dealer/manager/delivery" }
     ]
   },
 
@@ -46,12 +47,12 @@ export const dealerManagerMenuItems = [
   {
     icon: FiUsers,
     label: "Quản Lý Khách Hàng",
-    path: "/dealer/customers",
+    path: "/dealer/manager/customers",
     submenu: [
-      { icon: FiUserPlus, label: "Thêm Khách Hàng", path: "/dealer/customers/create" },
-      { icon: FiList, label: "Hồ Sơ Khách Hàng", path: "/dealer/customers/list" },
-      { icon: FiCalendar, label: "Lịch Hẹn Lái Thử", path: "/dealer/testdrives" },
-      { icon: FiMessageCircle, label: "Khiếu Nại & Phản Hồi", path: "/dealer/feedback" }
+      { icon: FiUserPlus, label: "Thêm Khách Hàng", path: "/dealer/manager/customers/create" },
+      { icon: FiList, label: "Hồ Sơ Khách Hàng", path: "/dealer/manager/customers/list" },
+      { icon: FiCalendar, label: "Lịch Hẹn Lái Thử", path: "/dealer/manager/testdrives" },
+      { icon: FiMessageCircle, label: "Khiếu Nại & Phản Hồi", path: "/dealer/manager/feedback" }
     ]
   },
 
@@ -59,11 +60,11 @@ export const dealerManagerMenuItems = [
   {
     icon: FiArchive,
     label: "Kho Đại Lý",
-    path: "/dealer/inventory",
+    path: "/dealer/manager/inventory",
     submenu: [
-      { icon: FiList, label: "Xe Trong Kho", path: "/dealer/inventory/stock" },
-      { icon: FiClipboard, label: "Kiểm Kê", path: "/dealer/inventory/audit" },
-      { icon: FiNavigation, label: "Đặt Xe Từ Hãng", path: "/dealer/inventory/order" }
+      { icon: FiList, label: "Xe Trong Kho", path: "/dealer/manager/inventory/stock" },
+      { icon: FiClipboard, label: "Kiểm Kê", path: "/dealer/manager/inventory/audit" },
+      { icon: FiNavigation, label: "Đặt Xe Từ Hãng", path: "/dealer/manager/inventory/order" }
     ]
   },
 
@@ -71,10 +72,10 @@ export const dealerManagerMenuItems = [
   {
     icon: FiCreditCard,
     label: "Tài Chính & Thanh Toán",
-    path: "/dealer/finance",
+    path: "/dealer/manager/finance",
     submenu: [
-      { icon: FiCreditCard, label: "Thanh Toán & Trả Góp", path: "/dealer/payments" },
-      { icon: FiBarChart2, label: "Công Nợ Khách Hàng", path: "/dealer/debts" }
+      { icon: FiCreditCard, label: "Thanh Toán & Trả Góp", path: "/dealer/manager/payments" },
+      { icon: FiBarChart2, label: "Công Nợ Khách Hàng", path: "/dealer/manager/debts" }
     ]
   },
 
@@ -82,11 +83,11 @@ export const dealerManagerMenuItems = [
   {
     icon: FiPieChart,
     label: "Báo Cáo Đại Lý",
-    path: "/dealer/reports",
+    path: "/dealer/manager/reports",
     submenu: [
-      { icon: FiTrendingUp, label: "Doanh Số Theo Nhân Viên", path: "/dealer/reports/staff" },
-      { icon: FiBarChart2, label: "Doanh Số Theo Mẫu Xe", path: "/dealer/reports/model" },
-      { icon: FiGift, label: "Hiệu Suất & Tỷ Lệ Chốt Đơn", path: "/dealer/reports/performance" }
+      { icon: FiTrendingUp, label: "Doanh Số Theo Nhân Viên", path: "/dealer/manager/reports/staff" },
+      { icon: FiBarChart2, label: "Doanh Số Theo Mẫu Xe", path: "/dealer/manager/reports/model" },
+      { icon: FiGift, label: "Hiệu Suất & Tỷ Lệ Chốt Đơn", path: "/dealer/manager/reports/performance" }
     ]
   },
 
@@ -94,10 +95,10 @@ export const dealerManagerMenuItems = [
   {
     icon: FiSettings,
     label: "Cài Đặt Đại Lý",
-    path: "/dealer/settings",
+    path: "/dealer/manager/settings",
     submenu: [
-      { icon: FiUsers, label: "Quản Lý Nhân Viên", path: "/dealer/settings/staff" },
-      { icon: FiSliders, label: "Cấu Hình Nội Bộ", path: "/dealer/settings/config" }
+      { icon: FiUsers, label: "Quản Lý Nhân Viên", path: "/dealer/manager/settings/staff" },
+      { icon: FiSliders, label: "Cấu Hình Nội Bộ", path: "/dealer/manager/settings/config" }
     ]
   }
 ];
@@ -110,11 +111,11 @@ export const dealerStaffMenuItems = [
   {
     icon: FiPackage,
     label: "Danh Mục Xe & Báo Giá",
-    path: "/staff/vehicles",
+    path: "/dealer/staff/vehicles",
     submenu: [
-      { icon: FiList, label: "Xe Có Sẵn", path: "/staff/vehicles/available" },
-      { icon: FiTag, label: "Toàn Bộ Mẫu Xe", path: "/staff/vehicles/all" },
-      { icon: FiFileText, label: "Tạo Báo Giá", path: "/staff/quotes/create" }
+      { icon: FiList, label: "Xe Có Sẵn", path: "/dealer/staff/vehicles/available" },
+      { icon: FiTag, label: "Toàn Bộ Mẫu Xe", path: "/dealer/staff/vehicles/all" },
+      { icon: FiFileText, label: "Tạo Báo Giá", path: "/dealer/staff/quotes/create" }
     ]
   },
 
@@ -122,12 +123,12 @@ export const dealerStaffMenuItems = [
   {
     icon: FiShoppingCart,
     label: "Quy Trình Bán Hàng",
-    path: "/staff/sales",
+    path: "/dealer/staff/sales",
     submenu: [
-      { icon: FiClipboard, label: "Đơn Hàng Mới", path: "/staff/orders/create" },
-      { icon: FiList, label: "Danh Sách Đơn Hàng", path: "/staff/orders" },
-      { icon: FiFileText, label: "Hợp Đồng Mua Bán", path: "/staff/contracts" },
-      { icon: FiTruck, label: "Theo Dõi Giao Xe", path: "/staff/delivery" }
+      { icon: FiClipboard, label: "Đơn Hàng Mới", path: "/dealer/staff/orders/create" },
+      { icon: FiList, label: "Danh Sách Đơn Hàng", path: "/dealer/staff/orders" },
+      { icon: FiFileText, label: "Hợp Đồng Mua Bán", path: "/dealer/staff/contracts" },
+      { icon: FiTruck, label: "Theo Dõi Giao Xe", path: "/dealer/staff/delivery" }
     ]
   },
 
@@ -135,12 +136,12 @@ export const dealerStaffMenuItems = [
   {
     icon: FiUsers,
     label: "Quản Lý Khách Hàng",
-    path: "/staff/customers",
+    path: "/dealer/staff/customers",
     submenu: [
-      { icon: FiUserPlus, label: "Thêm Khách Hàng", path: "/staff/customers/create" },
-      { icon: FiList, label: "Hồ Sơ Khách Hàng", path: "/staff/customers/list" },
-      { icon: FiCalendar, label: "Lịch Hẹn Lái Thử", path: "/staff/testdrives" },
-      { icon: FiMessageCircle, label: "Khiếu Nại & Phản Hồi", path: "/staff/feedback" }
+      { icon: FiUserPlus, label: "Thêm Khách Hàng", path: "/dealer/staff/customers/create" },
+      { icon: FiList, label: "Hồ Sơ Khách Hàng", path: "/dealer/staff/customers/list" },
+      { icon: FiCalendar, label: "Lịch Hẹn Lái Thử", path: "/dealer/staff/testdrives" },
+      { icon: FiMessageCircle, label: "Khiếu Nại & Phản Hồi", path: "/dealer/staff/feedback" }
     ]
   },
 
@@ -148,10 +149,10 @@ export const dealerStaffMenuItems = [
   {
     icon: FiArchive,
     label: "Kho Đại Lý",
-    path: "/staff/inventory",
+    path: "/dealer/staff/inventory",
     submenu: [
-      { icon: FiList, label: "Xe Trong Kho", path: "/staff/inventory/stock" },
-      { icon: FiNavigation, label: "Đặt Xe Từ Hãng", path: "/staff/inventory/order" }
+      { icon: FiList, label: "Xe Trong Kho", path: "/dealer/staff/inventory/stock" },
+      { icon: FiNavigation, label: "Đặt Xe Từ Hãng", path: "/dealer/staff/inventory/order" }
     ]
   },
 
@@ -159,11 +160,11 @@ export const dealerStaffMenuItems = [
   {
     icon: FiCreditCard,
     label: "Tài Chính & Báo Cáo",
-    path: "/staff/finance",
+    path: "/dealer/staff/finance",
     submenu: [
-      { icon: FiCreditCard, label: "Thanh Toán", path: "/staff/payments" },
-      { icon: FiBarChart2, label: "Doanh Số Cá Nhân", path: "/staff/reports/personal" },
-      { icon: FiGift, label: "Tỷ Lệ Chốt Đơn", path: "/staff/reports/performance" }
+      { icon: FiCreditCard, label: "Thanh Toán", path: "/dealer/staff/payments" },
+      { icon: FiBarChart2, label: "Doanh Số Cá Nhân", path: "/dealer/staff/reports/personal" },
+      { icon: FiGift, label: "Tỷ Lệ Chốt Đơn", path: "/dealer/staff/reports/performance" }
     ]
   }
 ];
@@ -622,7 +623,7 @@ const EvmLayout = () => {
 
                 {/* Content Area */}
                 <main className="flex-1 overflow-y-auto p-6 bg-transparent">
-                    <div className="max-w-8xl mx-auto space-y-6 h-full">
+                    <div className="max-w-8xl mx-auto space-y-6">
                         {/* Content Container với glassmorphism effect */}
                         <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200/80 p-8 transition-all duration-300 hover:shadow-md">
                             <Outlet/>

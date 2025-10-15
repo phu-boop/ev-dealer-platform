@@ -6,10 +6,10 @@ export default function NotFound() {
     const navigate = useNavigate();
 
     const handleGoBack = () => {
-        if (roles && roles.includes("ADMIN")) {
-            navigate("/admin");
+        if (roles && (roles.includes("ADMIN"||roles.includes("EVM_STAFF")))) {
+            navigate("/evm");
         } else {
-            navigate("/");
+            navigate("/dealer");
         }
     };
 
