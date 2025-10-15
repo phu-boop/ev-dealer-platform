@@ -18,6 +18,10 @@ import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import DealerLayout from "../layouts/DealerLayout.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 
+// customer pages
+import CustomerList from "../features/customers/pages/CustomerList.jsx";
+import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
+
 export default function AppRoutes() {
     return (
         <AuthProvider>
@@ -42,69 +46,31 @@ export default function AppRoutes() {
                     </Route>
                 </Route>
 
-                {/* Dealer routes - protected */}
-                <Route element={<ProtectedRoute allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]}/>}>
+                {/* Dealer Manager routes - protected */}
+                <Route element={<ProtectedRoute allowedRoles={["DEALER_MANAGER"]}/>}>
                     <Route path="/dealer" element={<DealerLayout/>}>
                         <Route index element={<DashboardForDealer/>}/>
                         <Route path="system/users" element={<UserManagement/>}/>
-                        {/* Thêm các route admin khác ở đây */}
+                        {/* Customer routes */}
+                        <Route path="customers/create" element={<CreateCustomer/>}/>
+                        <Route path="customers/list" element={<CustomerList/>}/>
+                        {/* Thêm các route dealer manager khác ở đây */}
+                    </Route>
+                </Route>
+
+                {/* Dealer Staff routes - protected */}
+                <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]}/>}>
+                    <Route path="/staff" element={<DealerLayout/>}>
+                        <Route index element={<DashboardForDealer/>}/>
+                        {/* Customer routes */}
+                        <Route path="customers/create" element={<CreateCustomer/>}/>
+                        <Route path="customers/list" element={<CustomerList/>}/>
+                        {/* Thêm các route dealer staff khác ở đây */}
                     </Route>
                 </Route>
 
                 {/* Not found */}
                 <Route path="*" element={<NotFound/>}/>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
                 {/* User routes - protected */}

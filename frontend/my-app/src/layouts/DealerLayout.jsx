@@ -169,27 +169,17 @@ export const dealerStaffMenuItems = [
 ];
 
 
-const rolesString = sessionStorage.getItem("roles");
-let roles = [];
-
-try {
-  roles = rolesString ? JSON.parse(rolesString) : [];
-} catch (error) {
-  console.error("Failed to parse roles:", error);
-}
-
-const menuItems = roles.includes("DEALER_MANAGER")
-  ? dealerManagerMenuItems
-  : dealerStaffMenuItems;
-
-
-
 const EvmLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [activePath, setActivePath] = useState("");
     const [openSubmenus, setOpenSubmenus] = useState(new Set());
     const {logout, email, name, fullName, roles} = useAuthContext();
+    
+    // Xác định menuItems dựa trên roles từ AuthContext
+    const menuItems = roles?.includes("DEALER_MANAGER")
+      ? dealerManagerMenuItems
+      : dealerStaffMenuItems;
     const location = useLocation();
     const navigate = useNavigate();
     const sidebarRef = useRef(null);
