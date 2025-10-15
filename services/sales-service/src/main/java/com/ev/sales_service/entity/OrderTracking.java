@@ -3,6 +3,7 @@ package com.ev.sales_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "order_tracking")
@@ -14,7 +15,7 @@ public class OrderTracking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "track_id")
-    private Long trackId;
+    private UUID trackId;
 
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)

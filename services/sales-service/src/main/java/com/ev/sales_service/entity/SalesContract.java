@@ -3,6 +3,7 @@ package com.ev.sales_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "sales_contracts")
@@ -14,7 +15,7 @@ public class SalesContract {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "contract_id")
-    private Long contractId;
+    private UUID contractId;
 
     @OneToOne
     @JoinColumn(name = "order_id", nullable = false)

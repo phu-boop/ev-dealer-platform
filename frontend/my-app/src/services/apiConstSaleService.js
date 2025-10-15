@@ -1,13 +1,13 @@
 import axios from "axios";
 
-const apiConstUserService = axios.create({
-  baseURL: "http://localhost:8080",
+const apiConst = axios.create({
+  baseURL: "http://localhost:8080/",
   headers: { "Content-Type": "application/json" },
   withCredentials: true
 });
 
 // Lấy token từ sessionStorage
-apiConstUserService.interceptors.request.use((config) => {
+apiConst.interceptors.request.use((config) => {
   const token = sessionStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -16,7 +16,7 @@ apiConstUserService.interceptors.request.use((config) => {
 });
 
 // Xử lý khi token hết hạn
-apiConstUserService.interceptors.response.use(
+apiConst.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response && error.response.status === 401) {
@@ -34,7 +34,7 @@ apiConstUserService.interceptors.response.use(
         sessionStorage.setItem("token", newToken);
         // Gửi lại request cũ với token mới
         error.config.headers["Authorization"] = `Bearer ${newToken}`;
-        return apiConstUserService(error.config);
+        return apiConst(error.config);
       } catch (refreshError) {
         console.error("Refresh token failed", refreshError);
         sessionStorage.removeItem("token");
@@ -45,4 +45,4 @@ apiConstUserService.interceptors.response.use(
   }
 );
 
-export default apiConstUserService;
+export default apiConst;

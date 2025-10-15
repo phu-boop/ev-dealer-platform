@@ -1,10 +1,12 @@
 package com.ev.sales_service.entity;
 
+import com.ev.sales_service.enums.PromotionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "promotions")
@@ -16,7 +18,7 @@ public class Promotion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "promotion_id")
-    private Long promotionId;
+    private UUID promotionId;
 
     @Column(name = "promotion_name", length = 255)
     private String promotionName;
@@ -37,7 +39,7 @@ public class Promotion {
     private String applicableModelsJson;
 
     @Column(name = "status", length = 50)
-    private String status;
+    private PromotionStatus status;
 
     @ManyToMany
     @JoinTable(

@@ -3,6 +3,7 @@ package com.ev.sales_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "order_items")
@@ -14,7 +15,7 @@ public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_item_id")
-    private Long orderItemId;
+    private UUID orderItemId;
 
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)

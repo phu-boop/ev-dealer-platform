@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "sales_orders")
@@ -17,20 +18,20 @@ public class SalesOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
-    private Long orderId;
+    private UUID orderId;
 
     @OneToOne
     @JoinColumn(name = "quotation_id", nullable = false)
     private Quotation quotation;
 
     @Column(name = "dealer_id", nullable = false)
-    private Long dealerId;
+    private UUID dealerId;
 
     @Column(name = "customer_id", nullable = false)
-    private Long customerId;
+    private UUID customerId;
 
     @Column(name = "staff_id", nullable = false)
-    private Long staffId;
+    private UUID staffId;
 
     @Column(name = "order_date")
     private LocalDateTime orderDate;

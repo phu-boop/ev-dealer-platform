@@ -25,7 +25,8 @@ export const dealerManagerMenuItems = [
       { icon: FiTag, label: "Toàn Bộ Mẫu Xe", path: "/dealer/vehicles/all" },
       { icon: FiSliders, label: "So Sánh Mẫu Xe", path: "/dealer/vehicles/compare" },
       { icon: FiFileText, label: "Tạo Báo Giá", path: "/dealer/quotes/create" },
-      { icon: FiCreditCard, label: "In Báo Giá", path: "/dealer/quotes/print" }
+      { icon: FiCreditCard, label: "In Báo Giá", path: "/dealer/quotes/print" },
+      { icon: FiCreditCard, label: "Giá & Khuyến Mãi", path: "/dealer/products/pricing" }
     ]
   },
 
