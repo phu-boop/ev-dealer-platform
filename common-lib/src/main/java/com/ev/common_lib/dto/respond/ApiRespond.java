@@ -20,5 +20,9 @@ public class ApiRespond<T> {
     public static <T> ApiRespond<T> success(String message, T data) {
         return new ApiRespond<>(ErrorCode.SUCCESS.getCode(), message, data);
     }
+
+    public static <T> ApiRespond<T> error(String code, String message, T data) {
+        return new ApiRespond<>(code, message, data);
+    }
 }
 

@@ -52,7 +52,20 @@ public enum ErrorCode {
     // ===== 6xxx - Business logic errors =====
     paymentT_FAILED("6001", "paymentt failed", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_BALANCE("6002", "Insufficient balance", HttpStatus.BAD_REQUEST),
-    PRODUCT_OUT_OF_STOCK("6004", "Product out of stock", HttpStatus.CONFLICT);
+    PRODUCT_OUT_OF_STOCK("6004", "Product out of stock", HttpStatus.CONFLICT),
+
+    // ===== 7xxx - Vehicle service errors =====
+    VEHICLE_MODEL_NOT_FOUND("7001", "Vehicle model not found", HttpStatus.NOT_FOUND),
+    VEHICLE_MODEL_ALREADY_EXISTS("7002", "A vehicle model with this name and version already exists", HttpStatus.CONFLICT),
+    VEHICLE_VARIANT_NOT_FOUND("7003", "Vehicle variant not found", HttpStatus.NOT_FOUND),
+    FEATURE_NOT_FOUND("7004", "Feature not found", HttpStatus.NOT_FOUND),
+    VEHICLE_VARIANT_SKU_ALREADY_EXISTS("7005", "A vehicle variant with this SKU code already exists", HttpStatus.CONFLICT),
+
+    // ===== 8xxx - Inventory service errors =====
+    INVENTORY_NOT_FOUND("8001", "Inventory record not found for this variant", HttpStatus.NOT_FOUND),
+    INSUFFICIENT_STOCK("8002", "Not enough stock to perform the transaction", HttpStatus.BAD_REQUEST),
+    ALLOCATION_NOT_FOUND("8003", "Allocation not found for this dealer and variant", HttpStatus.NOT_FOUND);
+
 
     private final String code;
     private final String message;
