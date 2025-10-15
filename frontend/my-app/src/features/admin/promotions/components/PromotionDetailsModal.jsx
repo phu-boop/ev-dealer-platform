@@ -1,6 +1,5 @@
-// features/admin/promotions/components/PromotionDetailsModal.js
 import React from 'react';
-import { XMarkIcon, CalendarIcon, TagIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CalendarIcon, TagIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 export const PromotionDetailsModal = ({ promotion, isOpen, onClose, onApprove, onEdit, onDelete }) => {
   if (!isOpen || !promotion) return null;
@@ -13,15 +12,36 @@ export const PromotionDetailsModal = ({ promotion, isOpen, onClose, onApprove, o
     return `${(rate * 100).toFixed(1)}%`;
   };
 
+  const calculateTimeRemaining = (endDate) => {
+    const now = new Date();
+    const end = new Date(endDate);
+    const diffMs = end - now;
+
+    if (diffMs <= 0) {
+      return { expired: true, text: 'Đã hết hạn' };
+    }
+
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    let text = '';
+    if (days > 0) text += `${days} ngày `;
+    if (hours > 0 || days > 0) text += `${hours} giờ `;
+    text += `${minutes} phút`;
+
+    return { expired: false, text: text.trim() };
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
-      UPCOMING: { color: 'bg-yellow-100 text-yellow-800', text: 'Chờ xác thực' },
+      DRAFT: { color: 'bg-yellow-100 text-yellow-800', text: 'Chờ xác thực' },
       ACTIVE: { color: 'bg-green-100 text-green-800', text: 'Đang hoạt động' },
       EXPIRED: { color: 'bg-red-100 text-red-800', text: 'Đã hết hạn' },
       INACTIVE: { color: 'bg-gray-100 text-gray-800', text: 'Không hoạt động' }
     };
     
-    const config = statusConfig[status] || statusConfig.UPCOMING;
+    const config = statusConfig[status] || statusConfig.DRAFT;
     return (
       <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
         {config.text}
@@ -29,9 +49,11 @@ export const PromotionDetailsModal = ({ promotion, isOpen, onClose, onApprove, o
     );
   };
 
+  const timeRemaining = calculateTimeRemaining(promotion.endDate);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/10 bg-opacity-10 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -45,7 +67,7 @@ export const PromotionDetailsModal = ({ promotion, isOpen, onClose, onApprove, o
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
             <XMarkIcon className="h-5 w-5 text-gray-500" />
           </button>
@@ -103,6 +125,17 @@ export const PromotionDetailsModal = ({ promotion, isOpen, onClose, onApprove, o
                   <p className="text-sm text-gray-900">{formatDate(promotion.endDate)}</p>
                 </div>
               </div>
+              <div className="md:col-span-2">
+                <div className={`flex items-center space-x-3 p-3 rounded-lg ${timeRemaining.expired ? 'bg-red-50' : 'bg-green-50'}`}>
+                  <ClockIcon className={`h-5 w-5 ${timeRemaining.expired ? 'text-red-600' : 'text-green-600'}`} />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Thời gian còn lại</p>
+                    <p className={`text-sm font-semibold ${timeRemaining.expired ? 'text-red-900' : 'text-green-900'}`}>
+                      {timeRemaining.text}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -121,29 +154,29 @@ export const PromotionDetailsModal = ({ promotion, isOpen, onClose, onApprove, o
 
         {/* Actions */}
         <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
-          {promotion.status === 'UPCOMING' && (
+          {promotion.status === 'DRAFT' && (
             <button
               onClick={() => onApprove(promotion.promotionId)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
             >
               Phê duyệt
             </button>
           )}
           <button
             onClick={() => onEdit(promotion)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
           >
             Chỉnh sửa
           </button>
           <button
             onClick={() => onDelete(promotion.promotionId, promotion.promotionName)}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
           >
             Xóa
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
           >
             Đóng
           </button>

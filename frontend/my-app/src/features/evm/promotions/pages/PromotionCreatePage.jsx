@@ -1,22 +1,53 @@
 // pages/PromotionCreatePage.js
-import React from "react";
+import React, { useState } from "react";
 import PromotionForm from "../components/PromotionForm";
 import { promotionService } from "../services/promotionService";
+import Alert from "../../../../components/ui/Alert"; // Import Alert component
 
 export default function PromotionCreatePage({ onBack }) {
+  const [alert, setAlert] = useState({ show: false, type: '', message: '' });
+
   const handleSubmit = async (data) => {
     try {
       await promotionService.create(data);
-      alert("Tạo chương trình khuyến mãi thành công!");
-      onBack();
+      setAlert({
+        show: true,
+        type: 'success',
+        message: 'Tạo chương trình khuyến mãi thành công!'
+      });
+      // Kéo lên top khi hiển thị alert
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Tự động quay lại sau 2 giây
+      setTimeout(() => {
+        onBack();
+      }, 2000);
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi tạo chương trình!");
+      setAlert({
+        show: true,
+        type: 'error',
+        message: 'Lỗi khi tạo chương trình!'
+      });
+      // Kéo lên top khi hiển thị alert lỗi
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
+  const handleCloseAlert = () => {
+    setAlert({ show: false, type: '', message: '' });
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
+    <div className="bg-white rounded-lg p-0 mx-auto">
+      {/* Alert Component */}
+      {alert.show && (
+        <Alert
+          type={alert.type}
+          message={alert.message}
+          onClose={handleCloseAlert}
+        />
+      )}
+      
       <div className="flex items-center mb-6">
         <button
           onClick={onBack}
@@ -26,7 +57,6 @@ export default function PromotionCreatePage({ onBack }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
-        <h1 className="text-2xl font-bold text-gray-800">Tạo chương trình khuyến mãi mới</h1>
       </div>
       <PromotionForm onSubmit={handleSubmit} onCancel={onBack} />
     </div>
