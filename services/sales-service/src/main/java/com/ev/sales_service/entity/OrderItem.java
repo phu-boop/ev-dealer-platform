@@ -13,8 +13,8 @@ import java.util.UUID;
 @Builder
 public class OrderItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_item_id")
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "order_item_id", columnDefinition = "BINARY(16)")
     private UUID orderItemId;
 
     @ManyToOne

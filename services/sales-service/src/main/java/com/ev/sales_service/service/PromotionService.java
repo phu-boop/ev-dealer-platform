@@ -52,5 +52,12 @@ public class PromotionService {
     public List<Promotion> getPromotionsByStatus(PromotionStatus status) {
         return promotionRepository.findByStatus(status);
     }
+
+    public Promotion authenticPromotion(UUID id) {
+        Promotion existing = promotionRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Promotion not found"));
+        existing.setStatus(PromotionStatus.ACTIVE);
+        return promotionRepository.save(existing);
+    }
 }
 

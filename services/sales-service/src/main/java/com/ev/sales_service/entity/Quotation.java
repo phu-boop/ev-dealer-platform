@@ -1,10 +1,11 @@
 package com.ev.sales_service.entity;
 
-
+import com.ev.sales_service.enums.QuotationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -14,21 +15,22 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Quotation {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "quotation_id")
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "quotation_id", columnDefinition = "BINARY(16)")
     private UUID quotationId;
 
-    @Column(name = "dealer_id", nullable = false)
+    @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id", nullable = false)
+    @Column(name = "customer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID customerId;
 
-    @Column(name = "model_id", nullable = false)
+    @Column(name = "model_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID modelId;
 
-    @Column(name = "staff_id", nullable = false)
+    @Column(name = "staff_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID staffId;
 
     @Column(name = "quotation_date")
@@ -49,12 +51,13 @@ public class Quotation {
     @Column(name = "terms_conditions", columnDefinition = "TEXT")
     private String termsConditions;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
-    private String status;
+    private QuotationStatus status;
 
     @OneToOne(mappedBy = "quotation")
     private SalesOrder salesOrder;
 
     @ManyToMany(mappedBy = "quotations")
-    private java.util.Set<Promotion> promotions;
+    private Set<Promotion> promotions;
 }

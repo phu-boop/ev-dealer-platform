@@ -48,7 +48,7 @@ export const adminMenuItems = [
     path: "/admin/products",
     submenu: [
       { icon: FiList, label: "Danh Mục Xe", path: "/admin/products/catalog" },
-      { icon: FiCreditCard, label: "Giá & Khuyến Mãi", path: "/admin/products/pricing" },
+      { icon: FiCreditCard, label: "Giá & Khuyến Mãi", path: "/evm/admin/promotions" },
       { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/admin/products/variants" }
     ]
   },
@@ -536,9 +536,9 @@ const EvmLayout = () => {
 
                 {/* Content Area với khoảng cách và bo tròn */}
                 <main className="flex-1 overflow-y-auto p-6 bg-transparent">
-                    <div className="max-w-8xl mx-auto space-y-6 h-full">
+                    <div className="max-w-8xl mx-auto">
                         {/* Content Container với glassmorphism effect */}
-                        <div className="bg-white/80 h-full backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
+                        <div className="bg-white/80  backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
                             <Outlet/>
                         </div>
                     </div>

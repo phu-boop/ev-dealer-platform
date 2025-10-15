@@ -29,6 +29,13 @@ public class PromotionController {
         return ResponseEntity.ok(updated);
     }
 
+    //chuyển status sang active dành cho admin
+    @PutMapping("/authentic/{id}")
+    public ResponseEntity<Promotion> authenticPromotion(@PathVariable UUID id) {
+        Promotion updated = promotionService.authenticPromotion(id);
+        return ResponseEntity.ok(updated);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Promotion> getPromotionById(@PathVariable UUID id) {
         Promotion promotion = promotionService.getPromotionById(id);
