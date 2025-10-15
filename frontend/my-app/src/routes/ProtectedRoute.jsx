@@ -14,7 +14,7 @@ export default function ProtectedRoute({allowedRoles}) {
             if (!alertShown) {
                 Swal.fire({
                     title: "Chưa đăng nhập",
-                    text: "Vui lòng đăng nhập để tiếp tục!",
+                    text: "Vui lòng đăng nhập",
                     icon: "warning",
                     showCancelButton: true,
                     confirmButtonText: "Đăng nhập",

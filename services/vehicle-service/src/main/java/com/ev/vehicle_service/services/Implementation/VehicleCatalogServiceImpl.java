@@ -24,13 +24,16 @@ import com.ev.vehicle_service.repository.VariantFeatureRepository;
 import com.ev.vehicle_service.repository.PriceHistoryRepository;
 import com.ev.vehicle_service.repository.VehicleVariantHistoryRepository;
 import com.ev.vehicle_service.services.Interface.VehicleCatalogService;
+import com.ev.vehicle_service.specification.VehicleVariantSpecification;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 
@@ -92,6 +95,10 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             newVariant.setSkuCode(variantRequest.getSkuCode());
             newVariant.setStatus(VehicleStatus.IN_PRODUCTION);
             newVariant.setVehicleModel(savedModel);
+
+            // Trạng thái Vehicle nếu để trống thì dùng giá trị mặc định là IN_PRODUCTION.
+            VehicleStatus status = (variantRequest.getStatus() != null) ? variantRequest.getStatus() : VehicleStatus.IN_PRODUCTION;
+            newVariant.setStatus(status);
             VehicleVariant savedVariant = variantRepository.save(newVariant);
 
             if (variantRequest.getFeatures() != null && !variantRequest.getFeatures().isEmpty()) {
@@ -175,6 +182,29 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         VehicleVariant variant = findVariantById(variantId);
         variant.setStatus(VehicleStatus.DISCONTINUED);
         variantRepository.save(variant);
+    }
+
+    @Override
+    public List<Long> searchVariantIdsByCriteria(String keyword, String color, String versionName) {
+        List<Specification<VehicleVariant>> specs = new ArrayList<>();
+
+        // Thêm điều kiện tìm kiếm chung theo keyword
+        if (keyword != null && !keyword.isBlank()) {
+            specs.add(VehicleVariantSpecification.hasKeyword(keyword));
+        }
+
+        // Thêm các điều kiện lọc chi tiết
+        if (color != null && !color.isBlank()) {
+            specs.add(VehicleVariantSpecification.hasColor(color));
+        }
+        if (versionName != null && !versionName.isBlank()) {
+            specs.add(VehicleVariantSpecification.hasVersionName(versionName));
+        }
+
+        Specification<VehicleVariant> finalSpec = specs.stream().reduce(Specification::and).orElse(null);
+
+        List<VehicleVariant> variants = variantRepository.findAll(finalSpec);
+        return variants.stream().map(VehicleVariant::getVariantId).collect(Collectors.toList());
     }
 
     // --- Helper Methods ---
