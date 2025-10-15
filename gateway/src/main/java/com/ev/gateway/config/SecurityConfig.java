@@ -20,12 +20,12 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Thêm cấu hình CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable) // Tắt Basic Auth popup
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable) // Tắt Form Login
+                // CHO PHÉP TẤT CẢ REQUEST - Authentication được xử lý bởi JwtGlobalFilter
                 .authorizeExchange(exchanges -> exchanges
-                        // Cho phép public routes
-                        .pathMatchers("/", "/error", "/auth/**", "/users/**","/vehicles/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // Cần JWT (đã xác thực qua JwtGlobalFilter)
-                        .anyExchange().authenticated()
+                        .anyExchange().permitAll()
                 )
                 // Không tạo session
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
