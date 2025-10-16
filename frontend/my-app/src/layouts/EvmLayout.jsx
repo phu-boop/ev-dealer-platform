@@ -505,9 +505,9 @@ const EvmLayout = () => {
 
                 {/* Content Area với khoảng cách và bo tròn */}
                 <main className="flex-1 overflow-y-auto p-6 bg-transparent">
-                    <div className="max-w-8xl mx-auto space-y-6 h-full">
+                    <div className="max-w-8xl mx-auto space-y-6 w-full min-h-0">
                         {/* Content Container với glassmorphism effect */}
-                        <div className="bg-white/80 h-full backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
+                        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md w-full min-h-0">
                             <Outlet/>
                         </div>
                     </div>

@@ -103,7 +103,7 @@ const CreateCustomer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 -m-8 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8 px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-6">

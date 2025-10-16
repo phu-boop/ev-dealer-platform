@@ -33,7 +33,8 @@ class CustomerService {
 
   async updateCustomer(id, customerData) {
     try {
-      const response = await apiConstUserService.put(`/customers/${id}`, customerData);
+      const modifiedBy = sessionStorage.getItem('email') || sessionStorage.getItem('name') || 'web-ui';
+      const response = await apiConstUserService.put(`/customers/${id}`, customerData, { headers: { 'X-Modified-By': modifiedBy } });
       return response.data.data;
     } catch (error) {
       console.error("Error updating customer:", error);

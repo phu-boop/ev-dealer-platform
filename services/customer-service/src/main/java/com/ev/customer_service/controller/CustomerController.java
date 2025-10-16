@@ -23,13 +23,13 @@ public class CustomerController {
     public ResponseEntity<ApiRespond<List<CustomerResponse>>> getAllCustomers(
             @RequestParam(required = false) String search) {
         List<CustomerResponse> customers;
-        
+
         if (search != null && !search.isEmpty()) {
             customers = customerService.searchCustomers(search);
         } else {
             customers = customerService.getAllCustomers();
         }
-        
+
         return ResponseEntity.ok(ApiRespond.success("Customers retrieved successfully", customers));
     }
 
@@ -51,10 +51,16 @@ public class CustomerController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiRespond<CustomerResponse>> updateCustomer(
             @PathVariable String id,
-            @Valid @RequestBody CustomerRequest request) {
+            @Valid @RequestBody CustomerRequest request,
+            @RequestHeader(value = "X-Modified-By", required = false) String modifiedBy) {
         Long customerId = Long.parseLong(id);
-        CustomerResponse customer = customerService.updateCustomer(customerId, request);
-        return ResponseEntity.ok(ApiRespond.success("Customer updated successfully", customer));
+        try {
+            com.ev.customer_service.util.RequestContext.setCurrentUser(modifiedBy);
+            CustomerResponse customer = customerService.updateCustomer(customerId, request);
+            return ResponseEntity.ok(ApiRespond.success("Customer updated successfully", customer));
+        } finally {
+            com.ev.customer_service.util.RequestContext.clear();
+        }
     }
 
     @DeleteMapping("/{id}")

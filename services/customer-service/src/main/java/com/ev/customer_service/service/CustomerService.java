@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CustomerService {
-
     private final CustomerRepository customerRepository;
     private final ModelMapper modelMapper;
+    private final com.ev.customer_service.repository.CustomerProfileAuditRepository auditRepository;
 
     @Transactional(readOnly = true)
     public List<CustomerResponse> getAllCustomers() {
@@ -108,7 +108,12 @@ public class CustomerService {
             throw new DuplicateResourceException("Customer with ID number " + request.getIdNumber() + " already exists");
         }
 
-        // Manually update fields to avoid overwriting relationships and managed fields
+    // Capture old values for audit
+    String oldPhone = customer.getPhone();
+    String oldAddress = customer.getAddress();
+    String oldStatus = customer.getStatus();
+
+    // Manually update fields to avoid overwriting relationships and managed fields
         customer.setFirstName(request.getFirstName());
         customer.setLastName(request.getLastName());
         customer.setEmail(request.getEmail());
@@ -122,6 +127,32 @@ public class CustomerService {
         // Don't update customerCode, customerId, createdAt, updatedAt, or relationships
         
         Customer updatedCustomer = customerRepository.save(customer);
+
+        // Record audit if relevant fields changed (phone, address, status)
+        java.util.Map<String, Object> changes = new java.util.HashMap<>();
+        if (oldPhone == null ? request.getPhone() != null : !oldPhone.equals(request.getPhone())) {
+            changes.put("phone", java.util.Map.of("old", oldPhone, "new", request.getPhone()));
+        }
+        if (oldAddress == null ? request.getAddress() != null : !oldAddress.equals(request.getAddress())) {
+            changes.put("address", java.util.Map.of("old", oldAddress, "new", request.getAddress()));
+        }
+        if (oldStatus == null ? request.getStatus() != null : !oldStatus.equals(request.getStatus())) {
+            changes.put("status", java.util.Map.of("old", oldStatus, "new", request.getStatus()));
+        }
+
+        if (!changes.isEmpty()) {
+            com.ev.customer_service.entity.CustomerProfileAudit audit = new com.ev.customer_service.entity.CustomerProfileAudit();
+            audit.setCustomerId(updatedCustomer.getCustomerId());
+            // modifiedBy will be set by controller via header and passed through ThreadLocal or param; default to 'system' here
+            audit.setChangedBy(java.util.Optional.ofNullable(com.ev.customer_service.util.RequestContext.getCurrentUser()).orElse("system"));
+            try {
+                String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(changes);
+                audit.setChangesJson(json);
+            } catch (Exception ex) {
+                audit.setChangesJson(changes.toString());
+            }
+            auditRepository.save(audit);
+        }
         return modelMapper.map(updatedCustomer, CustomerResponse.class);
     }
 
