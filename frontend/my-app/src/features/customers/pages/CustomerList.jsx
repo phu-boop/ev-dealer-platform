@@ -85,12 +85,14 @@ const CustomerList = () => {
     }
   };
 
+  const base = sessionStorage.getItem('roles')?.includes('DEALER_MANAGER') ? '/dealer' : '/staff';
+
   const handleView = (id) => {
-    navigate(`/dealer/customers/${id}`);
+    navigate(`${base}/customers/${id}`);
   };
 
   const handleEdit = (id) => {
-    navigate(`/dealer/customers/${id}/edit`);
+    navigate(`${base}/customers/${id}/edit`);
   };
 
   const paginatedCustomers = customers.slice(
@@ -99,7 +101,7 @@ const CustomerList = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 -m-8 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8 px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-6">
@@ -175,7 +177,7 @@ const CustomerList = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {paginatedCustomers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <tr key={customer.customerId || customer.id} className="hover:bg-gray-50 transition-colors duration-200">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold mr-3">
@@ -225,21 +227,21 @@ const CustomerList = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
-                            onClick={() => handleView(customer.id)}
+                            onClick={() => handleView(customer.customerId || customer.id)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                             title="Xem chi tiết"
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleEdit(customer.id)}
+                            onClick={() => handleEdit(customer.customerId || customer.id)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
                             title="Chỉnh sửa"
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(customer.id)}
+                            onClick={() => handleDelete(customer.customerId || customer.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                             title="Xóa"
                           >
@@ -256,7 +258,7 @@ const CustomerList = () => {
             {/* Mobile Cards */}
             <div className="lg:hidden">
               {paginatedCustomers.map((customer) => (
-                <div key={customer.id} className="p-4 border-b border-gray-200 last:border-b-0">
+                <div key={customer.customerId || customer.id} className="p-4 border-b border-gray-200 last:border-b-0">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3 flex-1">
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -283,19 +285,19 @@ const CustomerList = () => {
                     </div>
                     <div className="flex items-center space-x-1 ml-4">
                       <button
-                        onClick={() => handleView(customer.id)}
+                        onClick={() => handleView(customer.customerId || customer.id)}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                       >
                         <FiEye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleEdit(customer.id)}
+                        onClick={() => handleEdit(customer.customerId || customer.id)}
                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
                       >
                         <FiEdit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(customer.id)}
+                        onClick={() => handleDelete(customer.customerId || customer.id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                       >
                         <FiTrash2 className="w-4 h-4" />

@@ -21,6 +21,8 @@ import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.j
 // customer pages
 import CustomerList from "../features/customers/pages/CustomerList.jsx";
 import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
+import EditCustomer from "../features/customers/pages/EditCustomer.jsx";
+import CustomerDetail from "../features/customers/pages/CustomerDetail.jsx";
 
 export default function AppRoutes() {
     return (
@@ -53,7 +55,9 @@ export default function AppRoutes() {
                         <Route path="system/users" element={<UserManagement/>}/>
                         {/* Customer routes */}
                         <Route path="customers/create" element={<CreateCustomer/>}/>
-                        <Route path="customers/list" element={<CustomerList/>}/>
+                            <Route path="customers/list" element={<CustomerList/>}/>
+                            <Route path="customers/:id" element={<CustomerDetail/>}/>
+                            <Route path="customers/:id/edit" element={<EditCustomer/>}/>
                         {/* Thêm các route dealer manager khác ở đây */}
                     </Route>
                 </Route>
@@ -65,6 +69,8 @@ export default function AppRoutes() {
                         {/* Customer routes */}
                         <Route path="customers/create" element={<CreateCustomer/>}/>
                         <Route path="customers/list" element={<CustomerList/>}/>
+                        <Route path="customers/:id" element={<CustomerDetail/>}/>
+                        <Route path="customers/:id/edit" element={<EditCustomer/>}/>
                         {/* Thêm các route dealer staff khác ở đây */}
                     </Route>
                 </Route>
