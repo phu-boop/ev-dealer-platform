@@ -27,6 +27,8 @@ public class CreateVariantRequest {
     private BigDecimal price;
 
     private VehicleStatus status; // Cập nhật trạng thái của Vehicle
+
+    private String imageUrl;
     
     @Valid
     private List<FeatureRequest> features; 

@@ -9,5 +9,6 @@ public class ModelDetailDto {
     private String modelName;
     private String brand;
     private String specificationsJson;
+    private String thumbnailUrl;
     private List<VariantDetailDto> variants;
 }
