@@ -84,6 +84,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newModel.setModelName(request.getModelName());
         newModel.setBrand(request.getBrand());
         newModel.setSpecificationsJson(request.getSpecificationsJson());
+        newModel.setThumbnailUrl(request.getThumbnailUrl());
         newModel.setCreatedBy(request.getCreatedBy());
         VehicleModel savedModel = modelRepository.save(newModel);
 
@@ -92,6 +93,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             newVariant.setVersionName(variantRequest.getVersionName());
             newVariant.setColor(variantRequest.getColor());
             newVariant.setPrice(variantRequest.getPrice());
+            newVariant.setImageUrl(variantRequest.getImageUrl());
             newVariant.setSkuCode(variantRequest.getSkuCode());
             newVariant.setStatus(VehicleStatus.IN_PRODUCTION);
             newVariant.setVehicleModel(savedModel);
@@ -233,6 +235,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setModelName(model.getModelName());
         dto.setBrand(model.getBrand());
         dto.setSpecificationsJson(model.getSpecificationsJson());
+        dto.setThumbnailUrl(model.getThumbnailUrl());
         dto.setVariants(model.getVariants().stream()
                 .map(this::mapToVariantDetailDto)
                 .collect(Collectors.toList()));
@@ -246,6 +249,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setColor(variant.getColor());
         dto.setSkuCode(variant.getSkuCode());
         dto.setPrice(variant.getPrice());
+        dto.setImageUrl(variant.getImageUrl());
         dto.setStatus(variant.getStatus());
         
         if (variant.getFeatures() != null) {
