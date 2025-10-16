@@ -115,7 +115,8 @@ export const dealerStaffMenuItems = [
     submenu: [
       { icon: FiList, label: "Xe Có Sẵn", path: "/dealer/staff/vehicles/available" },
       { icon: FiTag, label: "Toàn Bộ Mẫu Xe", path: "/dealer/staff/vehicles/all" },
-      { icon: FiFileText, label: "Tạo Báo Giá", path: "/dealer/staff/quotes/create" }
+      { icon: FiFileText, label: "Tạo Báo Giá", path: "/dealer/staff/quotes/create" },
+      { icon: FiFileText, label: "(DONE)Xem khuyến mãi", path: "/dealer/staff/promotions" }
     ]
   },
 

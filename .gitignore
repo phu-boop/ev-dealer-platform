@@ -120,6 +120,3 @@ docker-compose.override.yml
 Thumbs.db
 ehthumbs.db
 Icon?
-
-# 🧩 Ignore tất cả file .properties
-*.properties
