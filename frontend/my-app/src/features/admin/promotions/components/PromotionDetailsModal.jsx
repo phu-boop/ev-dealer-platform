@@ -139,14 +139,26 @@ export const PromotionDetailsModal = ({ promotion, isOpen, onClose, onApprove, o
             </div>
           </div>
 
-          {/* Additional Info */}
+          {/* Additional Info - Simple Badge Style */}
           {promotion.applicableModelsJson && promotion.applicableModelsJson !== '[]' && (
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Áp dụng cho</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {JSON.stringify(JSON.parse(promotion.applicableModelsJson), null, 2)}
-                </pre>
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex flex-col space-y-2">
+                  {JSON.parse(promotion.applicableModelsJson).map((model, index) => (
+                    <div
+                      key={model.modelId || index}
+                      className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-200"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="font-medium text-gray-900">{model.modelName}</span>
+                        <span className="text-sm text-gray-500">- {model.brand}</span>
+                      </div>
+                      <span className="text-xs text-gray-400">#{model.modelId}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
