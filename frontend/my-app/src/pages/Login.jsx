@@ -64,8 +64,10 @@ export default function Login() {
                     if (result.isConfirmed) {
                         if (rolesArray.includes("ADMIN")||rolesArray.includes("EVM_STAFF")) {
                             navigate("/admin");
-                        } else if (rolesArray.includes("DEALER_MANAGER")||rolesArray.includes("DEALER_STAFF")) {
+                        } else if (rolesArray.includes("DEALER_MANAGER")) {
                             navigate("/dealer");
+                        } else if (rolesArray.includes("DEALER_STAFF")) {
+                            navigate("/staff");
                         }
                          else {
                             window.location.href = "/";
