@@ -13,5 +13,6 @@ public class VariantDetailDto {
     private String skuCode;
     private BigDecimal price;
     private VehicleStatus status;
+    private String imageUrl;
     private List<FeatureDto> features; 
 }

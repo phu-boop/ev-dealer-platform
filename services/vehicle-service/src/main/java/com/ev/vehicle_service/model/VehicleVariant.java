@@ -62,6 +62,9 @@ public class VehicleVariant {
     @CreationTimestamp
     @Column(name = "created_date", updatable = false)
     private LocalDateTime createdDate;
+
+    @Column(name = "image_url")
+    private String imageUrl;
     
     // ... updatedBy, updatedDate ...
 

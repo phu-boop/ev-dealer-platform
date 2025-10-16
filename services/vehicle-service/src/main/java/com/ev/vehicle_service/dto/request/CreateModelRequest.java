@@ -19,6 +19,8 @@ public class CreateModelRequest {
     
     private String createdBy; // Email người tạo
 
+    private String thumbnailUrl;
+
     @Valid
     @NotEmpty(message = "Model must have at least one variant")
     private List<CreateVariantRequest> variants;

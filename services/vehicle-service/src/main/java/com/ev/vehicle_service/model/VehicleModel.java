@@ -51,6 +51,9 @@ public class VehicleModel {
     @Column(name = "updated_date")
     private LocalDateTime updatedDate; // Tự động cập nhật thời gian
 
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
+
     // --- Relationships ---
     // <<< Mối quan hệ mới: Một Model có nhiều Variants >>>
     @OneToMany(mappedBy = "vehicleModel", cascade = CascadeType.ALL, orphanRemoval = true)
