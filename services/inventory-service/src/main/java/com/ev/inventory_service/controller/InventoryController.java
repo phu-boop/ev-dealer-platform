@@ -10,6 +10,7 @@ import com.ev.inventory_service.services.Interface.InventoryService;
 import com.ev.inventory_service.util.JwtUtil;
 import com.ev.inventory_service.model.InventoryTransaction;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,10 @@ public class InventoryController {
     /**
      * Lấy danh sách tồn kho phân trang, có thể lọc theo dealerId, status và tìm kiếm theo tên.
      */
+
+    //phân quyền cấp thấp hơn
+    //demo
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')")
     @GetMapping
     public ResponseEntity<ApiRespond<Page<InventoryStatusDto>>> getAllInventory(
             @RequestParam(required = false) String search,

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -29,9 +30,10 @@ public class JwtUtil {
     }
 
     // Generate Access Token
-    public String generateAccessToken(String email, String role) {
+    public String generateAccessToken(String email, String role, String profileId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
+        claims.put("profileId", profileId);
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(email)
@@ -42,9 +44,10 @@ public class JwtUtil {
     }
 
     // Generate Refresh Token
-    public String generateRefreshToken(String email, String role) {
+    public String generateRefreshToken(String email, String role, String profileId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
+        claims.put("profileId", profileId);
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(email)
@@ -71,6 +74,11 @@ public class JwtUtil {
     // Extract role
     public String extractRole(String token) {
         return extractClaims(token).get("role", String.class);
+    }
+
+    // Extract role
+    public String extractProfileId(String token) {
+        return extractClaims(token).get("profileId", String.class);
     }
 
     // Validate token
