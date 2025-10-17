@@ -46,22 +46,10 @@ public class AuthService {
     public LoginRespond login(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        UUID memberId;
-        switch (user.getRoleToString()) {
-            case "DEALER_MANAGER" -> memberId = user.getDealerManagerProfile() != null 
-                ? user.getDealerManagerProfile().getManagerId() : null;
-            case "DEALER_STAFF" -> memberId = user.getDealerStaffProfile() != null 
-                ? user.getDealerStaffProfile().getStaffId() : null;
-            case "EVM_STAFF" -> memberId = user.getEvmStaffProfile() != null 
-                ? user.getEvmStaffProfile().getEvmStaffId() : null;
-            case "ADMIN" -> memberId = user.getAdminProfile() != null 
-                ? user.getAdminProfile().getAdmin_id() : null;
-            default -> memberId = null;
-        }
         if (passwordEncoder.matches(password, user.getPassword())) {
-            String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString());
+            String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
             UserRespond userRespond = userMapper.usertoUserRespond(user);
-            userRespond.setMemberId(memberId);
+            userRespond.setMemberId(user.getProfileId());
             return new LoginRespond(userRespond, token);
         } else {
             throw new AppException(ErrorCode.INVALID_PASSWORD);
@@ -83,7 +71,7 @@ public class AuthService {
     public String generateRefreshToken(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return jwtUtil.generateRefreshToken(user.getEmail(), user.getRoleToString());
+        return jwtUtil.generateRefreshToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
     }
 
     public TokenPair newRefreshTokenAndAccessToken(HttpServletRequest request) {
@@ -97,11 +85,13 @@ public class AuthService {
         }
         String newAccessToken = jwtUtil.generateAccessToken(
                 jwtUtil.extractEmail(refreshToken),
-                jwtUtil.extractRole(refreshToken)
+                jwtUtil.extractRole(refreshToken),
+                jwtUtil.extractProfileId(refreshToken)
         );
         String newRefreshToken = jwtUtil.generateRefreshToken(
                 jwtUtil.extractEmail(refreshToken),
-                jwtUtil.extractRole(refreshToken)
+                jwtUtil.extractRole(refreshToken),
+                jwtUtil.extractProfileId(refreshToken)
         );
         return new TokenPair(newAccessToken, newRefreshToken);
     }
