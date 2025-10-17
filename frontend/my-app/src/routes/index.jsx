@@ -74,6 +74,7 @@ export default function AppRoutes() {
                         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                             <Route path="admin/products/promotions/*" element={<AdminPromotionManager />} />
                             <Route path="admin/system/users" element={<UserManagement />} />
+                            <Route path="admin/notifications" element={<UserManagement />} />
                         </Route>
 
                         {/* Staff only */}
