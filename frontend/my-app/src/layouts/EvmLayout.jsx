@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-
+import NotificationBell from '../components/NotificationBell';
 import { useAuthContext } from "../features/auth/AuthProvider";
 import {
   FiMenu,
@@ -241,6 +241,9 @@ const EvmLayout = () => {
   const sidebarRef = useRef(null);
   const profileDropdownRef = useRef(null);
   const [menuItems, setMenuItems] = useState([]);
+
+    // Kiểm tra xem user có role 'ADMIN' hay không
+    const role = roles.includes("ADMIN")?'admin':'evm_staff';
 
   useEffect(() => {
     // Nếu chưa đăng nhập thì không load menu
@@ -541,7 +544,10 @@ const EvmLayout = () => {
               </span>
             </div>
           </div>
-
+          <div className="flex items-center space-x-4">
+            <NotificationBell userRole={role} />
+            <span className="text-sm text-gray-600">{role}</span>
+          </div>
           <div className="flex items-center space-x-3">
             {/* Notifications */}
             <button className="p-2.5 hover:bg-gray-100 rounded-xl relative transition-all duration-300 group">
