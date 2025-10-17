@@ -59,6 +59,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             String email = jwtUtil.extractEmail(token);
             String role = jwtUtil.extractRole(token);
             Long userId = jwtUtil.extractUserId(token);
+            String profileId = jwtUtil.extractProfileId(token);
 
             if (!jwtUtil.isTokenValid(token, email)) {
             return this.onError(exchange, ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage(), ErrorCode.TOKEN_INVALID.getHttpStatus());
@@ -69,6 +70,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
                         headers.add("X-User-Email", email);
                         headers.add("X-User-Role", role);
                         headers.add("X-User-Id", String.valueOf(userId));
+                        headers.add("X-User-ProfileId", profileId);
                     }))
                     .build();
 
