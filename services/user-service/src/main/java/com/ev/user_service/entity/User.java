@@ -79,4 +79,22 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private AdminProfile adminProfile;
+
+    public UUID getProfileId() {
+        if (evmStaffProfile != null) {
+            return evmStaffProfile.getEvmStaffId();
+        }
+        if (dealerManagerProfile != null) {
+            return dealerManagerProfile.getDealerId();
+        }
+        if (dealerStaffProfile != null) {
+            return dealerStaffProfile.getDealerId();
+        }
+        if (adminProfile != null) {
+            return adminProfile.getAdmin_id();
+        }
+        return null;
+    }
+
+
 }

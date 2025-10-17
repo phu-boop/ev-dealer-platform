@@ -29,40 +29,6 @@ public class JwtUtil {
     }
 
     // ============================================================
-    // 🟢 Generate Access Token (thêm userId)
-    // ============================================================
-    public String generateAccessToken(Long userId, String email, String role) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("role", role);
-
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(email)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_EXPIRATION_MS))
-                .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    // ============================================================
-    // 🟡 Generate Refresh Token (thêm userId)
-    // ============================================================
-    public String generateRefreshToken(Long userId, String email, String role) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("role", role);
-
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(email)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_EXPIRATION_MS))
-                .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    // ============================================================
     // 🔍 Extract Claims
     // ============================================================
     public Claims extractClaims(String token) {
@@ -87,6 +53,10 @@ public class JwtUtil {
             return ((Integer) userIdObj).longValue();
         }
         return userIdObj != null ? Long.parseLong(userIdObj.toString()) : null;
+    }
+
+    public String extractProfileId(String token) {
+        return extractClaims(token).get("profileId", String.class);
     }
 
     // ============================================================
