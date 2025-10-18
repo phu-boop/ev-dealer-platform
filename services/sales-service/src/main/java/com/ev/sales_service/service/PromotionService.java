@@ -1,11 +1,14 @@
 package com.ev.sales_service.service;
 
+import com.ev.sales_service.dto.outbound.PromotionDTO;
 import com.ev.sales_service.entity.Promotion;
 import com.ev.sales_service.enums.PromotionStatus;
 import com.ev.sales_service.repository.PromotionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,10 +17,26 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PromotionService {
 
+    @Value("${user-service.base-url}")
+    private String userServiceBaseUrl;
     private final PromotionRepository promotionRepository;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public Promotion createPromotion(Promotion promotion) {
-        return promotionRepository.save(promotion);
+        Promotion saved = promotionRepository.save(promotion);
+        // ✅ Gửi thông báo sang user_service
+        try {
+            PromotionDTO dto = new PromotionDTO(saved.getPromotionId(), saved.getPromotionName());
+            restTemplate.postForObject(
+                    userServiceBaseUrl+"users/notifications/promotions",
+                    dto,
+                    Void.class
+            );
+        } catch (Exception e) {
+            e.printStackTrace(); // hoặc log warning nếu user_service không phản hồi
+        }
+
+        return saved;
     }
 
     public Promotion updatePromotion(UUID id, Promotion promotion) {

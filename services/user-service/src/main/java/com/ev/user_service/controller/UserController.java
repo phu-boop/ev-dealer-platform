@@ -1,7 +1,10 @@
 package com.ev.user_service.controller;
 
+import com.ev.user_service.entity.UserDevice;
+import com.ev.user_service.service.UserDeviceService;
 import com.ev.user_service.validation.group.*;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
@@ -14,7 +17,9 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.user_service.dto.respond.UserRespond;
 import com.ev.user_service.service.UserService;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -23,9 +28,14 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final UserDeviceService userDeviceService;
 
-    UserController(UserService userService) {
+    UserController(
+            UserService userService,
+            UserDeviceService userDeviceService
+    ) {
         this.userService = userService;
+        this.userDeviceService = userDeviceService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -89,5 +99,14 @@ public class UserController {
     public ResponseEntity<ApiRespond<Void>> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiRespond.success("Delete User Successfully", null));
+    }
+
+    @PostMapping("/{userId}/fcm-token")
+    public ResponseEntity<ApiRespond<Void>> saveFCMToken(
+            @PathVariable UUID userId,
+            @RequestBody Map<String, String> body
+    ) {
+        String message = userDeviceService.saveFCMToken(userId, body);
+        return ResponseEntity.ok(ApiRespond.success(message,null));
     }
 }
