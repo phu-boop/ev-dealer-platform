@@ -1,12 +1,14 @@
 import {useState} from "react";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
-import {loginUser} from "../features/auth/services/authService.js";
+import {loginUser, registerFCMToken} from "../features/auth/services/authService.js";
 import Alert from "../components/ui/Alert.jsx";
 import Swal from "sweetalert2";
 import {useNavigate} from "react-router-dom";
 import {useAuthContext} from "../features/auth/AuthProvider.jsx";
 import ReCAPTCHA from "react-google-recaptcha";
+import { getMessaging, getToken } from "firebase/messaging";
+import { messaging } from "../services/firebase/firebaseConfig.js";
 
 
 export default function Login() {
@@ -16,7 +18,6 @@ export default function Login() {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-
 
 
     const handleChange = (e) => {
@@ -30,51 +31,63 @@ export default function Login() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
         if (!form.captchaToken) {
             setError("Vui lòng xác nhận reCAPTCHA");
             return;
         }
+
         try {
             const response = await loginUser({
-                ...form,
+            ...form,
             });
 
             if (response.code === "1000") {
-                const userData = response.data.userRespond;
-                const jwtToken = response.data.token;
+            const userData = response.data.userRespond;
+            const jwtToken = response.data.token;
+            const rolesArray = userData.roles.map((role) => role.name);
 
-                const rolesArray = userData.roles.map((role) => role.name);
+            login(
+                jwtToken,
+                rolesArray,
+                userData.id,
+                userData.email,
+                userData.name,
+                userData.fullName,
+                userData.memberId,
+                userData
+            );
 
-                login(
-                    jwtToken,
-                    rolesArray,
-                    userData.id,
-                    userData.email,
-                    userData.name,
-                    userData.fullName,
-                    userData.memberId,
-                    userData
-                );
+            // ✅ Đăng ký FCM token ngay sau khi đăng nhập thành công
+            try {
+                const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+                const fcmToken = await getToken(messaging, { vapidKey });
+                if (fcmToken) {
+                    await registerFCMToken(userData.id, fcmToken);
+                    console.log("✅ FCM token đã gửi lên backend:", fcmToken);
+                }
+            } catch (error) {
+                console.error("❌ Lỗi gửi FCM token:", error);
+            }
 
-                Swal.fire({
-                    title: "Chúc mừng!",
-                    text: "Bạn đã đăng nhập thành công!",
-                    icon: "success",
-                    confirmButtonText: "OK",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        if (rolesArray.includes("ADMIN")||rolesArray.includes("EVM_STAFF")) {
-                            navigate("/evm");
-                        } else if (rolesArray.includes("DEALER_MANAGER")||rolesArray.includes("DEALER_STAFF")) {
-                            navigate("/dealer");
-                        }
-                         else {
-                            window.location.href = "/";
-                        }
-                    }
-                });
+            Swal.fire({
+                title: "Chúc mừng!",
+                text: "Bạn đã đăng nhập thành công!",
+                icon: "success",
+                confirmButtonText: "OK",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                if (rolesArray.includes("ADMIN") || rolesArray.includes("EVM_STAFF")) {
+                    navigate("/evm");
+                } else if (rolesArray.includes("DEALER_MANAGER") || rolesArray.includes("DEALER_STAFF")) {
+                    navigate("/dealer");
+                } else {
+                    window.location.href = "/";
+                }
+                }
+            });
             } else {
-                setError(response.message || "Đăng nhập thất bại");
+            setError(response.message || "Đăng nhập thất bại");
             }
         } catch (err) {
             console.error(err);
@@ -82,7 +95,7 @@ export default function Login() {
         } finally {
             setLoading(false);
         }
-    };
+        };
 
 
 
