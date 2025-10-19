@@ -165,10 +165,13 @@ const CustomerList = () => {
                       Liên hệ
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Loại KH
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Địa chỉ
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Trạng thái & Ngày đăng ký
+                      Trạng thái & Ngày ĐK
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Thao tác
@@ -202,25 +205,45 @@ const CustomerList = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                          customer.customerType === 'INDIVIDUAL' ? 'bg-blue-100 text-blue-800' :
+                          customer.customerType === 'CORPORATE' ? 'bg-purple-100 text-purple-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {customer.customerType === 'INDIVIDUAL' ? 'Cá nhân' :
+                           customer.customerType === 'CORPORATE' ? 'Doanh nghiệp' :
+                           customer.customerType || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex items-center text-sm text-gray-600">
                           <FiMapPin className="w-4 h-4 mr-2 text-gray-400" />
                           {customer.address}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           <div className="flex items-center text-sm text-gray-600">
                             <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
                             {customer.registrationDate ? new Date(customer.registrationDate).toLocaleDateString('vi-VN') : 'Chưa có'}
                           </div>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            customer.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                          <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                            customer.status === 'NEW' ? 'bg-blue-100 text-blue-800' :
+                            customer.status === 'POTENTIAL' ? 'bg-yellow-100 text-yellow-800' :
+                            customer.status === 'PURCHASED' ? 'bg-green-100 text-green-800' :
                             customer.status === 'INACTIVE' ? 'bg-gray-100 text-gray-800' :
+                            // Fallback for old statuses
+                            customer.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
                             'bg-red-100 text-red-800'
                           }`}>
-                            {customer.status === 'ACTIVE' ? 'Hoạt động' :
+                            {customer.status === 'NEW' ? 'Khách hàng mới' :
+                             customer.status === 'POTENTIAL' ? 'Tiềm năng' :
+                             customer.status === 'PURCHASED' ? 'Đã mua xe' :
                              customer.status === 'INACTIVE' ? 'Không hoạt động' :
-                             'Bị khóa'}
+                             // Fallback for old statuses
+                             customer.status === 'ACTIVE' ? 'Hoạt động' :
+                             customer.status === 'BLOCKED' ? 'Bị khóa' :
+                             customer.status}
                           </span>
                         </div>
                       </td>
@@ -267,6 +290,36 @@ const CustomerList = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-semibold text-gray-900 truncate">{customer.firstName} {customer.lastName}</h3>
                         <p className="text-sm text-gray-500 mb-2">{customer.customerCode}</p>
+                        
+                        {/* Customer Type Badge */}
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full mr-2 ${
+                          customer.customerType === 'INDIVIDUAL' ? 'bg-blue-100 text-blue-800' :
+                          customer.customerType === 'CORPORATE' ? 'bg-purple-100 text-purple-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {customer.customerType === 'INDIVIDUAL' ? 'Cá nhân' :
+                           customer.customerType === 'CORPORATE' ? 'Doanh nghiệp' :
+                           customer.customerType || 'N/A'}
+                        </span>
+                        
+                        {/* Status Badge */}
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full mb-2 ${
+                          customer.status === 'NEW' ? 'bg-blue-100 text-blue-800' :
+                          customer.status === 'POTENTIAL' ? 'bg-yellow-100 text-yellow-800' :
+                          customer.status === 'PURCHASED' ? 'bg-green-100 text-green-800' :
+                          customer.status === 'INACTIVE' ? 'bg-gray-100 text-gray-800' :
+                          customer.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {customer.status === 'NEW' ? 'Khách hàng mới' :
+                           customer.status === 'POTENTIAL' ? 'Tiềm năng' :
+                           customer.status === 'PURCHASED' ? 'Đã mua xe' :
+                           customer.status === 'INACTIVE' ? 'Không hoạt động' :
+                           customer.status === 'ACTIVE' ? 'Hoạt động' :
+                           customer.status === 'BLOCKED' ? 'Bị khóa' :
+                           customer.status}
+                        </span>
+                        
                         <div className="space-y-1">
                           <div className="flex items-center text-sm text-gray-600">
                             <FiMail className="w-4 h-4 mr-2 text-gray-400" />

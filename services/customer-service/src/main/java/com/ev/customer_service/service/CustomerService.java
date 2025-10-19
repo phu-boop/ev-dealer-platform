@@ -1,8 +1,11 @@
 package com.ev.customer_service.service;
 
 import com.ev.customer_service.dto.request.CustomerRequest;
+import com.ev.customer_service.dto.response.AuditResponse;
 import com.ev.customer_service.dto.response.CustomerResponse;
 import com.ev.customer_service.entity.Customer;
+import com.ev.customer_service.enums.CustomerStatus;
+import com.ev.customer_service.enums.CustomerType;
 import com.ev.customer_service.exception.DuplicateResourceException;
 import com.ev.customer_service.exception.ResourceNotFoundException;
 import com.ev.customer_service.repository.CustomerRepository;
@@ -62,6 +65,24 @@ public class CustomerService {
 
         Customer customer = modelMapper.map(request, Customer.class);
         
+        // Parse and set CustomerType (if provided)
+        if (request.getCustomerType() != null && !request.getCustomerType().isEmpty()) {
+            try {
+                customer.setCustomerType(CustomerType.valueOf(request.getCustomerType().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                customer.setCustomerType(CustomerType.INDIVIDUAL); // Default
+            }
+        }
+        
+        // Parse and set CustomerStatus (if provided, otherwise @PrePersist will set to NEW)
+        if (request.getStatus() != null && !request.getStatus().isEmpty()) {
+            try {
+                customer.setStatus(CustomerStatus.valueOf(request.getStatus().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                customer.setStatus(CustomerStatus.NEW); // Default
+            }
+        }
+        
         // Auto-generate customer code: CUS-YYYYMMDD-XXXX
         customer.setCustomerCode(generateCustomerCode());
         
@@ -109,9 +130,14 @@ public class CustomerService {
         }
 
     // Capture old values for audit
+    String oldFirstName = customer.getFirstName();
+    String oldLastName = customer.getLastName();
+    String oldEmail = customer.getEmail();
     String oldPhone = customer.getPhone();
     String oldAddress = customer.getAddress();
-    String oldStatus = customer.getStatus();
+    String oldIdNumber = customer.getIdNumber();
+    CustomerType oldCustomerType = customer.getCustomerType();
+    CustomerStatus oldStatus = customer.getStatus();
 
     // Manually update fields to avoid overwriting relationships and managed fields
         customer.setFirstName(request.getFirstName());
@@ -120,24 +146,105 @@ public class CustomerService {
         customer.setPhone(request.getPhone());
         customer.setAddress(request.getAddress());
         customer.setIdNumber(request.getIdNumber());
-        customer.setCustomerType(request.getCustomerType());
+        
+        // Parse and set CustomerType
+        if (request.getCustomerType() != null && !request.getCustomerType().isEmpty()) {
+            try {
+                customer.setCustomerType(CustomerType.valueOf(request.getCustomerType().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // Keep existing value if invalid
+            }
+        }
+        
         customer.setRegistrationDate(request.getRegistrationDate());
-        customer.setStatus(request.getStatus());
+        
+        // Parse and set CustomerStatus
+        if (request.getStatus() != null && !request.getStatus().isEmpty()) {
+            try {
+                customer.setStatus(CustomerStatus.valueOf(request.getStatus().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // Keep existing value if invalid
+            }
+        }
+        
         customer.setPreferredDealerId(request.getPreferredDealerId());
         // Don't update customerCode, customerId, createdAt, updatedAt, or relationships
         
         Customer updatedCustomer = customerRepository.save(customer);
 
-        // Record audit if relevant fields changed (phone, address, status)
+        // Record audit if relevant fields changed
         java.util.Map<String, Object> changes = new java.util.HashMap<>();
-        if (oldPhone == null ? request.getPhone() != null : !oldPhone.equals(request.getPhone())) {
-            changes.put("phone", java.util.Map.of("old", oldPhone, "new", request.getPhone()));
+        
+        // Compare first name
+        String newFirstName = updatedCustomer.getFirstName();
+        if (!java.util.Objects.equals(oldFirstName, newFirstName)) {
+            changes.put("firstName", java.util.Map.of(
+                "old", oldFirstName != null ? oldFirstName : "null", 
+                "new", newFirstName != null ? newFirstName : "null"
+            ));
         }
-        if (oldAddress == null ? request.getAddress() != null : !oldAddress.equals(request.getAddress())) {
-            changes.put("address", java.util.Map.of("old", oldAddress, "new", request.getAddress()));
+        
+        // Compare last name
+        String newLastName = updatedCustomer.getLastName();
+        if (!java.util.Objects.equals(oldLastName, newLastName)) {
+            changes.put("lastName", java.util.Map.of(
+                "old", oldLastName != null ? oldLastName : "null", 
+                "new", newLastName != null ? newLastName : "null"
+            ));
         }
-        if (oldStatus == null ? request.getStatus() != null : !oldStatus.equals(request.getStatus())) {
-            changes.put("status", java.util.Map.of("old", oldStatus, "new", request.getStatus()));
+        
+        // Compare email
+        String newEmail = updatedCustomer.getEmail();
+        if (!java.util.Objects.equals(oldEmail, newEmail)) {
+            changes.put("email", java.util.Map.of(
+                "old", oldEmail != null ? oldEmail : "null", 
+                "new", newEmail != null ? newEmail : "null"
+            ));
+        }
+        
+        // Compare phone
+        String newPhone = updatedCustomer.getPhone();
+        if (!java.util.Objects.equals(oldPhone, newPhone)) {
+            changes.put("phone", java.util.Map.of(
+                "old", oldPhone != null ? oldPhone : "null", 
+                "new", newPhone != null ? newPhone : "null"
+            ));
+        }
+        
+        // Compare address
+        String newAddress = updatedCustomer.getAddress();
+        if (!java.util.Objects.equals(oldAddress, newAddress)) {
+            changes.put("address", java.util.Map.of(
+                "old", oldAddress != null ? oldAddress : "null", 
+                "new", newAddress != null ? newAddress : "null"
+            ));
+        }
+        
+        // Compare ID number (CMND/CCCD)
+        String newIdNumber = updatedCustomer.getIdNumber();
+        if (!java.util.Objects.equals(oldIdNumber, newIdNumber)) {
+            changes.put("idNumber", java.util.Map.of(
+                "old", oldIdNumber != null ? oldIdNumber : "null", 
+                "new", newIdNumber != null ? newIdNumber : "null"
+            ));
+        }
+        
+        // Compare customer type enum
+        CustomerType newCustomerType = updatedCustomer.getCustomerType();
+        if (oldCustomerType != newCustomerType) {
+            changes.put("customerType", java.util.Map.of(
+                "old", oldCustomerType != null ? oldCustomerType.name() : "null", 
+                "new", newCustomerType != null ? newCustomerType.name() : "null"
+            ));
+        }
+        
+        // Compare status enum
+        CustomerStatus newStatus = updatedCustomer.getStatus();
+        if (oldStatus != newStatus) {
+            changes.put("status", java.util.Map.of(
+                "old", oldStatus != null ? oldStatus.name() : "null", 
+                "new", newStatus != null ? newStatus.name() : "null"
+            ));
         }
 
         if (!changes.isEmpty()) {
@@ -163,4 +270,20 @@ public class CustomerService {
         }
         customerRepository.deleteById(id);
     }
+
+    /**
+     * Get audit history for a customer
+     */
+    @Transactional(readOnly = true)
+    public List<AuditResponse> getCustomerAuditHistory(Long customerId) {
+        // Verify customer exists
+        if (!customerRepository.existsById(customerId)) {
+            throw new ResourceNotFoundException("Customer not found with id: " + customerId);
+        }
+        
+        return auditRepository.findByCustomerIdOrderByChangedAtDesc(customerId).stream()
+                .map(audit -> modelMapper.map(audit, AuditResponse.class))
+                .collect(Collectors.toList());
+    }
 }
+ 

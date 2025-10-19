@@ -176,12 +176,20 @@ const EditCustomer = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Loại khách hàng</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Loại khách hàng <span className="text-blue-500">*</span>
+                </label>
                 <div className="relative">
-                  <select name="customerType" value={formData.customerType} onChange={handleInputChange} className="w-full px-4 py-3.5 border border-gray-300 rounded-xl appearance-none">
+                  <select 
+                    name="customerType" 
+                    value={formData.customerType} 
+                    onChange={handleInputChange} 
+                    className="w-full px-4 py-3.5 border border-gray-300 rounded-xl appearance-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white cursor-pointer"
+                  >
                     <option value="INDIVIDUAL">Cá nhân</option>
                     <option value="CORPORATE">Doanh nghiệp</option>
                   </select>
+                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 </div>
               </div>
 
@@ -194,13 +202,44 @@ const EditCustomer = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Trạng thái</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Trạng thái khách hàng <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
-                  <select name="status" value={formData.status} onChange={handleInputChange} className="w-full px-4 py-3.5 border border-gray-300 rounded-xl appearance-none">
-                    <option value="ACTIVE">Hoạt động</option>
+                  <select 
+                    name="status" 
+                    value={formData.status} 
+                    onChange={handleInputChange} 
+                    className="w-full px-4 py-3.5 border border-gray-300 rounded-xl appearance-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white cursor-pointer"
+                  >
+                    <option value="NEW">Khách hàng mới</option>
+                    <option value="POTENTIAL">Khách hàng tiềm năng</option>
+                    <option value="PURCHASED">Đã mua xe</option>
                     <option value="INACTIVE">Không hoạt động</option>
-                    <option value="BLOCKED">Bị khóa</option>
                   </select>
+                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                </div>
+                <p className="mt-1.5 text-xs text-gray-500 flex items-center">
+                  <FiAlertCircle className="w-3 h-3 mr-1" />
+                  Cập nhật trạng thái theo hành trình khách hàng
+                </p>
+              </div>
+            </div>
+
+            {/* Status Info Box */}
+            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <FiAlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                </div>
+                <div className="ml-3 text-sm">
+                  <p className="font-semibold text-blue-900 mb-2">📊 Hướng dẫn cập nhật trạng thái:</p>
+                  <ul className="text-blue-800 space-y-1 list-disc list-inside">
+                    <li><strong>Khách hàng mới:</strong> Vừa tạo hồ sơ, chưa có tương tác</li>
+                    <li><strong>Tiềm năng:</strong> Đang quan tâm, liên hệ, đặt lịch xem xe</li>
+                    <li><strong>Đã mua xe:</strong> Hoàn tất giao dịch mua bán</li>
+                    <li><strong>Không hoạt động:</strong> Không còn liên lạc hoặc không quan tâm</li>
+                  </ul>
                 </div>
               </div>
             </div>

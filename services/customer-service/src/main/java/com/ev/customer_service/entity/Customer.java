@@ -1,5 +1,7 @@
 package com.ev.customer_service.entity;
 
+import com.ev.customer_service.enums.CustomerStatus;
+import com.ev.customer_service.enums.CustomerType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -44,14 +46,16 @@ public class Customer {
     @Column(name = "id_number", unique = true, length = 50)
     private String idNumber;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "customer_type", length = 20)
-    private String customerType; // INDIVIDUAL, CORPORATE
+    private CustomerType customerType; // INDIVIDUAL, CORPORATE
 
     @Column(name = "registration_date")
     private LocalDate registrationDate;
 
-    @Column(name = "status", length = 20)
-    private String status; // ACTIVE, INACTIVE, BLOCKED
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private CustomerStatus status; // NEW, POTENTIAL, PURCHASED, INACTIVE
 
     @Column(name = "preferred_dealer_id")
     private Long preferredDealerId;
@@ -79,4 +83,20 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<CommunicationHistory> communicationHistories;
+
+    /**
+     * Set default values before persisting
+     */
+    @PrePersist
+    protected void onCreate() {
+        if (this.status == null) {
+            this.status = CustomerStatus.NEW; // Mặc định là khách hàng mới
+        }
+        if (this.registrationDate == null) {
+            this.registrationDate = LocalDate.now();
+        }
+        if (this.customerType == null) {
+            this.customerType = CustomerType.INDIVIDUAL; // Mặc định là cá nhân
+        }
+    }
 }

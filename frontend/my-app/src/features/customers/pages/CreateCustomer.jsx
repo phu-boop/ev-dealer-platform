@@ -17,7 +17,7 @@ const CreateCustomer = () => {
     idNumber: "",
     customerType: "INDIVIDUAL",
     registrationDate: "",
-    status: "ACTIVE",
+    // status không cần thiết khi tạo mới - backend tự động set = NEW
     preferredDealerId: null
   });
 
@@ -82,7 +82,7 @@ const CreateCustomer = () => {
         idNumber: formData.idNumber || null,
         customerType: formData.customerType,
         registrationDate: formData.registrationDate || null,
-        status: formData.status,
+        // Không truyền status - backend tự động set = NEW
         preferredDealerId: formData.preferredDealerId || null
       };
 
@@ -267,8 +267,8 @@ const CreateCustomer = () => {
                     onChange={handleInputChange}
                     className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
                   >
-                    <option value="INDIVIDUAL">🙂 Cá nhân</option>
-                    <option value="CORPORATE">🏢 Doanh nghiệp</option>
+                    <option value="INDIVIDUAL">Cá nhân</option>
+                    <option value="CORPORATE">Doanh nghiệp</option>
                   </select>
                   <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 </div>
@@ -290,25 +290,14 @@ const CreateCustomer = () => {
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Trạng thái
-                </label>
-                <div className="relative">
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
-                  >
-                    <option value="ACTIVE">✅ Hoạt động</option>
-                    <option value="INACTIVE">⏸️ Không hoạt động</option>
-                    <option value="BLOCKED">🚫 Bị khóa</option>
-                  </select>
-                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                </div>
+            {/* Info Note */}
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start">
+              <FiAlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-800">
+                <p className="font-semibold mb-1">� Lưu ý:</p>
+                <p>Khách hàng mới sẽ tự động được gán trạng thái <span className="font-bold">"Khách hàng mới"</span>. Bạn có thể cập nhật trạng thái sau khi tạo.</p>
               </div>
             </div>
           </div>
