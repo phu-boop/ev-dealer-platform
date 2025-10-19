@@ -176,6 +176,11 @@ const EvmLayout = () => {
     const [activePath, setActivePath] = useState("");
     const [openSubmenus, setOpenSubmenus] = useState(new Set());
     const {logout, email, name, fullName, roles} = useAuthContext();
+    
+    // Xác định menuItems dựa trên roles từ AuthContext
+    const menuItems = roles?.includes("DEALER_MANAGER")
+      ? dealerManagerMenuItems
+      : dealerStaffMenuItems;
     const location = useLocation();
     const navigate = useNavigate();
     const sidebarRef = useRef(null);
