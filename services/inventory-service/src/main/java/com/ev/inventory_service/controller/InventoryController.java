@@ -7,7 +7,6 @@ import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
 import com.ev.inventory_service.services.Interface.InventoryService;
-import com.ev.inventory_service.util.JwtUtil;
 import com.ev.inventory_service.model.InventoryTransaction;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
 // import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -30,8 +30,6 @@ import java.io.IOException;
 public class InventoryController {
 
     private final InventoryService inventoryService;
-
-    private final JwtUtil jwtUtil;
 
     /**
      * Lấy danh sách tồn kho phân trang, có thể lọc theo dealerId, status và tìm kiếm theo tên.
@@ -101,27 +99,10 @@ public class InventoryController {
     @PutMapping("/dealer-stock/reorder-level")
     public ResponseEntity<ApiRespond<Void>> updateDealerReorderLevel(
             @Valid @RequestBody UpdateReorderLevelRequest request,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader("X-User-ProfileId") Long dealerId) {
         
-        // // 1. Sử dụng JwtUtil để lấy dealerId từ claim trong token
-        // Long dealerId = jwtUtil.extractDealerId(authorizationHeader);
-        
-        Long dealerId = 501L; // Gán giá trị cứng để test API
-        
-        // 2. Kiểm tra nếu token không có dealerId (ví dụ: token của Admin)
-        // if (dealerId == null) {
-        //     ErrorCode errorCode = ErrorCode.FORBIDDEN;
-        //     ApiRespond<Void> errorResponse = ApiRespond.error(
-        //         errorCode.getCode(),
-        //         "This action is only for dealer accounts.",
-        //         null
-        //     );
-        //     return new ResponseEntity<>(errorResponse, errorCode.getHttpStatus());
-        // }
-        // 3. Gọi service với dealerId đã được xác thực từ token
         inventoryService.updateDealerReorderLevel(dealerId, request);
-
-        
+          
         return ResponseEntity.ok(ApiRespond.success("Reorder level updated successfully", null));
     }
 
@@ -131,9 +112,10 @@ public class InventoryController {
     @PutMapping("/central-stock/reorder-level")
     public ResponseEntity<ApiRespond<Void>> updateCentralReorderLevel(
             @Valid @RequestBody UpdateReorderLevelRequest request,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            Authentication authentication) {
         
-            String email = jwtUtil.extractEmail(authorizationHeader);
+            // Lấy email trực tiếp từ principal đã được xác thực
+            String email = authentication.getName();
     
             // Gọi service với đầy đủ thông tin
             inventoryService.updateCentralReorderLevel(request, email);

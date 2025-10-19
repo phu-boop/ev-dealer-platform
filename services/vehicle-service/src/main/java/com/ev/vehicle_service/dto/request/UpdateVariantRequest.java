@@ -20,8 +20,17 @@ public class UpdateVariantRequest {
     @Min(value = 0, message = "Price must be non-negative")
     private BigDecimal price;
 
+    private String imageUrl;
+
     @NotNull(message = "Status is required")
     private VehicleStatus status;
+
+    private Integer batteryCapacity;
+    private Float chargingTime;
+    private Integer rangeKm;
+    private Integer motorPower;
+
+    private BigDecimal wholesalePrice;
 
     private String reason;
 }

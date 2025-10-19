@@ -19,7 +19,7 @@ import java.util.List;
 public class StockAlertServiceImpl implements StockAlertService {
 
     private final CentralInventoryRepository centralRepo;
-    private final DealerAllocationRepository dealerRepo; // <<< Inject thêm repository của đại lý
+    private final DealerAllocationRepository dealerRepo; 
     private final StockAlertRepository alertRepo;
 
     @Override
