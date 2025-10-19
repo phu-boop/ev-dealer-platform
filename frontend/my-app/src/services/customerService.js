@@ -51,6 +51,16 @@ class CustomerService {
       throw error;
     }
   }
+
+  async getCustomerAuditHistory(id) {
+    try {
+      const response = await apiConstUserService.get(`/customers/${id}/audit-history`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error fetching customer audit history:", error);
+      throw error;
+    }
+  }
 }
 
 export default new CustomerService();

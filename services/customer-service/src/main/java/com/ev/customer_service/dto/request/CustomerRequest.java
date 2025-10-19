@@ -36,12 +36,12 @@ public class CustomerRequest {
     @Size(max = 50, message = "ID number must not exceed 50 characters")
     private String idNumber;
 
-    @Size(max = 20, message = "Customer type must not exceed 20 characters")
+    // CustomerType: INDIVIDUAL hoặc CORPORATE (optional, mặc định = INDIVIDUAL)
     private String customerType;
 
     private LocalDate registrationDate;
 
-    @Size(max = 20, message = "Status must not exceed 20 characters")
+    // CustomerStatus: NEW, POTENTIAL, PURCHASED, INACTIVE (optional, mặc định = NEW khi tạo)
     private String status;
 
     private Long preferredDealerId;

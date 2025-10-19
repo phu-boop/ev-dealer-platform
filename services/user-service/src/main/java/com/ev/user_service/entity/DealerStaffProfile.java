@@ -25,7 +25,7 @@ public class DealerStaffProfile {
     private User user;
 
     @Column(name = "dealer_id", nullable = false)
-    private Long dealerId;
+    private UUID dealerId;
 
     @Column(name = "position", length = 100)
     private String position;

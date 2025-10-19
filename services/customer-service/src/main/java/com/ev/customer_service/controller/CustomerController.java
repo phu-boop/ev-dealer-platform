@@ -2,6 +2,8 @@ package com.ev.customer_service.controller;
 
 import com.ev.customer_service.dto.request.CustomerRequest;
 import com.ev.customer_service.dto.response.CustomerResponse;
+import com.ev.customer_service.enums.CustomerStatus;
+import com.ev.customer_service.enums.CustomerType;
 import com.ev.customer_service.service.CustomerService;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import jakarta.validation.Valid;
@@ -10,7 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/customers")
@@ -68,5 +73,48 @@ public class CustomerController {
         Long customerId = Long.parseLong(id);
         customerService.deleteCustomer(customerId);
         return ResponseEntity.ok(ApiRespond.success("Customer deleted successfully", (Void) null));
+    }
+
+    /**
+     * Get available customer statuses
+     * GET /customers/enums/statuses
+     */
+    @GetMapping("/enums/statuses")
+    public ResponseEntity<ApiRespond<List<Map<String, String>>>> getCustomerStatuses() {
+        List<Map<String, String>> statuses = Arrays.stream(CustomerStatus.values())
+                .map(status -> Map.of(
+                    "value", status.name(),
+                    "displayName", status.getDisplayName()
+                ))
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(ApiRespond.success("Customer statuses retrieved successfully", statuses));
+    }
+
+    /**
+     * Get available customer types
+     * GET /customers/enums/types
+     */
+    @GetMapping("/enums/types")
+    public ResponseEntity<ApiRespond<List<Map<String, String>>>> getCustomerTypes() {
+        List<Map<String, String>> types = Arrays.stream(CustomerType.values())
+                .map(type -> Map.of(
+                    "value", type.name(),
+                    "displayName", type.getDisplayName()
+                ))
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(ApiRespond.success("Customer types retrieved successfully", types));
+    }
+
+    /**
+     * Get audit history for a customer
+     * GET /customers/{id}/audit-history
+     */
+    @GetMapping("/{id}/audit-history")
+    public ResponseEntity<ApiRespond<List<com.ev.customer_service.dto.response.AuditResponse>>> getCustomerAuditHistory(@PathVariable String id) {
+        Long customerId = Long.parseLong(id);
+        List<com.ev.customer_service.dto.response.AuditResponse> audits = customerService.getCustomerAuditHistory(customerId);
+        return ResponseEntity.ok(ApiRespond.success("Audit history retrieved successfully", audits));
     }
 }
