@@ -31,6 +31,7 @@ public class UserDeviceService {
             UserDevice device = existing.get();
             device.setUpdatedAt(LocalDateTime.now());
             userDeviceRepository.save(device);
+            return "Token updated";
         } else {
             UserDevice device = UserDevice.builder()
                     .id(UUID.randomUUID())

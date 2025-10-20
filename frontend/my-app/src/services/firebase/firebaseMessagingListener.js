@@ -3,17 +3,26 @@ import { onMessage } from "firebase/messaging";
 import { messaging } from "./firebaseConfig";
 
 export default function initFirebaseMessaging() {
-  // Khi app đang mở và có thông báo từ FCM
+  if (!("Notification" in window)) {
+    console.warn("🚫 Trình duyệt không hỗ trợ Notification API.");
+    return;
+  }
+
+  // ✅ Đăng ký lắng nghe thông báo FCM realtime
   onMessage(messaging, (payload) => {
-    console.log("📩 Notification realtime:", payload);
+    console.log("📩 Nhận thông báo realtime:", payload);
+
+    const { title, body, icon } = payload.notification || {};
 
     if (Notification.permission === "granted") {
-      new Notification(payload.notification.title, {
-        body: payload.notification.body,
-        icon: payload.notification.icon || "/logo.png",
+      new Notification(title || "Thông báo mới", {
+        body: body || "Bạn có thông báo mớiiii app.",
+        icon: icon || "/logo.png",
+        badge: "/badge.png",
+        silent: false,
       });
     } else {
-      console.warn("🔒 Notification permission not granted.");
+      console.warn("🔒 Quyền thông báo chưa được cấp, bỏ qua hiển thị popup.");
     }
   });
 }

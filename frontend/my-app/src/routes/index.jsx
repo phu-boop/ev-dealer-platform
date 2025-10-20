@@ -21,8 +21,7 @@ import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.j
 import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx"
-
-
+import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
 export default function AppRoutes() {
     return (
         <AuthProvider>
@@ -75,6 +74,7 @@ export default function AppRoutes() {
                             <Route path="admin/products/promotions/*" element={<AdminPromotionManager />} />
                             <Route path="admin/system/users" element={<UserManagement />} />
                             <Route path="admin/notifications" element={<UserManagement />} />
+                            <Route path="admin/reports/notifications" element={<NotificationManagement />} />
                         </Route>
 
                         {/* Staff only */}

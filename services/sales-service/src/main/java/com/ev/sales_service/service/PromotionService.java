@@ -28,10 +28,11 @@ public class PromotionService {
         try {
             PromotionDTO dto = new PromotionDTO(saved.getPromotionId(), saved.getPromotionName());
             restTemplate.postForObject(
-                    userServiceBaseUrl+"users/notifications/promotions",
+                    userServiceBaseUrl+"/users/notifications/promotions",
                     dto,
                     Void.class
             );
+            System.out.printf("give to user-service");
         } catch (Exception e) {
             e.printStackTrace(); // hoặc log warning nếu user_service không phản hồi
         }

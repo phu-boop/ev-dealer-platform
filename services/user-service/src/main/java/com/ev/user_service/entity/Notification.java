@@ -29,7 +29,7 @@ public class Notification {
 
     private UUID promotionId; // nếu liên quan đến Promotion
 
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = false)
     private boolean read = false;
 
     @Column(nullable = false)
