@@ -157,7 +157,7 @@ export const evmStaffMenuItems = [
   // Quản lý sản phẩm
   {
     icon: FiPackage,
-    label: "Quản Lý Sản Phẩm",
+    label: "(DONE)Quản Lý Sản Phẩm",
     path: "/evm/staff/products",
     submenu: [
       { icon: FiList, label: "Danh Mục Xe", path: "/evm/staff/products/catalog" },
