@@ -120,3 +120,4 @@ docker-compose.override.yml
 Thumbs.db
 ehthumbs.db
 Icon?
+services/user-service/src/main/resources/firebase-service-account.json
