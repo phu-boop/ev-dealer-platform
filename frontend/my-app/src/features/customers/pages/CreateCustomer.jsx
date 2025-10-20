@@ -5,9 +5,13 @@ import {
   FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiSave, FiX,
   FiCheck, FiAlertCircle, FiChevronDown
 } from "react-icons/fi";
-import customerService from "../../../services/customerService";
+import customerService from "../../../services/apiConstCustomerService";
+import { useAuthContext } from "../../auth/AuthProvider";
 
 const CreateCustomer = () => {
+  const navigate = useNavigate();
+  const { roles } = useAuthContext();
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,8 +27,6 @@ const CreateCustomer = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -88,7 +90,10 @@ const CreateCustomer = () => {
 
       await customerService.createCustomer(customerData);
       toast.success("Thêm khách hàng thành công!");
-      navigate("/dealer/customers/list");
+      
+      // Navigate based on role
+      const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
+      navigate(`${base}/customers/list`);
     } catch (error) {
       console.error("Error creating customer:", error);
       const errorMessage = error.response?.data?.message || "Không thể thêm khách hàng. Vui lòng thử lại.";

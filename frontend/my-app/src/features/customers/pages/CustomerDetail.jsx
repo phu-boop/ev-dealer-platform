@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit, FiClock, FiUser } from "react-icons/fi";
-import customerService from "../../../services/customerService";
+import customerService from "../../../services/apiConstCustomerService";
 import { useAuthContext } from "../../../features/auth/AuthProvider";
 
 const CustomerDetail = () => {
@@ -96,7 +96,7 @@ const CustomerDetail = () => {
   if (loading) return <div className="p-6">Đang tải...</div>;
   if (!customer) return <div className="p-6">Không tìm thấy khách hàng</div>;
 
-  const base = roles?.includes("DEALER_MANAGER") ? '/dealer' : '/staff';
+  const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
 
   return (
     <div className="min-h-screen p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">

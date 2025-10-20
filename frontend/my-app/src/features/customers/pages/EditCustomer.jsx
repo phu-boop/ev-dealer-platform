@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiSave, FiX, FiAlertCircle, FiChevronDown } from "react-icons/fi";
-import customerService from "../../../services/customerService";
+import customerService from "../../../services/apiConstCustomerService";
 import { useAuthContext } from "../../../features/auth/AuthProvider";
 
 const EditCustomer = () => {
@@ -88,7 +88,7 @@ const EditCustomer = () => {
       };
       await customerService.updateCustomer(id, customerData);
       toast.success("Cập nhật khách hàng thành công");
-      const base = roles?.includes("DEALER_MANAGER") ? '/dealer' : '/staff';
+      const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
       navigate(`${base}/customers/list`);
     } catch (err) {
       console.error("Error updating customer:", err);
@@ -100,7 +100,7 @@ const EditCustomer = () => {
   };
 
   const handleCancel = () => {
-    const base = roles?.includes("DEALER_MANAGER") ? '/dealer' : '/staff';
+    const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
     navigate(`${base}/customers/list`);
   };
 

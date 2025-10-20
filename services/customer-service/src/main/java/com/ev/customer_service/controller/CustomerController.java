@@ -8,6 +8,7 @@ import com.ev.customer_service.service.CustomerService;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/customers")
 @RequiredArgsConstructor
@@ -24,18 +26,36 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
+    /**
+     * Health check endpoint
+     */
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("Customer Service is running!");
+    }
+
     @GetMapping
     public ResponseEntity<ApiRespond<List<CustomerResponse>>> getAllCustomers(
             @RequestParam(required = false) String search) {
-        List<CustomerResponse> customers;
+        log.info("GET /customers - search parameter: '{}'", search);
+        
+        try {
+            List<CustomerResponse> customers;
 
-        if (search != null && !search.isEmpty()) {
-            customers = customerService.searchCustomers(search);
-        } else {
-            customers = customerService.getAllCustomers();
+            if (search != null && !search.isEmpty()) {
+                log.info("Searching customers with query: {}", search);
+                customers = customerService.searchCustomers(search);
+            } else {
+                log.info("Fetching all customers");
+                customers = customerService.getAllCustomers();
+            }
+
+            log.info("Successfully retrieved {} customers", customers.size());
+            return ResponseEntity.ok(ApiRespond.success("Customers retrieved successfully", customers));
+        } catch (Exception e) {
+            log.error("Error in getAllCustomers: ", e);
+            throw e;
         }
-
-        return ResponseEntity.ok(ApiRespond.success("Customers retrieved successfully", customers));
     }
 
     @GetMapping("/{id}")

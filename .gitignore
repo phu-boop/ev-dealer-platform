@@ -121,6 +121,15 @@ Thumbs.db
 ehthumbs.db
 Icon?
 
-# 🧩 Ignore tất cả file .properties
-*.properties
->>>>>>>>> Temporary merge branch 2
+############################################
+### 📝 DOCUMENTATION / NOTES ###
+############################################
+
+# Temporary documentation files
+CUSTOMER_ROUTES_UPDATE.md
+README_DEALER_CUSTOMER.md
+
+# Other temp docs
+*_TEMP.md
+*_DRAFT.md
+

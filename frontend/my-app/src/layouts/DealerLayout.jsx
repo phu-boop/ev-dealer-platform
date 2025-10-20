@@ -176,30 +176,25 @@ const EvmLayout = () => {
     const [activePath, setActivePath] = useState("");
     const [openSubmenus, setOpenSubmenus] = useState(new Set());
     const {logout, email, name, fullName, roles} = useAuthContext();
-    
-    // Xác định menuItems dựa trên roles từ AuthContext
-    const menuItems = roles?.includes("DEALER_MANAGER")
-      ? dealerManagerMenuItems
-      : dealerStaffMenuItems;
     const location = useLocation();
     const navigate = useNavigate();
     const sidebarRef = useRef(null);
     const profileDropdownRef = useRef(null);
-        const [menuItems, setMenuItems] = useState([]);
+    const [menuItems, setMenuItems] = useState([]);
     
-        useEffect(() => {
-            // Nếu chưa đăng nhập thì không load menu
-            if (!roles || roles.length === 0) {
+    useEffect(() => {
+        // Nếu chưa đăng nhập thì không load menu
+        if (!roles || roles.length === 0) {
             return;
-            }
+        }
     
-            // Gán menu tùy role
-            if (roles.includes("DEALER_MANAGER")) {
+        // Gán menu tùy role
+        if (roles.includes("DEALER_MANAGER")) {
             setMenuItems(dealerManagerMenuItems);
-            } else {
+        } else {
             setMenuItems(dealerStaffMenuItems);
-            }
-        }, [roles]);
+        }
+    }, [roles]);
 
     // Xác định đường dẫn hiện tại và mở submenu tương ứng
     useEffect(() => {

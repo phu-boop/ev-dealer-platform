@@ -5,7 +5,7 @@ import {
   FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiUser,
   FiMail, FiPhone, FiMapPin, FiCalendar, FiChevronLeft, FiChevronRight
 } from "react-icons/fi";
-import customerService from "../../../services/customerService";
+import customerService from "../../../services/apiConstCustomerService";
 import { debugAuth } from "../../../utils/checkAuth";
 
 const CustomerList = () => {
@@ -85,7 +85,7 @@ const CustomerList = () => {
     }
   };
 
-  const base = sessionStorage.getItem('roles')?.includes('DEALER_MANAGER') ? '/dealer' : '/staff';
+  const base = sessionStorage.getItem('roles')?.includes('DEALER_MANAGER') ? '/dealer/manager' : '/dealer/staff';
 
   const handleView = (id) => {
     navigate(`${base}/customers/${id}`);
@@ -116,7 +116,7 @@ const CustomerList = () => {
               </p>
             </div>
             <button
-              onClick={() => navigate("/dealer/customers/create")}
+              onClick={() => navigate(`${base}/customers/create`)}
               className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
             >
               <FiPlus className="w-5 h-5 mr-2" />
