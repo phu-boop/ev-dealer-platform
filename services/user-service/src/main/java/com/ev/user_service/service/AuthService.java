@@ -14,6 +14,7 @@ import com.ev.user_service.entity.User;
 import com.ev.user_service.mapper.UserMapper;
 import com.ev.user_service.repository.UserRepository;
 import com.ev.user_service.security.JwtUtil;
+import java.util.UUID;
 
 import java.security.SecureRandom;
 
@@ -46,8 +47,9 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         if (passwordEncoder.matches(password, user.getPassword())) {
-            String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString());
+            String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
             UserRespond userRespond = userMapper.usertoUserRespond(user);
+            userRespond.setMemberId(user.getProfileId());
             return new LoginRespond(userRespond, token);
         } else {
             throw new AppException(ErrorCode.INVALID_PASSWORD);
@@ -69,7 +71,7 @@ public class AuthService {
     public String generateRefreshToken(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return jwtUtil.generateRefreshToken(user.getEmail(), user.getRoleToString());
+        return jwtUtil.generateRefreshToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
     }
 
     public TokenPair newRefreshTokenAndAccessToken(HttpServletRequest request) {
@@ -83,11 +85,13 @@ public class AuthService {
         }
         String newAccessToken = jwtUtil.generateAccessToken(
                 jwtUtil.extractEmail(refreshToken),
-                jwtUtil.extractRole(refreshToken)
+                jwtUtil.extractRole(refreshToken),
+                jwtUtil.extractProfileId(refreshToken)
         );
         String newRefreshToken = jwtUtil.generateRefreshToken(
                 jwtUtil.extractEmail(refreshToken),
-                jwtUtil.extractRole(refreshToken)
+                jwtUtil.extractRole(refreshToken),
+                jwtUtil.extractProfileId(refreshToken)
         );
         return new TokenPair(newAccessToken, newRefreshToken);
     }

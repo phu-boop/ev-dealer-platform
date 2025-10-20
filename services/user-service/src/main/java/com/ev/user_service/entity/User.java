@@ -11,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Data
@@ -22,8 +23,9 @@ import java.util.stream.Collectors;
 @Setter
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
     @Column(nullable = false, unique = true)
     String email;
     String password;
@@ -56,6 +58,7 @@ public class User {
                 .map(Role::getName)
                 .collect(Collectors.joining());
     }
+
     @UpdateTimestamp
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
@@ -76,4 +79,22 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private AdminProfile adminProfile;
+
+    public UUID getProfileId() {
+        if (evmStaffProfile != null) {
+            return evmStaffProfile.getEvmStaffId();
+        }
+        if (dealerManagerProfile != null) {
+            return dealerManagerProfile.getDealerId();
+        }
+        if (dealerStaffProfile != null) {
+            return dealerStaffProfile.getDealerId();
+        }
+        if (adminProfile != null) {
+            return adminProfile.getAdmin_id();
+        }
+        return null;
+    }
+
+
 }

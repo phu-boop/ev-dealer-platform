@@ -34,3 +34,5 @@ c. Báo cáo & phân tích
 + Doanh số theo khu vực, đại lý.
 + Tồn kho & tốc độ tiêu thụ.
 + AI dự báo nhu cầu để lên kế hoạch sản xuất & phân phối."
+fix
+mvn spring-boot:run -Dspring-boot.run.profiles=local

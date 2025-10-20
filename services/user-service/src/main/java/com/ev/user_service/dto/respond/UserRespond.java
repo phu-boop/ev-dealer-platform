@@ -1,5 +1,6 @@
 package com.ev.user_service.dto.respond;
 
+import com.ev.user_service.enums.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,14 +9,17 @@ import com.ev.user_service.entity.Role;
 import com.ev.user_service.enums.Gender;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserRespond {
-    Long id;
+    UUID id;
+    UUID memberId;
     String email;
     String name;
     String fullName;
@@ -26,4 +30,6 @@ public class UserRespond {
     LocalDate birthday;
     Gender gender;
     Set<Role> roles;
+    LocalDateTime lastLogin;
+    UserStatus status;
 }

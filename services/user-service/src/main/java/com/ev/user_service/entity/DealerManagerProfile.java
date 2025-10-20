@@ -3,6 +3,7 @@ package com.ev.user_service.entity;
 import lombok.*;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "dealer_manager_profiles")
@@ -11,18 +12,17 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class DealerManagerProfile {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "manager_id")
-    private Long managerId;
+    private UUID managerId;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @Column(name = "dealer_id", nullable = false)
-    private Long dealerId;
+    private UUID dealerId;
 
     @Column(name = "management_level", length = 50)
     private String managementLevel;

@@ -1,11 +1,14 @@
-import apiConstUserService from '../../../../services/apiConstUserService.js';
+import apiConst from '../../../../services/apiConst.js';
 
 export const mngUserService = {
-    getAll: () => apiConstUserService.get('/users'),
-    getById: (id) => apiConstUserService.get(`/users/${id}`),
-    create: (userData) => apiConstUserService.post('/users/register/dealerStaff', userData),
-    update: (id, userData) => apiConstUserService.put(`/users/${id}`, userData),
-    delete: (id) => apiConstUserService.delete(`/users/${id}`)
+    getAll: () => apiConst.get('/users'),
+    getById: (id) => apiConst.get(`/users/${id}`),
+    createAmind: (userData) => apiConst.post('/users/register/admin', userData),
+    createDealerStaff: (userData) => apiConst.post('/users/register/dealerStaff', userData),
+    createDealerManager: (userData) => apiConst.post('/users/register/dealerManager', userData),
+    createEvmStaff: (userData) => apiConst.post('/users/register/evmStaff', userData),
+    update: (id, userData) => apiConst.put(`/users/${id}`, userData),
+    delete: (id) => apiConst.delete(`/users/${id}`)
 };
 
 export default mngUserService;

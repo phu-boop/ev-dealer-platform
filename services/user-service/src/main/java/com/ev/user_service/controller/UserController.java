@@ -1,5 +1,6 @@
 package com.ev.user_service.controller;
 
+import com.ev.user_service.validation.group.*;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -12,10 +13,9 @@ import com.ev.user_service.dto.request.UserRequest;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.user_service.dto.respond.UserRespond;
 import com.ev.user_service.service.UserService;
-import com.ev.user_service.validation.group.OnCreate;
-import com.ev.user_service.validation.group.OnUpdate;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/users")
@@ -38,7 +38,7 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiRespond<UserRespond>> getUserById(@PathVariable long id) {
+    public ResponseEntity<ApiRespond<UserRespond>> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiRespond.success("Get User Successfully", userService.getUserById(id)));
     }
 
@@ -49,15 +49,35 @@ public class UserController {
     }
 
     @PostMapping("/register/dealerStaff")
-    public ResponseEntity<ApiRespond<UserRespond>> createUserDealerStaff(@Validated(OnCreate.class) @RequestBody UserRequest userRequest) {
+    public ResponseEntity<ApiRespond<UserRespond>> createUserDealerStaff(@Validated(OnCreateDealerStaff.class) @RequestBody UserRequest userRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiRespond.success("Create User Successfully", userService.createUserDealerStaff(userRequest)));
     }
 
+    @PostMapping("/register/evmStaff")
+    public ResponseEntity<ApiRespond<UserRespond>> createUserEvmStaff(@Validated(OnCreateEvmStaff.class) @RequestBody UserRequest userRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiRespond.success("Create User Successfully", userService.createUserEvmStaff(userRequest)));
+    }
+
+
+     @PostMapping("/register/dealerManager")
+    public ResponseEntity<ApiRespond<UserRespond>> createUserDealerManager(@Validated(OnCreateDealerManager.class) @RequestBody UserRequest userRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiRespond.success("Create User Successfully", userService.createUserDealerStaff(userRequest)));
+    }
+
+    @PostMapping("/register/admin")
+    public ResponseEntity<ApiRespond<UserRespond>> createUserAdmin(@Validated(OnCreate.class) @RequestBody UserRequest userRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiRespond.success("Create User Successfully", userService.createUserEvmStaff(userRequest)));
+    }
+
+
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiRespond<UserRespond>> updateUser(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Validated(OnUpdate.class) @Valid @RequestBody UserRequest userRequest) {
         return ResponseEntity.ok(
                 ApiRespond.success("Update User Successfully", userService.updateUser(id, userRequest))
@@ -66,7 +86,7 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiRespond<Void>> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiRespond<Void>> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiRespond.success("Delete User Successfully", null));
     }

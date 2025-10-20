@@ -5,7 +5,6 @@ import com.ev.gateway.util.JwtUtil;
 import com.ev.gateway.service.RedisService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.core.Ordered;
@@ -26,8 +25,14 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 
     //  Danh sách path được bỏ qua xác thực
     private static final List<String> EXCLUDED_PATHS = List.of(
-            "/auth/",
-            "/users/"
+            "/auth",
+            "/users",
+            "/customers",
+            "/dealers",
+            "/inventory",
+            "/payments",
+            "/sales",
+            "/vehicles"
     );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {
@@ -60,6 +65,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             String email = jwtUtil.extractEmail(token);
             String role = jwtUtil.extractRole(token);
             Long userId = jwtUtil.extractUserId(token);
+            String profileId = jwtUtil.extractProfileId(token);
 
             if (!jwtUtil.isTokenValid(token, email)) {
             return this.onError(exchange, ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage(), ErrorCode.TOKEN_INVALID.getHttpStatus());
@@ -70,6 +76,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
                         headers.add("X-User-Email", email);
                         headers.add("X-User-Role", role);
                         headers.add("X-User-Id", String.valueOf(userId));
+                        headers.add("X-User-ProfileId", profileId);
                     }))
                     .build();
 

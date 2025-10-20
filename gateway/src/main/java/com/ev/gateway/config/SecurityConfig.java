@@ -22,10 +22,38 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Thêm cấu hình CORS
                 .authorizeExchange(exchanges -> exchanges
-                        // Cho phép public routes
-                        .pathMatchers("/", "/error", "/auth/**", "/users/**","/vehicles/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // Cần JWT (đã xác thực qua JwtGlobalFilter)
-                        .anyExchange().authenticated()
+                // ===== Cho phép public routes =====
+                .pathMatchers(
+                        "/", 
+                        "/error", 
+                        "/swagger-ui/**", 
+                        "/v3/api-docs/**",
+                        
+                        // user-service
+                        "/auth/**", 
+                        "/users/**",
+                        
+                        // customer-service
+                        "/customers/**",
+                        
+                        // dealer-service
+                        "/dealers/**",
+                        
+                        // inventory-service
+                        "/inventory/**",
+                        
+                        // payment-service
+                        "/payments/**",
+                        
+                        // sales-service
+                        "/sales/**",
+                        
+                        // vehicle-service
+                        "/vehicles/**"
+                    ).permitAll()
+                    
+                    // ===== Các route khác cần JWT =====
+                    .anyExchange().authenticated()
                 )
                 // Không tạo session
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
