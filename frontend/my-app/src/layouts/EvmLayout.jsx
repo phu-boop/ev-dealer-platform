@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import {getAllNotification, putNotificationReaded} from "../services/firebase/notificationService";
+import {getAllNotification, markAllNotificationsAsRead, putNotificationReaded} from "../services/firebase/notificationService";
 import { useAuthContext } from "../features/auth/AuthProvider";
 
 import Swal from 'sweetalert2';
@@ -353,16 +353,7 @@ const markAsRead = async (notificationId, notificationData) => {
 };
   const markAllAsRead = async () => {
     try {
-      const unreadNotifications = notifications.filter(notification => !notification.read);
-      
-      // Gọi API cho từng thông báo chưa đọc
-      await Promise.all(
-        unreadNotifications.map(notification => 
-          putNotificationReaded(notification.id)
-        )
-      );
-      
-      // Cập nhật local state
+      await markAllNotificationsAsRead();
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, read: true }))
       );

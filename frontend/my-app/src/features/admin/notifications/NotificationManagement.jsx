@@ -367,9 +367,7 @@ const NotificationManagement = () => {
                 key={notification.id}
                 className={`p-6 transition-colors hover:bg-gray-50 ${
                   !notification.read ? 'bg-red-50 border-l-4 border-l-blue-500' : ''
-                }`}onClick={() => {
-                  window.location.href = '/evm/admin/products/promotions';
-            }}
+                }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -401,7 +399,7 @@ const NotificationManagement = () => {
                     {!notification.read && (
                       <button
                         onClick={() => handleMarkAsRead(notification.id)}
-                        className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                        className="p-2.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md border border-green-200"
                         title="Đánh dấu đã đọc"
                       >
                         <FiCheck className="w-4 h-4" />
@@ -410,10 +408,20 @@ const NotificationManagement = () => {
                     
                     <button
                       onClick={() => handleDeleteNotification(notification.id)}
-                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                      className="p-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md border border-red-200"
                       title="Xóa thông báo"
                     >
                       <FiTrash2 className="w-4 h-4" />
+                    </button>
+                    
+                    <button 
+                      onClick={() => {
+                        window.location.href = '/evm/admin/products/promotions';
+                      }}
+                      className="px-3 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md border border-blue-200 font-medium text-sm flex items-center space-x-1"
+                    >
+                      <FiEye className="w-3.5 h-3.5" />
+                      <span>Xem</span>
                     </button>
                   </div>
                 </div>

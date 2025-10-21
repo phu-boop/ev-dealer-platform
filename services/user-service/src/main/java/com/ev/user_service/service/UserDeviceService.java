@@ -30,6 +30,7 @@ public class UserDeviceService {
         if (existing.isPresent()) {
             UserDevice device = existing.get();
             device.setUpdatedAt(LocalDateTime.now());
+            device.setFcmToken(token);
             userDeviceRepository.save(device);
             return "Token updated";
         } else {
