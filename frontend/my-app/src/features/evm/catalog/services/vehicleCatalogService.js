@@ -124,3 +124,14 @@ export const unassignFeatureFromVariant = (variantId, featureId) => {
     `/vehicle-catalog/variants/${variantId}/features/${featureId}`
   );
 };
+
+/**
+ * Lấy chi tiết của nhiều phiên bản dựa trên danh sách ID.
+ * @param {Array<number|string>} ids - Mảng các variantId.
+ */
+export const getVariantDetailsByIds = (ids) => {
+  return apiConstVehicleService.post(
+    "/vehicle-catalog/variants/details-by-ids",
+    ids
+  );
+};

@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { FiPlus, FiEdit, FiTrash2, FiEye, FiRefreshCw } from "react-icons/fi";
-// Thêm getModelDetails vào import
+import {
+  FiPlus,
+  FiEdit,
+  FiTrash2,
+  FiEye,
+  FiRefreshCw,
+  FiSearch,
+} from "react-icons/fi";
 import {
   getModels,
   deactivateModel,
@@ -8,20 +14,22 @@ import {
 } from "../services/vehicleCatalogService";
 import ModelForm from "../components/ModelForm";
 import ConfirmationModal from "../components/ConfirmationModal";
-import ModelDetailsModal from "../components/ModelDetailsModal"; // Import component mới
+import ModelDetailsModal from "../components/ModelDetailsModal";
 
 const VehicleCatalogPage = () => {
   const [models, setModels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDetailLoading, setIsDetailLoading] = useState(false); // State loading riêng cho chi tiết
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false); // State cho modal chi tiết
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const [selectedModel, setSelectedModel] = useState(null);
-  const [modelForDetails, setModelForDetails] = useState(null); // State chứa data cho modal chi tiết
+  const [modelForDetails, setModelForDetails] = useState(null);
   const [actionToConfirm, setActionToConfirm] = useState(null);
 
   const fetchModels = useCallback(async () => {
@@ -42,7 +50,7 @@ const VehicleCatalogPage = () => {
     fetchModels();
   }, [fetchModels]);
 
-  // SỬA ĐỔI HÀM NÀY: Gọi API để lấy dữ liệu chi tiết trước khi mở form
+  // API để lấy dữ liệu chi tiết trước khi mở form
   const handleOpenForm = async (modelToEdit = null) => {
     // Nếu là tạo mới, chỉ cần mở form rỗng
     if (!modelToEdit) {
@@ -113,6 +121,20 @@ const VehicleCatalogPage = () => {
     }
   };
 
+  const filteredModels = models.filter((model) => {
+    // Chuẩn hóa từ khóa tìm kiếm: xóa hết dấu cách và chuyển sang chữ thường
+    const query = searchQuery.toLowerCase().replace(/\s+/g, "");
+
+    // Chuẩn hóa dữ liệu: gộp Tên và Hãng, xóa hết dấu cách, chuyển sang chữ thường
+    const brand = model.brand || "";
+    const modelName = model.modelName || "";
+
+    const combinedData = (brand + modelName).toLowerCase().replace(/\s+/g, "");
+
+    // So sánh hai chuỗi đã được chuẩn hóa
+    return combinedData.includes(query);
+  });
+
   if (error) return <div className="text-center text-red-500 p-8">{error}</div>;
 
   return (
@@ -140,6 +162,22 @@ const VehicleCatalogPage = () => {
         </div>
       </div>
 
+      {/* Ô tìm kiếm nằm bên dưới header */}
+      <div className="mb-6">
+        <div className="relative max-w-lg">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center">
+            <FiSearch className="h-5 w-5 text-gray-400" />
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Tìm theo tên mẫu xe hoặc hãng..."
+            className="w-full p-3 pl-10 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
       {isDetailLoading && (
         <div className="fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
           Đang tải dữ liệu chi tiết...
@@ -160,7 +198,8 @@ const VehicleCatalogPage = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {models.map((model) => (
+          {/* Sử dụng filteredModels để render */}
+          {filteredModels.map((model) => (
             <div
               key={model.modelId}
               className="bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-xl group"
@@ -170,7 +209,6 @@ const VehicleCatalogPage = () => {
               </h2>
               <p className="text-gray-500 mt-2 text-sm">ID: {model.modelId}</p>
               <div className="mt-6 flex justify-end space-x-3">
-                {/* SỬA LẠI ONCLICK CHO NÚT XEM CHI TIẾT */}
                 <button
                   onClick={() => handleViewDetails(model.modelId)}
                   className="p-3 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition duration-300"
@@ -198,6 +236,14 @@ const VehicleCatalogPage = () => {
         </div>
       )}
 
+      {/* Hiển thị thông báo nếu không có kết quả lọc */}
+      {!isLoading && filteredModels.length === 0 && (
+        <div className="text-center text-gray-500 py-10">
+          <p className="text-lg">Không tìm thấy mẫu xe nào.</p>
+          <p>Vui lòng thử lại với từ khóa khác.</p>
+        </div>
+      )}
+
       {isFormOpen && (
         <ModelForm
           isOpen={isFormOpen}
@@ -207,7 +253,6 @@ const VehicleCatalogPage = () => {
         />
       )}
 
-      {/* RENDER MODAL CHI TIẾT */}
       {isDetailsModalOpen && (
         <ModelDetailsModal
           isOpen={isDetailsModalOpen}

@@ -188,6 +188,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         model.setBaseRangeKm(request.getBaseRangeKm());
         model.setBaseMotorPower(request.getBaseMotorPower());
         model.setBaseBatteryCapacity(request.getBaseBatteryCapacity());
+        model.setBaseChargingTime(request.getBaseChargingTime());
         
         // 2. Cập nhật chuỗi JSON từ Map thông số mở rộng
         try {
@@ -337,6 +338,21 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         variantFeatureRepository.deleteById(id);
         
         saveVariantHistory(variant, EVMAction.UPDATE, updatedByEmail); // Ghi lại lịch sử
+    }
+
+    @Override
+    public List<VariantDetailDto> getVariantDetailsByIds(List<Long> variantIds) {
+        if (variantIds == null || variantIds.isEmpty()) {
+            return new ArrayList<>(); // Trả về danh sách rỗng nếu không có ID nào
+        }
+        
+        // Dùng findAllById để lấy tất cả trong một câu lệnh SQL
+        List<VehicleVariant> variants = variantRepository.findAllById(variantIds);
+        
+        // Map kết quả sang DTO
+        return variants.stream()
+                .map(this::mapToVariantDetailDto)
+                .collect(Collectors.toList());
     }
 
     // --- Helper Methods ---

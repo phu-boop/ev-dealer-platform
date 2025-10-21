@@ -18,11 +18,14 @@ import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import DealerLayout from "../layouts/DealerLayout.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
-import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
+
+// EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
 import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.jsx";
+import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
+import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -85,23 +88,27 @@ export default function AppRoutes() {
             {/* Staff only */}
             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
               <Route path="staff" element={<Dashboard />} />
-              <Route
-                path="staff/products/promotions"
-                element={<MainPromotion />}
-              />
-              {/* Quản lý Sản phẩm */}
+              {/* --------------------------------QUẢN LÝ SẢN PHẨM-------------------------------------------------- */}
+              {/* Quản lý danh mục xe */}
               <Route
                 path="staff/products/catalog"
                 element={<VehicleCatalogManager />}
               />
+              {/* Quản lý phiên bản, màu sắc xe (thiếu tiềm kiếm (lọc theo màu, phiên bản)) */}
               <Route
                 path="staff/products/variants"
                 element={<VariantManager />}
               />
-              {/* <Route
-                path="staff/distribution/allocation"
-                element={<StockTransferForm />}
-              /> */}
+              {/* Giá Sỉ & Chiết Khấu */}
+              <Route
+                path="staff/products/promotions"
+                element={<MainPromotion />}
+              />
+              {/* --------------------------------PHÂN PHỐI & KHO-------------------------------------------------- */}
+              <Route
+                path="staff/distribution/inventory/central"
+                element={<InventoryCentral />}
+              />
             </Route>
           </Route>
         </Route>

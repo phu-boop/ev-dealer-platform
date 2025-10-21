@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { FiPlus, FiEdit, FiTrash2, FiSettings, FiEye } from "react-icons/fi";
+import {
+  FiPlus,
+  FiEdit,
+  FiTrash2,
+  FiSettings,
+  FiEye,
+  FiSearch,
+} from "react-icons/fi";
 import {
   getModels,
   getModelDetails,
@@ -35,6 +42,8 @@ const VariantManagementPage = () => {
 
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [variantForDetails, setVariantForDetails] = useState(null);
+
+  const [variantSearchQuery, setVariantSearchQuery] = useState("");
 
   // Tải danh sách các mẫu xe (chỉ 1 lần khi component mount)
   useEffect(() => {
@@ -125,6 +134,25 @@ const VariantManagementPage = () => {
     }
   };
 
+  const filteredVariants = selectedModelDetails
+    ? selectedModelDetails.variants.filter((variant) => {
+        // Chuẩn hóa từ khóa tìm kiếm (xóa hết dấu cách)
+        const query = variantSearchQuery.toLowerCase().replace(/\s+/g, "");
+
+        // Chuẩn hóa dữ liệu (gộp các trường, xóa hết dấu cách)
+        const versionName = variant.versionName || "";
+        const color = variant.color || "";
+        const skuCode = variant.skuCode || "";
+
+        const combinedData = (versionName + color + skuCode)
+          .toLowerCase()
+          .replace(/\s+/g, "");
+
+        // So sánh các chuỗi đã được chuẩn hóa
+        return combinedData.includes(query);
+      })
+    : [];
+
   return (
     <div className="animate-in fade-in-0 duration-500">
       <h1 className="text-4xl font-bold text-gray-800 mb-8">
@@ -174,6 +202,23 @@ const VariantManagementPage = () => {
           </button>
         </div>
 
+        {selectedModelId && !isLoadingVariants && (
+          <div className="mb-4">
+            <div className="relative max-w-lg">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center">
+                <FiSearch className="h-5 w-5 text-gray-400" />
+              </span>
+              <input
+                type="text"
+                value={variantSearchQuery}
+                onChange={(e) => setVariantSearchQuery(e.target.value)}
+                placeholder="Tìm phiên bản theo tên, màu, hoặc SKU..."
+                className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        )}
+
         {isLoadingVariants ? (
           <p className="text-gray-500 py-4 text-center">
             Đang tải danh sách phiên bản...
@@ -192,7 +237,7 @@ const VariantManagementPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {selectedModelDetails.variants.map((variant) => (
+                {filteredVariants.map((variant) => (
                   <tr
                     key={variant.variantId}
                     className="border-b hover:bg-gray-50"
@@ -252,6 +297,11 @@ const VariantManagementPage = () => {
                 ))}
               </tbody>
             </table>
+            {filteredVariants.length === 0 && variantSearchQuery && (
+              <p className="text-gray-500 py-4 text-center">
+                Không tìm thấy phiên bản nào khớp với tìm kiếm của bạn.
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-gray-500 py-4 text-center">

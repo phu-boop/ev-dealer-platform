@@ -113,6 +113,7 @@ const ModelForm = ({ isOpen, onClose, onSuccess, model }) => {
     baseRangeKm: "",
     baseMotorPower: "",
     baseBatteryCapacity: "",
+    baseChargingTime: "",
     // --- State cho thông số mở rộng ---
     extendedSpecifications: [{ key: "", value: "", placeholder: "" }],
     variants: [
@@ -161,6 +162,7 @@ const ModelForm = ({ isOpen, onClose, onSuccess, model }) => {
         baseRangeKm: model.baseRangeKm || "",
         baseMotorPower: model.baseMotorPower || "",
         baseBatteryCapacity: model.baseBatteryCapacity || "",
+        baseChargingTime: model.baseChargingTime || "",
         extendedSpecifications:
           extendedSpecsArray.length > 0
             ? extendedSpecsArray
@@ -254,6 +256,7 @@ const ModelForm = ({ isOpen, onClose, onSuccess, model }) => {
       baseRangeKm: Number(formData.baseRangeKm) || null,
       baseMotorPower: Number(formData.baseMotorPower) || null,
       baseBatteryCapacity: Number(formData.baseBatteryCapacity) || null,
+      baseChargingTime: Number(formData.baseChargingTime) || null,
       extendedSpecs: extendedSpecsObject,
     };
 
@@ -269,6 +272,7 @@ const ModelForm = ({ isOpen, onClose, onSuccess, model }) => {
               skuCode: v.skuCode,
               imageUrl: v.imageUrl,
               batteryCapacity: Number(v.batteryCapacity) || null,
+              baseChargingTime: Number(v.baseChargingTime) || null,
               rangeKm: Number(v.rangeKm) || null,
               motorPower: Number(v.motorPower) || null,
             }))

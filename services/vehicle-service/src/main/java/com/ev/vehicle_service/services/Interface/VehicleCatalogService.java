@@ -43,4 +43,6 @@ public interface VehicleCatalogService {
     VehicleVariant assignFeatureToVariant(Long variantId, FeatureRequest request, String updatedByEmail);
     
     void unassignFeatureFromVariant(Long variantId, Long featureId, String updatedByEmail);
+
+    List<VariantDetailDto> getVariantDetailsByIds(List<Long> variantIds);
 }

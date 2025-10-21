@@ -155,6 +155,15 @@ public class VehicleCatalogController {
         return ResponseEntity.ok(ApiRespond.success("Variant has been discontinued", null));
     }
 
+    /**
+     * Lấy chi tiết của nhiều phiên bản xe dựa trên danh sách ID.
+     */
+    @PostMapping("/variants/details-by-ids")
+    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getVariantDetailsByIds(@RequestBody List<Long> variantIds) {
+        List<VariantDetailDto> variants = vehicleCatalogService.getVariantDetailsByIds(variantIds);
+        return ResponseEntity.ok(ApiRespond.success("Fetched variant details successfully", variants));
+    }
+
     // ==========================================================
     //          ENDPOINTS FOR FEATURES
     // ==========================================================

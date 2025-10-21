@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.core.Authentication;
 // import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -63,8 +62,15 @@ public class InventoryController {
      * Thực hiện một giao dịch kho (nhập, xuất, điều chuyển...).
      */
     @PostMapping("/transactions")
-    public ResponseEntity<ApiRespond<Void>> executeTransaction(@Valid @RequestBody TransactionRequestDto request) {
-        inventoryService.executeTransaction(request);
+    public ResponseEntity<ApiRespond<Void>> executeTransaction(
+            @Valid @RequestBody TransactionRequestDto request,
+            // LẤY THÔNG TIN TỪ HEADER 
+            @RequestHeader("X-User-Email") String email,
+            @RequestHeader("X-User-Role") String role, // Giả sử Gateway gửi role dưới dạng String
+            @RequestHeader("X-User-ProfileId") String profileId) {
+        
+        // Truyền thông tin đã xác thực xuống service
+        inventoryService.executeTransaction(request, email, role, profileId);
         return ResponseEntity.ok(ApiRespond.success("Transaction executed successfully", null));
     }
 
@@ -112,14 +118,11 @@ public class InventoryController {
     @PutMapping("/central-stock/reorder-level")
     public ResponseEntity<ApiRespond<Void>> updateCentralReorderLevel(
             @Valid @RequestBody UpdateReorderLevelRequest request,
-            Authentication authentication) {
+
+            @RequestHeader("X-User-Email") String email) {
         
-            // Lấy email trực tiếp từ principal đã được xác thực
-            String email = authentication.getName();
-    
-            // Gọi service với đầy đủ thông tin
-            inventoryService.updateCentralReorderLevel(request, email);
-        
+        // Gọi service chỉ với email
+        inventoryService.updateCentralReorderLevel(request, email);
         return ResponseEntity.ok(ApiRespond.success("Central reorder level updated successfully", null));
     }
 
