@@ -4,6 +4,7 @@ import { AuthProvider } from "../features/auth/AuthProvider";
 // layouts
 import EvmLayout from "../layouts/EvmLayout.jsx";
 import UserLayout from "../layouts/UserLayout";
+import DealerLayout from "../layouts/DealerLayout.jsx";
 
 // pages
 import Home from "../pages/Home";
@@ -16,10 +17,15 @@ import ProfileForm from "../features/profile/components/ProfileForm.jsx";
 import SecuritySettings from "../features/profile/components/SecuritySettings.jsx";
 import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
-import DealerLayout from "../layouts/DealerLayout.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
+
+// customer pages
+import CustomerList from "../features/customers/pages/CustomerList.jsx";
+import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
+import EditCustomer from "../features/customers/pages/EditCustomer.jsx";
+import CustomerDetail from "../features/customers/pages/CustomerDetail.jsx";
 
 // EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
@@ -124,17 +130,47 @@ export default function AppRoutes() {
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
 
-            {/* Dealer Manager only */}
+            {/* Dealer Manager Routes */}
             <Route
               element={<ProtectedRoute allowedRoles={["DEALER_MANAGER"]} />}
             >
+              {/* Customer Management */}
+              <Route
+                path="manager/customers/create"
+                element={<CreateCustomer />}
+              />
+              <Route path="manager/customers/list" element={<CustomerList />} />
+              <Route
+                path="manager/customers/:id"
+                element={<CustomerDetail />}
+              />
+              <Route
+                path="manager/customers/:id/edit"
+                element={<EditCustomer />}
+              />
+
+              {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
+
+              {/* System */}
               <Route path="manager/system/users" element={<UserManagement />} />
             </Route>
 
-            {/* Dealer Staff only */}
+            {/* Dealer Staff Routes */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
-              <Route path="staff" element={<DashboardForDealer />} />
+              {/* Customer Management */}
+              <Route
+                path="staff/customers/create"
+                element={<CreateCustomer />}
+              />
+              <Route path="staff/customers/list" element={<CustomerList />} />
+              <Route path="staff/customers/:id" element={<CustomerDetail />} />
+              <Route
+                path="staff/customers/:id/edit"
+                element={<EditCustomer />}
+              />
+
+              {/* Promotions */}
               <Route
                 path="staff/promotions"
                 element={<CustomerPromotionView />}
