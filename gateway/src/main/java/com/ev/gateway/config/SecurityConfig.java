@@ -2,75 +2,43 @@ package com.ev.gateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+
+import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
-@EnableReactiveMethodSecurity
 public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Thêm cấu hình CORS
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges
-                // ===== Cho phép public routes =====
-                .pathMatchers(
-                        "/", 
-                        "/error", 
-                        "/swagger-ui/**", 
-                        "/v3/api-docs/**",
-                        
-                        // user-service
-                        "/auth/**", 
-                        "/users/**",
-                        
-                        // customer-service
-                        "/customers/**",
-                        
-                        // dealer-service
-                        "/dealers/**",
-                        
-                        // inventory-service
-                        "/inventory/**",
-                        
-                        // payment-service
-                        "/payments/**",
-                        
-                        // sales-service
-                        "/sales/**",
-                        
-                        // vehicle-service
-                        "/vehicles/**"
-                    ).permitAll()
-                    
-                    // ===== Các route khác cần JWT =====
-                    .anyExchange().authenticated()
+                        .anyExchange().permitAll() // cho phép tất cả endpoint
                 )
-                // Không tạo session
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.addAllowedOrigin("http://localhost:5173");
-        corsConfig.addAllowedMethod("*"); // Cho phép tất cả phương thức: GET, POST, PUT, DELETE, OPTIONS
-        corsConfig.addAllowedHeader("*"); // Cho phép tất cả header
-        corsConfig.setAllowCredentials(true); // Cho phép gửi cookie/token
-        corsConfig.setMaxAge(3600L); // Cache preflight request trong 1 giờ
-
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfig);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
