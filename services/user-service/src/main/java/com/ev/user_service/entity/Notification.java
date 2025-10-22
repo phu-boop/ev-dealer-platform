@@ -29,6 +29,9 @@ public class Notification {
 
     private UUID promotionId; // nếu liên quan đến Promotion
 
+    @Column(unique = true)
+    private String eventId;
+
     @Column(name = "is_read", nullable = false)
     private boolean read = false;
 

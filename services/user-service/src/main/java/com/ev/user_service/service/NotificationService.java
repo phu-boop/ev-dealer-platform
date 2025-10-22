@@ -1,5 +1,6 @@
 package com.ev.user_service.service;
 
+import com.ev.common_lib.event.PromotionCreatedEvent;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.user_service.dto.internal.PromotionDTO;
@@ -13,6 +14,7 @@ import com.google.firebase.messaging.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -39,9 +41,9 @@ public class NotificationService {
             Message message = Message.builder()
                     .setToken(device.getFcmToken())
                     .setNotification(com.google.firebase.messaging.Notification.builder()
-                        .setTitle(notification.getTitle())
-                        .setBody(notification.getMessage())
-                        .build())
+                            .setTitle(notification.getTitle())
+                            .setBody(notification.getMessage())
+                            .build())
                     .putData("promotionId", dto.getId().toString())
                     .build();
 
@@ -53,11 +55,11 @@ public class NotificationService {
         }
     }
 
-    public List<Notification> findAll(){
+    public List<Notification> findAll() {
         return notificationRepository.findAll();
     }
 
-    public Notification markAsRead(UUID notificationId){
+    public Notification markAsRead(UUID notificationId) {
         Notification n = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
         n.setRead(true);
@@ -86,4 +88,49 @@ public class NotificationService {
         notificationRepository.deleteAll();
     }
 
+    // ✅ Kiểm tra idempotency
+    public boolean existsByEventId(String eventId) {
+        return notificationRepository.existsByEventId(eventId);
+    }
+
+    // ✅ Tạo notification record từ event Kafka
+    public void createPromotionNotification(PromotionCreatedEvent event) {
+        Notification notification = Notification.builder()
+                .type("NEW_PROMOTION")
+                .title("🎉 " + event.getPromotionName())
+                .message(event.getDescription())
+                .promotionId(event.getPromotionId())
+                .eventId(event.getEventId()) // để idempotency
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .read(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    // ✅ Gửi thông báo FCM tới các admin / user (tùy logic bạn muốn)
+    public void sendPromotionFCM(PromotionCreatedEvent event) {
+        // Lấy tất cả device token của admin (hoặc user)
+        List<UserDevice> adminDevices = userDeviceRepository.findAllAdminDevices();
+
+        for (UserDevice device : adminDevices) {
+            try {
+                Message message = Message.builder()
+                        .setToken(device.getFcmToken())
+                        .setNotification(com.google.firebase.messaging.Notification.builder()
+                                .setTitle("🎉 " + event.getPromotionName())
+                                .setBody(event.getDescription())
+                                .build())
+                        .putData("promotionId", event.getPromotionId().toString())
+                        .putData("eventId", event.getEventId())
+                        .build();
+
+                FirebaseMessaging.getInstance().send(message);
+            } catch (FirebaseMessagingException e) {
+                System.err.println("❌ Failed to send FCM to token: " + device.getFcmToken());
+                e.printStackTrace();
+            }
+        }
+    }
 }

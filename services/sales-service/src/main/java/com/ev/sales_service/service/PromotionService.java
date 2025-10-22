@@ -1,15 +1,21 @@
 package com.ev.sales_service.service;
 
-import com.ev.sales_service.dto.outbound.PromotionDTO;
+import com.ev.common_lib.event.PromotionCreatedEvent;
+import com.ev.common_lib.exception.AppException;
+import com.ev.common_lib.exception.ErrorCode;
+import com.ev.sales_service.entity.Outbox;
 import com.ev.sales_service.entity.Promotion;
 import com.ev.sales_service.enums.PromotionStatus;
+import com.ev.sales_service.repository.OutboxRepository;
 import com.ev.sales_service.repository.PromotionRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,22 +25,46 @@ public class PromotionService {
 
     @Value("${user-service.base-url}")
     private String userServiceBaseUrl;
-    private final PromotionRepository promotionRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
 
+    private final PromotionRepository promotionRepository;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper; // spring-boot auto-configures
+
+    @Transactional
     public Promotion createPromotion(Promotion promotion) {
         Promotion saved = promotionRepository.save(promotion);
-        // ✅ Gửi thông báo sang user_service
+
+        // prepare event
+        String eventId = UUID.randomUUID().toString();
+        PromotionCreatedEvent event = new PromotionCreatedEvent(
+                eventId,
+                saved.getPromotionId(),
+                saved.getPromotionName(),
+                saved.getDescription(),
+                saved.getDiscountRate(),
+                saved.getStartDate(),
+                saved.getEndDate(),
+                LocalDateTime.now()
+        );
+
         try {
-            PromotionDTO dto = new PromotionDTO(saved.getPromotionId(), saved.getPromotionName());
-            restTemplate.postForObject(
-                    userServiceBaseUrl+"/users/notifications/promotions",
-                    dto,
-                    Void.class
-            );
-            System.out.printf("give to user-service");
+            String payload = objectMapper.writeValueAsString(event);
+
+            Outbox out = Outbox.builder()
+                    .id(eventId)
+                    .aggregateType("Promotion")
+                    .aggregateId(saved.getPromotionId().toString())
+                    .eventType("PromotionCreated")
+                    .payload(payload)
+                    .status("NEW")
+                    .attempts(0)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            outboxRepository.save(out);
         } catch (Exception e) {
-            e.printStackTrace(); // hoặc log warning nếu user_service không phản hồi
+            // Nếu serialize lỗi thì rollback transaction (thrown exception)
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
 
         return saved;
