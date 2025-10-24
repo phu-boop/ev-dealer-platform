@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit, FiClock, FiUser } from "react-icons/fi";
-import customerService from "../../../services/apiConstCustomerService";
+import customerService from "../services/customerService";
 import { useAuthContext } from "../../../features/auth/AuthProvider";
 
 const CustomerDetail = () => {
