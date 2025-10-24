@@ -5,7 +5,7 @@ import {
   FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiSave, FiX,
   FiCheck, FiAlertCircle, FiChevronDown
 } from "react-icons/fi";
-import customerService from "../../../services/apiConstCustomerService";
+import customerService from "../services/customerService";
 import { useAuthContext } from "../../auth/AuthProvider";
 
 const CreateCustomer = () => {
