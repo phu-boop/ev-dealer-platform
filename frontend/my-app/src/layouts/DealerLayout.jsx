@@ -180,21 +180,21 @@ const EvmLayout = () => {
     const navigate = useNavigate();
     const sidebarRef = useRef(null);
     const profileDropdownRef = useRef(null);
-        const [menuItems, setMenuItems] = useState([]);
+    const [menuItems, setMenuItems] = useState([]);
     
-        useEffect(() => {
-            // Nếu chưa đăng nhập thì không load menu
-            if (!roles || roles.length === 0) {
+    useEffect(() => {
+        // Nếu chưa đăng nhập thì không load menu
+        if (!roles || roles.length === 0) {
             return;
-            }
+        }
     
-            // Gán menu tùy role
-            if (roles.includes("DEALER_MANAGER")) {
+        // Gán menu tùy role
+        if (roles.includes("DEALER_MANAGER")) {
             setMenuItems(dealerManagerMenuItems);
-            } else {
+        } else {
             setMenuItems(dealerStaffMenuItems);
-            }
-        }, [roles]);
+        }
+    }, [roles]);
 
     // Xác định đường dẫn hiện tại và mở submenu tương ứng
     useEffect(() => {

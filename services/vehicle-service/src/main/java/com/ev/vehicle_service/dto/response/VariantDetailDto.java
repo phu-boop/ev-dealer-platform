@@ -14,5 +14,11 @@ public class VariantDetailDto {
     private BigDecimal price;
     private VehicleStatus status;
     private String imageUrl;
+    private BigDecimal wholesalePrice;
+    private Integer batteryCapacity;
+    private Float chargingTime;
+    private Integer rangeKm;
+    private Integer motorPower;
+    
     private List<FeatureDto> features; 
 }

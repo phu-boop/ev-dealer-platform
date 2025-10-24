@@ -21,7 +21,7 @@ public interface InventoryService {
     Page<InventoryStatusDto> getAllInventory(String search, Long dealerId, String status, Pageable pageable);
     
     // Thực hiện một giao dịch kho
-    void executeTransaction(TransactionRequestDto request);
+    void executeTransaction(TransactionRequestDto request, String staffEmail, String role, String profileId);
     
     // Cập nhật ngưỡng cảnh báo tồn kho cho đại lí
     void updateDealerReorderLevel(Long dealerId, UpdateReorderLevelRequest request);

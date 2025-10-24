@@ -1,6 +1,10 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+<<<<<<< HEAD
 import {getAllNotification, markAllNotificationsAsRead, putNotificationReaded} from "../services/firebase/notificationService";
+=======
+import NotificationBell from "../components/NotificationBell";
+>>>>>>> origin/dev
 import { useAuthContext } from "../features/auth/AuthProvider";
 
 import Swal from 'sweetalert2';
@@ -53,11 +57,27 @@ export const adminMenuItems = [
     label: "Quản Lý Sản Phẩm",
     path: "/evm/admin/products",
     submenu: [
-      { icon: FiList, label: "Danh Mục Xe", path: "/evm/admin/products/catalog" },
-      { icon: FiCreditCard, label: "Giá & Khuyến Mãi", path: "/evm/admin/products/pricing" },
-      { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/evm/admin/products/variants" },
-      { icon: FiCreditCard, label: "(DONE)Khuyến Mãi", path: "/evm/admin/products/promotions" }
-    ]
+      {
+        icon: FiList,
+        label: "Danh Mục Xe",
+        path: "/evm/admin/products/catalog",
+      },
+      {
+        icon: FiCreditCard,
+        label: "Giá & Khuyến Mãi",
+        path: "/evm/admin/products/pricing",
+      },
+      {
+        icon: FiTag,
+        label: "Phiên Bản & Màu Sắc",
+        path: "/evm/admin/products/variants",
+      },
+      {
+        icon: FiCreditCard,
+        label: "(DONE)Khuyến Mãi",
+        path: "/evm/admin/products/promotions",
+      },
+    ],
   },
 
   // Quản lý phân phối & kho
@@ -119,11 +139,28 @@ export const adminMenuItems = [
     label: "Báo Cáo & Phân Tích",
     path: "/evm/admin/reports",
     submenu: [
+<<<<<<< HEAD
       { icon: FiTrendingUp, label: "(DONE)Thông báo", path: "/evm/admin/reports/notifications" },
       { icon: FiTrendingUp, label: "Doanh Số", path: "/evm/admin/reports/sales" },
       { icon: FiPieChart, label: "Tồn Kho", path: "/evm/admin/reports/inventory" },
+=======
+      {
+        icon: FiTrendingUp,
+        label: "Doanh Số",
+        path: "/evm/admin/reports/sales",
+      },
+      {
+        icon: FiPieChart,
+        label: "Tồn Kho",
+        path: "/evm/admin/reports/inventory",
+      },
+>>>>>>> origin/dev
       { icon: FiCpu, label: "Dự Báo AI", path: "/evm/admin/reports/forecast" },
-      { icon: FiMap, label: "Theo Khu Vực", path: "/evm/admin/reports/regional" },
+      {
+        icon: FiMap,
+        label: "Theo Khu Vực",
+        path: "/evm/admin/reports/regional",
+      },
     ],
   },
 
@@ -167,10 +204,22 @@ export const evmStaffMenuItems = [
     label: "Quản Lý Sản Phẩm",
     path: "/evm/staff/products",
     submenu: [
-      { icon: FiList, label: "Danh Mục Xe", path: "/evm/staff/products/catalog" },
-      { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/evm/staff/products/variants" },
-      { icon: FiCreditCard, label: "(DONE)Giá Sỉ & Chiết Khấu", path: "/evm/staff/products/promotions" },
-    ]
+      {
+        icon: FiList,
+        label: "(DONE)Danh Mục Xe",
+        path: "/evm/staff/products/catalog",
+      },
+      {
+        icon: FiTag,
+        label: "(DONE)Phiên Bản & Màu Sắc",
+        path: "/evm/staff/products/variants",
+      },
+      {
+        icon: FiCreditCard,
+        label: "(DONE)Giá Sỉ & Chiết Khấu",
+        path: "/evm/staff/products/promotions",
+      },
+    ],
   },
 
   // Quản lý phân phối & kho
@@ -181,8 +230,8 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiArchive,
-        label: "Kho Trung Tâm",
-        path: "/evm/staff/distribution/warehouse",
+        label: "(80%)Kho Trung Tâm",
+        path: "/evm/staff/distribution/inventory/central",
       },
       {
         icon: FiNavigation,
@@ -198,7 +247,11 @@ export const evmStaffMenuItems = [
     label: "Quản Lý Đại Lý",
     path: "/evm/staff/dealers",
     submenu: [
-      { icon: FiHomeAlt, label: "Danh Sách Đại Lý", path: "/evm/staff/dealers/list" },
+      {
+        icon: FiHomeAlt,
+        label: "Danh Sách Đại Lý",
+        path: "/evm/staff/dealers/list",
+      },
       {
         icon: FiFileText,
         label: "Hợp Đồng & Chỉ Tiêu",
@@ -253,6 +306,7 @@ const EvmLayout = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const notificationDropdownRef = useRef(null);
 
+<<<<<<< HEAD
   // Hàm fetch thông báo
 const fetchNotifications = async () => {
   if(roles.includes("ADMIN")){
@@ -404,6 +458,10 @@ const markAsRead = async (notificationId, notificationData) => {
 
   // Kiểm tra xem user có role 'ADMIN' hay không
   const role = roles.includes("ADMIN")?'ADMIN':'EVM_STAFF';
+=======
+  // Kiểm tra xem user có role 'ADMIN' hay không
+  const role = roles.includes("ADMIN") ? "admin" : "evm_staff";
+>>>>>>> origin/dev
 
   useEffect(() => {
     // Nếu chưa đăng nhập thì không load menu
@@ -906,15 +964,15 @@ const markAsRead = async (notificationId, notificationData) => {
           </div>
         </header>
 
-                {/* Content Area với khoảng cách và bo tròn */}
-                <main className="flex-1 overflow-y-auto p-6 bg-transparent">
-                    <div className="max-w-8xl mx-auto space-y-6">
-                        {/* Content Container với glassmorphism effect */}
-                        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
-                            <Outlet/>
-                        </div>
-                    </div>
-                </main>
+        {/* Content Area với khoảng cách và bo tròn */}
+        <main className="flex-1 overflow-y-auto p-6 bg-transparent">
+          <div className="max-w-8xl mx-auto space-y-6">
+            {/* Content Container với glassmorphism effect */}
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
+              <Outlet />
+            </div>
+          </div>
+        </main>
 
         {/* Footer */}
         <footer className="bg-white/80 backdrop-blur-lg border-t border-gray-200/60 py-5 px-6 mt-auto mx-6 my-3 rounded-3xl">
