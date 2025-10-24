@@ -14,6 +14,9 @@ import apiConstSaleService from "../../../../services/apiConstSaleService.js";
 export const promotionService = {
   getAll: () => apiConstSaleService.get("/promotions"),
   getById: (id) => apiConstSaleService.get(`/promotions/${id}`),
+<<<<<<< HEAD
+  create: (data) => apiConstSaleService.post('/promotions', data),
+=======
 
   create: async (data, createdBy = "staff") => {
     try {
@@ -34,6 +37,7 @@ export const promotionService = {
     }
   },
 
+>>>>>>> origin/dev
   update: (id, data) => apiConstSaleService.put(`/promotions/${id}`, data),
   delete: (id) => apiConstSaleService.delete(`/promotions/${id}`),
   getByStatus: (status) =>

@@ -121,6 +121,8 @@ Thumbs.db
 ehthumbs.db
 Icon?
 
+services/user-service/src/main/resources/firebase-service-account.json
+
 ############################################
 ### 📝 DOCUMENTATION / NOTES ###
 ############################################
@@ -132,4 +134,4 @@ README_DEALER_CUSTOMER.md
 # Other temp docs
 *_TEMP.md
 *_DRAFT.md
-
+>>>>>>> origin/dev

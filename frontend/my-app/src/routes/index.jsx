@@ -19,6 +19,10 @@ import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
+<<<<<<< HEAD
+import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx"
+import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
+=======
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 
 // customer pages
@@ -33,6 +37,7 @@ import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.
 import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
 
+>>>>>>> origin/dev
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -91,6 +96,15 @@ export default function AppRoutes() {
               <Route path="admin/notifications" element={<UserManagement />} />
             </Route>
 
+<<<<<<< HEAD
+                        {/* Admin only */}
+                        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+                            <Route path="admin/products/promotions/*" element={<AdminPromotionManager />} />
+                            <Route path="admin/system/users" element={<UserManagement />} />
+                            <Route path="admin/notifications" element={<UserManagement />} />
+                            <Route path="admin/reports/notifications" element={<NotificationManagement />} />
+                        </Route>
+=======
             {/* Staff only */}
             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
               <Route path="staff" element={<Dashboard />} />
@@ -118,6 +132,7 @@ export default function AppRoutes() {
             </Route>
           </Route>
         </Route>
+>>>>>>> origin/dev
 
         {/* Dealer Routes */}
         <Route

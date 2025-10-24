@@ -1,5 +1,5 @@
 // components/PromotionForm.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   CalendarIcon, 
   TagIcon, 
@@ -9,7 +9,9 @@ import {
   ClockIcon,
   PlayIcon,
   StopIcon,
-  XCircleIcon
+  XCircleIcon,
+  EyeIcon,
+  EyeSlashIcon
 } from "@heroicons/react/24/outline";
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -22,7 +24,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     startDate: "",
     endDate: "",
     applicableModelsJson: "[]",
-    status: "DRAFT", // Default value but user can change
+    status: "DRAFT",
   });
 
   const [errors, setErrors] = useState({});
@@ -30,7 +32,6 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
 
   useEffect(() => {
     if (initialData) {
-      // Format dates for datetime-local input
       const formatDateForInput = (dateString) => {
         if (!dateString) return "";
         try {
@@ -48,10 +49,89 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
         startDate: formatDateForInput(initialData.startDate),
         endDate: formatDateForInput(initialData.endDate),
         applicableModelsJson: initialData.applicableModelsJson || "[]",
-        status: initialData.status || "DRAFT", // Use actual status from data
+        status: initialData.status || "DRAFT",
       });
     }
   }, [initialData]);
+
+  // Hàm xử lý thay đổi ngày/giờ
+  const handleDateTimeChange = (type, field, value) => {
+    const currentDateTime = formData[`${type}Date`];
+    const [currentDate, currentTime] = currentDateTime.split('T');
+    
+    let newDate = currentDate;
+    let newTime = currentTime || '00:00';
+    
+    if (field === 'date') {
+      newDate = value;
+    } else if (field === 'time') {
+      newTime = value + ':00';
+    }
+    
+    const newDateTime = `${newDate}T${newTime}`;
+    
+    setFormData(prev => ({
+      ...prev,
+      [`${type}Date`]: newDateTime
+    }));
+
+    // Clear error when user starts typing
+    if (errors[`${type}Date`]) {
+      setErrors(prev => ({ ...prev, [`${type}Date`]: "" }));
+    }
+
+    // Auto-update status when dates change for new promotions
+    if (!isEdit) {
+      setTimeout(() => {
+        const start = new Date(formData.startDate);
+        const end = new Date(formData.endDate);
+        const now = new Date();
+        
+        if (start && end) {
+          if (start > now) {
+            setFormData(prev => ({ ...prev, status: "DRAFT" }));
+          } else if (start <= now && end >= now) {
+            setFormData(prev => ({ ...prev, status: "ACTIVE" }));
+          } else if (end < now) {
+            setFormData(prev => ({ ...prev, status: "EXPIRED" }));
+          }
+        }
+      }, 100);
+    }
+  };
+
+  // Hàm set thời gian nhanh
+  const setQuickTime = (type, time) => {
+    const now = new Date();
+    let newDate = formData[`${type}Date`] ? new Date(formData[`${type}Date`]) : new Date();
+    
+    switch (time) {
+      case 'now':
+        newDate = new Date();
+        break;
+      case 'tomorrow':
+        newDate = new Date();
+        newDate.setDate(now.getDate() + 1);
+        newDate.setHours(23, 59, 0, 0);
+        break;
+      case 'nextWeek':
+        newDate = new Date();
+        newDate.setDate(now.getDate() + 7);
+        newDate.setHours(23, 59, 0, 0);
+        break;
+      default:
+        const [hours, minutes] = time.split(':');
+        newDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    }
+    
+    const dateString = newDate.toISOString().slice(0, 10);
+    const timeString = newDate.toTimeString().slice(0, 8);
+    
+    setFormData(prev => ({
+      ...prev,
+      [`${type}Date`]: `${dateString}T${timeString}`
+    }));
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -79,24 +159,9 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     if (formData.startDate && formData.endDate) {
       const start = new Date(formData.startDate);
       const end = new Date(formData.endDate);
-      const now = new Date();
       
       if (end <= start) {
         newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
-      }
-      
-      // Auto-detect status based on dates for new promotions
-      if (!isEdit) {
-        if (start > now) {
-          // If start date is in future, suggest DRAFT
-          setFormData(prev => ({ ...prev, status: "DRAFT" }));
-        } else if (start <= now && end >= now) {
-          // If currently active, suggest ACTIVE
-          setFormData(prev => ({ ...prev, status: "ACTIVE" }));
-        } else if (end < now) {
-          // If end date passed, suggest EXPIRED
-          setFormData(prev => ({ ...prev, status: "EXPIRED" }));
-        }
       }
     }
     
@@ -111,26 +176,8 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       [name]: value 
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
-    }
-
-    // Auto-update status when dates change for new promotions
-    if (!isEdit && (name === 'startDate' || name === 'endDate')) {
-      if (formData.startDate && formData.endDate) {
-        const start = new Date(formData.startDate);
-        const end = new Date(formData.endDate);
-        const now = new Date();
-        
-        if (start > now) {
-          setFormData(prev => ({ ...prev, status: "DRAFT" }));
-        } else if (start <= now && end >= now) {
-          setFormData(prev => ({ ...prev, status: "ACTIVE" }));
-        } else if (end < now) {
-          setFormData(prev => ({ ...prev, status: "EXPIRED" }));
-        }
-      }
     }
   };
 
@@ -145,7 +192,6 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       setIsSubmitting(true);
       
       try {
-        // Convert discount rate from percentage to decimal for API
         const submitData = {
           ...formData,
           discountRate: parseFloat(formData.discountRate) / 100
@@ -170,23 +216,46 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
         borderColor: "border-yellow-200",
         icon: ClockIcon,
         buttonColor: "bg-yellow-100 hover:bg-yellow-200 text-yellow-700 border-yellow-300"
+      },
+      ACTIVE: {
+        label: "Đang hoạt động",
+        description: "Chương trình đang được áp dụng",
+        color: "text-green-600",
+        bgColor: "bg-green-50",
+        borderColor: "border-green-200",
+        icon: PlayIcon,
+        buttonColor: "bg-green-100 hover:bg-green-200 text-green-700 border-green-300"
+      },
+      EXPIRED: {
+        label: "Đã hết hạn",
+        description: "Chương trình đã kết thúc",
+        color: "text-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-200",
+        icon: XCircleIcon,
+        buttonColor: "bg-red-100 hover:bg-red-200 text-red-700 border-red-300"
       }
     };
     
     return configs[status] || configs.DRAFT;
   };
 
-  const calculateDuration = () => {
+  // Tính thời lượng với useMemo
+  const duration = useMemo(() => {
     if (!formData.startDate || !formData.endDate) return null;
     
     const start = new Date(formData.startDate);
     const end = new Date(formData.endDate);
-    const durationMs = end - start;
-    const days = Math.floor(durationMs / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((durationMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffMs = end - start;
     
-    return { days, hours };
-  };
+    if (diffMs <= 0) return null;
+    
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return { days, hours, minutes };
+  }, [formData.startDate, formData.endDate]);
 
   const getAutoSuggestedStatus = () => {
     if (!formData.startDate || !formData.endDate) return null;
@@ -201,7 +270,6 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     return "INACTIVE";
   };
 
-  const duration = calculateDuration();
   const statusConfig = getStatusConfig(formData.status);
   const autoSuggestedStatus = getAutoSuggestedStatus();
   const StatusIcon = statusConfig.icon;
@@ -222,7 +290,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Information Card */}
+        {/* Basic Information Card - Giữ nguyên */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0">
@@ -286,7 +354,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
           </div>
         </div>
 
-        {/* Discount & Settings Card */}
+        {/* Discount & Settings Card - Giữ nguyên */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0">
@@ -344,7 +412,6 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
                 Trạng thái <span className="text-red-500">*</span>
               </label>
               
-              {/* Status Buttons */}
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {[
                   { value: "DRAFT", label: "Chờ xác thực" }
@@ -369,7 +436,6 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
                 })}
               </div>
               
-              {/* Auto-suggestion for new promotions */}
               {!isEdit && autoSuggestedStatus && autoSuggestedStatus !== formData.status && (
                 <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-700">
@@ -386,7 +452,6 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
                 </div>
               )}
               
-              {/* Status Description */}
               <div className={`p-3 rounded-lg border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
                 <div className="flex items-start">
                   <StatusIcon className={`h-5 w-5 mt-0.5 mr-2 ${statusConfig.color}`} />
@@ -404,7 +469,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
           </div>
         </div>
 
-        {/* Date & Time Card */}
+        {/* Date & Time Card - ĐÃ CẬP NHẬT */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0">
@@ -416,67 +481,153 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Start Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ngày bắt đầu <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="datetime-local"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  className={`block w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                    errors.startDate 
-                      ? 'border-red-300 focus:border-red-500' 
-                      : 'border-gray-300 focus:border-indigo-500'
-                  }`}
-                />
-                {errors.startDate && (
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ExclamationCircleIcon className="h-5 w-5 text-red-500" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Start Date & Time */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ngày bắt đầu <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={formData.startDate.split('T')[0] || ''}
+                      onChange={(e) => handleDateTimeChange('start', 'date', e.target.value)}
+                      className={`block w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                        errors.startDate 
+                          ? 'border-red-300 focus:border-red-500' 
+                          : 'border-gray-300 focus:border-indigo-500'
+                      }`}
+                    />
                   </div>
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={formData.startDate.split('T')[1]?.substring(0, 5) || '00:00'}
+                      onChange={(e) => handleDateTimeChange('start', 'time', e.target.value)}
+                      className={`block w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                        errors.startDate 
+                          ? 'border-red-300 focus:border-red-500' 
+                          : 'border-gray-300 focus:border-indigo-500'
+                      }`}
+                    />
+                  </div>
+                </div>
+                {errors.startDate && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+                    {errors.startDate}
+                  </p>
                 )}
               </div>
-              {errors.startDate && (
-                <p className="mt-2 text-sm text-red-600 flex items-center">
-                  <ExclamationCircleIcon className="h-4 w-4 mr-1" />
-                  {errors.startDate}
-                </p>
-              )}
+
+              {/* Quick Start Time Buttons */}
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-gray-500 w-full">Chọn nhanh:</span>
+                <button
+                  type="button"
+                  onClick={() => setQuickTime('start', '08:00')}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  08:00
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickTime('start', '09:00')}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  09:00
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickTime('start', '12:00')}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  12:00
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickTime('start', 'now')}
+                  className="px-3 py-1.5 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors font-medium"
+                >
+                  Bây giờ
+                </button>
+              </div>
             </div>
 
-            {/* End Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ngày kết thúc <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="datetime-local"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  className={`block w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                    errors.endDate 
-                      ? 'border-red-300 focus:border-red-500' 
-                      : 'border-gray-300 focus:border-indigo-500'
-                  }`}
-                />
-                {errors.endDate && (
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ExclamationCircleIcon className="h-5 w-5 text-red-500" />
+            {/* End Date & Time */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ngày kết thúc <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={formData.endDate.split('T')[0] || ''}
+                      onChange={(e) => handleDateTimeChange('end', 'date', e.target.value)}
+                      className={`block w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                        errors.endDate 
+                          ? 'border-red-300 focus:border-red-500' 
+                          : 'border-gray-300 focus:border-indigo-500'
+                      }`}
+                    />
                   </div>
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={formData.endDate.split('T')[1]?.substring(0, 5) || '23:59'}
+                      onChange={(e) => handleDateTimeChange('end', 'time', e.target.value)}
+                      className={`block w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                        errors.endDate 
+                          ? 'border-red-300 focus:border-red-500' 
+                          : 'border-gray-300 focus:border-indigo-500'
+                      }`}
+                    />
+                  </div>
+                </div>
+                {errors.endDate && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+                    {errors.endDate}
+                  </p>
                 )}
               </div>
-              {errors.endDate && (
-                <p className="mt-2 text-sm text-red-600 flex items-center">
-                  <ExclamationCircleIcon className="h-4 w-4 mr-1" />
-                  {errors.endDate}
-                </p>
-              )}
+
+              {/* Quick End Time Buttons */}
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-gray-500 w-full">Chọn nhanh:</span>
+                <button
+                  type="button"
+                  onClick={() => setQuickTime('end', '17:00')}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  17:00
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickTime('end', '18:00')}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  18:00
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickTime('end', '23:59')}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  23:59
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickTime('end', 'tomorrow')}
+                  className="px-3 py-1.5 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors font-medium"
+                >
+                  Ngày mai
+                </button>
+              </div>
             </div>
           </div>
 
@@ -484,25 +635,39 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
           {duration && !errors.startDate && !errors.endDate && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h3 className="text-sm font-medium text-blue-900 mb-2">Tóm tắt Thời gian</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-600 font-medium">Bắt đầu:</span>
+                  <span className="text-blue-800 ml-2">
+                    {new Date(formData.startDate).toLocaleString('vi-VN')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-blue-600 font-medium">Kết thúc:</span>
+                  <span className="text-blue-800 ml-2">
+                    {new Date(formData.endDate).toLocaleString('vi-VN')}
+                  </span>
+                </div>
                 <div>
                   <span className="text-blue-600 font-medium">Thời lượng:</span>
                   <span className="text-blue-800 ml-2">
-                    {duration.days} ngày {duration.hours} giờ
+                    {duration.days} ngày {duration.hours} giờ {duration.minutes} phút
                   </span>
                 </div>
-                <div>
-                  <span className="text-blue-600 font-medium">Trạng thái tự động:</span>
-                  <span className="text-blue-800 ml-2">
-                    {getStatusConfig(autoSuggestedStatus).label}
-                  </span>
-                </div>
+              </div>
+              <div className="mt-2">
+                <span className="text-blue-600 font-medium">Trạng thái tự động:</span>
+                <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${
+                  getStatusConfig(autoSuggestedStatus).bgColor
+                } ${getStatusConfig(autoSuggestedStatus).color}`}>
+                  {getStatusConfig(autoSuggestedStatus).label}
+                </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Giữ nguyên */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
