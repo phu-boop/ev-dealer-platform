@@ -22,4 +22,6 @@ public interface UserDeviceRepository extends JpaRepository<UserDevice, UUID> {
             """, nativeQuery = true)
     List<UserDevice> findAllAdminDevices();
 
+    Optional<UserDevice> findByFcmToken(String token);
+
 }

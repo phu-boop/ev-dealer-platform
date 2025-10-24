@@ -129,7 +129,10 @@ public class NotificationService {
                 FirebaseMessaging.getInstance().send(message);
             } catch (FirebaseMessagingException e) {
                 System.err.println("❌ Failed to send FCM to token: " + device.getFcmToken());
-                e.printStackTrace();
+                userDeviceRepository.delete(
+                        userDeviceRepository.findByFcmToken(device.getFcmToken())
+                                .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND))
+                );
             }
         }
     }
