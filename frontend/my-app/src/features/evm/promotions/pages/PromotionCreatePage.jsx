@@ -22,7 +22,7 @@ export default function PromotionCreatePage({ onBack }) {
         onBack();
       }, 2000);
     } catch (err) {
-      console.error(err);
+      console.log(err);
       setAlert({
         show: true,
         type: 'error',

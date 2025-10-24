@@ -120,3 +120,17 @@ docker-compose.override.yml
 Thumbs.db
 ehthumbs.db
 Icon?
+
+services/user-service/src/main/resources/firebase-service-account.json
+
+############################################
+### 📝 DOCUMENTATION / NOTES ###
+############################################
+
+# Temporary documentation files
+CUSTOMER_ROUTES_UPDATE.md
+README_DEALER_CUSTOMER.md
+
+# Other temp docs
+*_TEMP.md
+*_DRAFT.md
