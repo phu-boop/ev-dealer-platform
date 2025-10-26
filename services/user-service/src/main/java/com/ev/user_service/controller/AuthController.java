@@ -62,6 +62,12 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Get current user successful", loginRespond));
     }
 
+    @GetMapping("/me/profile")
+    public ResponseEntity<ApiRespond<LoginRespond>> getCurrentUserProfile() {
+        LoginRespond loginRespond = authService.getCurrentUser();
+        return ResponseEntity.ok(ApiRespond.success("Get current user successful", loginRespond));
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/refresh")
     public ResponseEntity<ApiRespond<?>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
