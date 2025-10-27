@@ -1,21 +1,19 @@
 package com.ev.user_service.service;
 
-import com.ev.user_service.entity.EvmStaffProfile;
+import com.ev.user_service.dto.respond.ProfileRespond;
+import com.ev.user_service.entity.*;
 import com.ev.user_service.enums.UserStatus;
+import com.ev.user_service.repository.*;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.ev.user_service.dto.request.UserRequest;
 import com.ev.user_service.dto.respond.UserRespond;
-import com.ev.user_service.entity.Role;
-import com.ev.user_service.entity.User;
 import com.ev.user_service.enums.RoleName;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.user_service.mapper.UserMapper;
-import com.ev.user_service.repository.RoleRepository;
-import com.ev.user_service.repository.UserRepository;
 import reactor.core.publisher.Sinks;
 
 import java.math.BigDecimal;
@@ -34,6 +32,10 @@ public class UserService {
     private final AdminProfileService adminProfileService;
     private final DealerManagerProfileService dealerManagerProfileService;
     private final DealerStaffProfileService dealerStaffProfileService;
+    private final DealerStaffProfileRepository dealerStaffProfileRepository;
+    private final DealerManagerProfileRepository dealerManagerProfileRepository;
+    private final EvmStaffProfileRepository evmStaffProfileRepository;
+    private final AdminProfileRepository adminProfileRepository;
 
     public UserService(PasswordEncoder passwordEncoder,
                        UserMapper userMapper,
@@ -42,7 +44,12 @@ public class UserService {
                        EvmStaffProfileService evmStaffProfileService,
                        AdminProfileService adminProfileService,
                        DealerStaffProfileService dealerStaffProfileService,
-                       DealerManagerProfileService dealerManagerProfileService) {
+                       DealerManagerProfileService dealerManagerProfileService,
+                       DealerStaffProfileRepository dealerStaffProfileRepository,
+                       DealerManagerProfileRepository dealerManagerProfileRepository,
+                       EvmStaffProfileRepository evmStaffProfileRepository,
+                       AdminProfileRepository adminProfileRepository
+    ) {
         this.adminProfileService = adminProfileService;
         this.dealerManagerProfileService = dealerManagerProfileService;
         this.dealerStaffProfileService = dealerStaffProfileService;
@@ -51,6 +58,10 @@ public class UserService {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.evmStaffProfileService = evmStaffProfileService;
+        this.adminProfileRepository = adminProfileRepository;
+        this.dealerStaffProfileRepository = dealerStaffProfileRepository;
+        this.dealerManagerProfileRepository = dealerManagerProfileRepository;
+        this.evmStaffProfileRepository = evmStaffProfileRepository;
     }
 
     public List<UserRespond> getAllUser() {
@@ -178,4 +189,14 @@ public class UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         userRepository.delete(user);
     }
+
+    public ProfileRespond getCurrentProfileByIdUser(UUID id_user) {
+        User user = userRepository.findById(id_user)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        user.setPassword("đoán xemmmm");
+        ProfileRespond.ProfileRespondBuilder builder = ProfileRespond.builder().user(user);
+
+        return builder.build();
+    }
+
 }

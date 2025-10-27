@@ -1,5 +1,6 @@
 package com.ev.user_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import jakarta.persistence.*;
 
@@ -22,6 +23,7 @@ public class DealerStaffProfile {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JsonIgnore
     private User user;
 
     @Column(name = "dealer_id", nullable = false)

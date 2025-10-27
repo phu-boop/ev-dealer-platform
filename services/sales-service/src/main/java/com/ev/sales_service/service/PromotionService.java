@@ -32,6 +32,7 @@ public class PromotionService {
 
     @Transactional
     public Promotion createPromotion(Promotion promotion) {
+        promotion.setStatus(PromotionStatus.DRAFT);
         Promotion saved = promotionRepository.save(promotion);
 
         // prepare event
@@ -89,14 +90,36 @@ public class PromotionService {
     }
 
     public List<Promotion> getAllPromotions() {
+        updatePromotionStatuses();
         return promotionRepository.findAll();
     }
 
-    public void deletePromotion(UUID id) {
-        if (!promotionRepository.existsById(id)) {
-            throw new EntityNotFoundException("Promotion not found");
+
+    private void updatePromotionStatuses() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Promotion> promotions = promotionRepository.findAll();
+
+        for (Promotion promotion : promotions) {
+            if (promotion.getStartDate() != null && promotion.getEndDate() != null) {
+                if (promotion.getStatus().equals(PromotionStatus.ACTIVE)) {
+                    if (promotion.getEndDate().isBefore(now)) {
+                        promotion.setStatus(PromotionStatus.EXPIRED);
+                    } else if (promotion.getStartDate().isAfter(now)) {
+                        promotion.setStatus(PromotionStatus.INACTIVE);
+                    }
+                }
+            }
         }
-        promotionRepository.deleteById(id);
+
+        promotionRepository.saveAll(promotions);
+    }
+
+
+    public void deletePromotion(UUID id) {
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+        promotion.setStatus(PromotionStatus.DELETED);
+        promotionRepository.save(promotion);
     }
 
     public List<Promotion> getPromotionsByStatus(PromotionStatus status) {

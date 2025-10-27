@@ -11,10 +11,19 @@ import {
   StopIcon,
   XCircleIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  XMarkIcon,
+  BuildingStorefrontIcon
 } from "@heroicons/react/24/outline";
 import { format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { se, vi } from 'date-fns/locale';
+
+//services
+import fetchModelVehicle from '../services/fetchModelVehicle';
+import fetchDealer from '../services/fetchDealer';
+import fetchProfileDealer from '../services/fetchProfileDealer';
 
 export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit = false }) {
   const [formData, setFormData] = useState({
@@ -24,12 +33,32 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     startDate: "",
     endDate: "",
     applicableModelsJson: "[]",
+    dealerIdJson: "[]",
     status: "DRAFT",
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // State cho vehicle models
+  const [vehicleModels, setVehicleModels] = useState([]);
+  const [selectedModels, setSelectedModels] = useState([]);
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  
+  // State cho dealers
+  const [dealers, setDealers] = useState([]);
+  const [selectedDealers, setSelectedDealers] = useState([]);
+  const [isDealerDropdownOpen, setIsDealerDropdownOpen] = useState(false);
+  const [isLoadingDealers, setIsLoadingDealers] = useState(false);
+
+  // Load vehicle models và dealers on component mount
+  useEffect(() => {
+    loadVehicleModels();
+    loadDealers();
+  }, []);
+
+  // Initialize form data và selected items khi initialData changes
   useEffect(() => {
     if (initialData) {
       const formatDateForInput = (dateString) => {
@@ -43,16 +72,107 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       };
 
       setFormData({
-        promotionName: initialData.promotionName || "",
-        description: initialData.description || "",
-        discountRate: initialData.discountRate ? (initialData.discountRate * 100).toString() : "",
-        startDate: formatDateForInput(initialData.startDate),
-        endDate: formatDateForInput(initialData.endDate),
-        applicableModelsJson: initialData.applicableModelsJson || "[]",
-        status: initialData.status || "DRAFT",
-      });
+      promotionName: initialData.promotionName || "",
+      description: initialData.description || "",
+      discountRate: initialData.discountRate
+        ? (initialData.discountRate * 100).toString()
+        : "",
+      startDate: formatDateForInput(initialData.startDate),
+      endDate: formatDateForInput(initialData.endDate),
+
+      // Parse và lấy ra danh sách ID
+      applicableModelsJson: JSON.stringify(
+        Array.isArray(initialData.applicableModelsJson)
+          ? initialData.applicableModelsJson.map((m) => m.modelId)
+          : JSON.parse(initialData.applicableModelsJson || "[]")
+      ),
+      dealerIdJson: JSON.stringify(
+        Array.isArray(initialData.dealerIdJson)
+          ? initialData.dealerIdJson.map((d) => d.dealerId)
+          : JSON.parse(initialData.dealerIdJson || "[]")
+      ),
+
+      status: initialData.status || "DRAFT",
+    });
+
+        
+      // Parse và set selected models từ JSON
+      try {
+        const models = JSON.parse(initialData.applicableModelsJson || "[]");
+        setSelectedModels(models);
+      } catch (error) {
+        console.error("Error parsing applicableModelsJson:", error);
+        setSelectedModels([]);
+      }
+
+      // Parse và set selected dealers từ JSON
+      try {
+        const dealersData = JSON.parse(initialData.dealerIdJson || "[]");
+        setSelectedDealers(dealersData);
+      } catch (error) {
+        console.error("Error parsing dealerIdJson:", error);
+        setSelectedDealers([]);
+      }
     }
   }, [initialData]);
+
+
+  const getIdDealerCurrent = async() => {
+    try {
+      const response = await fetchProfileDealer.getProfile();
+      if(response.data && response.data.code === "1000"){
+        return response.data.data.user.dealerManagerProfile.dealerId;
+      }
+      return null;
+    }catch (error) {
+      console.error("Error fetching profile dealer:", error);
+    }
+  }
+
+  // Hàm load vehicle models
+  const loadVehicleModels = async () => {
+    setIsLoadingModels(true);
+    try {
+      const response = await fetchModelVehicle.getAllModelVehicle();
+      if (response.data && response.data.code === "1000") {
+        setVehicleModels(response.data.data || []);
+      }
+    } catch (error) {
+      console.error("Error loading vehicle models:", error);
+      setErrors(prev => ({ 
+        ...prev, 
+        applicableModels: "Không thể tải danh sách model xe" 
+      }));
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  // Hàm load dealers
+  const loadDealers = async () => {
+    setIsLoadingDealers(true);
+    try {
+      const response = (await fetchDealer.getAllDealer()).data;
+      if (response.success && response.data) {
+        if(sessionStorage.getItem("roles").includes("DEALER_MANAGER")){
+          const dealerCurrent = await getIdDealerCurrent();
+          if(response.data.map(d=>d.dealerId).includes(dealerCurrent)){
+            setDealers([response.data.find(d=>d.dealerId === dealerCurrent)]);
+          }
+        }else{
+          setDealers(response.data || []);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading dealers:", error);
+      setErrors(prev => ({ 
+        ...prev, 
+        dealers: "Không thể tải danh sách đại lý" 
+      }));
+    } finally {
+      setIsLoadingDealers(false);
+    }
+  };
 
   // Hàm xử lý thay đổi ngày/giờ
   const handleDateTimeChange = (type, field, value) => {
@@ -133,6 +253,68 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     }));
   };
 
+  // Hàm xử lý cho model selection
+  const handleModelSelect = (model) => {
+    if (selectedModels.some(selected => selected.modelId === model.modelId)) {
+      return;
+    }
+
+    const newSelectedModels = [...selectedModels, model];
+    setSelectedModels(newSelectedModels);
+    
+    setFormData(prev => ({
+      ...prev,
+      applicableModelsJson: JSON.stringify(newSelectedModels)
+    }));
+
+    if (errors.applicableModels) {
+      setErrors(prev => ({ ...prev, applicableModels: "" }));
+    }
+    
+    setIsModelDropdownOpen(false);
+  };
+
+  const removeModel = (modelId) => {
+    const newSelectedModels = selectedModels.filter(model => model.modelId !== modelId);
+    setSelectedModels(newSelectedModels);
+    
+    setFormData(prev => ({
+      ...prev,
+      applicableModelsJson: JSON.stringify(newSelectedModels)
+    }));
+  };
+
+  // Hàm xử lý cho dealer selection
+  const handleDealerSelect = (dealer) => {
+    if (selectedDealers.some(selected => selected.dealerId === dealer.dealerId)) {
+      return;
+    }
+
+    const newSelectedDealers = [...selectedDealers, dealer];
+    setSelectedDealers(newSelectedDealers);
+    
+    setFormData(prev => ({
+      ...prev,
+      dealerIdJson: JSON.stringify(newSelectedDealers)
+    }));
+
+    if (errors.dealers) {
+      setErrors(prev => ({ ...prev, dealers: "" }));
+    }
+    
+    setIsDealerDropdownOpen(false);
+  };
+
+  const removeDealer = (dealerId) => {
+    const newSelectedDealers = selectedDealers.filter(dealer => dealer.dealerId !== dealerId);
+    setSelectedDealers(newSelectedDealers);
+    
+    setFormData(prev => ({
+      ...prev,
+      dealerIdJson: JSON.stringify(newSelectedDealers)
+    }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
     
@@ -164,6 +346,16 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
         newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
       }
     }
+
+    // Validate selected models
+    if (selectedModels.length === 0) {
+      newErrors.applicableModels = "Vui lòng chọn ít nhất một model xe";
+    }
+
+    // Validate selected dealers
+    if (selectedDealers.length === 0) {
+      newErrors.dealers = "Vui lòng chọn ít nhất một đại lý";
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -194,7 +386,13 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       try {
         const submitData = {
           ...formData,
-          discountRate: parseFloat(formData.discountRate) / 100
+          discountRate: parseFloat(formData.discountRate) / 100,
+          applicableModelsJson: JSON.stringify(
+            selectedModels.map((m) => m.modelId)
+          ),
+          dealerIdJson: JSON.stringify(
+            selectedDealers.map((d) => d.dealerId)
+          ),
         };
         
         await onSubmit(submitData);
@@ -270,12 +468,20 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
     return "INACTIVE";
   };
 
+  const availableModels = vehicleModels.filter(
+    model => !selectedModels.some(selected => selected.modelId === model.modelId)
+  );
+
+  const availableDealers = dealers.filter(
+    dealer => !selectedDealers.some(selected => selected.dealerId === dealer.dealerId)
+  );
+
   const statusConfig = getStatusConfig(formData.status);
   const autoSuggestedStatus = getAutoSuggestedStatus();
   const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
@@ -290,7 +496,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Information Card - Giữ nguyên */}
+        {/* Basic Information Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0">
@@ -353,8 +559,292 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
             </div>
           </div>
         </div>
+        <div className="flex gap-8">
+          {/* Vehicle Models Selection */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center mb-6">
+              <div className="flex-shrink-0">
+                <TagIcon className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-3">
+                <h2 className="text-lg font-medium text-gray-900">Model Xe Áp dụng</h2>
+                <p className="text-sm text-gray-500">Chọn các model xe được áp dụng khuyến mãi</p>
+              </div>
+            </div>
 
-        {/* Discount & Settings Card - Giữ nguyên */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Model xe áp dụng <span className="text-red-500">*</span>
+                </label>
+                
+                {/* Selected Models Display */}
+                {selectedModels.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedModels.map((model) => (
+                        <div
+                          key={model.modelId}
+                          className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="text-sm text-gray-500 mt-0.5">{model.brand}-</div>
+                            <div className="font-semibold text-gray-900">{model.modelName}-</div>
+                            {/* Status tag */}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                model.status === 'IN_PRODUCTION'
+                                  ? 'bg-green-100 text-green-700'
+                                  : model.status === 'DISCONTINUED'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}
+                            >
+                              {model.status === 'IN_PRODUCTION' && '✅'}
+                              {model.status === 'DISCONTINUED' && '🔴'}
+                              {model.status === 'COMING_SOON' && '🟡'}
+                              <span>{model.status.replace('_', ' ')}</span>
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeModel(model.modelId)}
+                            className="ml-2 text-blue-600 hover:text-blue-800 focus:outline-none"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Model Selection Dropdown */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                    className={`flex justify-between items-center w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      errors.applicableModels 
+                        ? 'border-red-300 focus:border-red-500' 
+                        : 'border-gray-300 focus:border-indigo-500'
+                    }`}
+                  >
+                    <span className="text-gray-500">
+                      {isLoadingModels ? "Đang tải model xe..." : "Chọn model xe..."}
+                    </span>
+                    {isModelDropdownOpen ? (
+                      <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
+
+                  {isModelDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {isLoadingModels ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Đang tải model xe...
+                        </div>
+                      ) : availableModels.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Đã chọn tất cả model xe
+                        </div>
+                      ) : (
+                        availableModels.map((model) => (
+                          <button
+                            key={model.modelId}
+                            type="button"
+                            onClick={() => handleModelSelect(model)}
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="flex items-center justify-between w-full">
+                            <div className="font-semibold text-gray-900">{model.modelName}</div>
+                            {/* Status tag */}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                model.status === 'IN_PRODUCTION'
+                                  ? 'bg-green-100 text-green-700'
+                                  : model.status === 'DISCONTINUED'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}
+                            >
+                              {model.status === 'IN_PRODUCTION' && '✅'}
+                              {model.status === 'DISCONTINUED' && '🔴'}
+                              {model.status === 'COMING_SOON' && '🟡'}
+                              <span>{model.status.replace('_', ' ')}</span>
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500 mt-0.5">{model.brand}</div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {errors.applicableModels && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+                    {errors.applicableModels}
+                  </p>
+                )}
+
+                <p className="mt-2 text-sm text-gray-500">
+                  Đã chọn {selectedModels.length} model xe
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Dealer Selection */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex-1">
+            <div className="flex items-center mb-6">
+              <div className="flex-shrink-0">
+                <BuildingStorefrontIcon className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-3">
+                <h2 className="text-lg font-medium text-gray-900">Đại Lý Áp dụng</h2>
+                <p className="text-sm text-gray-500">Chọn các đại lý được áp dụng khuyến mãi</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Đại lý áp dụng <span className="text-red-500">*</span>
+                </label>
+                  {/* Selected Dealers Display */}
+                    {selectedDealers.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex flex-wrap gap-2">
+                          {selectedDealers.map((dealer) => (
+                            <div
+                              key={dealer.dealerId}
+                              className="inline-flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"
+                            >
+                              <span className="font-medium">{dealer.dealerName}</span>
+                              <span className="mx-1">-</span>
+                              <span className="text-purple-600">{dealer.city}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeDealer(dealer.dealerId)}
+                                className="ml-2 text-purple-600 hover:text-purple-800 focus:outline-none"
+                              >
+                                <XMarkIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  
+
+                {/* Selected Dealers Display */}
+                {selectedDealers.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDealers.map((dealer) => (
+                        <div
+                          key={dealer.dealerId}
+                          className="inline-flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"
+                        >
+                          <span className="font-medium">{dealer.dealerName}</span>
+                          <span className="mx-1">-</span>
+                          <span className="text-purple-600">{dealer.city}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeDealer(dealer.dealerId)}
+                            className="ml-2 text-purple-600 hover:text-purple-800 focus:outline-none"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dealer Selection Dropdown */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsDealerDropdownOpen(!isDealerDropdownOpen)}
+                    className={`flex justify-between items-center w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      errors.dealers 
+                        ? 'border-red-300 focus:border-red-500' 
+                        : 'border-gray-300 focus:border-indigo-500'
+                    }`}
+                  >
+                    <span className="text-gray-500">
+                      {isLoadingDealers ? "Đang tải danh sách đại lý..." : "Chọn đại lý..."}
+                    </span>
+                    {isDealerDropdownOpen ? (
+                      <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
+
+                  {isDealerDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {isLoadingDealers ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Đang tải danh sách đại lý...
+                        </div>
+                      ) : availableDealers.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Đã chọn tất cả đại lý
+                        </div>
+                      ) : (
+                        availableDealers.map((dealer) => (
+                          <button
+                            key={dealer.dealerId}
+                            type="button"
+                            onClick={() => handleDealerSelect(dealer)}
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-gray-900">{dealer.dealerName}</div>
+                            <div className="text-sm text-gray-500 flex justify-between">
+                              <span>{dealer.dealerCode}</span>
+                              <span>{dealer.city} • {dealer.region}</span>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {dealer.address}
+                            </div>
+                            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs mt-1 ${
+                              dealer.status === 'ACTIVE' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {dealer.status === 'ACTIVE' ? 'Đang hoạt động' : 'Không hoạt động'}
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {errors.dealers && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+                    {errors.dealers}
+                  </p>
+                )}
+
+                <p className="mt-2 text-sm text-gray-500">
+                  Đã chọn {selectedDealers.length} đại lý
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        
+
+        {/* Discount & Settings Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0">
@@ -469,7 +959,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
           </div>
         </div>
 
-        {/* Date & Time Card - ĐÃ CẬP NHẬT */}
+        {/* Date & Time Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0">
@@ -667,7 +1157,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
           )}
         </div>
 
-        {/* Action Buttons - Giữ nguyên */}
+        {/* Action Buttons */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"

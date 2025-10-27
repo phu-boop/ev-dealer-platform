@@ -40,4 +40,5 @@ public class Notification {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
 }

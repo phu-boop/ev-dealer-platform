@@ -209,7 +209,13 @@ export const evmStaffMenuItems = [
       },
       {
         icon: FiCreditCard,
-        label: "(DONE)Giá Sỉ & Chiết Khấu",
+        label: "Giá Sỉ & Chiết Khấu",
+        path: "",
+      },
+
+      {
+        icon: FiCreditCard,
+        label: "(DONE)Khuyen Mãi",
         path: "/evm/staff/products/promotions",
       },
     ],

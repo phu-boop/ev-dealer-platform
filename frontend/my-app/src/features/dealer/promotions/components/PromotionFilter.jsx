@@ -4,31 +4,24 @@ import { FunnelIcon } from '@heroicons/react/24/outline';
 
 const filterOptions = [
   { 
-    value: 'ALL', 
-    label: 'Tất cả', 
-    emoji: '🎁',
-    gradient: 'from-purple-100 to-pink-100',
-    selectedGradient: 'from-purple-500 to-pink-500',
-    borderColor: 'border-purple-200',
-    textColor: 'text-purple-700'
-  },
-  { 
     value: 'ACTIVE', 
     label: 'Đang diễn ra', 
-    emoji: '🔥',
-    gradient: 'from-emerald-100 to-green-100',
-    selectedGradient: 'from-emerald-500 to-green-500',
-    borderColor: 'border-emerald-200',
-    textColor: 'text-emerald-700'
+    emoji: '⚡',
+    gradient: 'from-blue-500 to-cyan-500',
+    hoverGradient: 'from-blue-600 to-cyan-600',
+    lightGradient: 'from-blue-50/80 to-cyan-50/60',
+    borderColor: 'border-blue-200/60',
+    textColor: 'text-blue-700'
   },
   { 
     value: 'UPCOMING', 
     label: 'Sắp diễn ra', 
-    emoji: '⏰',
-    gradient: 'from-blue-100 to-cyan-100',
-    selectedGradient: 'from-blue-500 to-cyan-500',
-    borderColor: 'border-blue-200',
-    textColor: 'text-blue-700'
+    emoji: '🕒',
+    gradient: 'from-purple-500 to-fuchsia-500',
+    hoverGradient: 'from-purple-600 to-fuchsia-600',
+    lightGradient: 'from-purple-50/80 to-fuchsia-50/60',
+    borderColor: 'border-purple-200/60',
+    textColor: 'text-purple-700'
   },
 ];
 
@@ -41,7 +34,6 @@ export const PromotionFilter = ({
 }) => {
   const getCount = (filterValue) => {
     switch (filterValue) {
-      case 'ALL': return totalCount;
       case 'ACTIVE': return activePromotionsCount;
       case 'UPCOMING': return upcomingPromotionsCount;
       default: return 0;
@@ -53,26 +45,42 @@ export const PromotionFilter = ({
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-gray-100/80 p-8 mb-8 relative overflow-hidden">
+    <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-lg border border-white/50 p-8 mb-12 relative overflow-hidden">
       {/* Background decorative elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-50 to-pink-50 rounded-full -translate-y-16 translate-x-16 opacity-60"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-50 to-cyan-50 rounded-full translate-y-12 -translate-x-12 opacity-60"></div>
+      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-100/40 to-cyan-100/30 rounded-full -translate-y-20 translate-x-20"></div>
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-100/30 to-fuchsia-100/20 rounded-full translate-y-16 -translate-x-16"></div>
       
+      {/* Animated background dots */}
+      <div className="absolute inset-0 overflow-hidden rounded-3xl">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-2 h-2 bg-blue-300/20 rounded-full animate-float"
+            style={{
+              top: `${20 + i * 30}%`,
+              left: `${10 + i * 40}%`,
+              animationDelay: `${i * 2}s`,
+              animationDuration: `${6 + i * 2}s`
+            }}
+          />
+        ))}
+      </div>
+
       <div className="relative z-10">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
           {/* Header Section */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl border border-purple-200/50">
-              <FunnelIcon className="w-6 h-6 text-purple-600" />
+            <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl border border-blue-200/50 shadow-sm">
+              <FunnelIcon className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Bộ lọc Khuyến mãi</h2>
-              <p className="text-sm text-gray-500">Lựa chọn loại ưu đãi bạn quan tâm</p>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Lọc Khuyến Mãi</h2>
+              <p className="text-gray-500 text-sm">Chọn loại ưu đãi bạn muốn xem</p>
             </div>
           </div>
           
           {/* Filter Buttons */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-4">
             {filterOptions.map((filter) => {
               const count = getCount(filter.value);
               const isSelected = selectedFilter === filter.value;
@@ -82,43 +90,44 @@ export const PromotionFilter = ({
                 <button
                   key={filter.value}
                   onClick={() => onFilterChange(filter.value)}
-                  className={`group relative flex items-center px-5 py-3 rounded-2xl border-2 transition-all duration-300 ease-out overflow-hidden ${
+                  className={`group relative flex items-center px-6 py-4 rounded-2xl border-2 transition-all duration-500 ease-out overflow-hidden min-w-[140px] justify-center ${
                     isSelected
-                      ? `bg-gradient-to-r ${config.selectedGradient} border-transparent text-white shadow-lg shadow-${config.textColor.split('-')[1]}-200/50`
-                      : `bg-white/60 backdrop-blur-sm ${config.borderColor} hover:shadow-md hover:scale-105 text-gray-600`
+                      ? `bg-gradient-to-r ${config.gradient} border-transparent text-white shadow-xl shadow-blue-500/25`
+                      : `bg-white/60 backdrop-blur-sm ${config.borderColor} hover:shadow-lg hover:scale-105 text-gray-600 hover:bg-white/80`
                   }`}
                 >
                   {/* Hover shine effect */}
-                  <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ${
-                    isSelected ? 'opacity-30' : 'opacity-0'
+                  <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ${
+                    isSelected ? 'opacity-50' : 'opacity-0'
                   }`}></div>
                   
                   {/* Content */}
                   <div className="flex items-center space-x-3 relative z-10">
-                    <span className={`text-lg transition-transform duration-300 group-hover:scale-110 ${
-                      isSelected ? 'filter brightness-0 invert' : ''
+                    <span className={`text-xl transition-all duration-300 group-hover:scale-110 ${
+                      isSelected ? 'filter brightness-0 invert drop-shadow-sm' : 'drop-shadow-sm'
                     }`}>
                       {filter.emoji}
                     </span>
                     
-                    <span className={`font-medium whitespace-nowrap ${
-                      isSelected ? 'text-white' : config.textColor
-                    }`}>
-                      {filter.label}
-                    </span>
-                    
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all duration-300 ${
-                      isSelected 
-                        ? 'bg-white/20 text-white backdrop-blur-sm' 
-                        : `${config.gradient} ${config.textColor} border ${config.borderColor}`
-                    }`}>
-                      {count}
-                    </span>
+                    <div className="flex flex-col items-start">
+                      <span className={`font-semibold whitespace-nowrap text-sm ${
+                        isSelected ? 'text-white' : config.textColor
+                      }`}>
+                        {filter.label}
+                      </span>
+                      <span className={`text-xs mt-1 ${
+                        isSelected ? 'text-white/90' : 'text-gray-500'
+                      }`}>
+                        {count} ưu đãi
+                      </span>
+                    </div>
                   </div>
 
                   {/* Selected indicator */}
                   {isSelected && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full shadow-sm"></div>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full shadow-lg flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                    </div>
                   )}
                 </button>
               );
@@ -126,36 +135,40 @@ export const PromotionFilter = ({
           </div>
         </div>
 
-        {/* Active Filter Indicator */}
-        <div className="mt-6 pt-6 border-t border-gray-100/60">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 text-sm text-gray-500">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                <span>Đang hoạt động: <strong className="text-gray-700">{activePromotionsCount}</strong></span>
+        {/* Stats Section */}
+        <div className="mt-8 pt-8 border-t border-gray-200/40">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-6 text-sm">
+              <div className="flex items-center space-x-3 bg-blue-50/50 rounded-2xl px-4 py-2.5 border border-blue-200/30">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-gray-700 font-medium">Đang hoạt động:</span>
+                </div>
+                <span className="text-blue-600 font-bold text-lg">{activePromotionsCount}</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <span>Sắp diễn ra: <strong className="text-gray-700">{upcomingPromotionsCount}</strong></span>
+              
+              <div className="flex items-center space-x-3 bg-purple-50/50 rounded-2xl px-4 py-2.5 border border-purple-200/30">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2.5 h-2.5 bg-purple-500 rounded-full"></div>
+                  <span className="text-gray-700 font-medium">Sắp diễn ra:</span>
+                </div>
+                <span className="text-purple-600 font-bold text-lg">{upcomingPromotionsCount}</span>
               </div>
             </div>
             
-            {selectedFilter !== 'ALL' && (
-              <button
-                onClick={() => onFilterChange('ALL')}
-                className="text-sm text-gray-400 hover:text-gray-600 transition-colors duration-200 flex items-center space-x-1"
-              >
-                <span>Xóa bộ lọc</span>
-                <span className="text-xs">✕</span>
-              </button>
-            )}
+            <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <div className="h-6 w-px bg-gray-300/60"></div>
+              <span className="text-xs bg-gray-100/50 rounded-full px-3 py-1.5 border border-gray-200/30">
+                Tổng cộng: <strong className="text-gray-700">{totalCount}</strong> ưu đãi
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Subtle border glow effect */}
-      <div className={`absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-100/30 via-pink-100/20 to-blue-100/30 opacity-0 transition-opacity duration-500 ${
-        selectedFilter !== 'ALL' ? 'opacity-100' : ''
+      <div className={`absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-100/20 via-purple-100/10 to-cyan-100/20 opacity-0 transition-opacity duration-500 ${
+        selectedFilter ? 'opacity-100' : ''
       }`}></div>
     </div>
   );

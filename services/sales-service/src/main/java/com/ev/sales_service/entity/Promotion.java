@@ -20,6 +20,9 @@ public class Promotion {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "promotion_id", columnDefinition = "BINARY(16)")
     private UUID promotionId;
+    
+    @Column(name = "dealer_id_json", columnDefinition = "JSON")
+    private String dealerIdJson;
 
     @Column(name = "promotion_name", length = 255, nullable = false)
     private String promotionName;
