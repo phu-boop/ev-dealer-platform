@@ -19,7 +19,7 @@ import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
-import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx"
+import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
 // customer pages
 import CustomerList from "../features/customers/pages/CustomerList.jsx";
@@ -32,6 +32,11 @@ import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogP
 import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.jsx";
 import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
+import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
+
+// Dealer
+import B2BOrderPage from "../features/dealer/promotions/pages/B2BOrderPage.jsx";
+import DealerOrdersPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -62,7 +67,9 @@ export default function AppRoutes() {
         */}
 
       <Routes>
-        {/* Public Routes */}
+        {/* ================================================================== */}
+        {/* ======================= PUBLIC ROUTES ============================ */}
+        {/* ================================================================== */}
         <Route path="/" element={<UserLayout />}>
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
@@ -70,7 +77,9 @@ export default function AppRoutes() {
           <Route path="reset-password" element={<ResetPassword />} />
         </Route>
 
-        {/* EVM Routes (Admin + Staff) */}
+        {/* ================================================================== */}
+        {/* ================== EVM ROUTES (ADMIN & STAFF) ==================== */}
+        {/* ================================================================== */}
         <Route
           element={<ProtectedRoute allowedRoles={["ADMIN", "EVM_STAFF"]} />}
         >
@@ -91,13 +100,23 @@ export default function AppRoutes() {
               <Route path="admin/notifications" element={<UserManagement />} />
             </Route>
 
-                        {/* Admin only */}
-                        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-                            <Route path="admin/products/promotions/*" element={<AdminPromotionManager />} />
-                            <Route path="admin/system/users" element={<UserManagement />} />
-                            <Route path="admin/notifications" element={<UserManagement />} />
-                            <Route path="admin/reports/notifications" element={<NotificationManagement />} />
-                        </Route>
+            {/* Admin only */}
+            <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route
+                path="admin/products/promotions/*"
+                element={<AdminPromotionManager />}
+              />
+              <Route path="admin/system/users" element={<UserManagement />} />
+              <Route path="admin/notifications" element={<UserManagement />} />
+              <Route
+                path="admin/reports/notifications"
+                element={<NotificationManagement />}
+              />
+              <Route
+                path="admin/distribution/allocation"
+                element={<AllocationPage />}
+              />
+            </Route>
             {/* Staff only */}
             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
               <Route path="staff" element={<Dashboard />} />
@@ -122,11 +141,17 @@ export default function AppRoutes() {
                 path="staff/distribution/inventory/central"
                 element={<InventoryCentral />}
               />
+              <Route
+                path="staff/distribution/allocation"
+                element={<AllocationPage />}
+              />
             </Route>
           </Route>
         </Route>
 
-        {/* Dealer Routes */}
+        {/* ================================================================== */}
+        {/* ================== DEALER ROUTES (MANAGER & STAFF) =============== */}
+        {/* ================================================================== */}
         <Route
           element={
             <ProtectedRoute allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]} />
@@ -137,7 +162,7 @@ export default function AppRoutes() {
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
 
-            {/* Dealer Manager Routes */}
+            {/* --- DEALER MANAGER ONLY ROUTES --- */}
             <Route
               element={<ProtectedRoute allowedRoles={["DEALER_MANAGER"]} />}
             >
@@ -161,6 +186,15 @@ export default function AppRoutes() {
 
               {/* System */}
               <Route path="manager/system/users" element={<UserManagement />} />
+
+              <Route
+                path="manager/inventory/order"
+                element={<B2BOrderPage />}
+              />
+              <Route
+                path="manager/inventory/info"
+                element={<DealerOrdersPage />}
+              />
             </Route>
 
             {/* Dealer Staff Routes */}

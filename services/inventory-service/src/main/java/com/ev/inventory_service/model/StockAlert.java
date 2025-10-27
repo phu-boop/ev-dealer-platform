@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "stock_alerts")
@@ -16,7 +17,7 @@ public class StockAlert {
     @Column(nullable = false)
     private Long variantId;
 
-    private Long dealerId;
+    private UUID dealerId;
 
     @Column(nullable = false)
     private String alertType; // Ví dụ: "LOW_STOCK_CENTRAL", "LOW_STOCK_DEALER"

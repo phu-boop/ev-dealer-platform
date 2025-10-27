@@ -2,14 +2,18 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   FiSearch,
   FiSliders,
-  FiPlusCircle,
-  FiEdit,
+  FiPlusCircle, // Dùng cho Nhập kho
+  FiEdit, // Dùng cho Sửa ngưỡng
   FiChevronDown,
+  FiNavigation, // Dùng cho Điều chuyển
 } from "react-icons/fi";
-import { getAllInventory } from "../services/inventoryService";
-import { getVariantDetailsByIds } from "../../catalog/services/vehicleCatalogService";
-import TransactionModal from "./TransactionModal";
-import ReorderLevelModal from "./ReorderLevelModal";
+
+import { getInventoryStatusByIds } from "../services/inventoryService";
+import { getAllVariantsPaginated } from "../../catalog/services/vehicleCatalogService";
+
+import TransactionModal from "./TransactionModal"; // Modal Nhập kho (RESTOCK)
+import TransferRequestModal from "./TransferRequestModal"; // Modal Tạo Yêu Cầu Điều Chuyển
+import ReorderLevelModal from "./ReorderLevelModal"; // Modal Sửa Ngưỡng
 
 // Component để hiển thị badge trạng thái
 const StatusBadge = ({ status }) => {
@@ -52,46 +56,75 @@ const InventoryStatusTab = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  // <<< STATE QUẢN LÝ MODAL >>>
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
 
   const fetchInventory = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params = { ...filters, page, size: 10 };
-      const inventoryResponse = await getAllInventory(params);
-      const inventoryData = inventoryResponse.data.data;
+      // BƯỚC 1: Lấy "Danh Sách Chủ" từ Vehicle Service (Lấy các phiên bản đã tạo)
+      const params = {
+        search: filters.search,
+        page: page,
+        size: 10,
+      };
 
-      if (inventoryData && inventoryData.content.length > 0) {
-        const variantIds = inventoryData.content.map((item) => item.variantId);
-        const detailsResponse = await getVariantDetailsByIds(variantIds);
-        const vehicleDetails = detailsResponse.data.data || [];
-        const detailsMap = new Map(vehicleDetails.map((v) => [v.variantId, v]));
+      const vehicleResponse = await getAllVariantsPaginated(params);
+      const vehicleData = vehicleResponse.data.data;
 
-        const mergedContent = inventoryData.content.map((item) => {
-          const details = detailsMap.get(item.variantId);
-          if (details) {
-            return { ...item, ...details };
-          }
-          return {
-            ...item,
-            versionName: `Không tìm thấy thông tin`,
-            color: `(ID: ${item.variantId})`,
-            skuCode: "N/A",
-          };
-        });
-
-        setInventoryWithDetails({
-          content: mergedContent,
-          totalPages: inventoryData.totalPages,
-        });
-      } else {
+      if (!vehicleData || vehicleData.content.length === 0) {
+        // Nếu không có xe nào trong danh mục, hiển thị bảng rỗng
         setInventoryWithDetails({ content: [], totalPages: 0 });
+        setIsLoading(false);
+        return;
       }
+
+      // BƯỚC 2: Lấy ID từ danh sách chủ
+      const variantIds = vehicleData.content.map(
+        (variant) => variant.variantId
+      );
+
+      // BƯỚC 3: Lấy thông tin tồn kho cho các ID này từ Inventory Service
+      // Giả sử bạn có API mới này
+      const inventoryResponse = await getInventoryStatusByIds(variantIds);
+      const inventoryList = inventoryResponse.data.data || [];
+
+      // Tạo một Map để tra cứu tồn kho nhanh (key: variantId, value: {availableQuantity, ...})
+      const inventoryMap = new Map(
+        inventoryList.map((inv) => [inv.variantId, inv])
+      );
+
+      // BƯỚC 4: Gộp dữ liệu (Merge)
+      const mergedContent = vehicleData.content.map((variant) => {
+        const inventoryInfo = inventoryMap.get(variant.variantId);
+
+        if (inventoryInfo) {
+          return {
+            ...variant, // (Tên, SKU, màu sắc... từ vehicle-service)
+            ...inventoryInfo, // (availableQuantity, allocatedQuantity, status... từ inventory-service)
+          };
+        } else {
+          // KHÔNG TÌM THẤY (Chưa có trong kho): Trả về thông tin xe với số lượng mặc định là 0
+          return {
+            ...variant,
+            availableQuantity: 0,
+            allocatedQuantity: 0,
+            totalQuantity: 0,
+            status: "OUT_OF_STOCK", // Mặc định là hết hàng
+            dealerStock: [], // Mặc định
+          };
+        }
+      });
+
+      // Cập nhật state với dữ liệu đã gộp
+      setInventoryWithDetails({
+        content: mergedContent,
+        totalPages: vehicleData.totalPages,
+      });
     } catch (error) {
-      console.error("Failed to fetch inventory data", error);
+      console.error("Failed to fetch merged inventory data", error);
       setInventoryWithDetails({ content: [], totalPages: 0 });
     } finally {
       setIsLoading(false);
@@ -103,7 +136,7 @@ const InventoryStatusTab = () => {
   }, [fetchInventory]);
 
   const handleFilterChange = (e) => {
-    setPage(0); // Reset về trang đầu khi thay đổi bộ lọc
+    setPage(0);
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
@@ -113,10 +146,14 @@ const InventoryStatusTab = () => {
     setExpandedRows(newSet);
   };
 
-  // ĐỊNH NGHĨA CÁC HÀM XỬ LÝ MODAL
-  const openTransactionModal = (variantId) => {
+  const openRestockModal = (variantId) => {
     setSelectedVariantId(variantId);
-    setIsTransactionModalOpen(true);
+    setIsRestockModalOpen(true);
+  };
+
+  const openTransferModal = (variantId) => {
+    setSelectedVariantId(variantId);
+    setIsTransferModalOpen(true);
   };
 
   const openReorderModal = (variantId) => {
@@ -124,8 +161,10 @@ const InventoryStatusTab = () => {
     setIsReorderModalOpen(true);
   };
 
+  // Hàm đóng chung cho tất cả
   const closeModal = () => {
-    setIsTransactionModalOpen(false);
+    setIsRestockModalOpen(false);
+    setIsTransferModalOpen(false);
     setIsReorderModalOpen(false);
     setSelectedVariantId(null);
   };
@@ -213,11 +252,18 @@ const InventoryStatusTab = () => {
                     </td>
                     <td className="p-3 text-right space-x-2">
                       <button
-                        onClick={() => openTransactionModal(item.variantId)}
+                        onClick={() => openRestockModal(item.variantId)}
                         className="p-2 text-blue-600 hover:bg-blue-100 rounded-full"
-                        title="Thực hiện giao dịch"
+                        title="Nhập kho (Restock)"
                       >
                         <FiPlusCircle />
+                      </button>
+                      <button
+                        onClick={() => openTransferModal(item.variantId)}
+                        className="p-2 text-purple-600 hover:bg-purple-100 rounded-full"
+                        title="Tạo Yêu Cầu Điều Chuyển"
+                      >
+                        <FiNavigation />
                       </button>
                       <button
                         onClick={() => openReorderModal(item.variantId)}
@@ -265,12 +311,19 @@ const InventoryStatusTab = () => {
         </div>
       )}
 
-      {/* RENDER CÁC MODAL CÓ ĐIỀU KIỆN */}
-      {isTransactionModalOpen && (
+      {isRestockModalOpen && (
         <TransactionModal
-          isOpen={isTransactionModalOpen}
+          isOpen={isRestockModalOpen}
           onClose={closeModal}
           onSuccess={fetchInventory}
+          variantId={selectedVariantId}
+        />
+      )}
+      {isTransferModalOpen && (
+        <TransferRequestModal
+          isOpen={isTransferModalOpen}
+          onClose={closeModal}
+          onSuccess={fetchInventory} // Tải lại kho sau khi tạo yêu cầu
           variantId={selectedVariantId}
         />
       )}

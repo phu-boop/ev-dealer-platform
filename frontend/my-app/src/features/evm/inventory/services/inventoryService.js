@@ -63,3 +63,7 @@ export const exportInventoryReport = (params) => {
     responseType: "blob", // Rất quan trọng để xử lý file download
   });
 };
+
+export const getInventoryStatusByIds = (variantIds) => {
+  return apiConstInventoryService.post("/inventory/status-by-ids", variantIds); // Gửi mảng ID trong body
+};

@@ -5,15 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface DealerLocationRepository extends JpaRepository<DealerLocation, Long> {
 
-    List<DealerLocation> findByDealerDealerId(Long dealerId);
+    List<DealerLocation> findByDealerDealerId(UUID dealerId);
 
     List<DealerLocation> findByCity(String city);
 
     List<DealerLocation> findByStatus(String status);
 
-    List<DealerLocation> findByDealerDealerIdAndStatus(Long dealerId, String status);
+    List<DealerLocation> findByDealerDealerIdAndStatus(UUID dealerId, String status);
 }

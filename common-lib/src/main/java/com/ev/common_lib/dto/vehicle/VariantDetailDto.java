@@ -1,6 +1,6 @@
-package com.ev.vehicle_service.dto.response;
+package com.ev.common_lib.dto.vehicle;
 
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
+import com.ev.common_lib.model.enums.*;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.util.List;

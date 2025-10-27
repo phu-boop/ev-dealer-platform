@@ -1,10 +1,11 @@
 package com.ev.inventory_service.model;
 
-import com.ev.inventory_service.model.Enum.TransactionType;
+import com.ev.common_lib.model.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "inventory_transactions")
@@ -25,9 +26,9 @@ public class InventoryTransaction {
     @Column(nullable = false)
     private Integer quantity;
 
-    private Long fromDealerId; // null nếu từ kho trung tâm
+    private UUID fromDealerId; // null nếu từ kho trung tâm
 
-    private Long toDealerId; // null nếu về kho trung tâm hoặc bán lẻ
+    private UUID toDealerId; // null nếu về kho trung tâm hoặc bán lẻ
 
     @CreationTimestamp
     @Column(updatable = false)

@@ -1,0 +1,391 @@
+package com.ev.sales_service.service.Implementation;
+
+import com.ev.common_lib.dto.inventory.AllocationRequestDto;
+import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
+import com.ev.common_lib.dto.respond.ApiRespond;
+import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.exception.AppException;
+import com.ev.common_lib.exception.ErrorCode;
+import com.ev.sales_service.dto.request.CreateB2BOrderRequest;
+import com.ev.sales_service.entity.OrderItem;
+import com.ev.sales_service.entity.OrderTracking;
+import com.ev.sales_service.entity.SalesOrder;
+import com.ev.sales_service.enums.OrderStatus;
+// Giả sử bạn có QuotationRepository, nếu không, hãy xóa import này
+// import com.ev.sales_service.repository.QuotationRepository; 
+import com.ev.sales_service.repository.SalesOrderRepository;
+import com.ev.sales_service.service.Interface.SalesOrderService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class SalesOrderServiceImpl implements SalesOrderService {
+
+    private final SalesOrderRepository salesOrderRepository;
+    // private final QuotationRepository quotationRepository; // Bỏ comment nếu bạn dùng logic báo giá
+    private final RestTemplate restTemplate;
+
+    @Value("${app.services.catalog.url}")
+    private String vehicleCatalogUrl;
+
+    @Value("${app.services.inventory.url}")
+    private String inventoryServiceUrl;
+
+    private static final Logger log = LoggerFactory.getLogger(SalesOrderServiceImpl.class);
+
+    @Override
+    @Transactional
+    public SalesOrder createB2BOrder(CreateB2BOrderRequest request, String email, UUID dealerId) {
+        
+        SalesOrder order = new SalesOrder();
+        order.setDealerId(dealerId);
+        order.setCustomerId(null); // B2B
+        order.setOrderDate(LocalDateTime.now());
+        order.setOrderStatus(OrderStatus.PENDING);
+        order.setManagerApproval(false);
+        // Tương lai: Lấy staffId từ email hoặc userId (từ header)
+        // order.setStaffId(findStaffIdByEmail(email)); 
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        // Lặp qua các mục hàng
+        for (CreateB2BOrderRequest.Item itemRequest : request.getItems()) {
+            
+            String url = vehicleCatalogUrl + "/vehicle-catalog/variants/" + itemRequest.getVariantId();
+            ResponseEntity<ApiRespond<VariantDetailDto>> response;
+            try {
+                // Dùng .exchange() để đọc được cấu trúc ApiRespond<T>
+                response = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null, // Không có body
+                        new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {}
+                );
+            } catch (Exception e) {
+                log.error("Error calling vehicle-catalog service for variant {}: {}", itemRequest.getVariantId(), e.getMessage());
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
+            }
+
+            // Kiểm tra response
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || response.getBody().getData() == null) {
+                log.error("Invalid response from vehicle-catalog for variant {}: {}", itemRequest.getVariantId(), response.getStatusCode());
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
+            }
+
+            VariantDetailDto variantDetails = response.getBody().getData(); // Lấy DTO 1 LẦN
+            
+            // Logic lấy giá
+            BigDecimal unitPrice = variantDetails.getWholesalePrice();
+            if (unitPrice == null) {
+                unitPrice = variantDetails.getPrice(); 
+            }
+            
+            // Kiểm tra null lần cuối
+            if (unitPrice == null) {
+                 log.error("Cannot determine unit price for variant {}", variantDetails.getVariantId());
+                 throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
+            }
+            
+            BigDecimal itemFinalPrice = unitPrice.multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
+            totalAmount = totalAmount.add(itemFinalPrice);
+
+            OrderItem orderItem = OrderItem.builder()
+                    .salesOrder(order)
+                    .variantId(itemRequest.getVariantId())
+                    .quantity(itemRequest.getQuantity())
+                    .unitPrice(unitPrice)
+                    .discount(BigDecimal.ZERO) 
+                    .finalPrice(itemFinalPrice)
+                    .build();
+            orderItems.add(orderItem);
+        }
+
+        order.setTotalAmount(totalAmount);
+        order.setOrderItems(orderItems);
+
+        // Tạo bản ghi theo dõi trạng thái đầu tiên
+        OrderTracking tracking = OrderTracking.builder()
+                .salesOrder(order)
+                .status("ĐÃ ĐẶT HÀNG")
+                .updateDate(LocalDateTime.now())
+                .notes("Đại lý đã tạo đơn hàng, chờ EVM xác nhận.")
+                //.updatedBy(staffId) // Gán ID người tạo
+                .build();
+        
+        order.setOrderTrackings(List.of(tracking)); // Khởi tạo list
+
+        return salesOrderRepository.save(order);
+    }
+    
+    @Override
+    @Transactional
+    // Bỏ các tham số role, userId, profileId thừa
+    public SalesOrder approveB2BOrder(UUID orderId, String email) {
+        SalesOrder order = salesOrderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
+
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
+        }
+
+        order.setOrderStatus(OrderStatus.CONFIRMED);
+        order.setManagerApproval(true);
+        order.setApprovalDate(LocalDateTime.now());
+        // order.setApprovedBy(findStaffIdByEmail(email)); // Logic lấy UUID người duyệt
+
+        OrderTracking tracking = OrderTracking.builder()
+                .salesOrder(order)
+                .status("ĐÃ TIẾP NHẬN ĐẶT XE")
+                .updateDate(LocalDateTime.now())
+                .notes("EVM Staff (" + email + ") đã xác nhận đơn hàng.")
+                //.updatedBy(...) // Gán ID người duyệt
+                .build();
+        if (order.getOrderTrackings() == null) {
+             order.setOrderTrackings(new ArrayList<>());
+        }
+        order.getOrderTrackings().add(tracking);
+
+        // Chuẩn bị gọi API inventory-service
+        AllocationRequestDto allocationRequest = new AllocationRequestDto();
+        allocationRequest.setOrderId(orderId);
+        List<AllocationRequestDto.AllocationItem> items = order.getOrderItems().stream()
+            .map(item -> {
+                AllocationRequestDto.AllocationItem allocItem = new AllocationRequestDto.AllocationItem();
+                allocItem.setVariantId(item.getVariantId());
+                allocItem.setQuantity(item.getQuantity());
+                return allocItem;
+            }).collect(Collectors.toList());
+        allocationRequest.setItems(items);
+
+        try {
+            String allocUrl = inventoryServiceUrl + "/inventory/allocate";
+            
+            // Lấy header từ request gốc để chuyển tiếp xác thực
+            HttpHeaders headers = buildHeadersFromCurrentRequest(email);
+
+            HttpEntity<AllocationRequestDto> requestEntity = new HttpEntity<>(allocationRequest, headers);
+
+            // Dùng .exchange() để xử lý lỗi và kiểu generic tốt hơn
+            ResponseEntity<ApiRespond<Void>> response = restTemplate.exchange(
+                allocUrl,
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<ApiRespond<Void>>() {}
+            );
+            
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.error("Inventory allocation failed for order {} with status: {}", orderId, response.getStatusCode());
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
+            }
+            
+            log.info("Successfully called inventory allocation for order {}", orderId);
+
+        } catch (HttpClientErrorException e) { // Bắt lỗi HTTP rõ ràng
+             log.error("HTTP Error calling inventory allocation for order {}: {} - {}", orderId, e.getStatusCode(), e.getResponseBodyAsString(), e);
+             // Nếu bạn CHƯA sửa AppException, hãy dùng constructor 1 tham số
+             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+             // Nếu BẠN ĐÃ SỬA AppException, hãy dùng constructor 2 tham số để message rõ hơn:
+             // throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE, "Lỗi từ inventory service: " + e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Failed to allocate stock for order {}: {}", orderId, e.getMessage(), e); 
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
+        }
+
+        return salesOrderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
+    // Bỏ các tham số role, userId, profileId thừa
+    public SalesOrder shipB2BOrder(UUID orderId, ShipmentRequestDto shipmentRequest, String email) {
+        SalesOrder order = salesOrderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
+            
+        if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
+            throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
+        }
+
+        order.setOrderStatus(OrderStatus.IN_TRANSIT);
+
+        OrderTracking tracking = OrderTracking.builder()
+                .salesOrder(order)
+                .status("ĐANG VẬN CHUYỂN")
+                .updateDate(LocalDateTime.now())
+                .notes("Hàng đã được xuất kho trung tâm, đang trên đường đến đại lý.")
+                // .updatedBy(...) // Gán ID người thực hiện
+                .build();
+         if (order.getOrderTrackings() == null) {
+              order.setOrderTrackings(new ArrayList<>());
+         }
+        order.getOrderTrackings().add(tracking);
+
+        try {
+            String shipUrl = inventoryServiceUrl + "/inventory/ship-b2b"; 
+            
+            // Lấy header từ request gốc để chuyển tiếp xác thực
+            HttpHeaders headers = buildHeadersFromCurrentRequest(email);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            shipmentRequest.setOrderId(orderId);
+            shipmentRequest.setDealerId(order.getDealerId());
+            
+            HttpEntity<ShipmentRequestDto> requestEntity = new HttpEntity<>(shipmentRequest, headers);
+            
+            // Dùng .exchange()
+            ResponseEntity<ApiRespond<Void>> response = restTemplate.exchange(
+                shipUrl,
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<ApiRespond<Void>>() {}
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()){
+                 log.error("Inventory shipping failed for order {} with status: {}", orderId, response.getStatusCode());
+                 throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
+            }
+            
+            log.info("Successfully called inventory shipping for order {}", orderId);
+
+        } catch (HttpClientErrorException e) { // Bắt lỗi HTTP
+            log.error("HTTP Error shipping stock for order {}: {} - {}", orderId, e.getStatusCode(), e.getResponseBodyAsString(), e);
+             // Ném lỗi 1 tham số
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        } catch (Exception e) {
+            log.error("Failed to ship stock for order {}: {}", orderId, e.getMessage(), e);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
+        }
+
+        return salesOrderRepository.save(order);
+    }
+    
+    @Override
+    @Transactional
+    public SalesOrder confirmDelivery(UUID orderId, String email, UUID dealerId) {
+        SalesOrder order = salesOrderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
+            
+        if (!order.getDealerId().equals(dealerId)) {
+            throw new AppException(ErrorCode.FORBIDDEN); // Dùng constructor 1 tham số
+        }
+            
+        if (order.getOrderStatus() != OrderStatus.IN_TRANSIT) {
+            throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
+        }
+        
+        order.setOrderStatus(OrderStatus.DELIVERED);
+        order.setDeliveryDate(LocalDateTime.now());
+        
+        OrderTracking tracking = OrderTracking.builder()
+                .salesOrder(order)
+                .status("ĐÃ GIAO THÀNH CÔNG")
+                .updateDate(LocalDateTime.now())
+                .notes("Đại lý đã xác nhận nhận hàng.")
+                //.updatedBy(findStaffIdByEmail(email)) // ID của DEANER_MANAGER
+                .build();
+         if (order.getOrderTrackings() == null) {
+             order.setOrderTrackings(new ArrayList<>());
+         }
+        order.getOrderTrackings().add(tracking);
+        
+        SalesOrder savedOrder = salesOrderRepository.save(order);
+        
+        // kafkaTemplate.send("order_delivered_events", savedOrder.getOrderId());
+        
+        return savedOrder;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SalesOrder> getAllB2BOrders(OrderStatus status, Pageable pageable) {
+        if (status != null) {
+            return salesOrderRepository.findAllByOrderStatus(status, pageable);
+        } else {
+            return salesOrderRepository.findAll(pageable);
+        }
+    }
+
+    // --- CÁC HÀM HELPER ĐỂ LẤY HEADER ---
+
+    /**
+     * Xây dựng HttpHeaders bao gồm token và thông tin user từ request gốc.
+     */
+    private HttpHeaders buildHeadersFromCurrentRequest(String fallbackEmail) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        HttpServletRequest currentRequest = getCurrentHttpRequest();
+        if (currentRequest != null) {
+            // 1. Chuyển tiếp Token (Quan trọng nhất)
+            final String authHeader = currentRequest.getHeader(HttpHeaders.AUTHORIZATION);
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwtToken = authHeader.substring(7);
+                headers.setBearerAuth(jwtToken);
+                log.debug("Forwarding Bearer token.");
+            } else {
+                 log.warn("Original request is missing Bearer token. Cannot forward token.");
+            }
+            
+            // 2. Chuyển tiếp các header X-User-*
+            copyUserHeaders(currentRequest, headers);
+            log.debug("Forwarding X-User-* headers: {}", headers);
+
+        } else {
+             log.warn("Could not get current HTTP request to forward headers. Using fallback email.");
+             headers.set("X-User-Email", fallbackEmail); // Ít nhất thêm email
+        }
+        return headers;
+    }
+
+    /**
+     * Lấy HttpServletRequest hiện tại một cách an toàn.
+     */
+    private HttpServletRequest getCurrentHttpRequest() {
+        try {
+             return ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        } catch (IllegalStateException e) {
+            log.warn("Not processing request within HTTP request context. Cannot retrieve original headers.");
+            return null;
+        }
+    }
+
+     /**
+     * Sao chép các header X-User-* từ request gốc sang header mới.
+     */
+     private void copyUserHeaders(HttpServletRequest sourceRequest, HttpHeaders targetHeaders) {
+         String userEmail = sourceRequest.getHeader("X-User-Email");
+         String userRole = sourceRequest.getHeader("X-User-Role");
+         String userId = sourceRequest.getHeader("X-User-Id");
+         String userProfileId = sourceRequest.getHeader("X-User-ProfileId");
+
+         if (userEmail != null) targetHeaders.set("X-User-Email", userEmail);
+         if (userRole != null) targetHeaders.set("X-User-Role", userRole); // Quan trọng
+         if (userId != null) targetHeaders.set("X-User-Id", userId);
+         if (userProfileId != null) targetHeaders.set("X-User-ProfileId", userProfileId);
+     }
+}

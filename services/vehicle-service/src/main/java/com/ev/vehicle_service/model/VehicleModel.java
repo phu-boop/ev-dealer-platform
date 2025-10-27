@@ -1,7 +1,7 @@
 package com.ev.vehicle_service.model;
 
 import org.hibernate.annotations.UpdateTimestamp;
-import com.ev.vehicle_service.model.Enum.*;
+import com.ev.common_lib.model.enums.VehicleStatus;
 
 import jakarta.persistence.*;
 // import lombok.Data;

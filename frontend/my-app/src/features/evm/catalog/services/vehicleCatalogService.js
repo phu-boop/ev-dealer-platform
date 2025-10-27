@@ -135,3 +135,9 @@ export const getVariantDetailsByIds = (ids) => {
     ids
   );
 };
+
+export const getAllVariantsPaginated = (params) => {
+  return apiConstVehicleService.get("/vehicle-catalog/variants/paginated", {
+    params,
+  });
+};
