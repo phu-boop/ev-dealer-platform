@@ -7,7 +7,7 @@ export const profileService = {
         "oldPassword": oldPassword,
         "newPassword": newPassword
     }),
-    updateProfile: (profileData) => apiConst.put(`users/profile/`, profileData)
+    updateProfile: (profileData) => apiConst.put(`users/profile`, profileData)
 };
 
 export default profileService;
