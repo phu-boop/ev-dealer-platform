@@ -15,6 +15,8 @@ import com.ev.user_service.entity.User;
 import com.ev.user_service.mapper.UserMapper;
 import com.ev.user_service.repository.UserRepository;
 import com.ev.user_service.security.JwtUtil;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import java.security.SecureRandom;
@@ -51,6 +53,8 @@ public class AuthService {
             String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
             UserRespond userRespond = userMapper.usertoUserRespond(user);
             userRespond.setMemberId(user.getProfileId());
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
             return new LoginRespond(userRespond, token);
         } else {
             throw new AppException(ErrorCode.INVALID_PASSWORD);

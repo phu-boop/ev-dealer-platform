@@ -1,6 +1,7 @@
 package com.ev.user_service.controller;
 
 import com.ev.user_service.dto.request.ProfileRequest;
+import com.ev.user_service.dto.request.UpdateProfileRequest;
 import com.ev.user_service.dto.respond.ProfileRespond;
 import com.ev.user_service.entity.User;
 import com.ev.user_service.entity.UserDevice;
@@ -118,5 +119,12 @@ public class UserController {
     public ResponseEntity<ApiRespond<ProfileRespond>> getCurrentProfileRespond(@RequestBody ProfileRequest request) {
         ProfileRespond profileRespond = userService.getCurrentProfileByIdUser(request.getId_user());
         return ResponseEntity.ok(ApiRespond.success("Get profile successfully", profileRespond));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+    @PutMapping("/profile")
+    public ResponseEntity<ApiRespond<?>> updateProfile(
+            @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(ApiRespond.success("Update successfully!",userService.updateProfile(request)));
     }
 }

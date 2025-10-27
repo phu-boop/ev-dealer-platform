@@ -44,6 +44,7 @@ public class User {
     LocalDate birthday;
     String city;
     String country;
+    String url;
     @Enumerated(EnumType.STRING)
     Gender gender;
     @CreationTimestamp
