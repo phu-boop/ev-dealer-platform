@@ -1,5 +1,6 @@
 package com.ev.user_service.controller;
 
+import com.ev.user_service.dto.respond.ProfileRespond;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +19,7 @@ import com.ev.user_service.service.LoginAttemptService;
 import com.ev.user_service.service.RecaptchaService;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
@@ -62,11 +64,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Get current user successful", loginRespond));
     }
 
-    @GetMapping("/me/profile")
-    public ResponseEntity<ApiRespond<LoginRespond>> getCurrentUserProfile() {
-        LoginRespond loginRespond = authService.getCurrentUser();
-        return ResponseEntity.ok(ApiRespond.success("Get current user successful", loginRespond));
-    }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/refresh")

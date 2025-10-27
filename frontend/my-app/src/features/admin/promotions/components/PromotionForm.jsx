@@ -361,7 +361,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
+        <div className=" gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tên chương trình <span className="text-red-500">*</span>
@@ -400,260 +400,262 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
           </div>
         </div>
       </div>
-
-      {/* Dealer Selection */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center mb-6">
-          <BuildingStorefrontIcon className="h-6 w-6 text-purple-600 mr-3" />
-          <div>
-            <h2 className="text-lg font-medium text-gray-900">Đại Lý Áp dụng</h2>
-            <p className="text-sm text-gray-500">Chọn các đại lý được áp dụng khuyến mãi</p>
+      
+      <div className="flex gap-8" >
+        {/* Dealer Selection */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex-1">
+          <div className="flex items-center mb-6">
+            <BuildingStorefrontIcon className="h-6 w-6 text-purple-600 mr-3" />
+            <div>
+              <h2 className="text-lg font-medium text-gray-900">Đại Lý Áp dụng</h2>
+              <p className="text-sm text-gray-500">Chọn các đại lý được áp dụng khuyến mãi</p>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Đại lý áp dụng <span className="text-red-500">*</span>
-            </label>
-            
-            {/* Selected Dealers Display */}
-            {selectedDealers.length > 0 && (
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {selectedDealers.map((dealer) => (
-                    <div
-                      key={dealer.dealerId}
-                      className="inline-flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"
-                    >
-                      <span className="font-medium">{dealer.dealerName}</span>
-                      <span className="mx-1">-</span>
-                      <span className="text-purple-600">{dealer.city}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeDealer(dealer.dealerId)}
-                        className="ml-2 text-purple-600 hover:text-purple-800 focus:outline-none"
-                      >
-                        <XMarkIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Dealer Selection Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsDealerDropdownOpen(!isDealerDropdownOpen)}
-                className={`flex justify-between items-center w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                  errors.dealers 
-                    ? 'border-red-300 focus:border-red-500' 
-                    : 'border-gray-300 focus:border-indigo-500'
-                }`}
-              >
-                <span className="text-gray-500">
-                  {isLoadingDealers ? "Đang tải danh sách đại lý..." : "Chọn đại lý..."}
-                </span>
-                {isDealerDropdownOpen ? (
-                  <ChevronUpIcon className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <ChevronDownIcon className="h-5 w-5 text-gray-400" />
-                )}
-              </button>
-
-              {isDealerDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {isLoadingDealers ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                      Đang tải danh sách đại lý...
-                    </div>
-                  ) : availableDealers.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                      Đã chọn tất cả đại lý
-                    </div>
-                  ) : (
-                    availableDealers.map((dealer) => (
-                      <button
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Đại lý áp dụng <span className="text-red-500">*</span>
+              </label>
+              
+              {/* Selected Dealers Display */}
+              {selectedDealers.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDealers.map((dealer) => (
+                      <div
                         key={dealer.dealerId}
-                        type="button"
-                        onClick={() => handleDealerSelect(dealer)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        className="inline-flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"
                       >
-                        <div className="font-medium text-gray-900">{dealer.dealerName}</div>
-                        <div className="text-sm text-gray-500 flex justify-between">
-                          <span>{dealer.dealerCode}</span>
-                          <span>{dealer.city} • {dealer.region}</span>
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {dealer.address}
-                        </div>
-                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs mt-1 ${
-                          dealer.status === 'ACTIVE' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {dealer.status === 'ACTIVE' ? 'Đang hoạt động' : 'Không hoạt động'}
-                        </div>
-                      </button>
-                    ))
-                  )}
+                        <span className="font-medium">{dealer.dealerName}</span>
+                        <span className="mx-1">-</span>
+                        <span className="text-purple-600">{dealer.city}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeDealer(dealer.dealerId)}
+                          className="ml-2 text-purple-600 hover:text-purple-800 focus:outline-none"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
 
-            {errors.dealers && (
-              <p className="mt-2 text-sm text-red-600 flex items-center">
-                <ExclamationCircleIcon className="h-4 w-4 mr-1" />
-                {errors.dealers}
-              </p>
-            )}
-
-            <p className="mt-2 text-sm text-gray-500">
-              Đã chọn {selectedDealers.length} đại lý
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Vehicle Models Selection */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center mb-6">
-          <TagIcon className="h-6 w-6 text-blue-600 mr-3" />
-          <div>
-            <h2 className="text-lg font-medium text-gray-900">Model Xe Áp dụng</h2>
-            <p className="text-sm text-gray-500">Chọn các model xe được áp dụng khuyến mãi</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Model xe áp dụng <span className="text-red-500">*</span>
-            </label>
-            
-            {/* Selected Models Display */}
-            {selectedModels.length > 0 && (
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {selectedModels.map((model) => (
-                    <div
-                      key={model.modelId}
-                      className="inline-flex items-center gap-2 bg-white border border-gray-200 shadow-sm px-3 py-1.5 rounded-full text-sm hover:shadow-md transition-all duration-200"
-                    >
-                      {/* Tên model */}
-                      <span className="font-semibold text-gray-800">{model.modelName}</span>
-
-                      {/* Dấu gạch nối */}
-                      <span className="text-gray-400">-</span>
-
-                      {/* Hãng xe */}
-                      <span className="text-blue-600 font-medium">{model.brand}</span>
-
-                      {/* Trạng thái */}
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          model.status === 'IN_PRODUCTION'
-                            ? 'bg-green-100 text-green-700'
-                            : model.status === 'DISCONTINUED'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}
-                      >
-                        {model.status.replace('_', ' ')}
-                      </span>
-
-                      {/* Nút xóa */}
-                      <button
-                        type="button"
-                        onClick={() => removeModel(model.modelId)}
-                        className="ml-1 text-gray-500 hover:text-red-500 transition-colors duration-200"
-                      >
-                        <XMarkIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Model Selection Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                className={`flex justify-between items-center w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                  errors.applicableModels 
-                    ? 'border-red-300 focus:border-red-500' 
-                    : 'border-gray-300 focus:border-indigo-500'
-                }`}
-              >
-                <span className="text-gray-500">
-                  {isLoadingModels ? "Đang tải model xe..." : "Chọn model xe..."}
-                </span>
-                {isModelDropdownOpen ? (
-                  <ChevronUpIcon className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <ChevronDownIcon className="h-5 w-5 text-gray-400" />
-                )}
-              </button>
-
-              {isModelDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {isLoadingModels ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                      Đang tải model xe...
-                    </div>
-                  ) : availableModels.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                      Đã chọn tất cả model xe
-                    </div>
+              {/* Dealer Selection Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsDealerDropdownOpen(!isDealerDropdownOpen)}
+                  className={`flex justify-between items-center w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                    errors.dealers 
+                      ? 'border-red-300 focus:border-red-500' 
+                      : 'border-gray-300 focus:border-indigo-500'
+                  }`}
+                >
+                  <span className="text-gray-500">
+                    {isLoadingDealers ? "Đang tải danh sách đại lý..." : "Chọn đại lý..."}
+                  </span>
+                  {isDealerDropdownOpen ? (
+                    <ChevronUpIcon className="h-5 w-5 text-gray-400" />
                   ) : (
-                    availableModels.map((model) => (
-                      <button
-                        key={model.modelId}
-                        type="button"
-                        onClick={() => handleModelSelect(model)}
-                        className="w-full flex flex-col items-start px-4 py-3 text-left bg-white hover:bg-gray-50 focus:outline-none focus:bg-gray-100 border-b border-gray-100 last:border-b-0 transition-colors duration-200"
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="font-semibold text-gray-900">{model.modelName}</div>
-                          {/* Status tag */}
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                              model.status === 'IN_PRODUCTION'
-                                ? 'bg-green-100 text-green-700'
-                                : model.status === 'DISCONTINUED'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-yellow-100 text-yellow-700'
-                            }`}
-                          >
-                            {model.status === 'IN_PRODUCTION' && '✅'}
-                            {model.status === 'DISCONTINUED' && '🔴'}
-                            {model.status === 'COMING_SOON' && '🟡'}
-                            <span>{model.status.replace('_', ' ')}</span>
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-500 mt-0.5">{model.brand}</div>
-                      </button>
-                    ))
+                    <ChevronDownIcon className="h-5 w-5 text-gray-400" />
                   )}
+                </button>
+
+                {isDealerDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {isLoadingDealers ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Đang tải danh sách đại lý...
+                      </div>
+                    ) : availableDealers.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Đã chọn tất cả đại lý
+                      </div>
+                    ) : (
+                      availableDealers.map((dealer) => (
+                        <button
+                          key={dealer.dealerId}
+                          type="button"
+                          onClick={() => handleDealerSelect(dealer)}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900">{dealer.dealerName}</div>
+                          <div className="text-sm text-gray-500 flex justify-between">
+                            <span>{dealer.dealerCode}</span>
+                            <span>{dealer.city} • {dealer.region}</span>
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            {dealer.address}
+                          </div>
+                          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs mt-1 ${
+                            dealer.status === 'ACTIVE' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {dealer.status === 'ACTIVE' ? 'Đang hoạt động' : 'Không hoạt động'}
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {errors.dealers && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+                  {errors.dealers}
+                </p>
+              )}
+
+              <p className="mt-2 text-sm text-gray-500">
+                Đã chọn {selectedDealers.length} đại lý
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Vehicle Models Selection */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center mb-6">
+            <TagIcon className="h-6 w-6 text-blue-600 mr-3" />
+            <div>
+              <h2 className="text-lg font-medium text-gray-900">Model Xe Áp dụng</h2>
+              <p className="text-sm text-gray-500">Chọn các model xe được áp dụng khuyến mãi</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Model xe áp dụng <span className="text-red-500">*</span>
+              </label>
+              
+              {/* Selected Models Display */}
+              {selectedModels.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {selectedModels.map((model) => (
+                      <div
+                        key={model.modelId}
+                        className="inline-flex items-center gap-2 bg-white border border-gray-200 shadow-sm px-3 py-1.5 rounded-full text-sm hover:shadow-md transition-all duration-200"
+                      >
+                        {/* Tên model */}
+                        <span className="font-semibold text-gray-800">{model.modelName}</span>
+
+                        {/* Dấu gạch nối */}
+                        <span className="text-gray-400">-</span>
+
+                        {/* Hãng xe */}
+                        <span className="text-blue-600 font-medium">{model.brand}</span>
+
+                        {/* Trạng thái */}
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            model.status === 'IN_PRODUCTION'
+                              ? 'bg-green-100 text-green-700'
+                              : model.status === 'DISCONTINUED'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}
+                        >
+                          {model.status.replace('_', ' ')}
+                        </span>
+
+                        {/* Nút xóa */}
+                        <button
+                          type="button"
+                          onClick={() => removeModel(model.modelId)}
+                          className="ml-1 text-gray-500 hover:text-red-500 transition-colors duration-200"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
 
-            {errors.applicableModels && (
-              <p className="mt-2 text-sm text-red-600 flex items-center">
-                <ExclamationCircleIcon className="h-4 w-4 mr-1" />
-                {errors.applicableModels}
+              {/* Model Selection Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                  className={`flex justify-between items-center w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                    errors.applicableModels 
+                      ? 'border-red-300 focus:border-red-500' 
+                      : 'border-gray-300 focus:border-indigo-500'
+                  }`}
+                >
+                  <span className="text-gray-500">
+                    {isLoadingModels ? "Đang tải model xe..." : "Chọn model xe..."}
+                  </span>
+                  {isModelDropdownOpen ? (
+                    <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+
+                {isModelDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {isLoadingModels ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Đang tải model xe...
+                      </div>
+                    ) : availableModels.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Đã chọn tất cả model xe
+                      </div>
+                    ) : (
+                      availableModels.map((model) => (
+                        <button
+                          key={model.modelId}
+                          type="button"
+                          onClick={() => handleModelSelect(model)}
+                          className="w-full flex flex-col items-start px-4 py-3 text-left bg-white hover:bg-gray-50 focus:outline-none focus:bg-gray-100 border-b border-gray-100 last:border-b-0 transition-colors duration-200"
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="font-semibold text-gray-900">{model.modelName}</div>
+                            {/* Status tag */}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                model.status === 'IN_PRODUCTION'
+                                  ? 'bg-green-100 text-green-700'
+                                  : model.status === 'DISCONTINUED'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}
+                            >
+                              {model.status === 'IN_PRODUCTION' && '✅'}
+                              {model.status === 'DISCONTINUED' && '🔴'}
+                              {model.status === 'COMING_SOON' && '🟡'}
+                              <span>{model.status.replace('_', ' ')}</span>
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500 mt-0.5">{model.brand}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {errors.applicableModels && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+                  {errors.applicableModels}
+                </p>
+              )}
+
+              <p className="mt-2 text-sm text-gray-500">
+                Đã chọn {selectedModels.length} model xe
               </p>
-            )}
-
-            <p className="mt-2 text-sm text-gray-500">
-              Đã chọn {selectedModels.length} model xe
-            </p>
+            </div>
           </div>
         </div>
       </div>
