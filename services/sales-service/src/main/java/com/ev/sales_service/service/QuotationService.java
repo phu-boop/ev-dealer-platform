@@ -178,6 +178,83 @@ public class QuotationService {
                 .build();
     }
 
+    /**
+     * Lấy tất cả báo giá của một đại lý (phục vụ EDMS-35)
+     * @param dealerId ID của đại lý
+     * @return Danh sách DTO báo giá
+     */
+    public List<QuotationResponseDTO> getQuotationsByDealerId(UUID dealerId) {
+        log.info("Fetching all quotations for dealerId: {}", dealerId);
+        List<Quotation> quotations = quotationRepository.findByDealerId(dealerId);
+
+        // Sử dụng lại hàm mapToResponseDTO để chuyển đổi List<Entity> sang List<DTO>
+        return quotations.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy tất cả báo giá của một đại lý THEO TRẠNG THÁI (phục vụ EDMS-35)
+     * @param dealerId ID của đại lý
+     * @param status Trạng thái (PENDING, APPROVED, v.v.)
+     * @return Danh sách DTO báo giá
+     */
+    public List<QuotationResponseDTO> getQuotationsByDealerIdAndStatus(UUID dealerId, QuotationStatus status) {
+        log.info("Fetching quotations for dealerId: {} with status: {}", dealerId, status);
+        List<Quotation> quotations = quotationRepository.findByDealerIdAndStatus(dealerId, status);
+
+        // Sử dụng lại hàm mapToResponseDTO
+        return quotations.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Cập nhật trạng thái của một báo giá (phục vụ EDMS-35: Duyệt/Từ chối)
+     *
+     * @param quotationId ID của báo giá cần cập nhật
+     * @param newStatus   Trạng thái mới (APPROVED hoặc REJECTED)
+     * @return DTO báo giá đã được cập nhật
+     */
+    @Transactional
+    public QuotationResponseDTO updateQuotationStatus(UUID quotationId, QuotationStatus newStatus) {
+        log.info("Attempting to update status for quotationId: {} to {}", quotationId, newStatus);
+
+        // 1. Chỉ cho phép cập nhật sang 2 trạng thái này
+        if (newStatus != QuotationStatus.APPROVED && newStatus != QuotationStatus.REJECTED) {
+            log.warn("Invalid status update attempt: {}", newStatus);
+            // Bạn cần import AppException và ErrorCode từ common-lib
+            throw new AppException(ErrorCode.INVALID_DATA);
+        }
+
+        // 2. Tìm báo giá
+        Quotation quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() -> {
+                    log.error("Quotation not found: {}", quotationId);
+                    return new AppException(ErrorCode.DATA_NOT_FOUND);
+                });
+
+        // 3. Kiểm tra logic (ví dụ: chỉ duyệt báo giá PENDING)
+        if (quotation.getStatus() != QuotationStatus.PENDING) {
+            log.warn("Quotation {} is not in PENDING state. Current state: {}", quotationId, quotation.getStatus());
+            throw new AppException(ErrorCode.INVALID_STATE);
+        }
+
+        // 4. Cập nhật và Lưu
+        quotation.setStatus(newStatus);
+
+        // TODO: Sau này, khi duyệt báo giá, cần gọi sang InventoryService để "giữ" (allocate) chiếc xe.
+        // if (newStatus == QuotationStatus.APPROVED) {
+        //     inventoryServiceClient.allocateStock(quotation.getVariantId(), 1);
+        // }
+
+        Quotation updatedQuotation = quotationRepository.save(quotation);
+        log.info("Quotation {} status updated to {}", updatedQuotation.getQuotationId(), updatedQuotation.getStatus());
+
+        // 5. Trả về DTO
+        return mapToResponseDTO(updatedQuotation);
+    }
+
 
     // --- CÁC HÀM GIẢ LẬP (SẼ XÓA KHI KẾT NỐI MICROSERVICE) ---
 
