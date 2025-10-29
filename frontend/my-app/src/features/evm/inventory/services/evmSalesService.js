@@ -26,11 +26,32 @@ export const shipB2BOrder = (orderId, shipmentData) => {
 };
 
 /**
- * TẠO MỘT ĐƠN HÀNG B2B MỚI (Dùng cho cả Đại lý "Kéo" và EVM "Đẩy")
+ * TẠO MỘT ĐƠN HÀNG B2B MỚI (Dùng cho Đại lý)
  * @param {object} orderData - Dữ liệu của CreateB2BOrderRequest
  */
 export const createB2BOrder = (orderData) => {
   return apiConstSaleService.post("/sales-orders/b2b", orderData);
+};
+
+// Hàm cho Staff/Admin đặt hộ
+export const createB2BOrderByStaff = (payload) => {
+  return apiConstSaleService.post("/sales-orders/b2b/staff-placement", payload);
+};
+
+/**
+ * Hủy đơn hàng bởi Staff/Admin
+ * @param {string} orderId
+ */
+export const cancelOrderByStaff = (orderId) => {
+  return apiConstSaleService.put(`/sales-orders/${orderId}/cancel-by-staff`);
+};
+
+/**
+ * Xóa một đơn hàng (chỉ khi CANCELLED)
+ * @param {string} orderId - UUID của đơn hàng
+ */
+export const deleteOrder = (orderId) => {
+  return apiConstSaleService.delete(`/sales-orders/${orderId}`);
 };
 
 // /**

@@ -397,30 +397,17 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     @Override
     public Page<VariantDetailDto> getAllVariantsPaginated(String search, Pageable pageable) {
         
-        // 1. Tạo một Specification rỗng (luôn đúng)
-        Specification<VehicleVariant> spec = (root, query, cb) -> {
-            // 1. Tạo một Predicate (điều kiện) rỗng (luôn đúng)
-            Predicate p = cb.conjunction(); 
+        // 1. Tạo Specification
+        // Gọi trực tiếp hàm static. Nếu 'search' là null/rỗng, hàm 'hasKeyword' của bạn
+        // nên trả về null (như trong code tôi gợi ý ở lần trước)
+        Specification<VehicleVariant> spec = VehicleVariantSpecification.hasKeyword(search);
 
-            // 2. Thêm điều kiện TÌM KIẾM nếu có
-            if (search != null && !search.isBlank()) {
-                // Kết hợp điều kiện rỗng (p) VÀ (and) điều kiện hasKeyword
-                p = cb.and(p, VehicleVariantSpecification.hasKeyword(search).toPredicate(root, query, cb));
-            }
-            
-            // (Trong tương lai, nếu có thêm filter, bạn chỉ cần .and() vào đây)
-            // if (status != null) {
-            //    p = cb.and(p, VehicleVariantSpecification.hasStatus(status).toPredicate(root, query, cb));
-            // }
-
-            return p;
-        };
-
-        // 3. Thực thi truy vấn
+        // (Nếu hasKeyword trả về null khi search rỗng)
+        // 2. Thực thi truy vấn
+        // JpaRepository.findAll() đủ thông minh để xử lý 'spec' là null (tức là không lọc)
         Page<VehicleVariant> variantPage = variantRepository.findAll(spec, pageable);
         
-        // 4. Ánh xạ (map) kết quả từ Entity Page sang DTO Page
-        // (Hàm mapToVariantDetailDto đã bao gồm logic kế thừa của bạn)
+        // 3. Ánh xạ
         return variantPage.map(this::mapToVariantDetailDto);
     }
 

@@ -102,8 +102,8 @@ public class InventoryController {
     public ResponseEntity<ApiRespond<List<InventoryStatusDto>>> getInventoryStatusByIds(
             @RequestBody List<Long> variantIds) {
         
-        List<InventoryStatusDto> statuses = inventoryService.getInventoryStatusByIds(variantIds);
-        return ResponseEntity.ok(ApiRespond.success("Fetched bulk inventory status", statuses));
+        List<InventoryStatusDto> results = inventoryService.getInventoryStatusByIds(variantIds);
+        return ResponseEntity.ok(ApiRespond.success("Fetched inventory status for " + results.size() + " items", results));
     }
 
     // ==========================================================

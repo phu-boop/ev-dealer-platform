@@ -64,6 +64,10 @@ export const exportInventoryReport = (params) => {
   });
 };
 
+/**
+ * Lấy thông tin tồn kho cho một danh sách ID
+ * @param {Array<number>} variantIds - Mảng các ID, ví dụ: [4, 5, 6]
+ */
 export const getInventoryStatusByIds = (variantIds) => {
-  return apiConstInventoryService.post("/inventory/status-by-ids", variantIds); // Gửi mảng ID trong body
+  return apiConstInventoryService.post("/inventory/status-by-ids", variantIds);
 };

@@ -12,13 +12,13 @@ import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
 import com.ev.inventory_service.model.PhysicalVehicle;
 import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
+import com.ev.inventory_service.model.Enum.InventoryLevelStatus;
 // import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
 import com.ev.inventory_service.model.CentralInventory;
 import com.ev.inventory_service.model.DealerAllocation;
 import com.ev.inventory_service.model.InventoryTransaction;
 import com.ev.inventory_service.model.TransferRequest;
-import com.ev.inventory_service.model.Enum.InventoryLevelStatus;
 import com.ev.inventory_service.model.Enum.TransferRequestStatus;
 import com.ev.inventory_service.repository.CentralInventoryRepository;
 import com.ev.inventory_service.repository.DealerAllocationRepository;
@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -491,18 +492,33 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     /**
-     * Triển khai logic cho API lấy tồn kho hàng loạt.
+     * SỬA LẠI: Lấy trạng thái tồn kho cho NHIỀU variant (Tối ưu)
      */
     @Override
+    @Transactional(readOnly = true)
     public List<InventoryStatusDto> getInventoryStatusByIds(List<Long> variantIds) {
         if (variantIds == null || variantIds.isEmpty()) {
-            return new ArrayList<>(); // Trả về danh sách rỗng nếu không có ID
+            return Collections.emptyList();
         }
 
-        // Lặp qua từng ID, gọi hàm đã có và thu thập kết quả
+        // 1. Tải TỒN KHO TRUNG TÂM (1 query duy nhất)
+        List<CentralInventory> inventories = centralRepo.findByVariantIdIn(variantIds);
+        // Tạo Map để tra cứu nhanh
+        Map<Long, CentralInventory> inventoryMap = inventories.stream()
+                .collect(Collectors.toMap(CentralInventory::getVariantId, inv -> inv));
+
+        // 2. (Đã xóa logic tìm kho đại lý vì DTO không có)
+
+        // 3. Map kết quả (Dùng stream() của variantIds gốc để đảm bảo trả về đủ)
         return variantIds.stream()
-                .map(this::getInventoryStatusForVariant)
-                .collect(Collectors.toList());
+            .map(id -> {
+                // Lấy thông tin từ Map đã tra cứu
+                CentralInventory inventory = inventoryMap.get(id);
+                
+                // Gọi hàm helper đã sửa (chỉ 2 tham số)
+                return mapToInventoryStatusDto(inventory, id);
+            })
+            .collect(Collectors.toList());
     }
 
     //--Helper methods--
@@ -546,41 +562,49 @@ public class InventoryServiceImpl implements InventoryService {
         centralRepo.save(inventory);
     }
 
-    // private void handleSale(TransactionRequestDto request) {
-    //     // Khi bán hàng, toDealerId chính là dealer đã bán chiếc xe đó
-    //     Long dealerId = request.getToDealerId();
-    //     if (dealerId == null) {
-    //         throw new IllegalArgumentException("Dealer ID is required for a sale transaction.");
-    //     }
+    /**
+     * Map thủ công từ Entity sang DTO.
+     * Xử lý cả trường hợp 'inventory' (kho TT) là null (khi xe chưa được nhập kho).
+     */
+    private InventoryStatusDto mapToInventoryStatusDto(CentralInventory inventory, Long variantId) {
+        
+        // 1. Dùng Builder() thay vì new InventoryStatusDto()
+        InventoryStatusDto.InventoryStatusDtoBuilder dtoBuilder = InventoryStatusDto.builder();
+        dtoBuilder.variantId(variantId);
 
-    //     DealerAllocation allocation = dealerRepo.findByVariantIdAndDealerId(request.getVariantId(), dealerId)
-    //             .orElseThrow(() -> new AppException(ErrorCode.ALLOCATION_NOT_FOUND));
+        if (inventory == null) {
+            // Trường hợp xe này CHƯA CÓ trong kho trung tâm
+            dtoBuilder.availableQuantity(0);
+            dtoBuilder.allocatedQuantity(0);
+            dtoBuilder.totalQuantity(0);
+            dtoBuilder.reorderLevel(0); // Ngưỡng mặc định
+            // 2. Dùng Enum thay vì String
+            dtoBuilder.status(InventoryLevelStatus.OUT_OF_STOCK); 
+        } else {
+            // Trường hợp xe ĐÃ CÓ trong kho trung tâm
+            // 1. Lấy reorderLevel và kiểm tra null, gán mặc định là 0
+            int reorderLvl = (inventory.getReorderLevel() != null) ? inventory.getReorderLevel() : 0;
+            
+            dtoBuilder.availableQuantity(inventory.getAvailableQuantity());
+            dtoBuilder.allocatedQuantity(inventory.getAllocatedQuantity());
+            dtoBuilder.totalQuantity(inventory.getTotalQuantity());
+            
+            // 2. Dùng giá trị đã kiểm tra null
+            dtoBuilder.reorderLevel(reorderLvl); 
+            
+            // Logic xác định trạng thái (Dùng Enum)
+            if (inventory.getAvailableQuantity() <= 0) {
+                dtoBuilder.status(InventoryLevelStatus.OUT_OF_STOCK);
+            } else if (inventory.getAvailableQuantity() <= reorderLvl) { // 3. Dùng giá trị đã kiểm tra null
+                dtoBuilder.status(InventoryLevelStatus.LOW_STOCK);
+            } else {
+                dtoBuilder.status(InventoryLevelStatus.IN_STOCK);
+            }
+        }
 
-    //     if (allocation.getAvailableQuantity() < request.getQuantity()) {
-    //         throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
-    //     }
+        return dtoBuilder.build(); // Trả về DTO đã được build
+    }
 
-    //     // Trừ cả số lượng khả dụng và số lượng đã phân bổ
-    //     allocation.setAvailableQuantity(allocation.getAvailableQuantity() - request.getQuantity());
-    //     allocation.setAllocatedQuantity(allocation.getAllocatedQuantity() - request.getQuantity());
-    //     dealerRepo.save(allocation);
-
-    //     // Đồng thời, cần cập nhật lại số lượng tổng trong kho trung tâm
-    //     CentralInventory central = centralRepo.findByVariantId(request.getVariantId())
-    //             .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
-    //     central.setTotalQuantity(central.getTotalQuantity() - request.getQuantity());
-    //     central.setAllocatedQuantity(central.getAllocatedQuantity() - request.getQuantity());
-    //     centralRepo.save(central);
-    // }
-
-    // private String formatDealerStock(List<DealerInventoryDto> dealerStock) {
-    //     if (dealerStock == null || dealerStock.isEmpty()) {
-    //         return "Không có";
-    //     }
-    //     return dealerStock.stream()
-    //             .map(d -> "Đại lý " + d.getDealerId() + ": " + d.getAvailableQuantity() + " xe")
-    //             .collect(Collectors.joining("; ")); // Ngăn cách bằng dấu chấm phẩy
-    // }
     private CellStyle createHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();

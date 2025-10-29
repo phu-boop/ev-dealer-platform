@@ -1,177 +1,300 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { FiTruck, FiCheckCircle, FiBox, FiAlertCircle } from "react-icons/fi";
+import {
+  FiCheckCircle,
+  FiPackage,
+  FiTruck,
+  FiList,
+  FiXCircle,
+} from "react-icons/fi"; // Thêm FiXCircle
+import Swal from "sweetalert2";
 import {
   getMyB2BOrders,
   confirmDelivery,
-} from "../services/dealerSalesService";
+  cancelOrderByDealer, // Import hàm hủy
+} from "../services/dealerSalesService"; // Service của Dealer
 
-import { getVariantDetailsByIds } from "../../../evm/catalog/services/vehicleCatalogService";
+// (Copy StatusBadge component hoặc import nếu đã tách riêng)
+const StatusBadge = ({ status }) => {
+  let colorClasses = "bg-gray-100 text-gray-800";
+  let text = status;
+
+  switch (status) {
+    case "PENDING":
+      colorClasses = "bg-yellow-100 text-yellow-800";
+      text = "Chờ duyệt";
+      break;
+    case "CONFIRMED":
+      colorClasses = "bg-blue-100 text-blue-800";
+      text = "Đã duyệt";
+      break;
+    case "IN_TRANSIT":
+      colorClasses = "bg-cyan-100 text-cyan-800";
+      text = "Đang giao";
+      break;
+    case "DELIVERED":
+      colorClasses = "bg-green-100 text-green-800";
+      text = "Đã nhận";
+      break;
+    case "CANCELLED":
+      colorClasses = "bg-red-100 text-red-800";
+      text = "Đã hủy";
+      break;
+    default:
+      break;
+  }
+  return (
+    <span
+      className={`px-2.5 py-1 text-xs font-semibold rounded-full inline-block ${colorClasses}`}
+    >
+      {text}
+    </span>
+  );
+};
 
 const DealerOrdersPage = () => {
-  const [activeTab, setActiveTab] = useState("IN_TRANSIT"); // Mặc định xem đơn đang giao
+  const [activeTab, setActiveTab] = useState("PENDING"); // Mặc định hiển thị tab "Chờ duyệt"
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 10,
+    totalPages: 0,
+  });
 
-  // (Chúng ta cần gộp dữ liệu để hiển thị tên sản phẩm, nhưng tạm thời sẽ hiển thị ID)
+  // --- Hàm tải danh sách đơn hàng ---
+  const fetchOrders = useCallback(
+    async (status, page = 0) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const params = { status: status, page: page, size: pagination.size };
+        const response = await getMyB2BOrders(params); // API của Dealer
+        setOrders(response.data.data.content || []);
+        setPagination((prev) => ({
+          ...prev,
+          page: response.data.data.number,
+          totalPages: response.data.data.totalPages,
+        }));
+      } catch (err) {
+        console.error("Failed to fetch orders", err);
+        setError("Không thể tải danh sách đơn hàng.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [pagination.size]
+  );
 
-  const fetchOrders = useCallback(async (status) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await getMyB2BOrders({ status: status, size: 50 }); // Lấy 50 đơn hàng
-      const ordersData = res.data.data?.content || [];
-
-      setOrders(ordersData);
-    } catch (error) {
-      console.error("Failed to fetch orders", error);
-      setError("Không thể tải danh sách đơn hàng.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
+  // Tải lại dữ liệu khi đổi tab hoặc page thay đổi (từ pagination controls)
   useEffect(() => {
-    fetchOrders(activeTab);
-  }, [activeTab, fetchOrders]);
+    fetchOrders(activeTab, pagination.page);
+  }, [activeTab, fetchOrders, pagination.page]); // Thêm pagination.page dependency
 
-  // Hàm xử lý khi Đại lý nhấn "Xác Nhận Nhận Hàng"
-  const handleConfirmDelivery = async (orderId) => {
+  // Hàm đổi trang (cho component Pagination)
+  const handlePageChange = (newPage) => {
     if (
-      !window.confirm(
-        "Bạn có chắc chắn đã nhận đủ hàng và muốn xác nhận đơn hàng này?"
-      )
+      newPage >= 0 &&
+      newPage < pagination.totalPages &&
+      newPage !== pagination.page
     ) {
-      return;
-    }
-
-    try {
-      await confirmDelivery(orderId);
-      alert("Xác nhận nhận hàng thành công!");
-      fetchOrders(activeTab); // Tải lại danh sách
-    } catch (err) {
-      alert("Lỗi: " + (err.response?.data?.message || "Không thể xác nhận"));
+      setPagination((prev) => ({ ...prev, page: newPage }));
+      // useEffect sẽ tự động gọi fetchOrders khi page thay đổi
     }
   };
 
-  const renderOrderList = () => {
-    if (isLoading) {
-      return (
-        <p className="text-center text-gray-500 py-10">Đang tải đơn hàng...</p>
-      );
-    }
-    if (error) {
-      return <p className="text-center text-red-500 py-10">{error}</p>;
-    }
-    if (orders.length === 0) {
-      return (
-        <p className="text-center text-gray-500 py-10">
-          Không có đơn hàng nào trong trạng thái này.
-        </p>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        {orders.map((order) => (
-          <div
-            key={order.orderId}
-            className="bg-white p-4 rounded-lg shadow-md border"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm text-gray-500">
-                  Đơn hàng #{order.orderId}
-                </p>
-                <p className="text-lg font-bold text-blue-600">
-                  Ngày đặt: {new Date(order.orderDate).toLocaleString("vi-VN")}
-                </p>
-                {order.status === "DELIVERED" && (
-                  <p className="text-sm text-green-600 font-medium">
-                    Đã nhận ngày:{" "}
-                    {new Date(order.deliveryDate).toLocaleString("vi-VN")}
-                  </p>
-                )}
-              </div>
-              <div
-                className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                  order.status === "IN_TRANSIT"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-green-100 text-green-800"
-                }`}
-              >
-                {order.status === "IN_TRANSIT"
-                  ? "Đang Vận Chuyển"
-                  : "Đã Nhận Hàng"}
-              </div>
-            </div>
-
-            <div className="mt-4 border-t pt-4">
-              <h4 className="font-semibold mb-2">Chi tiết sản phẩm:</h4>
-              <ul className="list-disc list-inside space-y-1">
-                {order.orderItems.map((item) => (
-                  <li key={item.variantId}>
-                    {item.quantity} x (SKU:{" "}
-                    {item.skuCode || `ID ${item.variantId}`}) -{" "}
-                    {item.versionName || "..."}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* NÚT HÀNH ĐỘNG */}
-            {order.orderStatus === "IN_TRANSIT" && (
-              <div className="text-right mt-4">
-                <button
-                  onClick={() => handleConfirmDelivery(order.orderId)}
-                  className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                >
-                  <FiCheckCircle className="mr-2" /> Xác Nhận Đã Nhận Hàng
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
+  // Hàm đổi tab (reset về trang 0)
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    setPagination((prev) => ({ ...prev, page: 0 })); // Reset page khi đổi tab
   };
+
+  // --- HÀM XỬ LÝ XÁC NHẬN NHẬN HÀNG ---
+  const handleConfirmDelivery = async (orderId) => {
+    const result = await Swal.fire({
+      /* ... SweetAlert config ... */
+    });
+    if (result.isConfirmed) {
+      try {
+        await confirmDelivery(orderId);
+        Swal.fire("Thành công!", "Đã xác nhận nhận hàng.", "success");
+        fetchOrders(activeTab, pagination.page); // Tải lại trang hiện tại
+      } catch (err) {
+        Swal.fire(
+          "Lỗi!",
+          err.response?.data?.message || "Xác nhận thất bại.",
+          "error"
+        );
+      }
+    }
+  };
+
+  // --- HÀM XỬ LÝ HỦY ĐƠN (Dealer) ---
+  const handleCancelOrder = async (orderId) => {
+    const result = await Swal.fire({
+      title: "Hủy đơn hàng?",
+      text: "Bạn chắc chắn muốn hủy đơn đặt hàng này không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Đúng, hủy đơn!",
+      cancelButtonText: "Không",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await cancelOrderByDealer(orderId); // Gọi API hủy của dealer
+        Swal.fire("Đã hủy!", "Đơn hàng của bạn đã được hủy.", "success");
+        fetchOrders(activeTab, pagination.page); // Tải lại
+      } catch (err) {
+        Swal.fire(
+          "Lỗi!",
+          err.response?.data?.message || "Hủy đơn thất bại.",
+          "error"
+        );
+      }
+    }
+  };
+
+  const tabs = [
+    { status: "PENDING", label: "Chờ Hãng duyệt" },
+    { status: "CONFIRMED", label: "Đã duyệt" },
+    { status: "IN_TRANSIT", label: "Đang giao" },
+    { status: "DELIVERED", label: "Đã nhận" },
+    { status: "CANCELLED", label: "Đã hủy" },
+  ];
 
   return (
-    <div className="animate-in fade-in-0 duration-500 p-6">
-      <h1 className="text-4xl font-bold text-gray-800 mb-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">
         Đơn Hàng Của Tôi
       </h1>
 
-      {/* Thanh điều hướng Tabs */}
+      {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
-        <nav className="flex space-x-6">
-          <button
-            onClick={() => setActiveTab("IN_TRANSIT")}
-            className={`flex items-center space-x-2 pb-3 font-medium ${
-              activeTab === "IN_TRANSIT"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <FiTruck />
-            <span>Đang Vận Chuyển</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("DELIVERED")}
-            className={`flex items-center space-x-2 pb-3 font-medium ${
-              activeTab === "DELIVERED"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <FiBox />
-            <span>Lịch Sử Nhận Hàng</span>
-          </button>
+        <nav className="flex flex-wrap space-x-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.status}
+              onClick={() => handleTabChange(tab.status)} // Dùng handleTabChange
+              className={`py-3 px-4 font-medium text-sm rounded-t-lg ${
+                activeTab === tab.status
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </nav>
       </div>
 
-      {/* Bảng danh sách đơn hàng */}
-      <div>{renderOrderList()}</div>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {isLoading ? (
+          <p className="text-gray-500">Đang tải đơn hàng...</p>
+        ) : orders.length === 0 ? (
+          <p className="text-gray-500">Không có đơn hàng nào trong mục này.</p>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <div
+                key={order.orderId}
+                className="border border-gray-200 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start gap-4"
+              >
+                {/* Thông tin đơn */}
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500">
+                    Mã ĐH: {order.orderId}
+                  </p>
+                  <p className="font-semibold">
+                    Ngày đặt:{" "}
+                    {new Date(order.orderDate).toLocaleDateString("vi-VN")}
+                  </p>
+                  <p className="font-bold text-lg text-blue-700 mt-1">
+                    Tổng:{" "}
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(order.totalAmount)}
+                  </p>
+                  {order.orderItems && order.orderItems.length > 0 && (
+                    <ul className="list-disc list-inside text-sm text-gray-600 mt-2 pl-4">
+                      {order.orderItems.map((item) => (
+                        <li key={item.orderItemId}>
+                          {item.quantity} x (Variant: {item.variantId}) - Đơn
+                          giá:{" "}
+                          {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          }).format(item.unitPrice)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {order.notes && (
+                    <p className="text-sm text-gray-500 mt-2 italic">
+                      Ghi chú: {order.notes}
+                    </p>
+                  )}
+                </div>
+
+                {/* Trạng thái và Hành động */}
+                <div className="flex-shrink-0 flex flex-col items-end space-y-2 w-full md:w-auto">
+                  <StatusBadge status={order.orderStatus} />
+
+                  {/* Nút Hủy cho PENDING */}
+                  {order.orderStatus === "PENDING" && (
+                    <button
+                      onClick={() => handleCancelOrder(order.orderId)}
+                      className="flex items-center justify-center w-full md:w-auto px-3 py-1.5 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 transition duration-150"
+                      title="Hủy đơn hàng này"
+                    >
+                      <FiXCircle className="mr-1" /> Hủy Đơn
+                    </button>
+                  )}
+
+                  {/* Nút Xác Nhận cho IN_TRANSIT */}
+                  {order.orderStatus === "IN_TRANSIT" && (
+                    <button
+                      onClick={() => handleConfirmDelivery(order.orderId)}
+                      className="flex items-center justify-center w-full md:w-auto px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition duration-150 shadow"
+                    >
+                      <FiCheckCircle className="mr-1" /> Xác Nhận Đã Nhận
+                    </button>
+                  )}
+                  {/* Không có nút Xóa ở đây */}
+                  {/* Có thể thêm nút Xem chi tiết */}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* --- Component Phân Trang --- */}
+        {pagination.totalPages > 1 && (
+          <div className="mt-6 flex justify-center items-center space-x-2">
+            <button
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 0}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Trước
+            </button>
+            <span>
+              Trang {pagination.page + 1} / {pagination.totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page >= pagination.totalPages - 1}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Sau
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

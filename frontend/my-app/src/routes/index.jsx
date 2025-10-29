@@ -35,8 +35,8 @@ import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx"
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 
 // Dealer
-import B2BOrderPage from "../features/dealer/promotions/pages/B2BOrderPage.jsx";
-import DealerOrdersPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
+import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
+import B2BOrderForm from "../features/dealer/promotions/pages/B2BOrderForm.jsx";
 
 export default function AppRoutes() {
   return (
@@ -189,12 +189,9 @@ export default function AppRoutes() {
 
               <Route
                 path="manager/inventory/order"
-                element={<B2BOrderPage />}
+                element={<B2BOrderForm />}
               />
-              <Route
-                path="manager/inventory/info"
-                element={<DealerOrdersPage />}
-              />
+              <Route path="manager/inventory/info" element={<B2BOrderPage />} />
             </Route>
 
             {/* Dealer Staff Routes */}

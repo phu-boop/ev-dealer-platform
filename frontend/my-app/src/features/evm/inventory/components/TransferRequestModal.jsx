@@ -2,10 +2,15 @@ import React, { useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
 import { useAuthContext } from "../../../../features/auth/AuthProvider";
 import { getAllDealersList } from "../../../dealer/promotions/services/dealerSalesService";
-import { createB2BOrder } from "../services/evmSalesService";
+import {
+  createB2BOrder,
+  createB2BOrderByStaff,
+} from "../services/evmSalesService";
 
 const TransferRequestModal = ({ isOpen, onClose, onSuccess, variantId }) => {
-  const { email } = useAuthContext();
+  const { email, roles } = useAuthContext();
+  const isStaffOrAdmin =
+    roles?.includes("EVM_STAFF") || roles?.includes("ADMIN");
 
   const [quantity, setQuantity] = useState("");
   const [toDealerId, setToDealerId] = useState("");
@@ -45,8 +50,8 @@ const TransferRequestModal = ({ isOpen, onClose, onSuccess, variantId }) => {
     setError("");
 
     try {
-      // Payload cho API /sales-orders/b2b
-      const payload = {
+      // basePayload cho API /sales-orders/b2b
+      const basePayload = {
         dealerId: toDealerId,
         requestedByEmail: email, // EVM Staff yêu cầu
         notes: notes,
@@ -58,16 +63,28 @@ const TransferRequestModal = ({ isOpen, onClose, onSuccess, variantId }) => {
         ],
       };
 
-      // GỌI API TẠO ĐƠN HÀNG B2B
-      await createB2BOrder(payload);
+      if (isStaffOrAdmin) {
+        if (!toDealerId) {
+          setError("Vui lòng chọn đại lý nhận.");
+          setIsLoading(false);
+          return;
+        }
+        const staffPayload = { ...basePayload, dealerId: toDealerId };
+        // --- GỌI HÀM MỚI ---
+        await createB2BOrderByStaff(staffPayload);
+        alert(
+          "Đã tạo lệnh điều chuyển thành công! Vui lòng vào trang 'Điều Phối Xe' để duyệt."
+        );
+      } else {
+        // --- GỌI HÀM CŨ ---
+        await createB2BOrder(basePayload); // Dealer tự đặt, không cần dealerId trong payload
+        alert("Đã tạo đơn đặt hàng thành công!");
+      }
 
-      alert(
-        "Đã tạo lệnh điều chuyển thành công! Vui lòng vào trang 'Điều Phối Xe' để duyệt."
-      );
-      onSuccess(); // Tải lại trang (tùy chọn)
+      onSuccess();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || "Tạo yêu cầu thất bại.");
+      setError(err.response?.data?.message || "Thao tác thất bại.");
     } finally {
       setIsLoading(false);
     }

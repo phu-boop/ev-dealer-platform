@@ -50,3 +50,11 @@ export const confirmDelivery = (orderId) => {
 export const getAllDealersList = () => {
   return apiConstDealerService.get("/api/dealers/list-all");
 };
+
+/**
+ * Hủy đơn hàng bởi Dealer
+ * @param {string} orderId
+ */
+export const cancelOrderByDealer = (orderId) => {
+  return apiConstSaleService.put(`/sales-orders/${orderId}/cancel-by-dealer`);
+};

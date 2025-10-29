@@ -9,13 +9,18 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class CreateB2BOrderRequest {
 
+    private UUID dealerId;
+
     @Valid
     @NotEmpty(message = "Đơn hàng phải có ít nhất một sản phẩm")
     private List<Item> items;
+
+    private String notes;
 
     @Data
     @NoArgsConstructor    
@@ -23,7 +28,6 @@ public class CreateB2BOrderRequest {
     public static class Item {
         
         @NotNull(message = "variantId là bắt buộc")
-
         private Long variantId; 
 
         @NotNull

@@ -34,6 +34,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.security.core.Authentication; 
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -330,6 +332,71 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SalesOrder> getMyB2BOrders(UUID dealerId, OrderStatus status, Pageable pageable) {
+        
+        // Cần dealerId để lọc
+        if (dealerId == null) {
+            // Ném lỗi nếu không xác định được đại lý (từ header)
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (status != null) {
+            // Trường hợp 1: Có lọc theo status
+            return salesOrderRepository.findAllByDealerIdAndOrderStatus(dealerId, status, pageable);
+        } else {
+            // Trường hợp 2: Không lọc, lấy tất cả đơn của đại lý đó
+            return salesOrderRepository.findAllByDealerId(dealerId, pageable);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void cancelOrderByDealer(UUID orderId, String email, UUID dealerId) {
+        SalesOrder order = findOrderByIdOrThrow(orderId);
+
+        // Kiểm tra trạng thái
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+
+        // Kiểm tra quyền sở hữu
+        if (!order.getDealerId().equals(dealerId)) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
+        // Thực hiện hủy
+        performCancel(order, email);
+    }
+
+    @Override
+    @Transactional
+    public void cancelOrderByStaff(UUID orderId, String email) {
+        SalesOrder order = findOrderByIdOrThrow(orderId);
+
+        // Kiểm tra trạng thái
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+
+        // Staff/Admin có quyền hủy mọi đơn PENDING, không cần kiểm tra dealerId
+        performCancel(order, email);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCancelledOrder(UUID orderId) {
+        SalesOrder order = salesOrderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getOrderStatus() != OrderStatus.CANCELLED) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+
+        salesOrderRepository.delete(order);
+    }
+
     // --- CÁC HÀM HELPER ĐỂ LẤY HEADER ---
 
     /**
@@ -377,7 +444,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
      /**
      * Sao chép các header X-User-* từ request gốc sang header mới.
      */
-     private void copyUserHeaders(HttpServletRequest sourceRequest, HttpHeaders targetHeaders) {
+    private void copyUserHeaders(HttpServletRequest sourceRequest, HttpHeaders targetHeaders) {
          String userEmail = sourceRequest.getHeader("X-User-Email");
          String userRole = sourceRequest.getHeader("X-User-Role");
          String userId = sourceRequest.getHeader("X-User-Id");
@@ -388,4 +455,19 @@ public class SalesOrderServiceImpl implements SalesOrderService {
          if (userId != null) targetHeaders.set("X-User-Id", userId);
          if (userProfileId != null) targetHeaders.set("X-User-ProfileId", userProfileId);
      }
+
+    private SalesOrder findOrderByIdOrThrow(UUID orderId) {
+        return salesOrderRepository.findById(orderId)
+               .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+    }
+
+    private void performCancel(SalesOrder order, String cancelledByEmail) {
+        order.setOrderStatus(OrderStatus.CANCELLED);
+        // Optional: Ghi lại ai đã hủy
+        // order.setCancelledBy(cancelledByEmail);
+        salesOrderRepository.save(order);
+
+        // Optional: Gửi sự kiện hủy đơn
+        // kafkaTemplate.send("order_cancelled_events", order.getOrderId());
+    }
 }

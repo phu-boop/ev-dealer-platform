@@ -45,7 +45,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
         }
 
         // Ngoại lệ
-        if (EXCLUDED_PATHS.contains(path)) {
+        if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
             return chain.filter(exchange);
         }
 
