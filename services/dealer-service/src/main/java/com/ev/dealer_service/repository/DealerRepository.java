@@ -1,5 +1,6 @@
 package com.ev.dealer_service.repository;
 
+import com.ev.dealer_service.dto.response.DealerBasicDto;
 import com.ev.dealer_service.entity.Dealer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -31,4 +32,10 @@ public interface DealerRepository extends JpaRepository<Dealer, Long> {
     @Query("SELECT d FROM Dealer d WHERE LOWER(d.dealerName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(d.city) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Dealer> searchDealers(@Param("keyword") String keyword);
+
+    /**
+     * Lấy danh sách rút gọn của tất cả các đại lý, chỉ bao gồm ID và Tên.
+     */
+    @Query("SELECT new com.ev.dealer_service.dto.response.DealerBasicDto(d.dealerId, d.dealerName) FROM Dealer d")
+    List<DealerBasicDto> findAllBasicInfo();
 }

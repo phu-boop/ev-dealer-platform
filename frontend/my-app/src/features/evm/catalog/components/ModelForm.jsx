@@ -126,6 +126,7 @@ const ModelForm = ({ isOpen, onClose, onSuccess, model }) => {
         batteryCapacity: "",
         rangeKm: "",
         motorPower: "",
+        status: "IN_PRODUCTION",
       },
     ],
   };
@@ -223,7 +224,17 @@ const ModelForm = ({ isOpen, onClose, onSuccess, model }) => {
       ...formData,
       variants: [
         ...formData.variants,
-        { versionName: "", color: "", price: "", skuCode: "", imageUrl: "" },
+        {
+          versionName: "",
+          color: "",
+          price: "",
+          skuCode: "",
+          imageUrl: "",
+          batteryCapacity: "",
+          rangeKm: "",
+          motorPower: "",
+          status: "IN_PRODUCTION",
+        },
       ],
     });
   };
@@ -275,6 +286,7 @@ const ModelForm = ({ isOpen, onClose, onSuccess, model }) => {
               baseChargingTime: Number(v.baseChargingTime) || null,
               rangeKm: Number(v.rangeKm) || null,
               motorPower: Number(v.motorPower) || null,
+              status: v.status || "IN_PRODUCTION",
             }))
           : []; // Nếu không hiển thị, gửi mảng rỗng
 

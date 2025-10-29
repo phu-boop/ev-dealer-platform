@@ -1,4 +1,4 @@
-package com.ev.vehicle_service.model.Enum;
+package com.ev.common_lib.model.enums;
 
 public enum EVMAction {
     CREATE, 

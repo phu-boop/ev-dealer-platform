@@ -9,18 +9,19 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface DealerContractRepository extends JpaRepository<DealerContract, Long> {
 
     Optional<DealerContract> findByContractNumber(String contractNumber);
 
-    List<DealerContract> findByDealerDealerId(Long dealerId);
+    List<DealerContract> findByDealerDealerId(UUID dealerId);
 
     List<DealerContract> findByContractStatus(String contractStatus);
 
     @Query("SELECT dc FROM DealerContract dc WHERE dc.dealer.dealerId = :dealerId AND dc.contractStatus = 'ACTIVE'")
-    List<DealerContract> findActiveContractsByDealerId(@Param("dealerId") Long dealerId);
+    List<DealerContract> findActiveContractsByDealerId(@Param("dealerId") UUID dealerId);
 
     @Query("SELECT dc FROM DealerContract dc WHERE dc.endDate < :currentDate AND dc.contractStatus = 'ACTIVE'")
     List<DealerContract> findExpiredContracts(@Param("currentDate") LocalDate currentDate);

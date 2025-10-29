@@ -69,8 +69,7 @@ public class VehicleCatalogController {
     public ResponseEntity<ApiRespond<ModelDetailDto>> updateModel(
             @PathVariable Long modelId,
             @Valid @RequestBody UpdateModelRequest request,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String email = jwtUtil.extractEmail(authorizationHeader);
+            @RequestHeader("X-User-Email") String email) {
         vehicleCatalogService.updateModel(modelId, request, email);
         ModelDetailDto updatedDto = vehicleCatalogService.getModelDetails(modelId);
         return ResponseEntity.ok(ApiRespond.success("Model updated successfully", updatedDto));
@@ -82,8 +81,7 @@ public class VehicleCatalogController {
     @DeleteMapping("/models/{modelId}")
     public ResponseEntity<ApiRespond<Void>> deactivateModel(
             @PathVariable Long modelId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String email = jwtUtil.extractEmail(authorizationHeader);
+            @RequestHeader("X-User-Email") String email) {
         vehicleCatalogService.deactivateModel(modelId, email);
         return ResponseEntity.ok(ApiRespond.success("Model and all its variants have been discontinued", null));
     }
@@ -123,8 +121,7 @@ public class VehicleCatalogController {
     public ResponseEntity<ApiRespond<VariantDetailDto>> updateVariant(
             @PathVariable Long variantId,
             @Valid @RequestBody UpdateVariantRequest request,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String email = jwtUtil.extractEmail(authorizationHeader);
+            @RequestHeader("X-User-Email") String email) {
         vehicleCatalogService.updateVariant(variantId, request, email);
         VariantDetailDto updatedDto = vehicleCatalogService.getVariantDetails(variantId);
         return ResponseEntity.ok(ApiRespond.success("Variant updated successfully", updatedDto));
@@ -136,8 +133,7 @@ public class VehicleCatalogController {
     @DeleteMapping("/variants/{variantId}")
     public ResponseEntity<ApiRespond<Void>> deactivateVariant(
             @PathVariable Long variantId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String email = jwtUtil.extractEmail(authorizationHeader);
+            @RequestHeader("X-User-Email") String email) {
         vehicleCatalogService.deactivateVariant(variantId, email);
         return ResponseEntity.ok(ApiRespond.success("Variant has been discontinued", null));
     }

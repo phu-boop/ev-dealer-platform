@@ -1,17 +1,17 @@
 package com.ev.vehicle_service.services.Implementation;
 
+import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.dto.vehicle.FeatureDto;
+import com.ev.common_lib.model.enums.VehicleStatus;
+import com.ev.common_lib.model.enums.EVMAction;
 import com.ev.vehicle_service.dto.request.CreateModelRequest;
 // import com.ev.vehicle_service.dto.request.FeatureRequest;
 import com.ev.vehicle_service.dto.request.UpdateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
 import com.ev.vehicle_service.dto.request.CreateVariantRequest;
 import com.ev.vehicle_service.dto.request.FeatureRequest;
-import com.ev.vehicle_service.dto.response.FeatureDto;
 import com.ev.vehicle_service.dto.response.ModelDetailDto;
 import com.ev.vehicle_service.dto.response.ModelSummaryDto;
-import com.ev.vehicle_service.dto.response.VariantDetailDto;
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
-import com.ev.vehicle_service.model.Enum.EVMAction;
 import com.ev.vehicle_service.model.VehicleFeature;
 import com.ev.vehicle_service.model.VehicleModel;
 import com.ev.vehicle_service.model.VehicleVariant;
@@ -27,15 +27,21 @@ import com.ev.vehicle_service.repository.PriceHistoryRepository;
 import com.ev.vehicle_service.repository.VehicleVariantHistoryRepository;
 import com.ev.vehicle_service.services.Interface.VehicleCatalogService;
 import com.ev.vehicle_service.specification.VehicleVariantSpecification;
+import jakarta.persistence.criteria.Predicate;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.domain.Specification;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+
+import org.springframework.kafka.core.KafkaTemplate;
+import com.ev.common_lib.event.ProductUpdateEvent;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -47,26 +53,37 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class VehicleCatalogServiceImpl implements VehicleCatalogService {
 
-    @Autowired
-    private VehicleModelRepository modelRepository;
+    // @Autowired
+    // private VehicleModelRepository modelRepository;
 
-    @Autowired
-    private VehicleVariantRepository variantRepository;
+    // @Autowired
+    // private VehicleVariantRepository variantRepository;
     
-    @Autowired 
-    private VehicleFeatureRepository featureRepository;
+    // @Autowired 
+    // private VehicleFeatureRepository featureRepository;
 
-    @Autowired 
-    private VariantFeatureRepository variantFeatureRepository;
+    // @Autowired 
+    // private VariantFeatureRepository variantFeatureRepository;
 
-    @Autowired
-    private PriceHistoryRepository priceHistoryRepository;
+    // @Autowired
+    // private PriceHistoryRepository priceHistoryRepository;
 
-    @Autowired
-    private VehicleVariantHistoryRepository variantHistoryRepository;
+    // @Autowired
+    // private VehicleVariantHistoryRepository variantHistoryRepository;
 
-    // Khởi tạo ObjectMapper để làm việc với JSON
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // @Autowired
+    // private KafkaTemplate<String, Object> kafkaTemplate;
+
+    // // Khởi tạo ObjectMapper để làm việc với JSON
+    // private final ObjectMapper objectMapper = new ObjectMapper();
+    private final VehicleModelRepository modelRepository;
+    private final VehicleVariantRepository variantRepository;
+    private final VehicleFeatureRepository featureRepository;
+    private final VariantFeatureRepository variantFeatureRepository;
+    private final PriceHistoryRepository priceHistoryRepository;
+    private final VehicleVariantHistoryRepository variantHistoryRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate; 
+    private final ObjectMapper objectMapper; 
 
     @Override
     public List<ModelSummaryDto> getAllModels() {
@@ -211,7 +228,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         // 1. Tìm variant hiện có
         VehicleVariant variant = findVariantById(variantId);
 
-        // <<< LOGIC: KIỂM TRA VÀ LƯU LỊCH SỬ GIÁ >>>
+        // KIỂM TRA VÀ LƯU LỊCH SỬ GIÁ 
         // So sánh giá cũ với giá mới từ request (chỉ lưu lịch sử nếu giá thực sự thay đổi)
         if (request.getPrice() != null && variant.getPrice().compareTo(request.getPrice()) != 0) {
             
@@ -244,7 +261,26 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         if (request.getRangeKm() != null) variant.setRangeKm(request.getRangeKm());
         if (request.getMotorPower() != null) variant.setMotorPower(request.getMotorPower());
 
-        return variantRepository.save(variant);
+        VehicleVariant savedVariant = variantRepository.save(variant);
+
+        // Gửi message lên kafka
+        try {
+            ProductUpdateEvent event = new ProductUpdateEvent();
+            event.setVariantId(savedVariant.getVariantId());
+            event.setModelName(savedVariant.getVehicleModel().getModelName());
+            event.setVersionName(savedVariant.getVersionName());
+            event.setColor(savedVariant.getColor());
+            event.setNewPrice(savedVariant.getPrice());
+            event.setStatus(savedVariant.getStatus().name());
+            event.setImageUrl(savedVariant.getImageUrl());
+            
+            kafkaTemplate.send("product_events", event);
+            
+        } catch (Exception e) {
+            System.err.println("WARN: Failed to send product update event to Kafka. " + e.getMessage());
+        }
+
+        return savedVariant;
     }
 
     @Override
@@ -353,6 +389,26 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         return variants.stream()
                 .map(this::mapToVariantDetailDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Triển khai logic cho API phân trang/tìm kiếm
+     */
+    @Override
+    public Page<VariantDetailDto> getAllVariantsPaginated(String search, Pageable pageable) {
+        
+        // 1. Tạo Specification
+        // Gọi trực tiếp hàm static. Nếu 'search' là null/rỗng, hàm 'hasKeyword' của bạn
+        // nên trả về null (như trong code tôi gợi ý ở lần trước)
+        Specification<VehicleVariant> spec = VehicleVariantSpecification.hasKeyword(search);
+
+        // (Nếu hasKeyword trả về null khi search rỗng)
+        // 2. Thực thi truy vấn
+        // JpaRepository.findAll() đủ thông minh để xử lý 'spec' là null (tức là không lọc)
+        Page<VehicleVariant> variantPage = variantRepository.findAll(spec, pageable);
+        
+        // 3. Ánh xạ
+        return variantPage.map(this::mapToVariantDetailDto);
     }
 
     // --- Helper Methods ---

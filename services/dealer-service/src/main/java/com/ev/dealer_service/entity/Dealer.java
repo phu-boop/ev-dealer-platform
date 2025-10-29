@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "dealers")
@@ -18,9 +19,9 @@ import java.util.List;
 public class Dealer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "dealer_id")
-    private Long dealerId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "binary(16)")
+    private UUID dealerId;
 
     @Column(name = "dealer_code", unique = true, nullable = false, length = 50)
     private String dealerCode;

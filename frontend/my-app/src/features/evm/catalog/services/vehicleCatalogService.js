@@ -91,6 +91,17 @@ export const searchVariants = (params) => {
   });
 };
 
+/**
+ * Lấy tất cả phiên bản xe (variants)
+ * có phân trang và tìm kiếm.
+ * @param {object} params - ví dụ: { search: 'VF8', page: 0, size: 10 }
+ */
+export const getAllVariantsPaginated = (params) => {
+  return apiConstVehicleService.get("/vehicle-catalog/variants/paginated", {
+    params,
+  });
+};
+
 // ==========================================================
 // ============ API CHO TÍNH NĂNG (FEATURES) ================
 // ==========================================================
