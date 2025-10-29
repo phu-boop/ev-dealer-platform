@@ -25,7 +25,7 @@ public class QuotationController {
     private final QuotationService quotationService;
 
     /**
-     * API để tạo báo giá mới (Thực thi story EDMS-34 và EVDMS-44)
+     * API để tạo báo giá mới
      * @param request DTO chứa variantId, customerId và danh sách promotionIds
      * @return DTO chứa thông tin báo giá đã được tính toán
      */
@@ -68,7 +68,6 @@ public class QuotationController {
 
     /**
      * API cho Manager duyệt (APPROVE) hoặc từ chối (REJECT) báo giá
-     * (Thực thi story EDMS-35)
      *
      * @param quotationId ID của báo giá (từ URL)
      * @param request     Body chứa status mới (APPROVED hoặc REJECTED)
@@ -88,4 +87,24 @@ public class QuotationController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * API cho Manager chỉnh sửa báo giá đang ở trạng thái PENDING hoặc DRAFT
+     *
+     * @param quotationId ID của báo giá cần sửa (từ URL)
+     * @param request     Body chứa thông tin báo giá mới (dùng lại QuotationRequestDTO)
+     * @return Báo giá đã được cập nhật
+     */
+    @PutMapping("/{quotationId}")
+    public ResponseEntity<QuotationResponseDTO> updateQuotation(
+            @PathVariable UUID quotationId,
+            @Valid @RequestBody QuotationRequestDTO request) {
+
+        // Gọi service để xử lý logic
+        QuotationResponseDTO response = quotationService.updateQuotation(
+                quotationId,
+                request
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }

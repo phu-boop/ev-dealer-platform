@@ -54,8 +54,8 @@ public enum ErrorCode {
     paymentT_FAILED("6001", "paymentt failed", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_BALANCE("6002", "Insufficient balance", HttpStatus.BAD_REQUEST),
     PRODUCT_OUT_OF_STOCK("6004", "Product out of stock", HttpStatus.CONFLICT),
-    INVALID_DATA("6005", "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
-    INVALID_STATE("6006", "Trạng thái nghiệp vụ không hợp lệ", HttpStatus.BAD_REQUEST),
+    INVALID_DATA("6006", "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
+    INVALID_STATE("6007", "Trạng thái nghiệp vụ không hợp lệ", HttpStatus.BAD_REQUEST),
 
     // ===== 7xxx - Vehicle service errors =====
     VEHICLE_MODEL_NOT_FOUND("7001", "Vehicle model not found", HttpStatus.NOT_FOUND),

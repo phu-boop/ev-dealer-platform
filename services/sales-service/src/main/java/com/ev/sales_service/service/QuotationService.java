@@ -101,7 +101,76 @@ public class QuotationService {
     }
 
     /**
-     * Hàm kiểm tra logic khuyến mãi (EDMS-44)
+     * Cập nhật một báo giá đang PENDING hoặc DRAFT
+     *
+     * @param quotationId ID của báo giá cần sửa
+     * @param request     DTO chứa thông tin mới
+     * @return DTO báo giá đã được cập nhật
+     */
+    @Transactional
+    public QuotationResponseDTO updateQuotation(UUID quotationId, QuotationRequestDTO request) {
+        log.info("Attempting to update quotationId: {}", quotationId);
+
+        // --- Bước 1: Lấy thông tin User (Tạm thời Hardcode) ---
+        // TODO: Lấy staffId từ SecurityContext, kiểm tra xem có quyền không
+        UUID staffId = UUID.fromString("e1c9cfba-f35e-41db-aedc-bc1f6802c08e");
+        UUID dealerId = UUID.fromString("5542f79e-5116-4f85-9cd3-d8b8b79512ae");
+
+        // --- Bước 2: Tìm báo giá cũ ---
+        Quotation quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+
+        // --- Bước 3: Kiểm tra trạng thái ---
+        if (quotation.getStatus() != QuotationStatus.PENDING && quotation.getStatus() != QuotationStatus.DRAFT) {
+            log.warn("Quotation {} cannot be edited. Current state: {}", quotationId, quotation.getStatus());
+            throw new AppException(ErrorCode.INVALID_STATE); // Không được sửa báo giá đã Duyệt/Từ chối
+        }
+
+        // --- Bước 4: Lấy thông tin xe và tính toán (Giống hệt createQuotation) ---
+        BigDecimal basePrice = getHardcodedPrice(request.getVariantId());
+        Long modelId = getHardcodedModelId(request.getVariantId());
+        log.info("Updated Vehicle variantId: {}, modelId: {}, basePrice: {}", request.getVariantId(), modelId, basePrice);
+
+        // --- Bước 5: Xử lý Khuyến mãi (Giống hệt createQuotation) ---
+        Set<Promotion> appliedPromotions = new HashSet<>();
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+
+        if (request.getPromotionIds() != null && !request.getPromotionIds().isEmpty()) {
+            List<Promotion> requestedPromotions = promotionRepository.findAllById(request.getPromotionIds());
+            for (Promotion promo : requestedPromotions) {
+                if (isValidPromotion(promo, modelId, dealerId)) {
+                    appliedPromotions.add(promo);
+                    BigDecimal discount = basePrice.multiply(promo.getDiscountRate());
+                    totalDiscount = totalDiscount.add(discount);
+                }
+            }
+        }
+        BigDecimal finalPrice = basePrice.subtract(totalDiscount);
+
+        // --- Bước 6: Cập nhật các trường cho Entity cũ ---
+        quotation.setCustomerId(request.getCustomerId());
+        quotation.setVariantId(request.getVariantId());
+        quotation.setModelId(modelId);
+        quotation.setBasePrice(basePrice);
+        quotation.setDiscountAmount(totalDiscount);
+        quotation.setFinalPrice(finalPrice);
+        quotation.setTermsConditions(request.getTermsConditions());
+        quotation.setPromotions(appliedPromotions);
+        // Cập nhật trạng thái: nếu đang SỬA, nó nên quay về PENDING (chờ duyệt lại)
+        quotation.setStatus(request.getSaveAsDraft() ? QuotationStatus.DRAFT : QuotationStatus.PENDING);
+        // Cập nhật người sửa (ví dụ)
+        // quotation.setLastModifiedBy(staffId);
+        // quotation.setQuotationDate(LocalDateTime.now()); // Cập nhật ngày báo giá
+
+        Quotation updatedQuotation = quotationRepository.save(quotation);
+        log.info("Quotation {} updated successfully", updatedQuotation.getQuotationId());
+
+        // --- Bước 7: Trả về DTO ---
+        return mapToResponseDTO(updatedQuotation);
+    }
+
+    /**
+     * Hàm kiểm tra logic khuyến mãi
      */
     private boolean isValidPromotion(Promotion promo, Long modelId, UUID dealerId) {
         LocalDateTime now = LocalDateTime.now();
@@ -179,7 +248,7 @@ public class QuotationService {
     }
 
     /**
-     * Lấy tất cả báo giá của một đại lý (phục vụ EDMS-35)
+     * Lấy tất cả báo giá của một đại lý
      * @param dealerId ID của đại lý
      * @return Danh sách DTO báo giá
      */
@@ -194,7 +263,7 @@ public class QuotationService {
     }
 
     /**
-     * Lấy tất cả báo giá của một đại lý THEO TRẠNG THÁI (phục vụ EDMS-35)
+     * Lấy tất cả báo giá của một đại lý THEO TRẠNG THÁI
      * @param dealerId ID của đại lý
      * @param status Trạng thái (PENDING, APPROVED, v.v.)
      * @return Danh sách DTO báo giá
@@ -210,7 +279,7 @@ public class QuotationService {
     }
 
     /**
-     * Cập nhật trạng thái của một báo giá (phục vụ EDMS-35: Duyệt/Từ chối)
+     * Cập nhật trạng thái của một báo giá
      *
      * @param quotationId ID của báo giá cần cập nhật
      * @param newStatus   Trạng thái mới (APPROVED hoặc REJECTED)
