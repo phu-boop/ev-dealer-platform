@@ -34,7 +34,7 @@ export const Sidebar = ({
       >
         <div className="flex flex-col h-full">
           {/* Header với nút toggle */}
-          <div className="h-24 flex items-center justify-between px-7 border-b border-slate-700/60 bg-slate-900/50 backdrop-blur-lg">
+          <div className="h-20 mt-4 flex items-center justify-between px-4 border border-slate-700/60 bg-slate-900/50 backdrop-blur-lg">
             <div className={`flex items-center transition-all duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 lg:opacity-100'}`}>
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mr-4 shadow-2xl border border-blue-400/30">
                 <span className="text-white font-bold text-xl">EV</span>
@@ -66,7 +66,7 @@ export const Sidebar = ({
                 {isSidebarOpen ? (
                   <FiChevronLeft className="w-5 h-5 text-slate-300" />
                 ) : (
-                  <FiChevronRight className="w-5 h-5 text-slate-300" />
+                  <></>
                 )}
               </button>
             </div>
@@ -79,7 +79,7 @@ export const Sidebar = ({
           />
 
           {/* Navigation */}
-          <nav className="flex-1 px-5 py-6 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 overflow-y-scroll no-scrollbar">
             <ul className="space-y-2.5">
               {menuItems.map((item, index) => (
                 <MenuItem

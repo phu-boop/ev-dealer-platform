@@ -6,7 +6,7 @@ export const UserProfile = ({ isSidebarOpen, user }) => {
 
   return (
     <div
-      className={`px-6 py-6 transition-all mt-10 duration-500 ${
+      className={`px-6 py-6 transition-all duration-500 ${
         isSidebarOpen 
           ? "opacity-100 bg-blue-800/20 backdrop-blur-lg border-y border-blue-600/30" 
           : "opacity-0 lg:opacity-0"

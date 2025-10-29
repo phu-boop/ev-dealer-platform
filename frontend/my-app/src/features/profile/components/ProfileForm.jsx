@@ -119,7 +119,7 @@ const ProfileForm = () => {
             }
         } catch (error) {
             console.error('Update error:', error);
-            setMessage('Lỗi khi cập nhật: ' + (error.response?.data?.message || error.message || 'Vui lòng thử lại'));
+            setMessage('Lỗi khi cập nhật: ' + (error.response.data.data || error.message || 'Vui lòng thử lại'));
         } finally {
             setLoading(false);
         }
