@@ -65,8 +65,6 @@ export default function Login() {
     }).then(async (result) => {
     if (result.isConfirmed) {
         try {
-        // ✅ Gửi FCM token lên backend (nếu là ADMIN)
-        if (rolesArray.includes("ADMIN")) {
             const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
             const fcmToken = await getToken(messaging, { vapidKey });
             if (fcmToken) {
@@ -75,7 +73,6 @@ export default function Login() {
             } else {
             console.warn("⚠️ Không lấy được FCM token (có thể user từ chối thông báo).");
             }
-        }
 
         // ✅ Nếu thành công thì điều hướng
         if (rolesArray.includes("ADMIN") || rolesArray.includes("EVM_STAFF")) {

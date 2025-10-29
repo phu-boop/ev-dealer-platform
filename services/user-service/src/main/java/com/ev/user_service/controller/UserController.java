@@ -1,5 +1,8 @@
 package com.ev.user_service.controller;
 
+import com.ev.user_service.dto.request.ProfileRequest;
+import com.ev.user_service.dto.respond.ProfileRespond;
+import com.ev.user_service.entity.User;
 import com.ev.user_service.entity.UserDevice;
 import com.ev.user_service.service.UserDeviceService;
 import com.ev.user_service.validation.group.*;
@@ -84,7 +87,7 @@ public class UserController {
     }
 
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiRespond<UserRespond>> updateUser(
             @PathVariable UUID id,
@@ -108,5 +111,12 @@ public class UserController {
     ) {
         String message = userDeviceService.saveFCMToken(userId, body);
         return ResponseEntity.ok(ApiRespond.success(message,null));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+    @PostMapping("/profile")
+    public ResponseEntity<ApiRespond<ProfileRespond>> getCurrentProfileRespond(@RequestBody ProfileRequest request) {
+        ProfileRespond profileRespond = userService.getCurrentProfileByIdUser(request.getId_user());
+        return ResponseEntity.ok(ApiRespond.success("Get profile successfully", profileRespond));
     }
 }
