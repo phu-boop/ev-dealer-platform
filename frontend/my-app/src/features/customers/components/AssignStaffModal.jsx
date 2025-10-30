@@ -33,11 +33,15 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
   const fetchStaffList = async () => {
     setLoadingStaff(true);
     try {
+      console.log("=== DEBUG: Fetching staff for dealerId:", dealerId);
       const data = await staffService.getStaffByDealerId(dealerId);
+      console.log("=== DEBUG: Received staff list:", data);
+      console.log("=== DEBUG: First staff object:", data[0]);
       setStaffList(data);
     } catch (error) {
       console.error("Error fetching staff list:", error);
-      toast.error("Không thể tải danh sách nhân viên");
+      console.error("Error details:", error.response?.data);
+      toast.error("Không thể tải danh sách nhân viên: " + (error.response?.data?.message || error.message));
       setStaffList([]);
     } finally {
       setLoadingStaff(false);
@@ -165,14 +169,19 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
                 <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 <select
                   value={formData.staffId}
-                  onChange={(e) => setFormData({ ...formData, staffId: e.target.value })}
+                  onChange={(e) => {
+                    const selectedValue = e.target.value;
+                    console.log("=== DEBUG: Selected staff ID (UUID):", selectedValue);
+                    setFormData({ ...formData, staffId: selectedValue });
+                  }}
                   className="w-full pl-10 pr-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
                   required
                 >
                   <option value="">-- Chọn nhân viên --</option>
                   {staffList.map((staff) => (
-                    <option key={staff.userId} value={staff.userId}>
-                      {staff.fullName || staff.name} - {staff.position || "N/A"} ({staff.email})
+                    <option key={staff.staffId} value={staff.staffId}>
+                      {staff.fullName || staff.name || 'N/A'} ({staff.email})
+                      {staff.position ? ` - ${staff.position}` : ''}
                     </option>
                   ))}
                 </select>

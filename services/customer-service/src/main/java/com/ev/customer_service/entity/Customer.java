@@ -60,8 +60,8 @@ public class Customer {
     @Column(name = "preferred_dealer_id")
     private Long preferredDealerId;
 
-    @Column(name = "assigned_staff_id")
-    private Long assignedStaffId; // ID của nhân viên được phân công
+    @Column(name = "assigned_staff_id", length = 36)
+    private String assignedStaffId; // UUID của nhân viên được phân công (từ User Service)
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

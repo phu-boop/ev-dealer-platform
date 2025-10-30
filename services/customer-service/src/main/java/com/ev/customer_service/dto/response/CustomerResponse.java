@@ -24,7 +24,7 @@ public class CustomerResponse {
     private LocalDate registrationDate;
     private String status;
     private Long preferredDealerId;
-    private Long assignedStaffId;
+    private String assignedStaffId; // UUID string
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

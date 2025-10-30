@@ -47,8 +47,9 @@ const CreateCustomer = () => {
     setLoadingStaff(true);
     try {
       console.log("=== DEBUG Frontend: Fetching staff for dealerId:", dealerId);
-      const data = await staffService.getStaffByDealerId(sessionStorage.getItem('dealerId'));
+      const data = await staffService.getStaffByDealerId(dealerId);
       console.log("=== DEBUG Frontend: Received staff list:", data);
+      console.log("=== DEBUG Frontend: First staff object:", data[0]);
       setStaffList(data);
     } catch (error) {
       console.error("Error fetching staff list:", error);
@@ -410,8 +411,9 @@ const CreateCustomer = () => {
                   >
                     <option value="">-- Chọn nhân viên --</option>
                     {staffList.map((staff) => (
-                      <option key={staff.id} value={staff.id}>
-                        {staff.fullName||staff.email} ({staff.username})
+                      <option key={staff.staffId} value={staff.staffId}>
+                        {staff.fullName || staff.name || 'N/A'} ({staff.email})
+                        {staff.position ? ` - ${staff.position}` : ''}
                       </option>
                     ))}
                   </select>

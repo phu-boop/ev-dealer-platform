@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit, FiClock, FiUser, FiUsers } from "react-icons/fi";
 import customerService from "../services/customerService";
+import staffService from "../services/staffService";
 import { useAuthContext } from "../../../features/auth/AuthProvider";
 import AssignStaffModal from "../components/AssignStaffModal";
 
@@ -16,9 +17,12 @@ const CustomerDetail = () => {
   const [loadingAudit, setLoadingAudit] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [assignedStaffInfo, setAssignedStaffInfo] = useState(null);
+  const [loadingStaff, setLoadingStaff] = useState(false);
   
   // Check if user is DEALER_MANAGER
   const isDealerManager = roles?.includes('DEALER_MANAGER');
+  const dealerId = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId');
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -26,6 +30,11 @@ const CustomerDetail = () => {
         setLoading(true);
         const data = await customerService.getCustomerById(id);
         setCustomer(data);
+        
+        // Fetch staff info if assigned
+        if (data.assignedStaffId && dealerId) {
+          fetchStaffInfo(data.assignedStaffId);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -33,12 +42,46 @@ const CustomerDetail = () => {
       }
     };
     fetchCustomer();
-  }, [id]);
+  }, [id, dealerId]);
+  
+  const fetchStaffInfo = async (staffId) => {
+    try {
+      setLoadingStaff(true);
+      console.log("=== DEBUG: Fetching staff info for staffId:", staffId);
+      
+      // Get all staff from dealer, then find the assigned one
+      const staffList = await staffService.getStaffByDealerId(dealerId);
+      console.log("=== DEBUG: Staff list from dealer:", staffList);
+      console.log("=== DEBUG: First staff object:", staffList[0]);
+      
+      // So sánh UUID case-insensitive
+      const staff = staffList.find(s => {
+        const match = s.staffId && s.staffId.toLowerCase() === staffId.toLowerCase();
+        console.log(`=== DEBUG: Comparing ${s.staffId} with ${staffId}: ${match}`);
+        return match;
+      });
+      
+      console.log("=== DEBUG: Found staff:", staff);
+      setAssignedStaffInfo(staff);
+    } catch (err) {
+      console.error("Error fetching staff info:", err);
+      setAssignedStaffInfo(null);
+    } finally {
+      setLoadingStaff(false);
+    }
+  };
   
   const refreshCustomer = async () => {
     try {
       const data = await customerService.getCustomerById(id);
       setCustomer(data);
+      
+      // Refresh staff info
+      if (data.assignedStaffId && dealerId) {
+        fetchStaffInfo(data.assignedStaffId);
+      } else {
+        setAssignedStaffInfo(null);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -160,8 +203,17 @@ const CustomerDetail = () => {
             <h3 className="text-sm font-semibold text-gray-500">Nhân viên phụ trách</h3>
             <p className="mt-2">
               <FiUsers className="inline mr-2"/>
-              {customer.assignedStaffId ? (
-                <span className="text-blue-600 font-medium">{customer.assignedStaffId}</span>
+              {loadingStaff ? (
+                <span className="text-gray-400 italic">Đang tải...</span>
+              ) : customer.assignedStaffId ? (
+                assignedStaffInfo ? (
+                  <span className="text-blue-600 font-medium">
+                    {assignedStaffInfo.fullName || assignedStaffInfo.name || 'N/A'} ({assignedStaffInfo.email})
+                    {assignedStaffInfo.position ? ` - ${assignedStaffInfo.position}` : ''}
+                  </span>
+                ) : (
+                  <span className="text-gray-400 italic">Không tìm thấy thông tin nhân viên</span>
+                )
               ) : (
                 <span className="text-gray-400 italic">Chưa phân công</span>
               )}

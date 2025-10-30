@@ -31,7 +31,7 @@ public class NotificationServiceClient {
      * Gửi thông báo cho nhân viên được phân công
      * TODO: Cập nhật endpoint URL và payload structure khi Notification Service hoàn thành
      */
-    public void sendAssignmentNotification(Long staffId, String staffEmail, String customerName, String customerCode) {
+    public void sendAssignmentNotification(String staffId, String staffEmail, String customerName, String customerCode) {
         try {
             // TODO: Điều chỉnh payload phù hợp với API của Notification Service
             Map<String, Object> notification = new HashMap<>();
@@ -66,7 +66,7 @@ public class NotificationServiceClient {
      * Gửi thông báo khi hủy phân công nhân viên
      * TODO: Cập nhật endpoint URL và payload structure
      */
-    public void sendUnassignmentNotification(Long staffId, String staffEmail, String customerName, String customerCode) {
+    public void sendUnassignmentNotification(String staffId, String staffEmail, String customerName, String customerCode) {
         try {
             Map<String, Object> notification = new HashMap<>();
             notification.put("userId", staffId);

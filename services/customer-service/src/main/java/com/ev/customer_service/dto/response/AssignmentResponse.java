@@ -16,7 +16,7 @@ public class AssignmentResponse {
     private Long customerId;
     private String customerCode;
     private String customerName;
-    private Long assignedStaffId;
+    private String assignedStaffId; // UUID string
     private String assignedStaffName;
     private LocalDateTime assignedAt;
     private String message;
