@@ -95,14 +95,12 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Logout successful", null));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiRespond<?>> forgotPassword(@RequestParam String email) {
         authService.sendOtp(email);
         return ResponseEntity.ok(ApiRespond.success("OTP sent to your email", null));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/reset-password")
     public ResponseEntity<ApiRespond<?>> resetPassword(@RequestParam String email,
                                                        @RequestParam String otp,

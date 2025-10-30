@@ -53,6 +53,7 @@ public class AuthService {
             String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
             UserRespond userRespond = userMapper.usertoUserRespond(user);
             userRespond.setMemberId(user.getProfileId());
+            userRespond.setUrl(user.getUrl());
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
             return new LoginRespond(userRespond, token);

@@ -68,7 +68,9 @@ public class UserService {
     public List<UserRespond> getAllUser() {
         return userRepository.findAll()
                 .stream()
-                .map(userMapper::usertoUserRespond)
+                .map(
+                        userMapper::usertoUserRespond
+                )
                 .collect(Collectors.toList());
     }
 
@@ -172,11 +174,11 @@ public class UserService {
     public UserRespond updateUser(UUID id, UserRequest userRequest) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if (!user.getEmail().equals(userRequest.getEmail())
+        if ((user.getEmail()!=null)&&!user.getEmail().equals(userRequest.getEmail())
                 && userRepository.existsByEmail(userRequest.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
-        if (!user.getPhone().equals(userRequest.getPhone())
+        if ((user.getPhone()!=null)&&!user.getPhone().equals(userRequest.getPhone())
                 && userRepository.existsByPhone(userRequest.getPhone())) {
             throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
         }

@@ -32,4 +32,5 @@ public class UserRespond {
     Set<Role> roles;
     LocalDateTime lastLogin;
     UserStatus status;
+    String url;
 }
