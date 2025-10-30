@@ -54,6 +54,7 @@ public enum ErrorCode {
     paymentT_FAILED("6001", "paymentt failed", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_BALANCE("6002", "Insufficient balance", HttpStatus.BAD_REQUEST),
     PRODUCT_OUT_OF_STOCK("6004", "Product out of stock", HttpStatus.CONFLICT),
+    ORDER_NOT_FOUND("6005", "Order not found", HttpStatus.NOT_FOUND),
     INVALID_DATA("6006", "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
     INVALID_STATE("6007", "Trạng thái nghiệp vụ không hợp lệ", HttpStatus.BAD_REQUEST),
 

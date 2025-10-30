@@ -67,9 +67,6 @@
   overflow: hidden;
 }
 
-
-
-
 /* Custom animation cho progress bar */
 @keyframes progress {
   0% {
@@ -106,5 +103,8 @@
 .Toastify__toast-container {
   z-index: 9999 !important;
 }
+<<<<<<< HEAD
+=======
 
 
+>>>>>>> 3bd475705d7a221c7fbae6c813a4b06c0a9ec57c

@@ -63,3 +63,11 @@ export const exportInventoryReport = (params) => {
     responseType: "blob", // Rất quan trọng để xử lý file download
   });
 };
+
+/**
+ * Lấy thông tin tồn kho cho một danh sách ID
+ * @param {Array<number>} variantIds - Mảng các ID, ví dụ: [4, 5, 6]
+ */
+export const getInventoryStatusByIds = (variantIds) => {
+  return apiConstInventoryService.post("/inventory/status-by-ids", variantIds);
+};

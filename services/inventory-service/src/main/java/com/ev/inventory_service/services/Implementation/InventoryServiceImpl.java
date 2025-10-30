@@ -3,17 +3,28 @@ package com.ev.inventory_service.services.Implementation;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
+import com.ev.common_lib.model.enums.*;
+
+import com.ev.common_lib.dto.inventory.AllocationRequestDto;
+import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
+import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
+import com.ev.inventory_service.model.PhysicalVehicle;
+import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
+import com.ev.inventory_service.model.Enum.InventoryLevelStatus;
 // import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
 import com.ev.inventory_service.model.CentralInventory;
 import com.ev.inventory_service.model.DealerAllocation;
 import com.ev.inventory_service.model.InventoryTransaction;
-import com.ev.inventory_service.model.Enum.*;
+import com.ev.inventory_service.model.TransferRequest;
+import com.ev.inventory_service.model.Enum.TransferRequestStatus;
 import com.ev.inventory_service.repository.CentralInventoryRepository;
 import com.ev.inventory_service.repository.DealerAllocationRepository;
 import com.ev.inventory_service.repository.InventoryTransactionRepository;
+import com.ev.inventory_service.repository.PhysicalVehicleRepository;
+import com.ev.inventory_service.repository.TransferRequestRepository;
 import com.ev.inventory_service.services.Interface.InventoryService;
 import com.ev.inventory_service.specification.InventorySpecification;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,6 +50,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -55,7 +67,10 @@ import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 
+import org.springframework.kafka.core.KafkaTemplate;
+
 import lombok.RequiredArgsConstructor;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor // Tự động inject dependency qua constructor
@@ -65,6 +80,9 @@ public class InventoryServiceImpl implements InventoryService {
     private final DealerAllocationRepository dealerRepo;
     private final InventoryTransactionRepository transactionRepo;
     private final RestTemplate restTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final PhysicalVehicleRepository physicalVehicleRepo;
+    private final TransferRequestRepository transferRequestRepo;
 
     @Value("${app.services.catalog.url}")
     private String vehicleCatalogUrl;
@@ -114,7 +132,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public Page<InventoryStatusDto> getAllInventory(
             String search,
-            Long dealerId,
+            UUID dealerId,
             String status,
             Pageable pageable) {
 
@@ -182,37 +200,57 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public void executeTransaction(TransactionRequestDto request, String staffEmail, String role, String profileId) {
         
-        // Luôn ghi lại log của giao dịch
+        // Chỉ xử lý RESTOCK ở đây
+        if (request.getTransactionType() != TransactionType.RESTOCK) {
+            throw new IllegalArgumentException("Invalid transaction type for this endpoint.");
+        }
+        
+        // Kiểm tra quyền
+        if (!role.equals("EVM_STAFF") && !role.equals("ADMIN")) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+        
+        // Xử lý logic nhập kho bằng VIN
+        handleRestock(request); 
+        
+        // Ghi log giao dịch
         InventoryTransaction transaction = new InventoryTransaction();
         transaction.setVariantId(request.getVariantId());
-        transaction.setTransactionType(request.getTransactionType());
-        transaction.setQuantity(request.getQuantity());
-        transaction.setFromDealerId(request.getFromDealerId());
-        transaction.setToDealerId(request.getToDealerId());
-        transaction.setStaffId(request.getStaffId());
+        transaction.setTransactionType(TransactionType.RESTOCK);
+        transaction.setQuantity(request.getVins().size()); // Lấy số lượng từ VINs
         transaction.setStaffId(staffEmail);
         transaction.setNotes(request.getNotes());
-        transactionRepo.save(transaction);
-
-        // Xử lý logic nghiệp vụ tùy theo loại giao dịch
-        switch (request.getTransactionType()) {
-            case RESTOCK:
-            case TRANSFER_TO_DEALER:
-                // Chỉ EVM_STAFF hoặc ADMIN mới được làm việc này
-                if (!role.equals("EVM_STAFF") && !role.equals("ADMIN")) {
-                    throw new AppException(ErrorCode.FORBIDDEN);
-                }
-                if (request.getTransactionType() == TransactionType.RESTOCK) {
-                    handleRestock(request);
-                } else {
-                    handleTransferToDealer(request);
-                }
-                break;
-                
-                
-            default:
-                throw new IllegalArgumentException("Unsupported transaction type");
+        InventoryTransaction savedTransaction = transactionRepo.save(transaction);
+        
+        // Gửi sự kiện Kafka
+        try {
+            kafkaTemplate.send("inventory_events", savedTransaction);
+        } catch (Exception e) {
+            System.err.println("WARN: Failed to send inventory event to Kafka. " + e.getMessage());
         }
+    }
+
+    @Override
+    @Transactional
+    public void createTransferRequest(CreateTransferRequestDto request) {
+        // Kiểm tra kho
+        CentralInventory central = centralRepo.findByVariantId(request.getVariantId())
+                .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+
+        if (central.getAvailableQuantity() < request.getQuantity()) {
+            throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
+        }
+
+        // Tạo yêu cầu mới
+        TransferRequest newRequest = new TransferRequest();
+        newRequest.setVariantId(request.getVariantId());
+        newRequest.setQuantity(request.getQuantity());
+        newRequest.setToDealerId(request.getToDealerId());
+        newRequest.setRequesterEmail(request.getRequesterEmail());
+        newRequest.setNotes(request.getNotes());
+        newRequest.setStatus(TransferRequestStatus.PENDING); // Trạng thái "Chờ duyệt"
+
+        transferRequestRepo.save(newRequest);
     }
 
     @Override
@@ -291,7 +329,7 @@ public class InventoryServiceImpl implements InventoryService {
         // --- Thêm Header cho Bảng ---
         String[] headers = {"ID", "Ngày", "Loại GD", "Variant ID", "SL", "Từ Kho", "Đến Kho", "Nhân Viên", "Ghi Chú"};
         for (String header : headers) {
-            // <<< SỬA LỖI: dùng biến `table` >>>
+            
             table.addHeaderCell(new Paragraph(header).setBold());
         }
 
@@ -319,7 +357,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public void updateDealerReorderLevel(Long dealerId, UpdateReorderLevelRequest request) {
+    public void updateDealerReorderLevel(UUID dealerId, UpdateReorderLevelRequest request) {
         // Tìm bản ghi phân bổ tương ứng với đại lý và sản phẩm
         DealerAllocation allocation = dealerRepo.findByVariantIdAndDealerId(request.getVariantId(), dealerId)
                 .orElseThrow(() -> new AppException(ErrorCode.ALLOCATION_NOT_FOUND));
@@ -337,7 +375,7 @@ public class InventoryServiceImpl implements InventoryService {
         CentralInventory inventory = centralRepo.findByVariantId(request.getVariantId())
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
-        // Thêm logic ghi log history ở đây nếu bạn muốn
+        
         // saveCentralInventoryHistory(inventory, EVMAction.UPDATE, updatedByEmail);
 
         inventory.setReorderLevel(request.getReorderLevel());
@@ -365,8 +403,150 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
+    @Override
+    @Transactional
+    public void allocateStockForOrder(AllocationRequestDto request, String staffEmail) {
+        for (AllocationRequestDto.AllocationItem item : request.getItems()) {
+            CentralInventory central = centralRepo.findByVariantId(item.getVariantId())
+                .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+
+            if (central.getAvailableQuantity() < item.getQuantity()) {
+                throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
+            }
+
+            central.setAvailableQuantity(central.getAvailableQuantity() - item.getQuantity());
+            central.setAllocatedQuantity(central.getAllocatedQuantity() + item.getQuantity());
+            centralRepo.save(central);
+            
+            // Ghi log giao dịch "ALLOCATE"
+            InventoryTransaction tx = new InventoryTransaction();
+            tx.setTransactionType(TransactionType.ALLOCATE);
+            tx.setVariantId(item.getVariantId());
+            tx.setQuantity(item.getQuantity());
+            tx.setStaffId(staffEmail);
+            tx.setReferenceId(request.getOrderId().toString());
+            transactionRepo.save(tx);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void shipAllocatedStock(ShipmentRequestDto request, String staffEmail) {
+        UUID dealerId = request.getDealerId();
+
+        for (ShipmentRequestDto.ShipmentItem item : request.getItems()) {
+            Long variantId = item.getVariantId();
+            List<String> vins = item.getVins();
+            int quantity = vins.size();
+
+            // 1. Cập nhật bảng SKU (kho trung tâm)
+            CentralInventory central = centralRepo.findByVariantId(variantId)
+                .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+            
+            if (central.getAllocatedQuantity() < quantity) {
+                System.err.println("Lỗi phân bổ: Không đủ hàng đã giữ.");
+                throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
+            }
+            central.setAllocatedQuantity(central.getAllocatedQuantity() - quantity);
+            central.setTotalQuantity(central.getTotalQuantity() - quantity);
+            centralRepo.save(central);
+
+            // 2. Cập nhật bảng SKU (kho đại lý)
+            DealerAllocation allocation = dealerRepo.findByVariantIdAndDealerId(variantId, dealerId)
+                .orElseGet(() -> {
+                    DealerAllocation newAlloc = new DealerAllocation();
+                    newAlloc.setVariantId(variantId);
+                    newAlloc.setDealerId(dealerId);
+                    newAlloc.setAllocatedQuantity(0);
+                    newAlloc.setAvailableQuantity(0);
+                    return newAlloc; // 
+                });
+            
+            // (Tạm thời) coi như hàng đến ngay
+            allocation.setAvailableQuantity(allocation.getAvailableQuantity() + quantity); 
+            dealerRepo.save(allocation);
+
+            // 3. Cập nhật bảng VIN (xe vật lý)
+            List<PhysicalVehicle> vehicles = physicalVehicleRepo.findAllById(vins);
+            for (PhysicalVehicle vehicle : vehicles) {
+                if (vehicle.getStatus() != VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE) {
+                    System.err.println("Xe " + vehicle.getVin() + " không ở kho trung tâm.");
+                    throw new AppException(ErrorCode.BAD_REQUEST);
+                }
+                vehicle.setStatus(VehiclePhysicalStatus.AT_DEALER); // Cập nhật trạng thái
+                vehicle.setLocationId(dealerId); // Cập nhật vị trí
+            }
+            physicalVehicleRepo.saveAll(vehicles);
+
+            // 4. Ghi log giao dịch
+            InventoryTransaction tx = new InventoryTransaction();
+            tx.setTransactionType(TransactionType.TRANSFER_TO_DEALER);
+            tx.setVariantId(variantId);
+            tx.setQuantity(quantity);
+            tx.setToDealerId(dealerId);
+            tx.setStaffId(staffEmail);
+            tx.setReferenceId(request.getOrderId().toString());
+            tx.setNotes("Đã giao các VIN: " + String.join(", ", vins));
+            transactionRepo.save(tx);
+        }
+    }
+
+    /**
+     * SỬA LẠI: Lấy trạng thái tồn kho cho NHIỀU variant (Tối ưu)
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventoryStatusDto> getInventoryStatusByIds(List<Long> variantIds) {
+        if (variantIds == null || variantIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 1. Tải TỒN KHO TRUNG TÂM (1 query duy nhất)
+        List<CentralInventory> inventories = centralRepo.findByVariantIdIn(variantIds);
+        // Tạo Map để tra cứu nhanh
+        Map<Long, CentralInventory> inventoryMap = inventories.stream()
+                .collect(Collectors.toMap(CentralInventory::getVariantId, inv -> inv));
+
+        // 2. (Đã xóa logic tìm kho đại lý vì DTO không có)
+
+        // 3. Map kết quả (Dùng stream() của variantIds gốc để đảm bảo trả về đủ)
+        return variantIds.stream()
+            .map(id -> {
+                // Lấy thông tin từ Map đã tra cứu
+                CentralInventory inventory = inventoryMap.get(id);
+                
+                // Gọi hàm helper đã sửa (chỉ 2 tham số)
+                return mapToInventoryStatusDto(inventory, id);
+            })
+            .collect(Collectors.toList());
+    }
+
     //--Helper methods--
     private void handleRestock(TransactionRequestDto request) {
+        
+        if (request.getVins() == null || request.getVins().isEmpty()) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+        
+        int quantity = request.getVins().size();
+
+        // 1. Lưu từng chiếc xe vật lý vào bảng VIN
+        List<PhysicalVehicle> newVehicles = new ArrayList<>();
+        for (String vin : request.getVins()) {
+            if (physicalVehicleRepo.existsById(vin)) {
+                throw new AppException(ErrorCode.DATA_ALREADY_EXISTS);
+            }
+            
+            PhysicalVehicle vehicle = new PhysicalVehicle();
+            vehicle.setVin(vin);
+            vehicle.setVariantId(request.getVariantId());
+            vehicle.setStatus(VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE); 
+            vehicle.setLocationId(null); // null = Kho trung tâm
+            newVehicles.add(vehicle);
+        }
+        physicalVehicleRepo.saveAll(newVehicles);
+
+        // 2. Cập nhật bảng tóm tắt (CentralInventory)
         CentralInventory inventory = centralRepo.findByVariantId(request.getVariantId())
                 .orElseGet(() -> {
                     CentralInventory newInv = new CentralInventory();
@@ -377,74 +557,54 @@ public class InventoryServiceImpl implements InventoryService {
                     return newInv;
                 });
 
-        inventory.setTotalQuantity(inventory.getTotalQuantity() + request.getQuantity());
-        inventory.setAvailableQuantity(inventory.getAvailableQuantity() + request.getQuantity());
+        inventory.setTotalQuantity(inventory.getTotalQuantity() + quantity);
+        inventory.setAvailableQuantity(inventory.getAvailableQuantity() + quantity);
         centralRepo.save(inventory);
     }
 
-    private void handleTransferToDealer(TransactionRequestDto request) {
-        // 1. Trừ kho trung tâm
-        CentralInventory central = centralRepo.findByVariantId(request.getVariantId())
-                .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+    /**
+     * Map thủ công từ Entity sang DTO.
+     * Xử lý cả trường hợp 'inventory' (kho TT) là null (khi xe chưa được nhập kho).
+     */
+    private InventoryStatusDto mapToInventoryStatusDto(CentralInventory inventory, Long variantId) {
+        
+        // 1. Dùng Builder() thay vì new InventoryStatusDto()
+        InventoryStatusDto.InventoryStatusDtoBuilder dtoBuilder = InventoryStatusDto.builder();
+        dtoBuilder.variantId(variantId);
 
-        if (central.getAvailableQuantity() < request.getQuantity()) {
-            throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
+        if (inventory == null) {
+            // Trường hợp xe này CHƯA CÓ trong kho trung tâm
+            dtoBuilder.availableQuantity(0);
+            dtoBuilder.allocatedQuantity(0);
+            dtoBuilder.totalQuantity(0);
+            dtoBuilder.reorderLevel(0); // Ngưỡng mặc định
+            // 2. Dùng Enum thay vì String
+            dtoBuilder.status(InventoryLevelStatus.OUT_OF_STOCK); 
+        } else {
+            // Trường hợp xe ĐÃ CÓ trong kho trung tâm
+            // 1. Lấy reorderLevel và kiểm tra null, gán mặc định là 0
+            int reorderLvl = (inventory.getReorderLevel() != null) ? inventory.getReorderLevel() : 0;
+            
+            dtoBuilder.availableQuantity(inventory.getAvailableQuantity());
+            dtoBuilder.allocatedQuantity(inventory.getAllocatedQuantity());
+            dtoBuilder.totalQuantity(inventory.getTotalQuantity());
+            
+            // 2. Dùng giá trị đã kiểm tra null
+            dtoBuilder.reorderLevel(reorderLvl); 
+            
+            // Logic xác định trạng thái (Dùng Enum)
+            if (inventory.getAvailableQuantity() <= 0) {
+                dtoBuilder.status(InventoryLevelStatus.OUT_OF_STOCK);
+            } else if (inventory.getAvailableQuantity() <= reorderLvl) { // 3. Dùng giá trị đã kiểm tra null
+                dtoBuilder.status(InventoryLevelStatus.LOW_STOCK);
+            } else {
+                dtoBuilder.status(InventoryLevelStatus.IN_STOCK);
+            }
         }
-        central.setAvailableQuantity(central.getAvailableQuantity() - request.getQuantity());
-        central.setAllocatedQuantity(central.getAllocatedQuantity() + request.getQuantity());
-        centralRepo.save(central);
 
-        // 2. Cộng kho đại lý
-        DealerAllocation allocation = dealerRepo.findByVariantIdAndDealerId(request.getVariantId(), request.getToDealerId())
-                .orElseGet(() -> {
-                    DealerAllocation newAlloc = new DealerAllocation();
-                    newAlloc.setVariantId(request.getVariantId());
-                    newAlloc.setDealerId(request.getToDealerId());
-                    newAlloc.setAllocatedQuantity(0);
-                    newAlloc.setAvailableQuantity(0);
-                    return newAlloc;
-                });
-
-        allocation.setAllocatedQuantity(allocation.getAllocatedQuantity() + request.getQuantity());
-        allocation.setAvailableQuantity(allocation.getAvailableQuantity() + request.getQuantity());
-        dealerRepo.save(allocation);
+        return dtoBuilder.build(); // Trả về DTO đã được build
     }
 
-    // private void handleSale(TransactionRequestDto request) {
-    //     // Khi bán hàng, toDealerId chính là dealer đã bán chiếc xe đó
-    //     Long dealerId = request.getToDealerId();
-    //     if (dealerId == null) {
-    //         throw new IllegalArgumentException("Dealer ID is required for a sale transaction.");
-    //     }
-
-    //     DealerAllocation allocation = dealerRepo.findByVariantIdAndDealerId(request.getVariantId(), dealerId)
-    //             .orElseThrow(() -> new AppException(ErrorCode.ALLOCATION_NOT_FOUND));
-
-    //     if (allocation.getAvailableQuantity() < request.getQuantity()) {
-    //         throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
-    //     }
-
-    //     // Trừ cả số lượng khả dụng và số lượng đã phân bổ
-    //     allocation.setAvailableQuantity(allocation.getAvailableQuantity() - request.getQuantity());
-    //     allocation.setAllocatedQuantity(allocation.getAllocatedQuantity() - request.getQuantity());
-    //     dealerRepo.save(allocation);
-
-    //     // Đồng thời, cần cập nhật lại số lượng tổng trong kho trung tâm
-    //     CentralInventory central = centralRepo.findByVariantId(request.getVariantId())
-    //             .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
-    //     central.setTotalQuantity(central.getTotalQuantity() - request.getQuantity());
-    //     central.setAllocatedQuantity(central.getAllocatedQuantity() - request.getQuantity());
-    //     centralRepo.save(central);
-    // }
-
-    // private String formatDealerStock(List<DealerInventoryDto> dealerStock) {
-    //     if (dealerStock == null || dealerStock.isEmpty()) {
-    //         return "Không có";
-    //     }
-    //     return dealerStock.stream()
-    //             .map(d -> "Đại lý " + d.getDealerId() + ": " + d.getAvailableQuantity() + " xe")
-    //             .collect(Collectors.joining("; ")); // Ngăn cách bằng dấu chấm phẩy
-    // }
     private CellStyle createHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();

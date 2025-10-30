@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/dealers")
@@ -20,7 +21,7 @@ public class DealerContractController {
     private final DealerContractService contractService;
 
     @GetMapping("/{dealerId}/contract")
-    public ResponseEntity<ApiResponse<List<DealerContractResponse>>> getContractsByDealerId(@PathVariable Long dealerId) {
+    public ResponseEntity<ApiResponse<List<DealerContractResponse>>> getContractsByDealerId(@PathVariable UUID dealerId) {
         List<DealerContractResponse> contracts = contractService.getContractsByDealerId(dealerId);
         return ResponseEntity.ok(ApiResponse.success(contracts));
     }

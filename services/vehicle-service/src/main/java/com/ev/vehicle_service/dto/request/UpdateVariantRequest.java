@@ -1,6 +1,6 @@
 package com.ev.vehicle_service.dto.request;
 
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
+import com.ev.common_lib.model.enums.VehicleStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

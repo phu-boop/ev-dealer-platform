@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +26,7 @@ public class DealerContractService {
     private final ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
-    public List<DealerContractResponse> getContractsByDealerId(Long dealerId) {
+    public List<DealerContractResponse> getContractsByDealerId(UUID dealerId) {
         return contractRepository.findByDealerDealerId(dealerId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());

@@ -1,6 +1,7 @@
 package com.ev.vehicle_service.controller;
 
 import com.ev.common_lib.dto.respond.ApiRespond;
+import com.ev.common_lib.dto.vehicle.VariantDetailDto;
 import com.ev.vehicle_service.dto.request.CreateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
@@ -9,7 +10,6 @@ import com.ev.vehicle_service.dto.request.CreateVariantRequest;
 // import com.ev.vehicle_service.dto.response.FeatureDto;
 import com.ev.vehicle_service.dto.response.ModelDetailDto;
 import com.ev.vehicle_service.dto.response.ModelSummaryDto;
-import com.ev.vehicle_service.dto.response.VariantDetailDto;
 import com.ev.vehicle_service.model.VehicleModel;
 import com.ev.vehicle_service.model.VehicleVariant;
 import com.ev.vehicle_service.model.VehicleFeature;
@@ -20,6 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
 import java.util.List;
 
@@ -162,6 +166,19 @@ public class VehicleCatalogController {
     public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getVariantDetailsByIds(@RequestBody List<Long> variantIds) {
         List<VariantDetailDto> variants = vehicleCatalogService.getVariantDetailsByIds(variantIds);
         return ResponseEntity.ok(ApiRespond.success("Fetched variant details successfully", variants));
+    }
+
+    /**
+     * API MỚI: Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
+     * Dùng cho trang "Tất cả sản phẩm" ở frontend.
+     */
+    @GetMapping("/variants/paginated")
+    public ResponseEntity<ApiRespond<Page<VariantDetailDto>>> getAllVariantsPaginated(
+            @RequestParam(required = false) String search,
+            @PageableDefault(size = 10, sort = "variantId") Pageable pageable) {
+        
+        Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, pageable);
+        return ResponseEntity.ok(ApiRespond.success("Fetched paginated variants successfully", results));
     }
 
     // ==========================================================

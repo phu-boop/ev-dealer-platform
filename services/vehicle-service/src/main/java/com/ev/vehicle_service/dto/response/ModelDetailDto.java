@@ -1,6 +1,7 @@
 package com.ev.vehicle_service.dto.response;
 
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
+import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.model.enums.VehicleStatus;
 import lombok.Data;
 import java.util.List;
 import java.util.Map;

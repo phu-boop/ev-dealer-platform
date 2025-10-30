@@ -1,4 +1,4 @@
-package com.ev.vehicle_service.dto.response;
+package com.ev.common_lib.dto.vehicle;
 
 import lombok.Data;
 import java.math.BigDecimal;

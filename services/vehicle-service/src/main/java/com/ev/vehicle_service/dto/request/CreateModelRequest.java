@@ -1,6 +1,6 @@
 package com.ev.vehicle_service.dto.request;
 
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
+import com.ev.common_lib.model.enums.VehicleStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -34,6 +34,5 @@ public class CreateModelRequest {
     private Map<String, Object> extendedSpecs;
 
     @Valid
-    @NotEmpty(message = "Model must have at least one variant")
     private List<CreateVariantRequest> variants;
 }
