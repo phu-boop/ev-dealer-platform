@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { FiUser, FiSettings, FiLogOut, FiChevronDown } from 'react-icons/fi';
 import { useClickOutside } from '../../hooks/useClickOutside';
-import { motion } from 'framer-motion';
 
 export const ProfileDropdown = ({
   user,
@@ -26,7 +25,7 @@ export const ProfileDropdown = ({
           <span className="text-white font-semibold text-lg">
             <div className="flex-shrink-0">
                 <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg avatar-glow">
-                    {sessionStorage.getItem('avatarUrl') ? (
+                    {sessionStorage.getItem('avatarUrl')!="null" ? (
                         <img
                             src={sessionStorage.getItem('avatarUrl')}
                             alt="Avatar"

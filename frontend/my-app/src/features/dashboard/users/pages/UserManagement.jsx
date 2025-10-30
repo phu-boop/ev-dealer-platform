@@ -374,7 +374,7 @@ export default function UserManagement() {
                                 Chi tiết người dùng
                             </h2>
                             <button
-                                onClick={() => setModalOpen(false)}
+                                onClick={() => setMode("null")}
                                 className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                             >
                                 <X size={24} />

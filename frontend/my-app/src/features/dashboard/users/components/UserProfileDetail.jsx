@@ -11,10 +11,11 @@ import {
     Clock,
     UserCheck
 } from 'lucide-react';
+import { X } from "lucide-react";
 
 const UserProfileDetail = ({ userProfile, mode = 'view' }) => {
+    
     if (!userProfile) return null;
-
     const formatDate = (dateString) => {
         if (!dateString) return 'Chưa cập nhật';
         return new Date(dateString).toLocaleDateString('vi-VN');
@@ -41,13 +42,14 @@ const UserProfileDetail = ({ userProfile, mode = 'view' }) => {
     const profileInfo = getProfileSpecificInfo();
 
     return (
+        mode === 'view' &&
         <div className="space-y-6">
             {/* Basic Information */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                     <UserCheck className="w-5 h-5 mr-2 text-blue-600" />
                     Thông tin cơ bản
-                </h3>
+                </h3>   
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <InfoItem 
                         icon={<Mail className="w-4 h-4" />}

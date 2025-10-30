@@ -2,8 +2,6 @@ import React from 'react';
 
 export const UserProfile = ({ isSidebarOpen, user }) => {
   const { email, name, fullName, roles } = user;
-  const avatarUrl = sessionStorage.getItem('avatarUrl');
-
   return (
     <div
       className={`px-6 py-6 transition-all duration-500 ${
@@ -16,9 +14,9 @@ export const UserProfile = ({ isSidebarOpen, user }) => {
         {/* Avatar với fallback */}
         <div className="relative group">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center text-white font-semibold text-xl shadow-2xl border-2 border-white/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-blue-500/25 overflow-hidden">
-            {avatarUrl ? (
+            {sessionStorage.getItem('avatarUrl')!="null" ? (
               <img
-                src={avatarUrl}
+                src={sessionStorage.getItem('avatarUrl')}
                 alt="Avatar"
                 className="w-full h-full object-cover rounded-2xl"
                 onError={(e) => {
@@ -27,7 +25,7 @@ export const UserProfile = ({ isSidebarOpen, user }) => {
                 }}
               />
             ) : null}
-            <span className={`${avatarUrl ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
+            <span className={`${sessionStorage.getItem('avatarUrl')!="null" ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
               {name?.charAt(0).toUpperCase() || email?.charAt(0).toUpperCase()}
             </span>
           </div>
