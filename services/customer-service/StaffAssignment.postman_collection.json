@@ -1,0 +1,102 @@
+{
+  "info": {
+    "name": "Customer Service - Staff Assignment APIs",
+    "description": "Collection for testing Staff Assignment feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Phân công nhân viên cho khách hàng",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"staffId\": 123,\n  \"note\": \"Nhân viên chăm sóc chính\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/customers/1/assign-staff",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["customers", "1", "assign-staff"]
+        },
+        "description": "Phân công nhân viên có ID 123 cho khách hàng có ID 1"
+      }
+    },
+    {
+      "name": "2. Xem nhân viên được phân công",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/customers/1/assigned-staff",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["customers", "1", "assigned-staff"]
+        },
+        "description": "Lấy thông tin nhân viên được phân công cho khách hàng ID 1"
+      }
+    },
+    {
+      "name": "3. Hủy phân công nhân viên",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/customers/1/assign-staff",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["customers", "1", "assign-staff"]
+        },
+        "description": "Hủy phân công nhân viên cho khách hàng ID 1"
+      }
+    },
+    {
+      "name": "4. Cập nhật customer với assignedStaffId",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Nguyen\",\n  \"lastName\": \"Van A\",\n  \"email\": \"nguyenvana@example.com\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 ABC Street\",\n  \"idNumber\": \"001234567890\",\n  \"customerType\": \"INDIVIDUAL\",\n  \"status\": \"POTENTIAL\",\n  \"assignedStaffId\": 123\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/customers/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["customers", "1"]
+        },
+        "description": "Cập nhật thông tin khách hàng bao gồm assignedStaffId (cách thay thế)"
+      }
+    },
+    {
+      "name": "5. Lấy thông tin customer với assignedStaffId",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/customers/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["customers", "1"]
+        },
+        "description": "Lấy thông tin chi tiết khách hàng, bao gồm assignedStaffId"
+      }
+    }
+  ]
+}

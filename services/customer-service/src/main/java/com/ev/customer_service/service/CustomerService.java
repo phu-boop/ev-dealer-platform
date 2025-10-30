@@ -168,6 +168,7 @@ public class CustomerService {
         }
         
         customer.setPreferredDealerId(request.getPreferredDealerId());
+        customer.setAssignedStaffId(request.getAssignedStaffId());
         // Don't update customerCode, customerId, createdAt, updatedAt, or relationships
         
         Customer updatedCustomer = customerRepository.save(customer);

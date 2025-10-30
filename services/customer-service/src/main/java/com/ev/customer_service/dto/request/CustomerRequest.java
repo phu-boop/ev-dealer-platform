@@ -45,4 +45,7 @@ public class CustomerRequest {
     private String status;
 
     private Long preferredDealerId;
+
+    // ID của nhân viên được phân công
+    private Long assignedStaffId;
 }

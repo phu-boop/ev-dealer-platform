@@ -60,6 +60,9 @@ public class Customer {
     @Column(name = "preferred_dealer_id")
     private Long preferredDealerId;
 
+    @Column(name = "assigned_staff_id")
+    private Long assignedStaffId; // ID của nhân viên được phân công
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -83,6 +86,7 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<CommunicationHistory> communicationHistories;
+
 
     /**
      * Set default values before persisting
