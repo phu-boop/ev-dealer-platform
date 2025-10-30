@@ -36,20 +36,15 @@ public class QuotationService {
     // private final CustomerServiceClient customerServiceClient; // Tương lai sẽ dùng
 
     @Transactional
-    public QuotationResponseDTO createQuotation(QuotationRequestDTO request) {
+    public QuotationResponseDTO createQuotation(QuotationRequestDTO request, UUID staffId, UUID dealerId) {
 
-        // --- Bước 1: Lấy thông tin User (Tạm thời Hardcode) ---
-        // TODO: Sau này sẽ lấy từ SecurityContext (Token)
-        UUID staffId = UUID.fromString("e1c9cfba-f35e-41db-aedc-bc1f6802c08e"); // StafffDealer@gmail.com
-        UUID dealerId = UUID.fromString("5542f79e-5116-4f85-9cd3-d8b8b79512ae"); // ID đại lý của staff trên
+        // --- Bước 1: Lấy thông tin User (Đã nhận từ Controller) ---
+        // UUID staffId = UUID.fromString("e1c9cfba..."); // <-- XÓA DÒNG NÀY
+        // UUID dealerId = UUID.fromString("5542f79e..."); // <-- XÓA DÒNG NÀY
 
-        // --- Bước 2: Gọi VehicleService (Tạm thời Hardcode) ---
-        // TODO: Gọi API từ VehicleService để lấy thông tin variant
-        // VehicleVariantDTO variant = vehicleServiceClient.getVariantById(request.getVariantId());
-
-        // Dữ liệu giả lập
+        // --- Bước 2: Gọi VehicleService (Hardcode) ---
         BigDecimal basePrice = getHardcodedPrice(request.getVariantId());
-        Long modelId = getHardcodedModelId(request.getVariantId()); // Lấy modelId để check KM
+        Long modelId = getHardcodedModelId(request.getVariantId());
         log.info("Vehicle variantId: {}, modelId: {}, basePrice: {}", request.getVariantId(), modelId, basePrice);
 
         // --- Bước 3: Xử lý Khuyến mãi (Logic EDMS-44) ---
@@ -61,9 +56,9 @@ public class QuotationService {
             log.info("Found {} requested promotions", requestedPromotions.size());
 
             for (Promotion promo : requestedPromotions) {
+                // SỬA: Dùng dealerId từ tham số
                 if (isValidPromotion(promo, modelId, dealerId)) {
                     appliedPromotions.add(promo);
-                    // Tính giảm giá = Giá gốc * %KM
                     BigDecimal discount = basePrice.multiply(promo.getDiscountRate());
                     totalDiscount = totalDiscount.add(discount);
                     log.info("Applied promotion: {} with discount: {}", promo.getPromotionId(), discount);
@@ -73,13 +68,13 @@ public class QuotationService {
             }
         }
 
-        // --- Bước 4: Tính toán giá cuối cùng ---
+        // ... (Bước 4: Tính toán giá cuối cùng - Giữ nguyên)
         BigDecimal finalPrice = basePrice.subtract(totalDiscount);
 
         // --- Bước 5: Tạo và Lưu Entity ---
         Quotation quotation = Quotation.builder()
-                .dealerId(dealerId)
-                .staffId(staffId)
+                .dealerId(dealerId) // Dùng dealerId tham số
+                .staffId(staffId) // Dùng staffId tham số
                 .customerId(request.getCustomerId())
                 .variantId(request.getVariantId())
                 .modelId(modelId)
@@ -108,13 +103,12 @@ public class QuotationService {
      * @return DTO báo giá đã được cập nhật
      */
     @Transactional
-    public QuotationResponseDTO updateQuotation(UUID quotationId, QuotationRequestDTO request) {
+    public QuotationResponseDTO updateQuotation(UUID quotationId, QuotationRequestDTO request, UUID staffId, UUID dealerId) {
         log.info("Attempting to update quotationId: {}", quotationId);
 
-        // --- Bước 1: Lấy thông tin User (Tạm thời Hardcode) ---
-        // TODO: Lấy staffId từ SecurityContext, kiểm tra xem có quyền không
-        UUID staffId = UUID.fromString("e1c9cfba-f35e-41db-aedc-bc1f6802c08e");
-        UUID dealerId = UUID.fromString("5542f79e-5116-4f85-9cd3-d8b8b79512ae");
+        // --- Bước 1: Lấy thông tin User ---
+        // UUID staffId = ...; // <-- XÓA DÒNG NÀY
+        // UUID dealerId = ...; // <-- XÓA DÒNG NÀY
 
         // --- Bước 2: Tìm báo giá cũ ---
         Quotation quotation = quotationRepository.findById(quotationId)
@@ -123,22 +117,21 @@ public class QuotationService {
         // --- Bước 3: Kiểm tra trạng thái ---
         if (quotation.getStatus() != QuotationStatus.PENDING && quotation.getStatus() != QuotationStatus.DRAFT) {
             log.warn("Quotation {} cannot be edited. Current state: {}", quotationId, quotation.getStatus());
-            throw new AppException(ErrorCode.INVALID_STATE); // Không được sửa báo giá đã Duyệt/Từ chối
+            throw new AppException(ErrorCode.INVALID_STATE);
         }
 
-        // --- Bước 4: Lấy thông tin xe và tính toán (Giống hệt createQuotation) ---
+        // --- Bước 4: Lấy thông tin xe ---
         BigDecimal basePrice = getHardcodedPrice(request.getVariantId());
         Long modelId = getHardcodedModelId(request.getVariantId());
-        log.info("Updated Vehicle variantId: {}, modelId: {}, basePrice: {}", request.getVariantId(), modelId, basePrice);
 
-        // --- Bước 5: Xử lý Khuyến mãi (Giống hệt createQuotation) ---
+        // --- Bước 5: Xử lý Khuyến mãi (SỬA: Dùng dealerId từ tham số) ---
         Set<Promotion> appliedPromotions = new HashSet<>();
         BigDecimal totalDiscount = BigDecimal.ZERO;
 
         if (request.getPromotionIds() != null && !request.getPromotionIds().isEmpty()) {
             List<Promotion> requestedPromotions = promotionRepository.findAllById(request.getPromotionIds());
             for (Promotion promo : requestedPromotions) {
-                if (isValidPromotion(promo, modelId, dealerId)) {
+                if (isValidPromotion(promo, modelId, dealerId)) { // <-- Dùng dealerId tham số
                     appliedPromotions.add(promo);
                     BigDecimal discount = basePrice.multiply(promo.getDiscountRate());
                     totalDiscount = totalDiscount.add(discount);
