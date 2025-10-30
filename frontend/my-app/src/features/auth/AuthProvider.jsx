@@ -39,7 +39,7 @@ export function AuthProvider({children}) {
         sessionStorage.setItem("name", newName);
         sessionStorage.setItem("fullName", newFullName);
         sessionStorage.setItem("userData", JSON.stringify(newUserData));
-        sessionStorage.setItem("memberId", newMemberId);
+        sessionStorage.setItem("dealerId", newMemberId);
 
         setEmail(newEmail);
         setToken(newToken);

@@ -47,7 +47,7 @@ const CreateCustomer = () => {
     setLoadingStaff(true);
     try {
       console.log("=== DEBUG Frontend: Fetching staff for dealerId:", dealerId);
-      const data = await staffService.getStaffByDealerId(dealerId);
+      const data = await staffService.getStaffByDealerId(sessionStorage.getItem('dealerId'));
       console.log("=== DEBUG Frontend: Received staff list:", data);
       setStaffList(data);
     } catch (error) {
@@ -411,7 +411,7 @@ const CreateCustomer = () => {
                     <option value="">-- Chọn nhân viên --</option>
                     {staffList.map((staff) => (
                       <option key={staff.id} value={staff.id}>
-                        {staff.fullName} ({staff.username})
+                        {staff.fullName||staff.email} ({staff.username})
                       </option>
                     ))}
                   </select>

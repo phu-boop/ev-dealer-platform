@@ -9,7 +9,7 @@ const staffService = {
    */
   async getStaffByDealerId(dealerId) {
     try {
-      const response = await apiConstUserService.get(`/staff/dealer/${dealerId}`);
+      const response = await apiConstUserService.get(`/users/profile/${dealerId}`);
       return response.data.data || [];
     } catch (error) {
       console.error('Error fetching staff list:', error);
