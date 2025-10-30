@@ -15,14 +15,10 @@ export const UserProfile = ({ isSidebarOpen, user }) => {
         <div className="relative group">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center text-white font-semibold text-xl shadow-2xl border-2 border-white/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-blue-500/25 overflow-hidden">
             {sessionStorage.getItem('avatarUrl')!="null" ? (
-              <img
+              <img  
                 src={sessionStorage.getItem('avatarUrl')}
                 alt="Avatar"
                 className="w-full h-full object-cover rounded-2xl"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  // Fallback sẽ được hiển thị bởi phần tử tiếp theo
-                }}
               />
             ) : null}
             <span className={`${sessionStorage.getItem('avatarUrl')!="null" ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>

@@ -6,7 +6,7 @@ import { Sidebar } from './components/Sidebar/Sidebar';
 import { Header } from './components/Header/Header';
 import { Footer } from './components/Footer/Footer';
 import { MainContent } from './components/MainContent/MainContent';
-import { dealerManagerMenuItems, dealerStaffMenuItems } from './data/menuItems';
+import { dealerManagerMenuItems, dealerStaffMenuItems } from './data/menuItems.jsx';
 import Swal from "sweetalert2";
 
 const DealerLayout = () => {
