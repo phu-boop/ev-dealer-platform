@@ -43,7 +43,7 @@ const ResetPassword = () => {
         } catch (error) {
             console.log(error);
             setIsError(true);
-            setMessage("Lỗi server. Vui lòng thử lại sau.");
+            setMessage(error.response.data.message||"Lỗi server. Vui lòng thử lại sau.");
         } finally {
             setIsLoading(false);
         }
