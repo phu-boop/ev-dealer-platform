@@ -1,0 +1,2 @@
+org.springframework.context.ApplicationContextInitializer=\
+  com.ev.dealer_service.config.DotenvApplicationInitializer

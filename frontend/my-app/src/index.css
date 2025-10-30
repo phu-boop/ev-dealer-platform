@@ -67,9 +67,6 @@
   overflow: hidden;
 }
 
-
-
-
 /* Custom animation cho progress bar */
 @keyframes progress {
   0% {
@@ -106,8 +103,6 @@
 .Toastify__toast-container {
   z-index: 9999 !important;
 }
-
-
 /* Thêm vào file CSS chính của bạn */
 @keyframes scaleIn {
   from {

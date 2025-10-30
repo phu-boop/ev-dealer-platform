@@ -8,13 +8,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface DealerPerformanceRepository extends JpaRepository<DealerPerformance, Long> {
 
-    List<DealerPerformance> findByDealerDealerId(Long dealerId);
+    List<DealerPerformance> findByDealerDealerId(UUID dealerId);
 
-    Optional<DealerPerformance> findByDealerDealerIdAndPeriod(Long dealerId, String period);
+    Optional<DealerPerformance> findByDealerDealerIdAndPeriod(UUID dealerId, String period);
 
     List<DealerPerformance> findByPeriod(String period);
 

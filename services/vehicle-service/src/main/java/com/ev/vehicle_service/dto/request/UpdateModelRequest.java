@@ -1,8 +1,8 @@
 package com.ev.vehicle_service.dto.request;
 
+import com.ev.common_lib.model.enums.VehicleStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
 import lombok.Data;
 import java.util.Map;
 

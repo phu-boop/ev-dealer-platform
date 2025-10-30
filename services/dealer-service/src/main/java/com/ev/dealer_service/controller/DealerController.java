@@ -1,9 +1,11 @@
 package com.ev.dealer_service.controller;
 
+import com.ev.common_lib.dto.respond.ApiRespond;
+import com.ev.dealer_service.dto.response.DealerBasicDto;
 import com.ev.dealer_service.dto.request.DealerRequest;
 import com.ev.dealer_service.dto.response.ApiResponse;
 import com.ev.dealer_service.dto.response.DealerResponse;
-import com.ev.dealer_service.service.DealerService;
+import com.ev.dealer_service.service.Interface.DealerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import java.util.List;
 public class DealerController {
 
     private final DealerService dealerService;
+
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<DealerResponse>>> getAllDealers(
@@ -68,5 +71,15 @@ public class DealerController {
     public ResponseEntity<ApiResponse<Void>> deleteDealer(@PathVariable Long id) {
         dealerService.deleteDealer(id);
         return ResponseEntity.ok(ApiResponse.success("Dealer deleted successfully", null));
+    }
+
+    /**
+     * Lấy danh sách rút gọn (ID và Tên) của tất cả đại lý.
+     * Dùng cho các dropdown ở các service khác.
+     */
+    @GetMapping("/list-all")
+    public ResponseEntity<ApiRespond<List<DealerBasicDto>>> getAllDealersList() {
+        List<DealerBasicDto> dealers = dealerService.getAllDealersBasicInfo();
+        return ResponseEntity.ok(ApiRespond.success("Fetched all dealer names successfully", dealers));
     }
 }

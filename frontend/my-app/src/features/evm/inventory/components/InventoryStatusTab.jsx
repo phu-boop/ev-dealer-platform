@@ -2,14 +2,18 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   FiSearch,
   FiSliders,
-  FiPlusCircle,
-  FiEdit,
+  FiPlusCircle, // Dùng cho Nhập kho
+  FiEdit, // Dùng cho Sửa ngưỡng
   FiChevronDown,
+  FiNavigation, // Dùng cho Điều chuyển
 } from "react-icons/fi";
-import { getAllInventory } from "../services/inventoryService";
-import { getVariantDetailsByIds } from "../../catalog/services/vehicleCatalogService";
-import TransactionModal from "./TransactionModal";
-import ReorderLevelModal from "./ReorderLevelModal";
+
+import { getInventoryStatusByIds } from "../services/inventoryService";
+import { getAllVariantsPaginated } from "../../catalog/services/vehicleCatalogService";
+
+import TransactionModal from "./TransactionModal"; // Modal Nhập kho (RESTOCK)
+import TransferRequestModal from "./TransferRequestModal"; // Modal Tạo Yêu Cầu Điều Chuyển
+import ReorderLevelModal from "./ReorderLevelModal"; // Modal Sửa Ngưỡng
 
 // Component để hiển thị badge trạng thái
 const StatusBadge = ({ status }) => {
@@ -39,71 +43,110 @@ const StatusBadge = ({ status }) => {
 };
 
 const InventoryStatusTab = () => {
-  const [inventoryWithDetails, setInventoryWithDetails] = useState({
+  // --- THAY ĐỔI 2: Đổi tên state cho rõ nghĩa ---
+  // Tên cũ: inventoryWithDetails
+  const [mergedData, setMergedData] = useState({
     content: [],
     totalPages: 0,
   });
+
   const [filters, setFilters] = useState({
     search: "",
-    dealerId: "",
+    dealerId: "", // (Lọc dealerId sẽ cần logic khác ở backend)
     status: "",
   });
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  // <<< STATE QUẢN LÝ MODAL >>>
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  // State cho Modals (giữ nguyên)
+  const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
 
+  // --- THAY ĐỔI 3: VIẾT LẠI HOÀN TOÀN HÀM FETCH DỮ LIỆU ---
   const fetchInventory = useCallback(async () => {
     setIsLoading(true);
+    setMergedData({ content: [], totalPages: 0 }); // Xóa dữ liệu cũ
+
     try {
-      const params = { ...filters, page, size: 10 };
-      const inventoryResponse = await getAllInventory(params);
-      const inventoryData = inventoryResponse.data.data;
+      // BƯỚC 1: Lấy "Danh Sách Chủ" (Master List) từ Vehicle Service
+      const params = {
+        search: filters.search,
+        // status: filters.status, // Cần backend vehicle-service hỗ trợ filter status
+        page: page,
+        size: 10,
+      };
 
-      if (inventoryData && inventoryData.content.length > 0) {
-        const variantIds = inventoryData.content.map((item) => item.variantId);
-        const detailsResponse = await getVariantDetailsByIds(variantIds);
-        const vehicleDetails = detailsResponse.data.data || [];
-        const detailsMap = new Map(vehicleDetails.map((v) => [v.variantId, v]));
+      const vehicleResponse = await getAllVariantsPaginated(params);
+      const vehicleData = vehicleResponse.data.data; // { content: [], totalPages: ... }
 
-        const mergedContent = inventoryData.content.map((item) => {
-          const details = detailsMap.get(item.variantId);
-          if (details) {
-            return { ...item, ...details };
-          }
-          return {
-            ...item,
-            versionName: `Không tìm thấy thông tin`,
-            color: `(ID: ${item.variantId})`,
-            skuCode: "N/A",
-          };
-        });
-
-        setInventoryWithDetails({
-          content: mergedContent,
-          totalPages: inventoryData.totalPages,
-        });
-      } else {
-        setInventoryWithDetails({ content: [], totalPages: 0 });
+      if (!vehicleData || vehicleData.content.length === 0) {
+        // Không tìm thấy xe nào trong danh mục
+        setIsLoading(false);
+        return;
       }
+
+      // BƯỚC 2: Lấy danh sách ID từ Bước 1
+      const variantIds = vehicleData.content.map(
+        (variant) => variant.variantId
+      );
+
+      // BƯỚC 3: Lấy "Dữ Liệu Phụ" (Inventory) từ Inventory Service
+      const inventoryResponse = await getInventoryStatusByIds(variantIds);
+      const inventoryList = inventoryResponse.data.data || [];
+
+      // Tạo một Map để tra cứu tồn kho nhanh (key: variantId, value: {availableQuantity, ...})
+      const inventoryMap = new Map(
+        inventoryList.map((inv) => [inv.variantId, inv])
+      );
+
+      // BƯỚC 4: Gộp (Merge) hai danh sách
+      const finalMergedContent = vehicleData.content.map((variant) => {
+        const inventoryInfo = inventoryMap.get(variant.variantId);
+
+        if (inventoryInfo) {
+          // TÌM THẤY: Gộp thông tin xe (master) và thông tin kho (supplementary)
+          return {
+            ...variant, // (id, versionName, skuCode, color, brand, modelName...)
+            ...inventoryInfo, // (availableQuantity, allocatedQuantity, status, reorderLevel...)
+          };
+        } else {
+          // KHÔNG TÌM THẤY (Xe mới, chưa nhập kho):
+          // Trả về thông tin xe + tồn kho mặc định là 0
+          return {
+            ...variant,
+            availableQuantity: 0,
+            allocatedQuantity: 0,
+            totalQuantity: 0,
+            reorderLevel: 0,
+            status: "OUT_OF_STOCK", // Mặc định là hết hàng
+            dealerStock: [], // (Nếu DTO của bạn có trường này)
+          };
+        }
+      });
+
+      // BƯỚC 5: Cập nhật State
+      setMergedData({
+        content: finalMergedContent,
+        totalPages: vehicleData.totalPages,
+      });
     } catch (error) {
-      console.error("Failed to fetch inventory data", error);
-      setInventoryWithDetails({ content: [], totalPages: 0 });
+      console.error("Failed to fetch merged inventory data", error);
+      setMergedData({ content: [], totalPages: 0 }); // Đặt lại về rỗng nếu lỗi
     } finally {
       setIsLoading(false);
     }
-  }, [filters, page]);
+  }, [filters, page]); // Phụ thuộc vào filters và page
 
+  // useEffect gọi fetch (giữ nguyên)
   useEffect(() => {
     fetchInventory();
   }, [fetchInventory]);
 
   const handleFilterChange = (e) => {
-    setPage(0); // Reset về trang đầu khi thay đổi bộ lọc
+    setPage(0);
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
@@ -113,10 +156,14 @@ const InventoryStatusTab = () => {
     setExpandedRows(newSet);
   };
 
-  // ĐỊNH NGHĨA CÁC HÀM XỬ LÝ MODAL
-  const openTransactionModal = (variantId) => {
+  const openRestockModal = (variantId) => {
     setSelectedVariantId(variantId);
-    setIsTransactionModalOpen(true);
+    setIsRestockModalOpen(true);
+  };
+
+  const openTransferModal = (variantId) => {
+    setSelectedVariantId(variantId);
+    setIsTransferModalOpen(true);
   };
 
   const openReorderModal = (variantId) => {
@@ -124,8 +171,10 @@ const InventoryStatusTab = () => {
     setIsReorderModalOpen(true);
   };
 
+  // Hàm đóng chung cho tất cả
   const closeModal = () => {
-    setIsTransactionModalOpen(false);
+    setIsRestockModalOpen(false);
+    setIsTransferModalOpen(false);
     setIsReorderModalOpen(false);
     setSelectedVariantId(null);
   };
@@ -178,99 +227,121 @@ const InventoryStatusTab = () => {
               </tr>
             </thead>
             <tbody>
-              {inventoryWithDetails.content.map((item) => (
-                <React.Fragment key={item.variantId}>
-                  <tr className="border-b hover:bg-gray-50">
-                    <td
-                      className="p-3 text-center cursor-pointer"
-                      onClick={() => toggleRow(item.variantId)}
-                    >
-                      <FiChevronDown
-                        className={`transition-transform ${
-                          expandedRows.has(item.variantId) ? "rotate-180" : ""
-                        }`}
-                      />
-                    </td>
-                    <td className="p-3">
-                      <p className="font-semibold text-gray-800">
-                        {item.versionName} - {item.color}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        SKU: {item.skuCode}
-                      </p>
-                    </td>
-                    <td className="p-3 text-center text-lg font-bold text-green-600">
-                      {item.availableQuantity}
-                    </td>
-                    <td className="p-3 text-center text-gray-600">
-                      {item.allocatedQuantity}
-                    </td>
-                    <td className="p-3 text-center font-semibold text-blue-600">
-                      {item.totalQuantity}
-                    </td>
-                    <td className="p-3">
-                      <StatusBadge status={item.status} />
-                    </td>
-                    <td className="p-3 text-right space-x-2">
-                      <button
-                        onClick={() => openTransactionModal(item.variantId)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-full"
-                        title="Thực hiện giao dịch"
+              {mergedData.content.map(
+                (
+                  item // <-- Tự động dùng dữ liệu đã gộp
+                ) => (
+                  <React.Fragment key={item.variantId}>
+                    <tr className="border-b hover:bg-gray-50">
+                      <td
+                        className="p-3 text-center cursor-pointer"
+                        onClick={() => toggleRow(item.variantId)}
                       >
-                        <FiPlusCircle />
-                      </button>
-                      <button
-                        onClick={() => openReorderModal(item.variantId)}
-                        className="p-2 text-yellow-600 hover:bg-yellow-100 rounded-full"
-                        title="Cập nhật ngưỡng"
-                      >
-                        <FiEdit />
-                      </button>
-                    </td>
-                  </tr>
-                  {expandedRows.has(item.variantId) && (
-                    <tr className="bg-gray-100">
-                      <td colSpan="7" className="p-4">
-                        <h4 className="font-semibold mb-2">
-                          Chi tiết tồn kho đại lý:
-                        </h4>
-                        {item.dealerStock && item.dealerStock.length > 0 ? (
-                          <ul className="list-disc list-inside text-sm">
-                            {item.dealerStock.map((dealer) => (
-                              <li key={dealer.dealerId}>
-                                Đại lý #{dealer.dealerId}:{" "}
-                                <span className="font-semibold">
-                                  {dealer.availableQuantity}
-                                </span>{" "}
-                                khả dụng /{" "}
-                                <span className="text-gray-600">
-                                  {dealer.allocatedQuantity}
-                                </span>{" "}
-                                đã phân bổ
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-sm text-gray-500">
-                            Chưa có dữ liệu tồn kho ở đại lý.
-                          </p>
-                        )}
+                        <FiChevronDown
+                          className={`transition-transform ${
+                            expandedRows.has(item.variantId) ? "rotate-180" : ""
+                          }`}
+                        />
+                      </td>
+
+                      {/* Các cột này giờ sẽ CÓ thông tin từ vehicle-service */}
+                      <td className="p-3">
+                        <p className="font-semibold text-gray-800">
+                          {item.modelName} - {item.versionName} - {item.color}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          SKU: {item.skuCode} | Brand: {item.brand}
+                        </p>
+                      </td>
+
+                      {/* Các cột này CÓ thông tin từ inventory-service (kể cả khi là 0) */}
+                      <td className="p-3 text-center text-lg font-bold text-green-600">
+                        {item.availableQuantity}
+                      </td>
+                      <td className="p-3 text-center text-gray-600">
+                        {item.allocatedQuantity}
+                      </td>
+                      <td className="p-3 text-center font-semibold text-blue-600">
+                        {item.totalQuantity}
+                      </td>
+                      <td className="p-3">
+                        <StatusBadge status={item.status} />
+                      </td>
+                      <td className="p-3 text-right space-x-2">
+                        <button
+                          onClick={() => openRestockModal(item.variantId)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-full"
+                          title="Nhập kho (Restock)"
+                        >
+                          <FiPlusCircle />
+                        </button>
+                        <button
+                          onClick={() => openTransferModal(item.variantId)}
+                          className="p-2 text-purple-600 hover:bg-purple-100 rounded-full"
+                          title="Tạo Yêu Cầu Điều Chuyển"
+                        >
+                          <FiNavigation />
+                        </button>
+                        <button
+                          onClick={() => openReorderModal(item.variantId)}
+                          className="p-2 text-yellow-600 hover:bg-yellow-100 rounded-full"
+                          title="Cập nhật ngưỡng"
+                        >
+                          <FiEdit />
+                        </button>
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))}
+                    {expandedRows.has(item.variantId) && (
+                      <tr className="bg-gray-100">
+                        <td colSpan="7" className="p-4">
+                          <h4 className="font-semibold mb-2">
+                            Chi tiết tồn kho đại lý:
+                          </h4>
+                          {item.dealerStock && item.dealerStock.length > 0 ? (
+                            <ul className="list-disc list-inside text-sm">
+                              {item.dealerStock.map((dealer) => (
+                                <li key={dealer.dealerId}>
+                                  Đại lý #{dealer.dealerId}:{" "}
+                                  <span className="font-semibold">
+                                    {dealer.availableQuantity}
+                                  </span>{" "}
+                                  khả dụng /{" "}
+                                  <span className="text-gray-600">
+                                    {dealer.allocatedQuantity}
+                                  </span>{" "}
+                                  đã phân bổ
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              Chưa có dữ liệu tồn kho ở đại lý.
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                )
+              )}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* RENDER CÁC MODAL CÓ ĐIỀU KIỆN */}
-      {isTransactionModalOpen && (
+      {isRestockModalOpen && (
         <TransactionModal
-          isOpen={isTransactionModalOpen}
+          isOpen={isRestockModalOpen}
           onClose={closeModal}
           onSuccess={fetchInventory}
+          variantId={selectedVariantId}
+        />
+      )}
+      {isTransferModalOpen && (
+        <TransferRequestModal
+          isOpen={isTransferModalOpen}
+          onClose={closeModal}
+          onSuccess={fetchInventory} // Tải lại kho sau khi tạo yêu cầu
           variantId={selectedVariantId}
         />
       )}
