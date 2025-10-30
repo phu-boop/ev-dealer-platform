@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiSave, FiX,
-  FiCheck, FiAlertCircle, FiChevronDown
+  FiCheck, FiAlertCircle, FiChevronDown, FiUsers
 } from "react-icons/fi";
 import customerService from "../services/customerService";
+import staffService from "../services/staffService";
 import { useAuthContext } from "../../auth/AuthProvider";
 
 const CreateCustomer = () => {
@@ -21,12 +22,42 @@ const CreateCustomer = () => {
     idNumber: "",
     customerType: "INDIVIDUAL",
     registrationDate: "",
+    assignedStaffId: "", // Thêm field phân công nhân viên
     // status không cần thiết khi tạo mới - backend tự động set = NEW
     preferredDealerId: null
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [staffList, setStaffList] = useState([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
+  
+  // Check if user is DEALER_MANAGER
+  const isDealerManager = roles?.includes('DEALER_MANAGER');
+  const dealerId = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId');
+
+  // Load staff list when component mounts
+  useEffect(() => {
+    if (isDealerManager && dealerId) {
+      fetchStaffList();
+    }
+  }, [isDealerManager, dealerId]);
+
+  const fetchStaffList = async () => {
+    setLoadingStaff(true);
+    try {
+      console.log("=== DEBUG Frontend: Fetching staff for dealerId:", dealerId);
+      const data = await staffService.getStaffByDealerId(dealerId);
+      console.log("=== DEBUG Frontend: Received staff list:", data);
+      setStaffList(data);
+    } catch (error) {
+      console.error("Error fetching staff list:", error);
+      console.error("Error details:", error.response?.data);
+      setStaffList([]);
+    } finally {
+      setLoadingStaff(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,12 +115,28 @@ const CreateCustomer = () => {
         idNumber: formData.idNumber || null,
         customerType: formData.customerType,
         registrationDate: formData.registrationDate || null,
+        assignedStaffId: formData.assignedStaffId || null, // Thêm assignedStaffId
         // Không truyền status - backend tự động set = NEW
         preferredDealerId: formData.preferredDealerId || null
       };
 
-      await customerService.createCustomer(customerData);
-      toast.success("Thêm khách hàng thành công!");
+      const newCustomer = await customerService.createCustomer(customerData);
+      
+      // Nếu có phân công nhân viên, gọi API phân công
+      if (formData.assignedStaffId && newCustomer.customerId) {
+        try {
+          await customerService.assignStaffToCustomer(newCustomer.customerId, {
+            staffId: formData.assignedStaffId,
+            notes: "Phân công khi tạo khách hàng mới"
+          });
+          toast.success("Thêm khách hàng và phân công nhân viên thành công!");
+        } catch (assignError) {
+          console.error("Error assigning staff:", assignError);
+          toast.warning("Khách hàng đã được tạo nhưng không thể phân công nhân viên");
+        }
+      } else {
+        toast.success("Thêm khách hàng thành công!");
+      }
       
       // Navigate based on role
       const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
@@ -335,6 +382,56 @@ const CreateCustomer = () => {
               </div>
             </div>
           </div>
+
+          {/* Staff Assignment Card - Only for Dealer Manager */}
+          {isDealerManager && (
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-8 hover:shadow-xl transition-shadow duration-300">
+              <div className="mb-6 pb-4 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <FiUsers className="w-5 h-5 text-white" />
+                  </div>
+                  Phân Công Nhân Viên
+                </h2>
+                <p className="text-sm text-gray-500 mt-2 ml-13">Chọn nhân viên phụ trách khách hàng (không bắt buộc)</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nhân viên được phân công
+                </label>
+                <div className="relative">
+                  <FiUsers className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <select
+                    name="assignedStaffId"
+                    value={formData.assignedStaffId}
+                    onChange={handleInputChange}
+                    disabled={loadingStaff}
+                    className="w-full pl-10 pr-10 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white appearance-none"
+                  >
+                    <option value="">-- Chọn nhân viên --</option>
+                    {staffList.map((staff) => (
+                      <option key={staff.id} value={staff.id}>
+                        {staff.fullName} ({staff.username})
+                      </option>
+                    ))}
+                  </select>
+                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                </div>
+                {loadingStaff && (
+                  <p className="mt-2 text-sm text-gray-500 flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    Đang tải danh sách nhân viên...
+                  </p>
+                )}
+                {!loadingStaff && staffList.length === 0 && (
+                  <p className="mt-2 text-sm text-amber-600 flex items-center bg-amber-50 px-3 py-2 rounded-lg">
+                    <FiAlertCircle className="w-4 h-4 mr-1" />
+                    Không có nhân viên nào trong đại lý
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Submit Buttons Card */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-6">

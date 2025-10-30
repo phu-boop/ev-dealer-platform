@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit, FiClock, FiUser } from "react-icons/fi";
+import { FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit, FiClock, FiUser, FiUsers } from "react-icons/fi";
 import customerService from "../services/customerService";
 import { useAuthContext } from "../../../features/auth/AuthProvider";
+import AssignStaffModal from "../components/AssignStaffModal";
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -14,6 +15,10 @@ const CustomerDetail = () => {
   const [auditHistory, setAuditHistory] = useState([]);
   const [loadingAudit, setLoadingAudit] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  
+  // Check if user is DEALER_MANAGER
+  const isDealerManager = roles?.includes('DEALER_MANAGER');
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -29,6 +34,15 @@ const CustomerDetail = () => {
     };
     fetchCustomer();
   }, [id]);
+  
+  const refreshCustomer = async () => {
+    try {
+      const data = await customerService.getCustomerById(id);
+      setCustomer(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const loadAuditHistory = async () => {
     try {
@@ -106,8 +120,23 @@ const CustomerDetail = () => {
             <h2 className="text-2xl font-bold">{customer.firstName} {customer.lastName}</h2>
             <p className="text-sm text-gray-500">{customer.customerCode}</p>
           </div>
-          <div>
-            <button onClick={() => navigate(`${base}/customers/${id}/edit`)} className="px-4 py-2 bg-green-600 text-white rounded-xl">Chỉnh sửa</button>
+          <div className="flex gap-3">
+            {isDealerManager && (
+              <button 
+                onClick={() => setAssignModalOpen(true)} 
+                className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center"
+              >
+                <FiUsers className="w-4 h-4 mr-2" />
+                Phân công nhân viên
+              </button>
+            )}
+            <button 
+              onClick={() => navigate(`${base}/customers/${id}/edit`)} 
+              className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center"
+            >
+              <FiEdit className="w-4 h-4 mr-2" />
+              Chỉnh sửa
+            </button>
           </div>
         </div>
 
@@ -125,6 +154,18 @@ const CustomerDetail = () => {
           <div>
             <h3 className="text-sm font-semibold text-gray-500">CMND/CCCD</h3>
             <p className="mt-2"><FiUser className="inline mr-2"/>{customer.idNumber || 'Chưa cập nhật'}</p>
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-semibold text-gray-500">Nhân viên phụ trách</h3>
+            <p className="mt-2">
+              <FiUsers className="inline mr-2"/>
+              {customer.assignedStaffId ? (
+                <span className="text-blue-600 font-medium">{customer.assignedStaffId}</span>
+              ) : (
+                <span className="text-gray-400 italic">Chưa phân công</span>
+              )}
+            </p>
           </div>
           
           <div>
@@ -241,6 +282,14 @@ const CustomerDetail = () => {
           )}
         </div>
       </div>
+      
+      {/* Assign Staff Modal */}
+      <AssignStaffModal
+        isOpen={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        customer={customer}
+        onAssignSuccess={refreshCustomer}
+      />
     </div>
   );
 };
