@@ -1,5 +1,6 @@
 package com.ev.user_service.service;
 
+import com.ev.user_service.dto.request.UpdateProfileRequest;
 import com.ev.user_service.dto.respond.ProfileRespond;
 import com.ev.user_service.entity.*;
 import com.ev.user_service.enums.UserStatus;
@@ -67,7 +68,9 @@ public class UserService {
     public List<UserRespond> getAllUser() {
         return userRepository.findAll()
                 .stream()
-                .map(userMapper::usertoUserRespond)
+                .map(
+                        userMapper::usertoUserRespond
+                )
                 .collect(Collectors.toList());
     }
 
@@ -171,11 +174,11 @@ public class UserService {
     public UserRespond updateUser(UUID id, UserRequest userRequest) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if (!user.getEmail().equals(userRequest.getEmail())
+        if ((user.getEmail()!=null)&&!user.getEmail().equals(userRequest.getEmail())
                 && userRepository.existsByEmail(userRequest.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
-        if (!user.getPhone().equals(userRequest.getPhone())
+        if ((user.getPhone()!=null)&&!user.getPhone().equals(userRequest.getPhone())
                 && userRepository.existsByPhone(userRequest.getPhone())) {
             throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
         }
@@ -197,6 +200,88 @@ public class UserService {
         ProfileRespond.ProfileRespondBuilder builder = ProfileRespond.builder().user(user);
 
         return builder.build();
+    }
+
+    public User updateProfile(UpdateProfileRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Cập nhật thông tin cơ bản
+        updateBasicInfo(user, request);
+
+        // ====== Dealer Staff Profile ======
+        if (request.getDealerStaffProfile() != null) {
+            DealerStaffProfile dsp = user.getDealerStaffProfile();
+            if (dsp == null) dsp = new DealerStaffProfile();
+
+            DealerStaffProfile newProfile = request.getDealerStaffProfile();
+            if (newProfile.getDealerId() != null) dsp.setDealerId(newProfile.getDealerId());
+            if (newProfile.getPosition() != null) dsp.setPosition(newProfile.getPosition());
+            if (newProfile.getDepartment() != null) dsp.setDepartment(newProfile.getDepartment());
+            if (newProfile.getHireDate() != null) dsp.setHireDate(newProfile.getHireDate());
+            if (newProfile.getSalary() != null) dsp.setSalary(newProfile.getSalary());
+            if (newProfile.getCommissionRate() != null) dsp.setCommissionRate(newProfile.getCommissionRate());
+
+            dealerStaffProfileRepository.save(dsp);
+            user.setDealerStaffProfile(dsp);
+        }
+
+        // ====== Dealer Manager Profile ======
+        if (request.getDealerManagerProfile() != null) {
+            DealerManagerProfile dmp = user.getDealerManagerProfile();
+            if (dmp == null) dmp = new DealerManagerProfile();
+
+            DealerManagerProfile newProfile = request.getDealerManagerProfile();
+            if (newProfile.getDealerId() != null) dmp.setDealerId(newProfile.getDealerId());
+            if (newProfile.getManagementLevel() != null) dmp.setManagementLevel(newProfile.getManagementLevel());
+            if (newProfile.getApprovalLimit() != null) dmp.setApprovalLimit(newProfile.getApprovalLimit());
+            if (newProfile.getDepartment() != null) dmp.setDepartment(newProfile.getDepartment());
+
+            dealerManagerProfileRepository.save(dmp);
+            user.setDealerManagerProfile(dmp);
+        }
+
+        // ====== EVM Staff Profile ======
+        if (request.getEvmStaffProfile() != null) {
+            EvmStaffProfile esp = user.getEvmStaffProfile();
+            if (esp == null) esp = new EvmStaffProfile();
+
+            EvmStaffProfile newProfile = request.getEvmStaffProfile();
+            if (newProfile.getDepartment() != null) esp.setDepartment(newProfile.getDepartment());
+            if (newProfile.getSpecialization() != null) esp.setSpecialization(newProfile.getSpecialization());
+
+            evmStaffProfileRepository.save(esp);
+            user.setEvmStaffProfile(esp);
+        }
+
+        // ====== Admin Profile ======
+        if (request.getAdminProfile() != null) {
+            AdminProfile ap = user.getAdminProfile();
+            if (ap == null) ap = new AdminProfile();
+
+            AdminProfile newProfile = request.getAdminProfile();
+            if (newProfile.getAdminLevel() != null) ap.setAdminLevel(newProfile.getAdminLevel());
+            if (newProfile.getSystemPermissions() != null) ap.setSystemPermissions(newProfile.getSystemPermissions());
+            if (newProfile.getAccessScope() != null) ap.setAccessScope(newProfile.getAccessScope());
+
+            adminProfileRepository.save(ap);
+            user.setAdminProfile(ap);
+        }
+
+        userRepository.save(user);
+        return user;
+    }
+
+    private void updateBasicInfo(User user, UpdateProfileRequest req) {
+        if (req.getName() != null) user.setName(req.getName());
+        if (req.getFullName() != null) user.setFullName(req.getFullName());
+        if (req.getPhone() != null) user.setPhone(req.getPhone());
+        if (req.getAddress() != null) user.setAddress(req.getAddress());
+        if (req.getBirthday() != null) user.setBirthday(req.getBirthday());
+        if (req.getCity() != null) user.setCity(req.getCity());
+        if (req.getCountry() != null) user.setCountry(req.getCountry());
+        if (req.getGender() != null) user.setGender(req.getGender());
+        if (req.getUrl() != null) user.setUrl(req.getUrl());
     }
 
 }

@@ -1,7 +1,7 @@
 import {useState} from "react";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
-import {loginUser, registerFCMToken} from "../features/auth/services/authService.js";
+import {loginUser, registerFCMToken, getIddealerByIdMember} from "../features/auth/services/authService.js";
 import Alert from "../components/ui/Alert.jsx";
 import Swal from "sweetalert2";
 import {useNavigate} from "react-router-dom";
@@ -54,7 +54,8 @@ export default function Login() {
         userData.name,
         userData.fullName,
         userData.memberId,
-        userData
+        userData,
+        userData.url
       );
 
       Swal.fire({

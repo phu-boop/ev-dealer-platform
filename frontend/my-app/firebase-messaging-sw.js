@@ -79,9 +79,9 @@ importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-com
 // -----------------------------------------------------------
 firebase.initializeApp({
   apiKey: "AIzaSyDM7qyWVqh3kYbbECM9TPaFRTYXf_2Vb4k",
-  authDomain: "eletricvehicl.firebaseapp.com",
-  projectId: "eletricvehicl",
-  storageBucket: "eletricvehicl.appspot.com",
+  authDomain: "eletricvehicle.firebaseapp.com",
+  projectId: "eletricvehicle",
+  storageBucket: "eletricvehicle.appspot.com",
   messagingSenderId: "903235101201",
   appId: "1:903235101201:web:e7a6ef46f73d8a086b47b0",
   measurementId: "G-H10W8LJ2ZF",
