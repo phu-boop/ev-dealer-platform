@@ -13,13 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class StockAlertServiceImpl implements StockAlertService {
 
     private final CentralInventoryRepository centralRepo;
-    private final DealerAllocationRepository dealerRepo; // <<< Inject thêm repository của đại lý
+    private final DealerAllocationRepository dealerRepo; 
     private final StockAlertRepository alertRepo;
 
     @Override
@@ -73,7 +74,7 @@ public class StockAlertServiceImpl implements StockAlertService {
     /**
      * Hàm helper để tạo và lưu một cảnh báo mới.
      */
-    private void createAlert(Long variantId, Long dealerId, String alertType, int currentStock, int threshold) {
+    private void createAlert(Long variantId, UUID dealerId, String alertType, int currentStock, int threshold) {
         StockAlert newAlert = new StockAlert();
         newAlert.setVariantId(variantId);
         newAlert.setDealerId(dealerId); // Sẽ là null nếu là kho trung tâm

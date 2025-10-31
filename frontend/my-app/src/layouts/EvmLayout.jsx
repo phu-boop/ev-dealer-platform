@@ -1,7 +1,9 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import NotificationBell from '../components/NotificationBell';
+import {getAllNotification, markAllNotificationsAsRead, putNotificationReaded} from "../services/firebase/notificationService";
 import { useAuthContext } from "../features/auth/AuthProvider";
+
+import Swal from 'sweetalert2';
 import {
   FiMenu,
   FiX,
@@ -36,6 +38,10 @@ import {
   FiCreditCard as FiCreditCardAlt,
   FiUser,
 } from "react-icons/fi";
+import { ro } from "date-fns/locale";
+import { set } from "date-fns";
+
+
 
 export const adminMenuItems = [
   // Dashboard
@@ -47,11 +53,27 @@ export const adminMenuItems = [
     label: "Quản Lý Sản Phẩm",
     path: "/evm/admin/products",
     submenu: [
-      { icon: FiList, label: "Danh Mục Xe", path: "/evm/admin/products/catalog" },
-      { icon: FiCreditCard, label: "Giá & Khuyến Mãi", path: "/evm/admin/products/pricing" },
-      { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/evm/admin/products/variants" },
-      { icon: FiCreditCard, label: "(DONE)Khuyến Mãi", path: "/evm/admin/products/promotions" }
-    ]
+      {
+        icon: FiList,
+        label: "Danh Mục Xe",
+        path: "/evm/admin/products/catalog",
+      },
+      {
+        icon: FiCreditCard,
+        label: "Giá & Khuyến Mãi",
+        path: "/evm/admin/products/pricing",
+      },
+      {
+        icon: FiTag,
+        label: "Phiên Bản & Màu Sắc",
+        path: "/evm/admin/products/variants",
+      },
+      {
+        icon: FiCreditCard,
+        label: "(DONE)Khuyến Mãi",
+        path: "/evm/admin/products/promotions",
+      },
+    ],
   },
 
   // Quản lý phân phối & kho
@@ -113,10 +135,25 @@ export const adminMenuItems = [
     label: "Báo Cáo & Phân Tích",
     path: "/evm/admin/reports",
     submenu: [
+      { icon: FiTrendingUp, label: "(DONE)Thông báo", path: "/evm/admin/reports/notifications" },
       { icon: FiTrendingUp, label: "Doanh Số", path: "/evm/admin/reports/sales" },
       { icon: FiPieChart, label: "Tồn Kho", path: "/evm/admin/reports/inventory" },
+      {
+        icon: FiTrendingUp,
+        label: "Doanh Số",
+        path: "/evm/admin/reports/sales",
+      },
+      {
+        icon: FiPieChart,
+        label: "Tồn Kho",
+        path: "/evm/admin/reports/inventory",
+      },
       { icon: FiCpu, label: "Dự Báo AI", path: "/evm/admin/reports/forecast" },
-      { icon: FiMap, label: "Theo Khu Vực", path: "/evm/admin/reports/regional" },
+      {
+        icon: FiMap,
+        label: "Theo Khu Vực",
+        path: "/evm/admin/reports/regional",
+      },
     ],
   },
 
@@ -160,10 +197,28 @@ export const evmStaffMenuItems = [
     label: "Quản Lý Sản Phẩm",
     path: "/evm/staff/products",
     submenu: [
-      { icon: FiList, label: "Danh Mục Xe", path: "/evm/staff/products/catalog" },
-      { icon: FiTag, label: "Phiên Bản & Màu Sắc", path: "/evm/staff/products/variants" },
-      { icon: FiCreditCard, label: "(DONE)Giá Sỉ & Chiết Khấu", path: "/evm/staff/products/promotions" },
-    ]
+      {
+        icon: FiList,
+        label: "(DONE)Danh Mục Xe",
+        path: "/evm/staff/products/catalog",
+      },
+      {
+        icon: FiTag,
+        label: "(DONE)Phiên Bản & Màu Sắc",
+        path: "/evm/staff/products/variants",
+      },
+      {
+        icon: FiCreditCard,
+        label: "Giá Sỉ & Chiết Khấu",
+        path: "",
+      },
+
+      {
+        icon: FiCreditCard,
+        label: "(DONE)Khuyen Mãi",
+        path: "/evm/staff/products/promotions",
+      },
+    ],
   },
 
   // Quản lý phân phối & kho
@@ -174,8 +229,8 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiArchive,
-        label: "Kho Trung Tâm",
-        path: "/evm/staff/distribution/warehouse",
+        label: "(80%)Kho Trung Tâm",
+        path: "/evm/staff/distribution/inventory/central",
       },
       {
         icon: FiNavigation,
@@ -191,7 +246,11 @@ export const evmStaffMenuItems = [
     label: "Quản Lý Đại Lý",
     path: "/evm/staff/dealers",
     submenu: [
-      { icon: FiHomeAlt, label: "Danh Sách Đại Lý", path: "/evm/staff/dealers/list" },
+      {
+        icon: FiHomeAlt,
+        label: "Danh Sách Đại Lý",
+        path: "/evm/staff/dealers/list",
+      },
       {
         icon: FiFileText,
         label: "Hợp Đồng & Chỉ Tiêu",
@@ -241,9 +300,162 @@ const EvmLayout = () => {
   const sidebarRef = useRef(null);
   const profileDropdownRef = useRef(null);
   const [menuItems, setMenuItems] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notificationDropdownRef = useRef(null);
 
-    // Kiểm tra xem user có role 'ADMIN' hay không
-    const role = roles.includes("ADMIN")?'admin':'evm_staff';
+  // Hàm fetch thông báo
+const fetchNotifications = async () => {
+  if(roles.includes("ADMIN")){
+    try {
+      const respond = await getAllNotification();
+      const data = respond.data || [];
+      
+      // Sort notifications: chưa đọc lên đầu, sau đó sort theo ngày tạo (mới nhất lên đầu)
+      const sortedData = data.sort((a, b) => {
+        // Ưu tiên thông báo chưa đọc
+        if (!a.read && b.read) return -1;
+        if (a.read && !b.read) return 1;
+        
+        // Nếu cùng trạng thái đọc, sort theo ngày tạo (mới nhất lên đầu)
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      
+      setNotifications(sortedData);
+      
+      // Đếm số thông báo chưa đọc
+      const unread = data.filter(notification => !notification.read).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  } else {
+    setNotifications([]);
+  }
+};
+
+// Hàm đánh dấu đã đọc với lựa chọn điều hướng
+const markAsRead = async (notificationId, notificationData) => {
+  try {
+    // Hiển thị dialog lựa chọn
+    const result = await Swal.fire({
+      title: 'Thông báo mới',
+      html: `
+        <div class="text-left">
+          <p class="font-semibold text-gray-800">${notificationData?.title || 'Khuyến mãi mới'}</p>
+          <p class="text-sm text-gray-600 mt-2">${notificationData?.message || 'Có khuyến mãi mới được cập nhật'}</p>
+        </div>
+      `,
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonText: 'Đi đến khuyến mãi',
+      cancelButtonText: 'Chỉ đánh dấu đã đọc',
+      confirmButtonColor: '#3B82F6',
+      cancelButtonColor: '#6B7280',
+      reverseButtons: true,
+      showClass: {
+        popup: 'animate-scaleIn'
+      }
+    });
+
+    // Đánh dấu đã đọc trong mọi trường hợp
+    await putNotificationReaded(notificationId);
+    
+    // Cập nhật local state
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === notificationId 
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+    
+    // Cập nhật số lượng chưa đọc
+    setUnreadCount(prev => Math.max(0, prev - 1));
+
+    // Nếu người dùng chọn đi đến trang khuyến mãi
+    if (result.isConfirmed) {
+      // Đóng dropdown notification trước
+      setIsNotificationDropdownOpen(false);
+      
+      // Điều hướng đến trang promotions
+      navigate('/evm/admin/products/promotions');
+    } else {
+      // Chỉ hiển thị thông báo thành công nếu cần
+      Swal.fire({
+        title: 'Đã đánh dấu đã đọc',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        timerProgressBar: true
+      });
+    }
+
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    
+    Swal.fire({
+      title: 'Lỗi',
+      text: 'Không thể đánh dấu thông báo là đã đọc',
+      icon: 'error',
+      confirmButtonText: 'Đóng'
+    });
+  }
+};
+  const markAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+      
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  };
+
+  // Fetch thông báo khi component mount
+  useEffect(() => {
+    fetchNotifications();
+    
+    // Có thể thêm polling mỗi 30 giây để cập nhật thông báo mới
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Đóng dropdown khi click ra ngoài (cho cả profile và notification)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Đóng notification dropdown
+      if (
+        isNotificationDropdownOpen &&
+        notificationDropdownRef.current &&
+        !notificationDropdownRef.current.contains(event.target)
+      ) {
+        setIsNotificationDropdownOpen(false);
+      }
+      
+      // Đóng profile dropdown (giữ nguyên code cũ)
+      if (
+        isProfileDropdownOpen &&
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationDropdownOpen, isProfileDropdownOpen]);
+
+
+  // Kiểm tra xem user có role 'ADMIN' hay không
+  const role = roles.includes("ADMIN")?'ADMIN':'EVM_STAFF';
 
   useEffect(() => {
     // Nếu chưa đăng nhập thì không load menu
@@ -257,6 +469,8 @@ const EvmLayout = () => {
     } else {
       setMenuItems(evmStaffMenuItems);
     }
+
+
   }, [roles]);
 
   // Xác định đường dẫn hiện tại và mở submenu tương ứng
@@ -544,16 +758,108 @@ const EvmLayout = () => {
               </span>
             </div>
           </div>
+
           <div className="flex items-center space-x-4">
-            <NotificationBell userRole={role} />
             <span className="text-sm text-gray-600">{role}</span>
           </div>
+
           <div className="flex items-center space-x-3">
             {/* Notifications */}
-            <button className="p-2.5 hover:bg-gray-100 rounded-xl relative transition-all duration-300 group">
-              <FiBell className="w-5 h-5 text-gray-600 group-hover:scale-110 transition-transform duration-300" />
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+          <div className="relative" ref={notificationDropdownRef}>
+            <button 
+              onClick={() => {
+                setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
+                setIsProfileDropdownOpen(false); // Đóng profile dropdown nếu đang mở
+              }}
+              className="p-2.5 hover:bg-gray-100 rounded-xl relative transition-all duration-300 group"
+            >
+              <FiBell className="w-7 h-7 text-gray-600 group-hover:scale-110 transition-transform duration-300" />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 w-5 h-5 bg-red-500 rounded-full border-2 border-white text-xs text-white flex items-center justify-center font-medium">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
+
+            {/* Notification Dropdown */}
+            {isNotificationDropdownOpen && 
+            (
+  <div 
+    ref={notificationDropdownRef}
+    className="absolute right-0 mt-3 w-96 bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/60 z-40 animate-in fade-in-0 zoom-in-95"
+  >
+    {/* Header */}
+    <div className="px-4 py-3 border-b border-gray-100/60 flex justify-between items-center">
+      <h3 className="text-lg font-semibold text-gray-800">Thông báo</h3>
+      {unreadCount > 0 && (
+        <button
+          onClick={markAllAsRead}
+          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+        >
+          Đánh dấu tất cả đã đọc
+        </button>
+      )}
+    </div>
+
+    {/* Notification List */}
+    <div className="max-h-96 overflow-y-auto custom-scrollbar">
+      {notifications.length === 0 ? (
+        <div className="px-4 py-8 text-center text-gray-500">
+          <FiBell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <p>Không có thông báo nào</p>
+        </div>
+      ) : (
+        <div className="py-2">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`px-4 py-3 border-b border-gray-100/60 last:border-b-0 transition-all duration-200 cursor-pointer group ${
+                !notification.read ? 'bg-red-50/50 hover:bg-blue-100/50' : 'hover:bg-gray-50/50'
+              }`}
+              onClick={() => markAsRead(notification.id)}
+            >
+              <div className="flex items-start space-x-3">
+                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                  !notification.read ? 'bg-red-500' : 'bg-transparent'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`font-medium text-sm mb-1 ${
+                    !notification.read ? 'text-gray-900' : 'text-gray-600'
+                  }`}>
+                    {notification.title}
+                  </p>
+                  <p className="text-gray-500 text-sm line-clamp-2">
+                    {notification.message}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {new Date(notification.createdAt).toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+    {/* Footer */}
+    <div className="px-4 py-3 border-t border-gray-100/60">
+    {role === 'ADMIN' && (
+      <button
+        onClick={() => {
+          setIsNotificationDropdownOpen(false)
+          navigate('/evm/admin/reports/notifications');
+        }}
+        className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+      >
+        Xem tất cả thông báo
+      </button>
+      )}
+    </div>
+  </div>
+)
+            }
+          </div>
 
             {/* Profile Dropdown */}
             <div className="relative profile-dropdown" ref={profileDropdownRef}>
@@ -652,15 +958,15 @@ const EvmLayout = () => {
           </div>
         </header>
 
-                {/* Content Area với khoảng cách và bo tròn */}
-                <main className="flex-1 overflow-y-auto p-6 bg-transparent">
-                    <div className="max-w-8xl mx-auto space-y-6">
-                        {/* Content Container với glassmorphism effect */}
-                        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
-                            <Outlet/>
-                        </div>
-                    </div>
-                </main>
+        {/* Content Area với khoảng cách và bo tròn */}
+        <main className="flex-1 overflow-y-auto p-6 bg-transparent">
+          <div className="max-w-8xl mx-auto space-y-6">
+            {/* Content Container với glassmorphism effect */}
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-sm border border-gray-200/60 p-8 transition-all duration-300 hover:shadow-md">
+              <Outlet />
+            </div>
+          </div>
+        </main>
 
         {/* Footer */}
         <footer className="bg-white/80 backdrop-blur-lg border-t border-gray-200/60 py-5 px-6 mt-auto mx-6 my-3 rounded-3xl">
@@ -712,29 +1018,9 @@ const EvmLayout = () => {
           </div>
         </footer>
       </div>
-
-      {/* Custom Scrollbar Styles */}
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.3);
-          border-radius: 10px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.5);
-        }
-      `}</style>
     </div>
   );
 };
 
 export default EvmLayout;
+

@@ -1,7 +1,7 @@
 package com.ev.vehicle_service.model;
 
-import com.ev.vehicle_service.model.Enum.EVMAction;
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
+import com.ev.common_lib.model.enums.VehicleStatus;
+import com.ev.common_lib.model.enums.EVMAction;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;

@@ -1,6 +1,7 @@
 package com.ev.vehicle_service.model;
 
 import org.hibernate.annotations.UpdateTimestamp;
+import com.ev.common_lib.model.enums.VehicleStatus;
 
 import jakarta.persistence.*;
 // import lombok.Data;
@@ -32,10 +33,6 @@ public class VehicleModel {
 
     private String brand;
 
-    // Lưu trữ dưới dạng chuỗi JSON
-    @Column(name = "specifications_json", columnDefinition = "json")
-    private String specificationsJson;
-
     @Column(name = "created_by")
     // private Long createdBy; // Giả sử là ID của User 
     private String createdBy; // Email của user (tạm thời)
@@ -51,8 +48,30 @@ public class VehicleModel {
     @Column(name = "updated_date")
     private LocalDateTime updatedDate; // Tự động cập nhật thời gian
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private VehicleStatus status;
+
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
+
+    // Đây là các thông số cơ bản của mẫu xe, làm giá trị mặc định
+    @Column(name = "base_range_km")
+    private Integer baseRangeKm;
+
+    @Column(name = "base_motor_power")
+    private Integer baseMotorPower;
+
+    @Column(name = "base_battery_capacity")
+    private Integer baseBatteryCapacity;
+    
+    @Column(name = "base_charging_time")
+    private Float baseChargingTime;
+
+    // --- THÔNG SỐ MỞ RỘNG (EXTENDED SPECS) ---
+    // Dùng cho các thông số phụ hoặc sẽ phát sinh trong tương lai
+    @Column(name = "extended_specs_json", columnDefinition = "json")
+    private String extendedSpecsJson;
 
     // --- Relationships ---
     // <<< Mối quan hệ mới: Một Model có nhiều Variants >>>

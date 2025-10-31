@@ -1,6 +1,6 @@
 package com.ev.vehicle_service.dto.request;
 
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
+import com.ev.common_lib.model.enums.VehicleStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,8 +20,17 @@ public class UpdateVariantRequest {
     @Min(value = 0, message = "Price must be non-negative")
     private BigDecimal price;
 
+    private String imageUrl;
+
     @NotNull(message = "Status is required")
     private VehicleStatus status;
+
+    private Integer batteryCapacity;
+    private Float chargingTime;
+    private Integer rangeKm;
+    private Integer motorPower;
+
+    private BigDecimal wholesalePrice;
 
     private String reason;
 }

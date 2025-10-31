@@ -1,100 +1,62 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import {
-  FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiUser,
-  FiMail, FiPhone, FiMapPin, FiCalendar, FiChevronLeft, FiChevronRight
-} from "react-icons/fi";
-import customerService from "../../../services/apiConstCustomerService";
-import { debugAuth } from "../../../utils/checkAuth";
+import { FiPlus, FiUser, FiSearch, FiMail, FiPhone, FiMapPin, FiCalendar, FiEye, FiEdit, FiTrash2, FiChevronLeft, FiChevronRight, FiUsers } from "react-icons/fi";
+import { useCustomers } from "../hooks/useCustomers";
+import AssignStaffModal from "../components/AssignStaffModal";
+import { useAuthContext } from "../../auth/AuthProvider";
 
 const CustomerList = () => {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 10;
-
   const navigate = useNavigate();
+  const { roles } = useAuthContext();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  
+  // Check if user is DEALER_MANAGER
+  const isDealerManager = roles?.includes('DEALER_MANAGER');
 
-  useEffect(() => {
-    // Debug: Check authentication status
-    debugAuth();
-    
-    // Kiểm tra token trước khi fetch
-    const token = sessionStorage.getItem("token");
-    if (!token) {
-      console.error("No token found - redirecting to login");
-      toast.error("Vui lòng đăng nhập để tiếp tục");
-      navigate("/login");
-      return;
-    }
-    
-    fetchCustomers();
-  }, [searchTerm, currentPage]);
 
-  const fetchCustomers = async () => {
-    try {
-      setLoading(true);
-      console.log("Fetching customers with search term:", searchTerm);
-      
-      const data = await customerService.getAllCustomers(searchTerm);
-      console.log("Customers fetched successfully:", data);
-      
-      setCustomers(data);
-      setTotalPages(Math.ceil(data.length / itemsPerPage));
-    } catch (error) {
-      console.error("Error fetching customers:", error);
-      
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        console.error("Error status:", error.response.status);
-        
-        if (error.response.status === 401) {
-          toast.error("Lỗi xác thực. Vui lòng kiểm tra token hoặc đăng nhập lại.", {
-            autoClose: 5000
-          });
-          // Không tự động redirect - để user tự quyết định
-          // sessionStorage.clear();
-          // navigate("/login");
-        } else {
-          toast.error(`Lỗi ${error.response.status}: ${error.response.data.message || "Không thể tải danh sách khách hàng"}`);
-        }
-      } else if (error.request) {
-        toast.error("❌ Không thể kết nối đến server. Vui lòng kiểm tra Gateway (port 8080) và Customer Service (port 8082)");
-        console.error("Request was made but no response:", error.request);
-      } else {
-        toast.error("Lỗi không xác định: " + error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    customers,
+    loading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    deleteCustomer: removeCustomer,
+    refresh,
+  } = useCustomers();
 
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa khách hàng này?")) {
-      try {
-        await customerService.deleteCustomer(id);
+      const result = await removeCustomer(id);
+      if (result.success) {
         toast.success("Xóa khách hàng thành công");
-        fetchCustomers();
-      } catch (error) {
-        toast.error("Không thể xóa khách hàng");
-        console.error("Error deleting customer:", error);
+      } else {
+        toast.error(result.error || "Không thể xóa khách hàng");
       }
     }
   };
 
-  const base = sessionStorage.getItem('roles')?.includes('DEALER_MANAGER') ? '/dealer/manager' : '/dealer/staff';
+  const base = sessionStorage.getItem('roles')?.includes('DEALER_MANAGER') 
+    ? '/dealer/manager' 
+    : '/dealer/staff';
 
-  const handleView = (id) => {
-    navigate(`${base}/customers/${id}`);
+  const handleView = (id) => navigate(`${base}/customers/${id}`);
+  const handleEdit = (id) => navigate(`${base}/customers/${id}/edit`);
+  const handleCreate = () => navigate(`${base}/customers/create`);
+  
+  const handleAssignStaff = (customer) => {
+    setSelectedCustomer(customer);
+    setAssignModalOpen(true);
+  };
+  
+  const handleAssignSuccess = () => {
+    refresh(); // Refresh customer list after assignment
   };
 
-  const handleEdit = (id) => {
-    navigate(`${base}/customers/${id}/edit`);
-  };
-
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
   const paginatedCustomers = customers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -256,6 +218,15 @@ const CustomerList = () => {
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
+                          {isDealerManager && (
+                            <button
+                              onClick={() => handleAssignStaff(customer)}
+                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                              title="Phân công nhân viên"
+                            >
+                              <FiUsers className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEdit(customer.customerId || customer.id)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
@@ -392,6 +363,14 @@ const CustomerList = () => {
         )}
         </div>
       </div>
+      
+      {/* Assign Staff Modal */}
+      <AssignStaffModal
+        isOpen={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        customer={selectedCustomer}
+        onAssignSuccess={handleAssignSuccess}
+      />
     </div>
   );
 };

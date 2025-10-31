@@ -1,6 +1,6 @@
 package com.ev.inventory_service.config;
 
-import com.ev.common_lib.exception.AppException;
+// import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,24 +30,16 @@ public class DevSecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
-                //.authorizeHttpRequests(auth -> auth
+                // .authorizeHttpRequests(auth -> auth
                 //      .anyRequest().permitAll()
-                //)
+                // )
                 .authorizeHttpRequests(auth -> auth
 
-                        // Đại lý, Nhân viên hãng, và Admin đều có thể xem tồn kho.
-                        .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyRole("DEALER_STAFF", "EVM_STAFF", "ADMIN")
-
-                        // Chỉ Nhân viên hãng và Admin mới được thực hiện các giao dịch kho (nhập, xuất, điều chuyển)
-                        .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyRole("EVM_STAFF", "ADMIN")
-
-                        // Chỉ Quản lý đại lí và (admin) mới có thể thực hiện chỉnh ngưỡng cảnh báo cho đại lí của họ
-                        .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**").hasAnyRole("DEALER_MANAGER", "ADMIN")
-
-                        // Chỉ Nhân viên hãng và (admin) mới có thể thực hiện chỉnh ngưỡng cảnh báo cho hãng của họ
-                        .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**").hasAnyRole("EVM_STAFF", "ADMIN")
-                        // Các request khác (nếu có) ít nhất phải được xác thực
-                        .anyRequest().authenticated()
+                    .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyRole("DEALER_STAFF", "EVM_STAFF", "ADMIN") 
+                    .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyRole("EVM_STAFF", "ADMIN") 
+                    .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**").hasAnyRole("DEALER_MANAGER", "ADMIN") 
+                    .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**").hasAnyRole("EVM_STAFF", "ADMIN") 
+                    .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(ErrorCode.FORBIDDEN.getHttpStatus().value());

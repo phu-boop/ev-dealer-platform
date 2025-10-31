@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import PromotionForm from '../components/PromotionForm';
 import { usePromotions } from '../hooks/usePromotions';
 import Alert from '../../../../components/ui/Alert';
+import { FaArrowLeft } from "react-icons/fa";
 
 const PromotionCreatePage = ({ onBack }) => {
   const { createPromotion } = usePromotions();
@@ -44,7 +45,7 @@ const PromotionCreatePage = ({ onBack }) => {
             onClick={onBack}
             className="mr-4 text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            ←
+             <FaArrowLeft />
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Tạo Khuyến mãi Mới</h1>

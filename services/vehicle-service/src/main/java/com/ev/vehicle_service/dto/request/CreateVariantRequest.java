@@ -1,6 +1,7 @@
 package com.ev.vehicle_service.dto.request;
 
-import com.ev.vehicle_service.model.Enum.*;
+import com.ev.common_lib.model.enums.VehicleStatus;
+// import com.ev.common_lib.model.enums.EVMAction;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -26,6 +27,7 @@ public class CreateVariantRequest {
     @Min(value = 0, message = "Price must be non-negative")
     private BigDecimal price;
 
+    @NotNull(message = "Status is required")
     private VehicleStatus status; // Cập nhật trạng thái của Vehicle
 
     private String imageUrl;

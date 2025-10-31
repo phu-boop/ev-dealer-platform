@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiSave, FiX, FiAlertCircle, FiChevronDown } from "react-icons/fi";
-import customerService from "../../../services/apiConstCustomerService";
+import customerService from "../services/customerService";
 import { useAuthContext } from "../../../features/auth/AuthProvider";
 
 const EditCustomer = () => {

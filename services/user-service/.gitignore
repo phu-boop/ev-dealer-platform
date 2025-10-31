@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Firebase Service Account (Sensitive) ###
+src/main/resources/firebase-service-account.json
