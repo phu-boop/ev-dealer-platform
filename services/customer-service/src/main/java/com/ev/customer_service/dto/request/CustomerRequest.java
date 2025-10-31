@@ -3,6 +3,8 @@ package com.ev.customer_service.dto.request;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.ev.customer_service.util.LenientLongDeserializer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -45,4 +47,7 @@ public class CustomerRequest {
     private String status;
 
     private Long preferredDealerId;
+
+    // UUID của nhân viên được phân công (từ User Service)
+    private String assignedStaffId;
 }

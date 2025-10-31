@@ -1,13 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FiPlus, FiUser, FiSearch, FiMail, FiPhone, FiMapPin, FiCalendar, FiEye, FiEdit, FiTrash2, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiPlus, FiUser, FiSearch, FiMail, FiPhone, FiMapPin, FiCalendar, FiEye, FiEdit, FiTrash2, FiChevronLeft, FiChevronRight, FiUsers } from "react-icons/fi";
 import { useCustomers } from "../hooks/useCustomers";
+import AssignStaffModal from "../components/AssignStaffModal";
+import { useAuthContext } from "../../auth/AuthProvider";
 
 const CustomerList = () => {
   const navigate = useNavigate();
+  const { roles } = useAuthContext();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  
+  // Check if user is DEALER_MANAGER
+  const isDealerManager = roles?.includes('DEALER_MANAGER');
+
 
   const {
     customers,
@@ -37,6 +46,15 @@ const CustomerList = () => {
   const handleView = (id) => navigate(`${base}/customers/${id}`);
   const handleEdit = (id) => navigate(`${base}/customers/${id}/edit`);
   const handleCreate = () => navigate(`${base}/customers/create`);
+  
+  const handleAssignStaff = (customer) => {
+    setSelectedCustomer(customer);
+    setAssignModalOpen(true);
+  };
+  
+  const handleAssignSuccess = () => {
+    refresh(); // Refresh customer list after assignment
+  };
 
   const totalPages = Math.ceil(customers.length / itemsPerPage);
   const paginatedCustomers = customers.slice(
@@ -200,6 +218,15 @@ const CustomerList = () => {
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
+                          {isDealerManager && (
+                            <button
+                              onClick={() => handleAssignStaff(customer)}
+                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                              title="Phân công nhân viên"
+                            >
+                              <FiUsers className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEdit(customer.customerId || customer.id)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
@@ -336,6 +363,14 @@ const CustomerList = () => {
         )}
         </div>
       </div>
+      
+      {/* Assign Staff Modal */}
+      <AssignStaffModal
+        isOpen={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        customer={selectedCustomer}
+        onAssignSuccess={handleAssignSuccess}
+      />
     </div>
   );
 };

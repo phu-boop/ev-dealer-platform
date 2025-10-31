@@ -97,6 +97,7 @@ public class UserRequest {
 
     private String fullName;
     private String address;
+    private String url;
 
     @Pattern(regexp = "^[0-9]{10,12}$", message = "PHONE_INVALID_FORMAT")
     private String phone;
