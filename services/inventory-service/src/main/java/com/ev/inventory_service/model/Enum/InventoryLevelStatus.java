@@ -1,4 +1,4 @@
-package com.ev.common_lib.model.enums;
+package com.ev.inventory_service.model.Enum;
 
 public enum InventoryLevelStatus {
     IN_STOCK,       // Còn hàng

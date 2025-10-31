@@ -1,4 +1,4 @@
-package com.ev.sales_service.dto.outbound;
+package com.ev.sales_service.dto.request;
 
 import com.ev.sales_service.enums.QuotationStatus;
 import jakarta.validation.constraints.NotNull;

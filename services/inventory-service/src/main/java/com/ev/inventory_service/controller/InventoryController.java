@@ -2,14 +2,10 @@ package com.ev.inventory_service.controller;
 
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
-import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
-import com.ev.common_lib.dto.inventory.DetailedInventoryRequest;
 import com.ev.common_lib.dto.respond.ApiRespond;
-
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
-import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.InventoryTransaction;
 import com.ev.inventory_service.services.Interface.InventoryService;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
@@ -22,7 +18,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.HttpHeaders;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -30,7 +25,7 @@ import java.util.UUID;
 import java.util.List;
 
 @RestController
-@RequestMapping({"/inventory", ""})
+@RequestMapping("/inventory")
 @RequiredArgsConstructor
 public class InventoryController {
 
@@ -63,51 +58,6 @@ public class InventoryController {
     public ResponseEntity<ApiRespond<InventoryStatusDto>> getInventoryStatusForVariant(@PathVariable Long variantId) {
         InventoryStatusDto status = inventoryService.getInventoryStatusForVariant(variantId);
         return ResponseEntity.ok(ApiRespond.success("Fetched inventory status for variant successfully", status));
-    }
-
-    /**
-     * API MỚI: Dành cho Đại lý (Dealer) xem tồn kho của chính họ.
-     * Tự động lọc dựa trên profileId (dealerId) của người dùng.
-     */
-    @GetMapping("/my-stock")
-    @PreAuthorize("hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')")
-    // @PreAuthorize("permitAll()") // Tạm thời cho phép tất cả để test
-    public ResponseEntity<ApiRespond<List<DealerInventoryDto>>> getMyInventory(
-            @RequestHeader("X-User-ProfileId") UUID dealerId,
-            @RequestHeader("X-User-Email") String email, // Cần để chuyển tiếp
-            @RequestHeader("X-User-Role") String role, // Cần để chuyển tiếp
-            @RequestHeader("X-User-Id") String userId, // Cần để chuyển tiếp
-            @RequestParam(required = false) String search) {
-        
-        // Tạo một đối tượng HttpHeaders để chuyển tiếp xác thực
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-User-Email", email);
-        headers.set("X-User-Role", role);
-        headers.set("X-User-Id", userId);
-        headers.set("X-User-ProfileId", dealerId.toString());
-
-        List<DealerInventoryDto> results = inventoryService.getDealerInventory(dealerId, search, headers);
-        return ResponseEntity.ok(ApiRespond.success("Fetched dealer inventory", results));
-    }
-
-    /**
-     * API MỚI: Lấy trạng thái tồn kho chi tiết cho việc so sánh (cả kho TT và kho đại lý).
-     * Được gọi bởi Vehicle-Service.
-     */
-    @PostMapping("/status-by-ids-detailed")
-    // Cho phép tất cả các dịch vụ nội bộ đã xác thực gọi
-    @PreAuthorize("isAuthenticated()") 
-    public ResponseEntity<ApiRespond<List<InventoryComparisonDto>>> getDetailedInventoryStatus(
-            @RequestBody DetailedInventoryRequest request){
-        
-        // Lấy thông số từ body
-        List<Long> variantIds = request.getVariantIds();
-        UUID dealerId = request.getDealerId();
-
-        // Gọi service để lấy dữ liệu
-        List<InventoryComparisonDto> results = inventoryService.getDetailedInventoryByIds(variantIds, dealerId);
-        
-        return ResponseEntity.ok(ApiRespond.success("Fetched detailed inventory status", results));
     }
 
     // ==========================================================
@@ -221,7 +171,7 @@ public class InventoryController {
      * (Lưu ý: API này được gọi bởi vai trò DEALER, không phải EVM_STAFF)
      */
     @PutMapping("/dealer-stock/reorder-level")
-    @PreAuthorize("hasAnyRole('DEALER_MANAGER')")
+    @PreAuthorize("hasRole('DEALER_MANAGER')") // Giả định vai trò của Đại lý
     public ResponseEntity<ApiRespond<Void>> updateDealerReorderLevel(
             @Valid @RequestBody UpdateReorderLevelRequest request,
             @RequestHeader("X-User-ProfileId") UUID dealerId) {

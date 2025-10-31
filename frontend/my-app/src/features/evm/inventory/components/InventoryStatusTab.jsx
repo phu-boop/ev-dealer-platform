@@ -43,6 +43,8 @@ const StatusBadge = ({ status }) => {
 };
 
 const InventoryStatusTab = () => {
+  // --- THAY ĐỔI 2: Đổi tên state cho rõ nghĩa ---
+  // Tên cũ: inventoryWithDetails
   const [mergedData, setMergedData] = useState({
     content: [],
     totalPages: 0,
@@ -63,11 +65,13 @@ const InventoryStatusTab = () => {
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
 
+  // --- THAY ĐỔI 3: VIẾT LẠI HOÀN TOÀN HÀM FETCH DỮ LIỆU ---
   const fetchInventory = useCallback(async () => {
     setIsLoading(true);
     setMergedData({ content: [], totalPages: 0 }); // Xóa dữ liệu cũ
 
     try {
+      // BƯỚC 1: Lấy "Danh Sách Chủ" (Master List) từ Vehicle Service
       const params = {
         search: filters.search,
         // status: filters.status, // Cần backend vehicle-service hỗ trợ filter status
@@ -89,6 +93,7 @@ const InventoryStatusTab = () => {
         (variant) => variant.variantId
       );
 
+      // BƯỚC 3: Lấy "Dữ Liệu Phụ" (Inventory) từ Inventory Service
       const inventoryResponse = await getInventoryStatusByIds(variantIds);
       const inventoryList = inventoryResponse.data.data || [];
 
@@ -97,34 +102,15 @@ const InventoryStatusTab = () => {
         inventoryList.map((inv) => [inv.variantId, inv])
       );
 
+      // BƯỚC 4: Gộp (Merge) hai danh sách
       const finalMergedContent = vehicleData.content.map((variant) => {
         const inventoryInfo = inventoryMap.get(variant.variantId);
 
         if (inventoryInfo) {
+          // TÌM THẤY: Gộp thông tin xe (master) và thông tin kho (supplementary)
           return {
-            variantId: variant.variantId,
-            versionName: variant.versionName,
-            modelName: variant.modelName,
-            color: variant.color,
-            skuCode: variant.skuCode,
-            price: variant.price,
-            status: inventoryInfo.status,
-
-            imageUrl: variant.imageUrl,
-            wholesalePrice: variant.wholesalePrice,
-            batteryCapacity: variant.batteryCapacity,
-            chargingTime: variant.chargingTime,
-            rangeKm: variant.rangeKm,
-            motorPower: variant.motorPower,
-            features: variant.features,
-            brand: variant.brand,
-
-            // Chỉ lấy các thông tin về số lượng/tồn kho từ 'inventoryInfo'
-            totalQuantity: inventoryInfo.totalQuantity,
-            allocatedQuantity: inventoryInfo.allocatedQuantity,
-            availableQuantity: inventoryInfo.availableQuantity,
-            reorderLevel: inventoryInfo.reorderLevel,
-            inventoryStatus: inventoryInfo.status, // Đổi tên để tránh trùng với variant.status
+            ...variant, // (id, versionName, skuCode, color, brand, modelName...)
+            ...inventoryInfo, // (availableQuantity, allocatedQuantity, status, reorderLevel...)
           };
         } else {
           // KHÔNG TÌM THẤY (Xe mới, chưa nhập kho):
@@ -154,6 +140,7 @@ const InventoryStatusTab = () => {
     }
   }, [filters, page]); // Phụ thuộc vào filters và page
 
+  // useEffect gọi fetch (giữ nguyên)
   useEffect(() => {
     fetchInventory();
   }, [fetchInventory]);
@@ -306,98 +293,30 @@ const InventoryStatusTab = () => {
                     </tr>
                     {expandedRows.has(item.variantId) && (
                       <tr className="bg-gray-100">
-                        <td colSpan="7" className="p-4 text-sm">
-                          {" "}
-                          {/* Tăng colspan lên 7 */}
-                          <h4 className="font-semibold mb-2 text-gray-700">
-                            Thông số kỹ thuật chi tiết:
+                        <td colSpan="7" className="p-4">
+                          <h4 className="font-semibold mb-2">
+                            Chi tiết tồn kho đại lý:
                           </h4>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                            {/* Hiển thị các thông số */}
-                            {item.rangeKm != null && ( // Kiểm tra null trước khi hiển thị
-                              <div>
-                                <span className="text-gray-500">
-                                  Quãng đường:
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {item.rangeKm} km
-                                </span>
-                              </div>
-                            )}
-                            {item.motorPower != null && (
-                              <div>
-                                <span className="text-gray-500">
-                                  Công suất:
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {item.motorPower} W
-                                </span>{" "}
-                                {/* Hoặc đơn vị phù hợp */}
-                              </div>
-                            )}
-                            {item.batteryCapacity != null && (
-                              <div>
-                                <span className="text-gray-500">
-                                  Dung lượng pin:
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {item.batteryCapacity} kWh
-                                </span>{" "}
-                                {/* Hoặc đơn vị phù hợp */}
-                              </div>
-                            )}
-                            {item.chargingTime != null && (
-                              <div>
-                                <span className="text-gray-500">
-                                  Thời gian sạc:
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {item.chargingTime} giờ
-                                </span>{" "}
-                                {/* Hoặc đơn vị phù hợp */}
-                              </div>
-                            )}
-                            {item.price != null && (
-                              <div>
-                                <span className="text-gray-500">
-                                  Giá bán lẻ:
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {item.price.toLocaleString("vi-VN")} VNĐ
-                                </span>
-                              </div>
-                            )}
-                            {item.wholesalePrice != null && (
-                              <div>
-                                <span className="text-gray-500">
-                                  Giá bán sỉ:
-                                </span>
-                                <span className="font-medium ml-1">
-                                  {item.wholesalePrice.toLocaleString("vi-VN")}{" "}
-                                  VNĐ
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          {/* Hiển thị danh sách tính năng (features) nếu có */}
-                          {item.features && item.features.length > 0 && (
-                            <div className="mt-2">
-                              <h5 className="font-semibold text-gray-600 mb-1">
-                                Tính năng:
-                              </h5>
-                              <ul className="list-disc list-inside text-gray-600">
-                                {item.features.map((feature) => (
-                                  <li key={feature.featureId}>
-                                    {feature.featureName}
-                                    {feature.additionalCost > 0 &&
-                                      ` (+${feature.additionalCost.toLocaleString(
-                                        "vi-VN"
-                                      )} VNĐ)`}
-                                    {!feature.standard && " (Tùy chọn)"}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
+                          {item.dealerStock && item.dealerStock.length > 0 ? (
+                            <ul className="list-disc list-inside text-sm">
+                              {item.dealerStock.map((dealer) => (
+                                <li key={dealer.dealerId}>
+                                  Đại lý #{dealer.dealerId}:{" "}
+                                  <span className="font-semibold">
+                                    {dealer.availableQuantity}
+                                  </span>{" "}
+                                  khả dụng /{" "}
+                                  <span className="text-gray-600">
+                                    {dealer.allocatedQuantity}
+                                  </span>{" "}
+                                  đã phân bổ
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              Chưa có dữ liệu tồn kho ở đại lý.
+                            </p>
                           )}
                         </td>
                       </tr>
