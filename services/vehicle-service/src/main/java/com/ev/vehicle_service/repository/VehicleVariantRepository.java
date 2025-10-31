@@ -14,4 +14,10 @@ public interface VehicleVariantRepository extends JpaRepository<VehicleVariant, 
     // Tìm kiếm variantId theo keyword
     @Query("SELECT v.variantId FROM VehicleVariant v WHERE v.vehicleModel.modelName LIKE %:keyword% OR v.versionName LIKE %:keyword% OR v.color LIKE %:keyword%")
     List<Long> findVariantIdsByKeyword(@Param("keyword") String keyword);
+
+    @Query("SELECT v FROM VehicleVariant v " +
+           "LEFT JOIN FETCH v.vehicleModel " +
+           "LEFT JOIN FETCH v.features " + 
+           "WHERE v.variantId IN :variantIds")
+    List<VehicleVariant> findAllWithDetailsByIds(List<Long> variantIds);
 }

@@ -1,4 +1,4 @@
- import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
 // layouts
@@ -37,6 +37,8 @@ import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 // Dealer
 import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
 import B2BOrderForm from "../features/dealer/promotions/pages/B2BOrderForm.jsx";
+import DealerInventoryStockPage from "../features/dealer/promotions/pages/DealerInventoryStockPage.jsx";
+import DealerProductCatalogPage from "../features/dealer/promotions/pages/DealerProductCatalogPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -181,12 +183,24 @@ export default function AppRoutes() {
                 element={<EditCustomer />}
               />
 
+              <Route
+                path="manager/vehicles/all"
+                element={<DealerProductCatalogPage />}
+              />
+
               {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
 
               {/* System */}
               <Route path="manager/system/users" element={<UserManagement />} />
 
+              {/* Xem tồn kho đại lí */}
+              <Route
+                path="manager/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+
+              {/* Đặt xe từ hãng và xem trạng thái đơn hàng */}
               <Route
                 path="manager/inventory/order"
                 element={<B2BOrderForm />}
@@ -194,7 +208,7 @@ export default function AppRoutes() {
               <Route path="manager/inventory/info" element={<B2BOrderPage />} />
             </Route>
 
-            {/* Dealer Staff Routes */}
+            {/* --- DEALER STAFF ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
               {/* Customer Management */}
               <Route
@@ -206,6 +220,18 @@ export default function AppRoutes() {
               <Route
                 path="staff/customers/:id/edit"
                 element={<EditCustomer />}
+              />
+
+              {/* Danh mục xe & báo cáo */}
+              {/* Xe có sẵn trong kho đại lí */}
+              <Route
+                path="staff/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+              {/* Tất cả phiên bảng (hãng) */}
+              <Route
+                path="staff/vehicles/all"
+                element={<DealerProductCatalogPage />}
               />
 
               {/* Promotions */}
