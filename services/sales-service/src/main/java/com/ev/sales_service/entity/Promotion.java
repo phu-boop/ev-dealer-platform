@@ -3,9 +3,9 @@ package com.ev.sales_service.entity;
 import com.ev.sales_service.enums.PromotionStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.Set;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -46,11 +46,6 @@ public class Promotion {
     @Column(name = "status", length = 50)
     private PromotionStatus status;
 
-    @ManyToMany
-    @JoinTable(
-        name = "quotation_promotions",
-        joinColumns = @JoinColumn(name = "promotion_id"),
-        inverseJoinColumns = @JoinColumn(name = "quotation_id")
-    )
+    @ManyToMany(mappedBy = "promotions")
     private Set<Quotation> quotations;
 }

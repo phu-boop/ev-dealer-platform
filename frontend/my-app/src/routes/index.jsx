@@ -1,10 +1,10 @@
-import { Routes, Route } from "react-router-dom";
+ import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
 // layouts
-import EvmLayout from "../layouts/EvmLayout.jsx";
+import EvmLayout from "../layouts/evmLayout/EvmLayout.jsx";
 import UserLayout from "../layouts/UserLayout";
-import DealerLayout from "../layouts/DealerLayout.jsx";
+import DealerLayout from "../layouts/dealerLayout/DealerLayout.jsx";
 
 // pages
 import Home from "../pages/Home";

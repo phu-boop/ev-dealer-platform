@@ -54,7 +54,8 @@ export default function Login() {
         userData.name,
         userData.fullName,
         userData.memberId,
-        userData
+        userData,
+        userData.url
       );
 
       Swal.fire({
