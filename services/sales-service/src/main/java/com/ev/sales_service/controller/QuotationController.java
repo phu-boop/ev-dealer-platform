@@ -3,7 +3,7 @@ package com.ev.sales_service.controller;
 import com.ev.sales_service.dto.outbound.QuotationRequestDTO;
 import com.ev.sales_service.dto.outbound.QuotationResponseDTO;
 import com.ev.sales_service.enums.QuotationStatus;
-import com.ev.sales_service.dto.outbound.UpdateQuotationStatusDTO;
+import com.ev.sales_service.dto.request.UpdateQuotationStatusDTO;
 import com.ev.sales_service.service.QuotationService;
 import jakarta.validation.Valid; // <-- Import để kích hoạt validation
 import lombok.RequiredArgsConstructor;

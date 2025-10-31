@@ -1,7 +1,6 @@
 import apiConstSaleService from "../../../../services/apiConstSaleService";
 import apiConstVehicleService from "../../../../services/apiConstVehicleService";
 import apiConstDealerService from "../../../../services/apiConstDealerService";
-import apiConstInventoryService from "../../../../services/apiConstInventoryService";
 
 // ----- API gọi đến vehicle-service -----
 
@@ -58,24 +57,4 @@ export const getAllDealersList = () => {
  */
 export const cancelOrderByDealer = (orderId) => {
   return apiConstSaleService.put(`/sales-orders/${orderId}/cancel-by-dealer`);
-};
-
-/**
- * Lấy tồn kho của chính đại lý đang đăng nhập.
- * @param {object} params - { search: '...' }
- */
-export const getMyStock = (params) => {
-  // API này gọi GET /inventory/my-stock
-  return apiConstInventoryService.get("/my-stock", {
-    params,
-  });
-};
-
-/**
- * Đại lý cập nhật ngưỡng đặt lại cho một variant
- * @param {object} payload - { variantId: number, reorderLevel: number }
- */
-export const updateDealerReorderLevel = (payload) => {
-  // --- SỬA Ở ĐÂY: Bỏ "/inventory" ở đầu ---
-  return apiConstInventoryService.put("/dealer-stock/reorder-level", payload);
 };
