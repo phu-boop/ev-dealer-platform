@@ -222,10 +222,18 @@ export default function AppRoutes() {
                 element={<EditCustomer />}
               />
 
+              {/* Danh mục xe & báo cáo */}
+              {/* Xe có sẵn trong kho đại lí */}
+              <Route
+                path="staff/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+              {/* Tất cả phiên bảng (hãng) */}
               <Route
                 path="staff/vehicles/all"
                 element={<DealerProductCatalogPage />}
               />
+
               {/* Promotions */}
               <Route
                 path="staff/promotions"

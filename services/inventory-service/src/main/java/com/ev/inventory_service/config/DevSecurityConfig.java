@@ -36,9 +36,9 @@ public class DevSecurityConfig {
                 // )
                 .authorizeHttpRequests(auth -> auth
 
-                // Gateway đã strip prefix /inventory → downstream path còn "/my-stock"
+                
                 .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyRole("EVM_STAFF", "ADMIN","DEALER_MANAGER","DEALER_STAFF")
-                .requestMatchers(HttpMethod.GET, "/my-stock").hasAnyRole("DEALER_MANAGER")
+                .requestMatchers(HttpMethod.GET, "/my-stock").hasAnyRole("DEALER_MANAGER", "DEALER_STAFF")
                 .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyRole("EVM_STAFF", "ADMIN") 
                 .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**").hasAnyRole("DEALER_MANAGER", "ADMIN") 
                 .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**").hasAnyRole("EVM_STAFF", "ADMIN") 
