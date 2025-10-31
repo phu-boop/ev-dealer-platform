@@ -7,9 +7,11 @@ import com.ev.common_lib.model.enums.*;
 
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
+import com.ev.common_lib.dto.vehicle.VariantDetailDto;
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
+import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.PhysicalVehicle;
 import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
 import com.ev.inventory_service.model.Enum.InventoryLevelStatus;
@@ -44,6 +46,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 
 import java.io.OutputStream;
 import java.io.IOException;
@@ -611,5 +615,76 @@ public class InventoryServiceImpl implements InventoryService {
         font.setBold(true);
         style.setFont(font);
         return style;
+    }
+
+    /**
+     * Lấy tồn kho của Đại lý và gộp với thông tin chi tiết từ Vehicle-Service.
+     */
+    @Override
+    public List<DealerInventoryDto> getDealerInventory(UUID dealerId, String search, HttpHeaders headers) {
+        
+        // 1. Lấy tất cả tồn kho (SKU) của Đại lý này
+        List<DealerAllocation> dealerStock = dealerRepo.findByDealerId(dealerId);
+        
+        // 2. Lấy tất cả ID sản phẩm mà đại lý này có
+        List<Long> variantIds = dealerStock.stream()
+                                    .map(DealerAllocation::getVariantId)
+                                    .collect(Collectors.toList());
+
+        // Nếu đại lý không có xe nào, trả về danh sách rỗng
+        if (variantIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 3. GỌI API (ĐỒNG BỘ) sang Vehicle-Service để lấy chi tiết của các xe này
+        // (Đây là cách gọi liên service an toàn, chuyển tiếp header)
+        String url = vehicleCatalogUrl + "/vehicle-catalog/variants/details-by-ids";
+        HttpEntity<List<Long>> requestEntity = new HttpEntity<>(variantIds, headers); // Gửi List<Long> trong body
+
+        ResponseEntity<ApiRespond<List<VariantDetailDto>>> response;
+        try {
+            response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>>() {}
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to call vehicle-service /details-by-ids: " + e.getMessage());
+            e.printStackTrace(); 
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+
+        if (response.getBody() == null || response.getBody().getData() == null) {
+             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+
+        // 4. Tạo Map tra cứu
+        // Map<VariantID, ThôngTinChiTiếtXe>
+        Map<Long, VariantDetailDto> variantDetailsMap = response.getBody().getData().stream()
+                .collect(Collectors.toMap(VariantDetailDto::getVariantId, v -> v));
+
+        // Map<VariantID, ThôngTinKho>
+        Map<Long, DealerAllocation> inventoryMap = dealerStock.stream()
+                .collect(Collectors.toMap(DealerAllocation::getVariantId, s -> s));
+
+        // 5. Gộp dữ liệu và Lọc (nếu có)
+        List<DealerInventoryDto> mergedList = variantIds.stream()
+            .map(id -> {
+                VariantDetailDto details = variantDetailsMap.get(id);
+                DealerAllocation stock = inventoryMap.get(id);
+                return DealerInventoryDto.merge(details, stock);
+            })
+            .filter(dto -> { // Lọc client-side (vì số lượng ít)
+                if (search == null || search.isBlank()) return true;
+                String query = search.toLowerCase();
+                return (dto.getModelName() != null && dto.getModelName().toLowerCase().contains(query)) ||
+                       (dto.getVersionName() != null && dto.getVersionName().toLowerCase().contains(query)) ||
+                       (dto.getColor() != null && dto.getColor().toLowerCase().contains(query)) ||
+                       (dto.getSkuCode() != null && dto.getSkuCode().toLowerCase().contains(query));
+            })
+            .collect(Collectors.toList());
+
+        return mergedList;
     }
 }

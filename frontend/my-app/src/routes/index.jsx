@@ -37,6 +37,7 @@ import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 // Dealer
 import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
 import B2BOrderForm from "../features/dealer/promotions/pages/B2BOrderForm.jsx";
+import DealerInventoryStockPage from "../features/dealer/promotions/pages/DealerInventoryStockPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -187,6 +188,13 @@ export default function AppRoutes() {
               {/* System */}
               <Route path="manager/system/users" element={<UserManagement />} />
 
+              {/* Xem tồn kho đại lí */}
+              <Route
+                path="manager/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+
+              {/* Đặt xe từ hãng và xem trạng thái đơn hàng */}
               <Route
                 path="manager/inventory/order"
                 element={<B2BOrderForm />}

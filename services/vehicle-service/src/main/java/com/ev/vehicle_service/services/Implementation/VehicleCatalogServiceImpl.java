@@ -482,6 +482,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setStatus(variant.getStatus());
         dto.setWholesalePrice(variant.getWholesalePrice()); // Giá sỉ là của riêng variant, không kế thừa
         
+        dto.setModelName(model.getModelName());
+        dto.setBrand(model.getBrand());
         // 3. ÁP DỤNG LOGIC KẾ THỪA VÀ GÁN MỘT LẦN DUY NHẤT
         // Xử lý Range: Ưu tiên variant, nếu không có thì lấy của model
         dto.setRangeKm(

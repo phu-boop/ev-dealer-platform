@@ -6,6 +6,7 @@ import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
+import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.InventoryTransaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpHeaders;
 // import java.time.LocalTime;
 // import java.time.LocalDateTime;
 
@@ -64,5 +66,10 @@ public interface InventoryService {
      * Lấy trạng thái tồn kho cho một danh sách các variantId.
      */
     List<InventoryStatusDto> getInventoryStatusByIds(List<Long> variantIds);
+
+    /**
+     * Lấy tồn kho đã gộp thông tin chi tiết của một đại lý cụ thể.
+     */
+    List<DealerInventoryDto> getDealerInventory(UUID dealerId, String search, HttpHeaders headers);
 
 }
