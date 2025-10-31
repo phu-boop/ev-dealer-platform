@@ -2,6 +2,8 @@ package com.ev.vehicle_service.controller;
 
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.dto.vehicle.ComparisonDto;
+
 import com.ev.vehicle_service.dto.request.CreateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
@@ -24,8 +26,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpHeaders;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/vehicle-catalog") 
@@ -179,6 +184,33 @@ public class VehicleCatalogController {
         
         Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, pageable);
         return ResponseEntity.ok(ApiRespond.success("Fetched paginated variants successfully", results));
+    }
+
+    /**
+     * Lấy dữ liệu gộp để so sánh các phiên bản.
+     * Nhận vào danh sách các ID của phiên bản cần so sánh.
+     */
+    @PostMapping("/compare")
+    // THÊM CHÚ THÍCH @PreAuthorize NÀY:
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF','DEALER_MANAGER', 'DEALER_STAFF') or " +
+                  "( (hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')) and " +
+                  "  #dealerId.toString() == authentication.details['profileId'] )")
+    public ResponseEntity<ApiRespond<List<ComparisonDto>>> getComparisonDetails(
+            @RequestBody List<Long> variantIds,
+            @RequestHeader("X-User-ProfileId") UUID dealerId,
+            @RequestHeader(value = "X-User-Email", required = false) String email,
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) String userId
+    ) {
+        // Tạo HttpHeaders để chuyển tiếp các header xác thực đến inventory-service
+        HttpHeaders headers = new HttpHeaders();
+        if (email != null) headers.set("X-User-Email", email);
+        if (role != null) headers.set("X-User-Role", role);
+        if (userId != null) headers.set("X-User-Id", userId);
+        if (dealerId != null) headers.set("X-User-ProfileId", dealerId.toString());
+        
+        List<ComparisonDto> results = vehicleCatalogService.getComparisonData(variantIds, dealerId, headers);
+        return ResponseEntity.ok(ApiRespond.success("Fetched comparison data successfully", results));
     }
 
     // ==========================================================

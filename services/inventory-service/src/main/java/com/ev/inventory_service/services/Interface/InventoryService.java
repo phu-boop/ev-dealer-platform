@@ -2,6 +2,8 @@ package com.ev.inventory_service.services.Interface;
 
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
+import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
+
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
@@ -72,4 +74,8 @@ public interface InventoryService {
      */
     List<DealerInventoryDto> getDealerInventory(UUID dealerId, String search, HttpHeaders headers);
 
+    /**
+     * Lấy thông tin tồn kho chi tiết (cả kho TT và kho đại lý) cho việc so sánh.
+     */
+    List<InventoryComparisonDto> getDetailedInventoryByIds(List<Long> variantIds, UUID dealerId);
 }

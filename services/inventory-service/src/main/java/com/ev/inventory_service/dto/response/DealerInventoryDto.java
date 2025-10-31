@@ -1,9 +1,9 @@
 package com.ev.inventory_service.dto.response;
 
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
-
+import com.ev.common_lib.model.enums.InventoryLevelStatus;
 import com.ev.inventory_service.model.DealerAllocation;
-import com.ev.inventory_service.model.Enum.InventoryLevelStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

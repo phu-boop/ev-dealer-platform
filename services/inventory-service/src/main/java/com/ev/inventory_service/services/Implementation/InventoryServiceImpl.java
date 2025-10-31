@@ -7,6 +7,7 @@ import com.ev.common_lib.model.enums.*;
 
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
+import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
@@ -14,7 +15,6 @@ import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
 import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.PhysicalVehicle;
 import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
-import com.ev.inventory_service.model.Enum.InventoryLevelStatus;
 // import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
 import com.ev.inventory_service.model.CentralInventory;
@@ -525,6 +525,50 @@ public class InventoryServiceImpl implements InventoryService {
             .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventoryComparisonDto> getDetailedInventoryByIds(List<Long> variantIds, UUID dealerId) {
+        if (variantIds == null || variantIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, CentralInventory> centralMap = centralRepo.findByVariantIdIn(variantIds).stream()
+                .collect(Collectors.toMap(CentralInventory::getVariantId, inv -> inv));
+
+        // (Bạn cần thêm phương thức findByVariantIdInAndDealerId vào DealerAllocationRepository)
+        Map<Long, DealerAllocation> dealerMap = dealerRepo.findByVariantIdInAndDealerId(variantIds, dealerId).stream()
+                .collect(Collectors.toMap(DealerAllocation::getVariantId, alloc -> alloc));
+
+        return variantIds.stream()
+            .map(id -> {
+                CentralInventory central = centralMap.get(id);
+                DealerAllocation dealer = dealerMap.get(id);
+
+                InventoryComparisonDto dto = new InventoryComparisonDto();
+                dto.setVariantId(id);
+
+                // Lấy tồn kho trung tâm
+                int centralStock = (central != null) ? central.getAvailableQuantity() : 0;
+                dto.setCentralStockAvailable(centralStock);
+
+                // Lấy tồn kho đại lý
+                int dealerStock = (dealer != null) ? dealer.getAvailableQuantity() : 0;
+                dto.setDealerStockAvailable(dealerStock);
+
+                // Xác định trạng thái chung (ưu tiên tồn kho đại lý, sau đó đến kho hãng)
+                if (dealerStock > 0) {
+                    dto.setStatus(InventoryLevelStatus.IN_STOCK);
+                } else if (centralStock > 0) {
+                    dto.setStatus(InventoryLevelStatus.IN_STOCK);
+                } else {
+                    dto.setStatus(InventoryLevelStatus.OUT_OF_STOCK);
+                }
+
+                return dto;
+            })
+            .collect(Collectors.toList());
+    }
+
     //--Helper methods--
     private void handleRestock(TransactionRequestDto request) {
         
@@ -623,10 +667,10 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public List<DealerInventoryDto> getDealerInventory(UUID dealerId, String search, HttpHeaders headers) {
         
-        // 1. Lấy tất cả tồn kho (SKU) của Đại lý này
+        // Lấy tất cả tồn kho (SKU) của Đại lý này
         List<DealerAllocation> dealerStock = dealerRepo.findByDealerId(dealerId);
         
-        // 2. Lấy tất cả ID sản phẩm mà đại lý này có
+        // Lấy tất cả ID sản phẩm mà đại lý này có
         List<Long> variantIds = dealerStock.stream()
                                     .map(DealerAllocation::getVariantId)
                                     .collect(Collectors.toList());
@@ -636,10 +680,8 @@ public class InventoryServiceImpl implements InventoryService {
             return new ArrayList<>();
         }
 
-        // 3. GỌI API (ĐỒNG BỘ) sang Vehicle-Service để lấy chi tiết của các xe này
-        // (Đây là cách gọi liên service an toàn, chuyển tiếp header)
         String url = vehicleCatalogUrl + "/vehicle-catalog/variants/details-by-ids";
-        HttpEntity<List<Long>> requestEntity = new HttpEntity<>(variantIds, headers); // Gửi List<Long> trong body
+        HttpEntity<List<Long>> requestEntity = new HttpEntity<>(variantIds, headers); 
 
         ResponseEntity<ApiRespond<List<VariantDetailDto>>> response;
         try {
@@ -659,7 +701,6 @@ public class InventoryServiceImpl implements InventoryService {
              throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
 
-        // 4. Tạo Map tra cứu
         // Map<VariantID, ThôngTinChiTiếtXe>
         Map<Long, VariantDetailDto> variantDetailsMap = response.getBody().getData().stream()
                 .collect(Collectors.toMap(VariantDetailDto::getVariantId, v -> v));
@@ -668,7 +709,7 @@ public class InventoryServiceImpl implements InventoryService {
         Map<Long, DealerAllocation> inventoryMap = dealerStock.stream()
                 .collect(Collectors.toMap(DealerAllocation::getVariantId, s -> s));
 
-        // 5. Gộp dữ liệu và Lọc (nếu có)
+        // Gộp dữ liệu và Lọc (nếu có)
         List<DealerInventoryDto> mergedList = variantIds.stream()
             .map(id -> {
                 VariantDetailDto details = variantDetailsMap.get(id);

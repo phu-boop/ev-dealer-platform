@@ -2,7 +2,10 @@ package com.ev.inventory_service.controller;
 
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
+import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
+import com.ev.common_lib.dto.inventory.DetailedInventoryRequest;
 import com.ev.common_lib.dto.respond.ApiRespond;
+
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
@@ -85,6 +88,26 @@ public class InventoryController {
 
         List<DealerInventoryDto> results = inventoryService.getDealerInventory(dealerId, search, headers);
         return ResponseEntity.ok(ApiRespond.success("Fetched dealer inventory", results));
+    }
+
+    /**
+     * API MỚI: Lấy trạng thái tồn kho chi tiết cho việc so sánh (cả kho TT và kho đại lý).
+     * Được gọi bởi Vehicle-Service.
+     */
+    @PostMapping("/status-by-ids-detailed")
+    // Cho phép tất cả các dịch vụ nội bộ đã xác thực gọi
+    @PreAuthorize("isAuthenticated()") 
+    public ResponseEntity<ApiRespond<List<InventoryComparisonDto>>> getDetailedInventoryStatus(
+            @RequestBody DetailedInventoryRequest request){
+        
+        // Lấy thông số từ body
+        List<Long> variantIds = request.getVariantIds();
+        UUID dealerId = request.getDealerId();
+
+        // Gọi service để lấy dữ liệu
+        List<InventoryComparisonDto> results = inventoryService.getDetailedInventoryByIds(variantIds, dealerId);
+        
+        return ResponseEntity.ok(ApiRespond.success("Fetched detailed inventory status", results));
     }
 
     // ==========================================================

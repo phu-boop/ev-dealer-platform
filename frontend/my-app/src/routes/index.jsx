@@ -1,4 +1,4 @@
- import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
 // layouts
@@ -38,6 +38,7 @@ import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
 import B2BOrderForm from "../features/dealer/promotions/pages/B2BOrderForm.jsx";
 import DealerInventoryStockPage from "../features/dealer/promotions/pages/DealerInventoryStockPage.jsx";
+import DealerProductCatalogPage from "../features/dealer/promotions/pages/DealerProductCatalogPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -182,6 +183,11 @@ export default function AppRoutes() {
                 element={<EditCustomer />}
               />
 
+              <Route
+                path="manager/vehicles/all"
+                element={<DealerProductCatalogPage />}
+              />
+
               {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
 
@@ -202,7 +208,7 @@ export default function AppRoutes() {
               <Route path="manager/inventory/info" element={<B2BOrderPage />} />
             </Route>
 
-            {/* Dealer Staff Routes */}
+            {/* --- DEALER STAFF ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
               {/* Customer Management */}
               <Route
@@ -216,6 +222,10 @@ export default function AppRoutes() {
                 element={<EditCustomer />}
               />
 
+              <Route
+                path="staff/vehicles/all"
+                element={<DealerProductCatalogPage />}
+              />
               {/* Promotions */}
               <Route
                 path="staff/promotions"
