@@ -29,6 +29,6 @@ export const registerFCMToken = (userId, fcmToken) =>
     apiConst.post(`users/${userId}/fcm-token`, { fcmToken })
         .then((res) => res.data);
 
-
-
-
+export const getIddealerByIdMember = (idDealer) =>
+    apiConst.post(`users/profile/idDealer`, { idDealer })
+        .then((res) => res.data);
