@@ -1,4 +1,4 @@
-package com.ev.sales_service.dto.outbound;
+package com.ev.sales_service.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

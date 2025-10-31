@@ -1,6 +1,7 @@
-package com.ev.sales_service.dto.outbound;
+package com.ev.sales_service.dto.response;
 
 //import com.ev.sales_service.dto.outbound.PromotionDTO; // Sửa DTO này nếu cần
+import com.ev.sales_service.dto.outbound.PromotionDTO;
 import com.ev.sales_service.enums.QuotationStatus;
 import lombok.Builder;
 import lombok.Data;

@@ -1,9 +1,9 @@
 package com.ev.sales_service.controller;
 
-import com.ev.sales_service.dto.outbound.QuotationRequestDTO;
-import com.ev.sales_service.dto.outbound.QuotationResponseDTO;
+import com.ev.sales_service.dto.request.QuotationRequestDTO;
+import com.ev.sales_service.dto.response.QuotationResponseDTO;
 import com.ev.sales_service.enums.QuotationStatus;
-import com.ev.sales_service.dto.request.UpdateQuotationStatusDTO;
+import com.ev.sales_service.dto.outbound.UpdateQuotationStatusDTO;
 import com.ev.sales_service.service.QuotationService;
 import jakarta.validation.Valid; // <-- Import để kích hoạt validation
 import lombok.RequiredArgsConstructor;
@@ -38,6 +38,35 @@ public class QuotationController {
         // SỬA: Truyền ID vào service
         QuotationResponseDTO response = quotationService.createQuotation(request, staffId, dealerId);
 
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * API MỚI: Cho Staff lấy báo giá của CHÍNH MÌNH
+     */
+    @GetMapping("/my")
+    public ResponseEntity<List<QuotationResponseDTO>> getMyQuotations(
+            @RequestHeader("X-Staff-Id") UUID staffId,
+            @RequestParam(required = false) QuotationStatus status) {
+
+        List<QuotationResponseDTO> response;
+        if (status != null) {
+            response = quotationService.getMyQuotationsByStatus(staffId, status);
+        } else {
+            response = quotationService.getMyQuotations(staffId);
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * API lấy chi tiết một báo giá
+     * (Phục vụ EDMS-35: Xem chi tiết & Chỉnh sửa)
+     */
+    @GetMapping("/{quotationId}")
+    public ResponseEntity<QuotationResponseDTO> getQuotationById(
+            @PathVariable UUID quotationId) {
+
+        QuotationResponseDTO response = quotationService.getQuotationDetailsById(quotationId);
         return ResponseEntity.ok(response);
     }
 
@@ -77,12 +106,14 @@ public class QuotationController {
     @PutMapping("/{quotationId}/status")
     public ResponseEntity<QuotationResponseDTO> updateQuotationStatus(
             @PathVariable UUID quotationId,
-            @Valid @RequestBody UpdateQuotationStatusDTO request) {
+            @Valid @RequestBody UpdateQuotationStatusDTO request,
+            @RequestHeader("X-User-Role") String userRole) {
 
         // Gọi service để xử lý logic
         QuotationResponseDTO response = quotationService.updateQuotationStatus(
                 quotationId,
-                request.getStatus()
+                request.getStatus(),
+                userRole
         );
 
         return ResponseEntity.ok(response);
@@ -100,14 +131,15 @@ public class QuotationController {
             @PathVariable UUID quotationId,
             @Valid @RequestBody QuotationRequestDTO request,
             @RequestHeader("X-Staff-Id") UUID staffId,
-            @RequestHeader("X-Dealer-Id") UUID dealerId) {
+            @RequestHeader("X-Dealer-Id") UUID dealerId,
+            @RequestHeader("X-User-Role") String userRole) {
 
-        // SỬA: Truyền ID vào service
         QuotationResponseDTO response = quotationService.updateQuotation(
                 quotationId,
                 request,
                 staffId,
-                dealerId
+                dealerId,
+                userRole
         );
 
         return ResponseEntity.ok(response);

@@ -3,8 +3,8 @@ package com.ev.sales_service.service;
 import com.ev.common_lib.exception.AppException; // Bạn cần import AppException từ common-lib
 import com.ev.common_lib.exception.ErrorCode; // Bạn cần import ErrorCode từ common-lib
 import com.ev.sales_service.dto.outbound.PromotionDTO;
-import com.ev.sales_service.dto.outbound.QuotationRequestDTO;
-import com.ev.sales_service.dto.outbound.QuotationResponseDTO;
+import com.ev.sales_service.dto.request.QuotationRequestDTO;
+import com.ev.sales_service.dto.response.QuotationResponseDTO;
 import com.ev.sales_service.entity.Promotion;
 import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.enums.PromotionStatus;
@@ -103,21 +103,31 @@ public class QuotationService {
      * @return DTO báo giá đã được cập nhật
      */
     @Transactional
-    public QuotationResponseDTO updateQuotation(UUID quotationId, QuotationRequestDTO request, UUID staffId, UUID dealerId) {
-        log.info("Attempting to update quotationId: {}", quotationId);
+    public QuotationResponseDTO updateQuotation(UUID quotationId, QuotationRequestDTO request, UUID staffId, UUID dealerId, String userRole) {
+        log.info("Attempting to update quotationId: {} by user: {}", quotationId, staffId);
 
-        // --- Bước 1: Lấy thông tin User ---
-        // UUID staffId = ...; // <-- XÓA DÒNG NÀY
-        // UUID dealerId = ...; // <-- XÓA DÒNG NÀY
-
-        // --- Bước 2: Tìm báo giá cũ ---
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
 
-        // --- Bước 3: Kiểm tra trạng thái ---
-        if (quotation.getStatus() != QuotationStatus.PENDING && quotation.getStatus() != QuotationStatus.DRAFT) {
-            log.warn("Quotation {} cannot be edited. Current state: {}", quotationId, quotation.getStatus());
-            throw new AppException(ErrorCode.INVALID_STATE);
+        boolean canUpdate = false;
+
+        // 1. Manager có thể sửa bất kỳ quote PENDING/DRAFT nào trong đại lý của họ
+        if ("DEALER_MANAGER".equals(userRole)) {
+            if (quotation.getDealerId().equals(dealerId) &&
+                    (quotation.getStatus() == QuotationStatus.PENDING || quotation.getStatus() == QuotationStatus.DRAFT)) {
+                canUpdate = true;
+            }
+        }
+        // 2. Staff chỉ có thể sửa quote DRAFT của chính MÌNH
+        else if ("DEALER_STAFF".equals(userRole)) {
+            if (quotation.getStaffId().equals(staffId) && quotation.getStatus() == QuotationStatus.DRAFT) {
+                canUpdate = true;
+            }
+        }
+
+        if (!canUpdate) {
+            log.warn("User {} FORBIDDEN to update quote {}. Role: {}, Status: {}", staffId, quotationId, userRole, quotation.getStatus());
+            throw new AppException(ErrorCode.FORBIDDEN); // Lỗi 403
         }
 
         // --- Bước 4: Lấy thông tin xe ---
@@ -272,6 +282,47 @@ public class QuotationService {
     }
 
     /**
+     * Lấy báo giá của MỘT Staff (cho Staff)
+     */
+    public List<QuotationResponseDTO> getMyQuotations(UUID staffId) {
+        log.info("Fetching all quotations for staffId: {}", staffId);
+        List<Quotation> quotations = quotationRepository.findByStaffId(staffId);
+        return quotations.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy báo giá của MỘT Staff theo status (cho Staff)
+     */
+    public List<QuotationResponseDTO> getMyQuotationsByStatus(UUID staffId, QuotationStatus status) {
+        log.info("Fetching quotations for staffId: {} with status: {}", staffId, status);
+
+        // Bạn có thể tạo hàm findByStaffIdAndStatus trong Repository
+        // Hoặc lọc bằng Java Stream như sau:
+        List<Quotation> quotations = quotationRepository.findByStaffId(staffId).stream()
+                .filter(q -> q.getStatus() == status)
+                .collect(Collectors.toList());
+
+        return quotations.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy chi tiết một báo giá bằng ID
+     * (Phục vụ trang Chi tiết & Chỉnh sửa)
+     */
+    public QuotationResponseDTO getQuotationDetailsById(UUID quotationId) {
+        log.info("Fetching details for quotationId: {}", quotationId);
+
+        Quotation quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+
+        return mapToResponseDTO(quotation);
+    }
+
+    /**
      * Cập nhật trạng thái của một báo giá
      *
      * @param quotationId ID của báo giá cần cập nhật
@@ -279,7 +330,13 @@ public class QuotationService {
      * @return DTO báo giá đã được cập nhật
      */
     @Transactional
-    public QuotationResponseDTO updateQuotationStatus(UUID quotationId, QuotationStatus newStatus) {
+    public QuotationResponseDTO updateQuotationStatus(UUID quotationId, QuotationStatus newStatus, String userRole) { // <-- THÊM userRole
+
+        if (!"DEALER_MANAGER".equals(userRole)) {
+            log.warn("User with role {} FORBIDDEN to update status.", userRole);
+            throw new AppException(ErrorCode.FORBIDDEN); // Chỉ Manager được duyệt
+        }
+
         log.info("Attempting to update status for quotationId: {} to {}", quotationId, newStatus);
 
         // 1. Chỉ cho phép cập nhật sang 2 trạng thái này
