@@ -184,6 +184,11 @@ export default function AppRoutes() {
               />
 
               <Route
+                path="manager/quotations/*"
+                element={<QuotationManagement />}
+              />
+
+              <Route
                 path="manager/vehicles/all"
                 element={<DealerProductCatalogPage />}
               />
@@ -232,6 +237,11 @@ export default function AppRoutes() {
               <Route
                 path="staff/vehicles/all"
                 element={<DealerProductCatalogPage />}
+              />
+
+              <Route
+                path="staff/quotations/*"
+                element={<QuotationManagement />}
               />
 
               {/* Promotions */}
