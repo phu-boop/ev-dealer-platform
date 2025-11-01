@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/promotions")
@@ -64,9 +65,11 @@ public class PromotionController {
      */
     @GetMapping("/dealer/active")
     public ResponseEntity<List<Promotion>> getActivePromotionsForDealer(
-            @RequestHeader("X-Dealer-Id") UUID dealerId) {
+            @RequestHeader("X-Dealer-Id") UUID dealerId,
+            @RequestParam(required = false) Long modelId) { // <-- THÊM THAM SỐ NÀY
 
-        List<Promotion> activePromotions = promotionService.getActivePromotionsForDealer(dealerId);
+        // Truyền modelId (có thể null) vào service
+        List<Promotion> activePromotions = promotionService.getActivePromotionsForDealer(dealerId, Optional.ofNullable(modelId));
         return ResponseEntity.ok(activePromotions);
     }
 }

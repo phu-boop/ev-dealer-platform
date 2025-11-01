@@ -5,6 +5,7 @@ import com.ev.common_lib.exception.ErrorCode; // Bạn cần import ErrorCode t�
 import com.ev.sales_service.dto.outbound.PromotionDTO;
 import com.ev.sales_service.dto.request.QuotationRequestDTO;
 import com.ev.sales_service.dto.response.QuotationResponseDTO;
+import com.ev.sales_service.dto.outbound.VehicleVariantDTO;
 import com.ev.sales_service.entity.Promotion;
 import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.enums.PromotionStatus;
@@ -13,8 +14,15 @@ import com.ev.sales_service.repository.PromotionRepository;
 import com.ev.sales_service.repository.QuotationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.core.ParameterizedTypeReference; // <-- THÊM
+import org.springframework.http.HttpMethod; // <-- THÊM
+import org.springframework.http.ResponseEntity; // <-- THÊM
+import com.ev.sales_service.dto.response.ApiRespondDTO; // <-- THÊM
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,6 +43,56 @@ public class QuotationService {
     // private final VehicleServiceClient vehicleServiceClient; // Tương lai sẽ dùng
     // private final CustomerServiceClient customerServiceClient; // Tương lai sẽ dùng
 
+    private final RestTemplate restTemplate; // (Phải import AppConfig.java của bạn)
+
+    @Value("${vehicle-service.uri}")
+    private String vehicleServiceUri;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    /**
+     * HÀM MỚI: Gọi VehicleService (cổng 8087) để lấy thông tin xe
+     */
+    public VehicleVariantDTO getVehicleDetails(Long variantId) {
+        try {
+            // URL đúng
+            String url = vehicleServiceUri + "/vehicle-catalog/variants/" + variantId;
+
+            // BƯỚC 1: Lấy response dưới dạng String thô
+            ResponseEntity<String> rawResponseEntity =
+                    restTemplate.exchange(url, HttpMethod.GET, null, String.class);
+
+            String rawJsonBody = rawResponseEntity.getBody();
+
+            // BƯỚC 2: GHI LOG JSON THÔ (QUAN TRỌNG NHẤT)
+            log.info("RAW JSON RESPONSE from VehicleService: {}", rawJsonBody);
+
+            // BƯỚC 3: Định nghĩa kiểu trả về
+            ParameterizedTypeReference<ApiRespondDTO<VehicleVariantDTO>> responseType =
+                    new ParameterizedTypeReference<>() {};
+
+            // BƯỚC 4: Tự convert (parse) String JSON thô sang Object
+            ApiRespondDTO<VehicleVariantDTO> apiRespond =
+                    objectMapper.readValue(rawJsonBody,
+                            objectMapper.getTypeFactory().constructType(responseType.getType())); // <-- THÊM .getType()
+
+            // Bước 5: Kiểm tra và lấy 'data'
+            if (apiRespond == null || apiRespond.getData() == null) {
+                log.error("Không thể phân tích 'data' từ JSON: {}", rawJsonBody);
+                throw new AppException(ErrorCode.DATA_NOT_FOUND);
+            }
+
+            // BƯỚC 6: Ghi log DTO sau khi convert
+            log.info("Deserialized (Đã convert) VehicleVariantDTO: {}", apiRespond.getData());
+
+            return apiRespond.getData(); // <-- Trả về đối tượng VehicleVariantDTO
+
+        } catch (Exception e) {
+            // Sửa log này để in ra lỗi chi tiết
+            log.error("Lỗi khi gọi hoặc phân tích VehicleService (variantId: {}): {}", variantId, e.getMessage(), e);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+    }
+
     @Transactional
     public QuotationResponseDTO createQuotation(QuotationRequestDTO request, UUID staffId, UUID dealerId) {
 
@@ -43,9 +101,9 @@ public class QuotationService {
         // UUID dealerId = UUID.fromString("5542f79e..."); // <-- XÓA DÒNG NÀY
 
         // --- Bước 2: Gọi VehicleService (Hardcode) ---
-        BigDecimal basePrice = getHardcodedPrice(request.getVariantId());
-        Long modelId = getHardcodedModelId(request.getVariantId());
-        log.info("Vehicle variantId: {}, modelId: {}, basePrice: {}", request.getVariantId(), modelId, basePrice);
+        VehicleVariantDTO vehicle = getVehicleDetails(request.getVariantId());
+        BigDecimal basePrice = vehicle.getPrice();
+        Long modelId = vehicle.getModelId();
 
         // --- Bước 3: Xử lý Khuyến mãi (Logic EDMS-44) ---
         Set<Promotion> appliedPromotions = new HashSet<>();
@@ -135,8 +193,9 @@ public class QuotationService {
         }
 
         // --- Bước 4: Lấy thông tin xe ---
-        BigDecimal basePrice = getHardcodedPrice(request.getVariantId());
-        Long modelId = getHardcodedModelId(request.getVariantId());
+        VehicleVariantDTO vehicle = getVehicleDetails(request.getVariantId());
+        BigDecimal basePrice = vehicle.getPrice();
+        Long modelId = vehicle.getModelId();
 
         // --- Bước 5: Xử lý Khuyến mãi (SỬA: Dùng dealerId từ tham số) ---
         Set<Promotion> appliedPromotions = new HashSet<>();
@@ -376,35 +435,5 @@ public class QuotationService {
 
         // 5. Trả về DTO
         return mapToResponseDTO(updatedQuotation);
-    }
-
-
-    // --- CÁC HÀM GIẢ LẬP (SẼ XÓA KHI KẾT NỐI MICROSERVICE) ---
-
-    private BigDecimal getHardcodedPrice(Long variantId) {
-        // Lấy dữ liệu giả lập từ vehicle_db
-        if (variantId == 4L) { // VF 9 Eco
-            return new BigDecimal("1491000000.00");
-        }
-        if (variantId == 5L) { // VF 9 Plus
-            return new BigDecimal("1684000000.00");
-        }
-        if (variantId == 10L) { // VF 6 Plus
-            return new BigDecimal("1309000000.00");
-        }
-        // Mặc định
-        return new BigDecimal("1000000000.00");
-    }
-
-    private Long getHardcodedModelId(Long variantId) {
-        // Lấy dữ liệu giả lập từ vehicle_db
-        if (variantId == 4L || variantId == 5L) {
-            return 3L; // Model VF 9
-        }
-        if (variantId == 9L || variantId == 10L) {
-            return 6L; // Model VF 6
-        }
-        // Mặc định
-        return 1L;
     }
 }

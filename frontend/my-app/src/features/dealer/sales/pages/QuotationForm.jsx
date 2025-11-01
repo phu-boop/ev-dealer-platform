@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthContext } from '../../../auth/AuthProvider';
-import { createQuotation, getQuotationById, updateQuotation, getActiveDealerPromotions } from '../services/salesService';
+import { createQuotation, getQuotationById, updateQuotation, getActiveDealerPromotions, getVehicleInfo } from '../services/salesService';
 import Swal from 'sweetalert2';
 
 // Import UI thật của bạn
@@ -24,10 +24,9 @@ const QuotationForm = () => {
         termsConditions: '',
         saveAsDraft: false,
     });
-
+    const [currentModelId, setCurrentModelId] = useState(null);
     const [promoOptions, setPromoOptions] = useState([]);
-    const [promoLoading, setPromoLoading] = useState(true);
-
+    const [promoLoading, setPromoLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -46,6 +45,7 @@ const QuotationForm = () => {
                         termsConditions: quote.termsConditions || '',
                         saveAsDraft: quote.status === 'DRAFT',
                     });
+                    setCurrentModelId(quote.modelId);
                 })
                 .catch(err => {
                     console.error("Lỗi khi tải báo giá:", err);
@@ -69,7 +69,7 @@ const QuotationForm = () => {
                 })
                 .finally(() => setPromoLoading(false));
         }
-    }, [dealerId]); // Chạy lại khi dealerId có
+    }, [dealerId, currentModelId]); // Chạy lại khi dealerId có
 
     // Bước 2: Xử lý thay đổi trên form
     const handleChange = (e) => {
@@ -86,6 +86,32 @@ const QuotationForm = () => {
                 ...prev,
                 [name]: type === 'checkbox' ? checked : value,
             }));
+        }
+        if (name === "variantId") {
+            // Khi người dùng nhập variantId, chúng ta tìm modelId của nó
+            findModelId(value);
+        }
+    };
+
+    const findModelId = async (variantId) => {
+        if (!variantId || isNaN(parseInt(variantId, 10))) {
+            setCurrentModelId(null);
+            return;
+        }
+
+        try {
+            // Gọi API thật từ salesService.js
+            const response = await getVehicleInfo(variantId);
+            const vehicle = response.data; // { variantId, price, modelId }
+
+            setCurrentModelId(vehicle.modelId); // <-- Cập nhật state
+
+            // Xóa các KM đã chọn vì danh sách KM sắp thay đổi
+            setFormData(prev => ({ ...prev, promotionIds: [] }));
+        } catch (err) {
+            console.error("Không tìm thấy variant:", err);
+            Swal.fire('Lỗi', 'Không tìm thấy thông tin xe cho ID phiên bản này.', 'error');
+            setCurrentModelId(null);
         }
     };
 
@@ -173,15 +199,17 @@ const QuotationForm = () => {
                     <select
                         id="promotionIds"
                         name="promotionIds"
-                        multiple={true} // Cho phép chọn nhiều
-                        value={formData.promotionIds} // Giá trị là một mảng
+                        multiple={true}
+                        value={formData.promotionIds}
                         onChange={handleChange}
-                        disabled={promoLoading}
+                        disabled={promoLoading || !currentModelId} // Tắt khi đang tải hoặc chưa nhập variantId
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        size={5} // Hiển thị 5 dòng
+                        size={5}
                     >
                         {promoLoading ? (
-                            <option disabled>Đang tải khuyến mãi...</option>
+                            <option disabled>Đang rà soát khuyến mãi...</option>
+                        ) : !currentModelId ? (
+                            <option disabled>Hãy nhập ID Phiên bản xe để xem KM</option>
                         ) : promoOptions.length === 0 ? (
                             <option disabled>Hiện không có khuyến mãi nào được áp dụng</option>
                         ) : (

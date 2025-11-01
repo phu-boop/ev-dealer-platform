@@ -4,6 +4,7 @@ import com.ev.sales_service.dto.request.QuotationRequestDTO;
 import com.ev.sales_service.dto.response.QuotationResponseDTO;
 import com.ev.sales_service.enums.QuotationStatus;
 import com.ev.sales_service.dto.outbound.UpdateQuotationStatusDTO;
+import com.ev.sales_service.dto.outbound.VehicleVariantDTO;
 import com.ev.sales_service.service.QuotationService;
 import jakarta.validation.Valid; // <-- Import để kích hoạt validation
 import lombok.RequiredArgsConstructor;
@@ -142,6 +143,17 @@ public class QuotationController {
                 userRole
         );
 
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * API Passthrough: Giúp frontend lấy thông tin xe từ VehicleService
+     */
+    @GetMapping("/vehicle-info/{variantId}")
+    public ResponseEntity<VehicleVariantDTO> getVehicleInfo(
+            @PathVariable Long variantId) {
+
+        VehicleVariantDTO response = quotationService.getVehicleDetails(variantId);
         return ResponseEntity.ok(response);
     }
 }

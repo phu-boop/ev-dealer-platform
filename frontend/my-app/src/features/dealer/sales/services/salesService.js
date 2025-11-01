@@ -108,12 +108,28 @@ export const getQuotationById = (id) => {
  * @param {string} dealerId - UUID của đại lý (từ context)
  * @returns {Promise<Array>} Danh sách khuyến mãi
  */
-export const getActiveDealerPromotions = (dealerId) => {
-    // URL sẽ là: http://localhost:8080/sales/promotions/dealer/active
+export const getActiveDealerPromotions = (dealerId, modelId = null) => {
+
+    const params = {};
+    if (modelId) {
+        params.modelId = modelId; // Thêm modelId vào query params
+    }
+
     return apiConstSaleService.get("/promotions/dealer/active", {
+        params, // Gửi params (ví dụ: ?modelId=3)
         headers: {
             "X-Dealer-Id": dealerId,
         },
     });
+};
+
+/**
+ * Lấy thông tin cơ bản của xe (price, modelId) từ backend
+ * @param {number} variantId
+ * @returns {Promise<object>} { variantId, price, modelId }
+ */
+export const getVehicleInfo = (variantId) => {
+    // URL: http://localhost:8080/sales/quotations/vehicle-info/4
+    return apiConstSaleService.get(`/quotations/vehicle-info/${variantId}`);
 };
 

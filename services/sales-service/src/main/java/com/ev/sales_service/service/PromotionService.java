@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -141,7 +142,7 @@ public class PromotionService {
      * @param dealerId ID của đại lý (lấy từ header)
      * @return List<Promotion>
      */
-    public List<Promotion> getActivePromotionsForDealer(UUID dealerId) {
+    public List<Promotion> getActivePromotionsForDealer(UUID dealerId, Optional<Long> modelId) {
         // 1. Lấy tất cả KM đang ACTIVE
         List<Promotion> allActivePromotions = promotionRepository.findByStatus(PromotionStatus.ACTIVE);
 
@@ -149,23 +150,37 @@ public class PromotionService {
         return allActivePromotions.stream()
                 .filter(promo -> {
                     String dealerJson = promo.getDealerIdJson();
+                    String modelJson = promo.getApplicableModelsJson();
                     LocalDateTime now = LocalDateTime.now();
 
                     // 2.1. Kiểm tra ngày (phòng trường hợp cron job chưa chạy)
-                    if (promo.getStartDate() != null && promo.getStartDate().isAfter(now)) {
-                        return false;
-                    }
-                    if (promo.getEndDate() != null && promo.getEndDate().isBefore(now)) {
-                        return false;
-                    }
+                    if (promo.getStartDate() != null && promo.getStartDate().isAfter(now)) return false;
+                    if (promo.getEndDate() != null && promo.getEndDate().isBefore(now)) return false;
 
-                    // 2.2. Nếu là KM chung (không áp dụng cho đại lý cụ thể) -> Thêm vào
+                    // 2.2. Lọc theo Đại lý
+                    boolean dealerMatch = false;
                     if (dealerJson == null || dealerJson.isEmpty() || dealerJson.equals("[]")) {
-                        return true;
+                        dealerMatch = true; // KM chung
+                    } else {
+                        dealerMatch = dealerJson.contains(dealerId.toString()); // KM riêng
                     }
 
-                    // 2.3. Nếu là KM riêng, kiểm tra xem ID của đại lý có nằm trong chuỗi JSON không
-                    return dealerJson.contains(dealerId.toString());
+                    if (!dealerMatch) return false; // Nếu không khớp đại lý -> loại
+
+                    // 2.3. Lọc theo Model (NẾU modelId được cung cấp)
+                    if (modelId.isPresent()) {
+                        Long mId = modelId.get();
+                        // Nếu KM này có áp dụng cho model cụ thể (không rỗng)
+                        if (modelJson != null && !modelJson.isEmpty() && !modelJson.equals("[]")) {
+                            // Và nếu JSON model *không* chứa modelId -> loại
+                            if (!modelJson.contains(mId.toString())) {
+                                return false;
+                            }
+                        }
+                        // (Nếu KM không chỉ định model, nó được coi là áp dụng cho mọi model)
+                    }
+
+                    return true; // Vượt qua mọi kiểm tra
                 })
                 .collect(Collectors.toList());
     }
