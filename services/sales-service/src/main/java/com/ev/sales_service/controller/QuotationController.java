@@ -31,12 +31,13 @@ public class QuotationController {
      */
     @PostMapping
     public ResponseEntity<QuotationResponseDTO> createQuotation(
-            @Valid @RequestBody QuotationRequestDTO request) {
+            @Valid @RequestBody QuotationRequestDTO request,
+            @RequestHeader("X-Staff-Id") UUID staffId,
+            @RequestHeader("X-Dealer-Id") UUID dealerId) {
 
-        // Gọi service để xử lý toàn bộ logic nghiệp vụ
-        QuotationResponseDTO response = quotationService.createQuotation(request);
+        // SỬA: Truyền ID vào service
+        QuotationResponseDTO response = quotationService.createQuotation(request, staffId, dealerId);
 
-        // Trả về 200 OK cùng với dữ liệu báo giá
         return ResponseEntity.ok(response);
     }
 
@@ -97,12 +98,16 @@ public class QuotationController {
     @PutMapping("/{quotationId}")
     public ResponseEntity<QuotationResponseDTO> updateQuotation(
             @PathVariable UUID quotationId,
-            @Valid @RequestBody QuotationRequestDTO request) {
+            @Valid @RequestBody QuotationRequestDTO request,
+            @RequestHeader("X-Staff-Id") UUID staffId,
+            @RequestHeader("X-Dealer-Id") UUID dealerId) {
 
-        // Gọi service để xử lý logic
+        // SỬA: Truyền ID vào service
         QuotationResponseDTO response = quotationService.updateQuotation(
                 quotationId,
-                request
+                request,
+                staffId,
+                dealerId
         );
 
         return ResponseEntity.ok(response);

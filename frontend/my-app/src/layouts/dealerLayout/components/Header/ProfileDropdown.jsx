@@ -24,16 +24,12 @@ export const ProfileDropdown = ({
         <div className="w-11 h-11 avatar-glow rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:rotate-6">
           <span className="text-white font-semibold text-lg">
             <div className="flex-shrink-0">
-                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg avatar-glow">
+                <div className="w-20 mt-13 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg avatar-glow">
                     {sessionStorage.getItem('avatarUrl')!="null" ? (
                         <img
                             src={sessionStorage.getItem('avatarUrl')}
                             alt="Avatar"
                             className="w-full h-full rounded-full object-cover"
-                            onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                            }}
                         />
                     ) : 
                       (name?.charAt(0).toUpperCase() || email?.charAt(0).toUpperCase())

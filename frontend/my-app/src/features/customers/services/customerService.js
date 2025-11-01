@@ -91,6 +91,29 @@ const customerService = {
   async getCustomerTypes() {
     const response = await apiConstCustomerService.get("/enums/types");
     return response.data.data;
+  },
+
+  /**
+   * Phân công nhân viên cho khách hàng
+   * @param {number} customerId - Mã khách hàng
+   * @param {Object} assignData - Dữ liệu phân công
+   * @param {string} assignData.staffId - UUID của nhân viên
+   * @param {string} assignData.notes - Ghi chú (optional)
+   * @returns {Promise<Object>} Thông tin khách hàng sau khi phân công
+   */
+  async assignStaffToCustomer(customerId, assignData) {
+    const response = await apiConstCustomerService.post(`/${customerId}/assign-staff`, assignData);
+    return response.data.data;
+  },
+
+  /**
+   * Hủy phân công nhân viên
+   * @param {number} customerId - Mã khách hàng
+   * @returns {Promise<Object>} Thông tin khách hàng sau khi hủy phân công
+   */
+  async unassignStaffFromCustomer(customerId) {
+    const response = await apiConstCustomerService.delete(`/${customerId}/assign-staff`);
+    return response.data.data;
   }
 };
 

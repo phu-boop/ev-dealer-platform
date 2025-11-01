@@ -22,10 +22,6 @@ export const UserProfile = ({ isSidebarOpen, user }) => {
                 src={sessionStorage.getItem('avatarUrl')}
                 alt="Avatar"
                 className="w-full h-full object-cover rounded-2xl"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  // Fallback sẽ được hiển thị bởi phần tử tiếp theo
-                }}
               />
             ) : null}
             <span className={`${sessionStorage.getItem('avatarUrl')!="null" ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
