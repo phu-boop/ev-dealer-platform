@@ -1,7 +1,11 @@
 package com.ev.user_service.config;
 
+import com.ev.user_service.entity.EvmStaffProfile;
 import com.ev.user_service.enums.UserStatus;
 import com.ev.user_service.service.AdminProfileService;
+import com.ev.user_service.service.DealerManagerProfileService;
+import com.ev.user_service.service.DealerStaffProfileService;
+import com.ev.user_service.service.EvmStaffProfileService;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +23,7 @@ import com.ev.user_service.repository.UserRepository;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Component
 public class DataInitializer implements ApplicationRunner {
@@ -28,6 +33,9 @@ public class DataInitializer implements ApplicationRunner {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final AdminProfileService adminProfileService;
+    private final DealerManagerProfileService dealerManagerProfileService;
+    private final EvmStaffProfileService evmStaffProfileService;
+    private final DealerStaffProfileService dealerStaffProfileService;
 
     // Helper method
     private Permission createPermission(PermissionName permissionName) {
@@ -36,12 +44,24 @@ public class DataInitializer implements ApplicationRunner {
         return permission;
     }
 
-    public DataInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, PermissionRepository permissionRepository, AdminProfileService adminProfileService) {
+    public DataInitializer(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            RoleRepository roleRepository,
+            PermissionRepository permissionRepository,
+            AdminProfileService adminProfileService,
+            DealerManagerProfileService dealerManagerProfileService,
+            EvmStaffProfileService evmStaffProfileService,
+            DealerStaffProfileService dealerStaffProfileService
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.adminProfileService = adminProfileService;
+        this.dealerManagerProfileService = dealerManagerProfileService;
+        this.evmStaffProfileService = evmStaffProfileService;
+        this.dealerStaffProfileService =dealerStaffProfileService;
     }
 
     @Override
@@ -163,6 +183,7 @@ public class DataInitializer implements ApplicationRunner {
             managerDealer.setRoles(new HashSet<>(roles));
             managerDealer.setStatus(UserStatus.ACTIVE);
             userRepository.save(managerDealer);
+            dealerManagerProfileService.SaveDealerManagerProfile(managerDealer, UUID.randomUUID(),null,null,null);
 
 // ========== DEALER_STAFF ==========
             Role dealerStaffRole = roleRepository.findByName(RoleName.DEALER_STAFF.getRoleName())
@@ -175,7 +196,31 @@ public class DataInitializer implements ApplicationRunner {
             staffDealer.setRoles(new HashSet<>(roles));
             staffDealer.setStatus(UserStatus.ACTIVE);
             userRepository.save(staffDealer);
-
+            dealerStaffProfileService.SaveDealerStaffProfile(staffDealer,UUID.randomUUID(),null,null,null,null,null);
+// ========== DEALER_STAFF ==========
+            Role dealerStaffRole1 = roleRepository.findByName(RoleName.DEALER_STAFF.getRoleName())
+                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+            roles.clear();
+            roles.add(dealerStaffRole1);
+            User staffDealer1 = new User();
+            staffDealer1.setEmail("StafffDealer1@gmail.com");
+            staffDealer1.setPassword(passwordEncoder.encode("123123123"));
+            staffDealer1.setRoles(new HashSet<>(roles));
+            staffDealer1.setStatus(UserStatus.ACTIVE);
+            userRepository.save(staffDealer1);
+            dealerStaffProfileService.SaveDealerStaffProfile(staffDealer1,UUID.randomUUID(),null,null,null,null,null);
+// ========== DEALER_STAFF ==========
+            Role dealerStaffRole2 = roleRepository.findByName(RoleName.DEALER_STAFF.getRoleName())
+                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+            roles.clear();
+            roles.add(dealerStaffRole2);
+            User staffDealer2 = new User();
+            staffDealer2.setEmail("StafffDealer2@gmail.com");
+            staffDealer2.setPassword(passwordEncoder.encode("123123123"));
+            staffDealer2.setRoles(new HashSet<>(roles));
+            staffDealer2.setStatus(UserStatus.ACTIVE);
+            userRepository.save(staffDealer2);
+            dealerStaffProfileService.SaveDealerStaffProfile(staffDealer2,UUID.randomUUID(),null,null,null,null,null);
 // ========== EVM_STAFF ==========
             Role evmStaffRole = roleRepository.findByName(RoleName.EVM_STAFF.getRoleName())
                     .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
@@ -187,6 +232,7 @@ public class DataInitializer implements ApplicationRunner {
             staffEvm.setRoles(new HashSet<>(roles));
             staffEvm.setStatus(UserStatus.ACTIVE);
             userRepository.save(staffEvm);
+            evmStaffProfileService.SaveEvmStaffProfile(staffEvm,null,null);
 
         }
     }

@@ -24,11 +24,14 @@ public class Quotation {
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID customerId;
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId; // Phải là Long (bigint)
 
-    @Column(name = "model_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID modelId;
+    @Column(name = "model_id", nullable = false)
+    private Long modelId; // Phải là Long (bigint)
+
+    @Column(name = "variant_id", nullable = false)
+    private Long variantId; // Phải là Long (bigint)
 
     @Column(name = "staff_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID staffId;
@@ -58,6 +61,11 @@ public class Quotation {
     @OneToOne(mappedBy = "quotation")
     private SalesOrder salesOrder;
 
-    @ManyToMany(mappedBy = "quotations")
+    @ManyToMany
+    @JoinTable(
+            name = "quotation_promotions",
+            joinColumns = @JoinColumn(name = "quotation_id"),
+            inverseJoinColumns = @JoinColumn(name = "promotion_id")
+    )
     private Set<Promotion> promotions;
 }

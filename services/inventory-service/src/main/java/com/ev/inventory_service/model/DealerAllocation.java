@@ -2,9 +2,10 @@ package com.ev.inventory_service.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.util.UUID;
 
 @Entity
-@Table(name = "dealer_allocations")
+@Table(name = "dealer_inventory")
 @Data
 public class DealerAllocation {
     
@@ -13,7 +14,7 @@ public class DealerAllocation {
     private Long allocationId;
 
     @Column(nullable = false)
-    private Long dealerId; // Khóa ngoại trỏ đến dealer-service
+    private UUID dealerId; // Khóa ngoại trỏ đến dealer-service
 
     @Column(nullable = false)
     private Long variantId; // Khóa ngoại trỏ đến vehicle-catalog-service

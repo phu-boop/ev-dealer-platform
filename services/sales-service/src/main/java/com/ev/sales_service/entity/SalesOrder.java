@@ -1,5 +1,6 @@
 package com.ev.sales_service.entity;
 
+import com.ev.sales_service.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -8,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sales_orders")
+@Table(name = "sales_orders") // Dùng chung cho 2 chức năng: đặt hàng từ hãng xe, người dùng đặt hàng
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,21 +17,21 @@ import java.util.UUID;
 public class SalesOrder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID) 
     @Column(name = "order_id", columnDefinition = "BINARY(16)")
     private UUID orderId;
 
     @OneToOne
-    @JoinColumn(name = "quotation_id", nullable = false)
+    @JoinColumn(name = "quotation_id")
     private Quotation quotation;
 
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID customerId;
+    @Column(name = "customer_id", columnDefinition = "BINARY(16)")
+    private UUID customerId; // Nếu là đơn đặt hàng xe từ hãng thì customerid = null
 
-    @Column(name = "staff_id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "staff_id", columnDefinition = "BINARY(16)")
     private UUID staffId;
 
     @Column(name = "order_date", nullable = false)
@@ -39,8 +40,9 @@ public class SalesOrder {
     @Column(name = "delivery_date")
     private LocalDateTime deliveryDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "order_status", length = 50)
-    private String orderStatus;
+    private OrderStatus orderStatus;
 
     @Column(name = "total_amount", precision = 15, scale = 2)
     private BigDecimal totalAmount;

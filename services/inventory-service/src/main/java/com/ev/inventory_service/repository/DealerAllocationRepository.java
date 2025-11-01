@@ -6,15 +6,16 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface DealerAllocationRepository extends JpaRepository<DealerAllocation, Long> {
     // Tìm kiếm phân bổ cho đại lý bằng variantId và dealerId
-    Optional<DealerAllocation> findByVariantIdAndDealerId(Long variantId, Long dealerId);
+    Optional<DealerAllocation> findByVariantIdAndDealerId(Long variantId, UUID dealerId);
 
     // Tìm tất cả các phân bổ của một variant
     List<DealerAllocation> findByVariantId(Long variantId);
 
     // Tìm tất cả các phân bổ của một dealer
-    List<DealerAllocation> findByDealerId(Long dealerId);
+    List<DealerAllocation> findByDealerId(UUID dealerId);
 }

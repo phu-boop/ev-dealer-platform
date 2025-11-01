@@ -2,6 +2,7 @@ package com.ev.user_service.service;
 
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
+import com.ev.user_service.dto.respond.ProfileRespond;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +15,14 @@ import com.ev.user_service.entity.User;
 import com.ev.user_service.mapper.UserMapper;
 import com.ev.user_service.repository.UserRepository;
 import com.ev.user_service.security.JwtUtil;
+
+import com.ev.user_service.repository.DealerManagerProfileRepository;
+import com.ev.user_service.repository.DealerStaffProfileRepository;
+import com.ev.user_service.entity.DealerManagerProfile;
+import com.ev.user_service.entity.DealerStaffProfile;
+import java.util.Optional;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import java.security.SecureRandom;
@@ -28,40 +37,66 @@ public class AuthService {
     private final RedisService redisService;
     private final EmailService emailService;
 
+    private final DealerManagerProfileRepository managerProfileRepository;
+    private final DealerStaffProfileRepository staffProfileRepository;
+
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        JwtUtil jwtUtil,
                        UserMapper userMapper,
                        RedisService redisService,
-                       EmailService emailService) {
+                       EmailService emailService,
+                       DealerManagerProfileRepository managerProfileRepository,
+                       DealerStaffProfileRepository staffProfileRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.userMapper = userMapper;
         this.redisService = redisService;
         this.emailService = emailService;
+
+        this.managerProfileRepository = managerProfileRepository;
+        this.staffProfileRepository = staffProfileRepository;
     }
 
 
     public LoginRespond login(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        UUID memberId;
-        switch (user.getRoleToString()) {
-            case "DEALER_MANAGER" -> memberId = user.getDealerManagerProfile() != null 
-                ? user.getDealerManagerProfile().getManagerId() : null;
-            case "DEALER_STAFF" -> memberId = user.getDealerStaffProfile() != null 
-                ? user.getDealerStaffProfile().getStaffId() : null;
-            case "EVM_STAFF" -> memberId = user.getEvmStaffProfile() != null 
-                ? user.getEvmStaffProfile().getEvmStaffId() : null;
-            case "ADMIN" -> memberId = user.getAdminProfile() != null 
-                ? user.getAdminProfile().getAdmin_id() : null;
-            default -> memberId = null;
-        }
         if (passwordEncoder.matches(password, user.getPassword())) {
-            String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString());
+            // === 4. LOGIC MỚI ĐỂ LẤY DEALER ID ===
+
+            // Lấy thông tin cơ bản
+            String role = user.getRoleToString();
+            UUID profileId = user.getProfileId(); // Đây là staffId hoặc managerId
+            UUID userId = user.getId();
+            UUID dealerId = null; // Biến để lưu dealerId
+
+            // Truy vấn profile tương ứng để lấy dealerId
+            if ("DEALER_MANAGER".equals(role)) {
+                // Sửa: Tìm bằng userId, không phải profileId
+                Optional<DealerManagerProfile> profile = managerProfileRepository.findByUserId(userId);
+                if (profile.isPresent()) {
+                    dealerId = profile.get().getDealerId();
+                }
+            } else if ("DEALER_STAFF".equals(role)) {
+                // Sửa: Tìm bằng userId, không phải profileId
+                Optional<DealerStaffProfile> profile = staffProfileRepository.findByUserId(userId);
+                if (profile.isPresent()) {
+                    dealerId = profile.get().getDealerId();
+                }
+            }
+            // === KẾT THÚC LOGIC MỚI ===
+            String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
             UserRespond userRespond = userMapper.usertoUserRespond(user);
-            userRespond.setMemberId(memberId);
+            userRespond.setMemberId(user.getProfileId());
+            userRespond.setUrl(user.getUrl());
+
+            // === 5. GÁN DEALER ID VÀO RESPONSE ===
+            userRespond.setDealerId(dealerId);
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
             return new LoginRespond(userRespond, token);
         } else {
             throw new AppException(ErrorCode.INVALID_PASSWORD);
@@ -83,7 +118,7 @@ public class AuthService {
     public String generateRefreshToken(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return jwtUtil.generateRefreshToken(user.getEmail(), user.getRoleToString());
+        return jwtUtil.generateRefreshToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
     }
 
     public TokenPair newRefreshTokenAndAccessToken(HttpServletRequest request) {
@@ -97,11 +132,13 @@ public class AuthService {
         }
         String newAccessToken = jwtUtil.generateAccessToken(
                 jwtUtil.extractEmail(refreshToken),
-                jwtUtil.extractRole(refreshToken)
+                jwtUtil.extractRole(refreshToken),
+                jwtUtil.extractProfileId(refreshToken)
         );
         String newRefreshToken = jwtUtil.generateRefreshToken(
                 jwtUtil.extractEmail(refreshToken),
-                jwtUtil.extractRole(refreshToken)
+                jwtUtil.extractRole(refreshToken),
+                jwtUtil.extractProfileId(refreshToken)
         );
         return new TokenPair(newAccessToken, newRefreshToken);
     }

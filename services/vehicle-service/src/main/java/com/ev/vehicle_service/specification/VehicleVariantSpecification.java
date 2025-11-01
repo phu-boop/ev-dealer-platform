@@ -16,12 +16,14 @@ public class VehicleVariantSpecification {
     }
 
     public static Specification<VehicleVariant> hasKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null; // Trả về null nếu không có gì để tìm
+        }
+    
+        // Nếu có keyword, trả về Specification
         return (root, query, cb) -> {
             String likePattern = "%" + keyword.toLowerCase() + "%";
-            // Lấy đường dẫn tới modelName từ quan hệ ManyToOne
             Join<VehicleVariant, VehicleModel> modelJoin = root.join("vehicleModel");
-            
-            // Tìm kiếm trên nhiều trường với logic OR
             return cb.or(
                 cb.like(cb.lower(modelJoin.get("modelName")), likePattern),
                 cb.like(cb.lower(root.get("versionName")), likePattern),
@@ -29,4 +31,5 @@ public class VehicleVariantSpecification {
             );
         };
     }
+    
 }

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiConstCustomerService = axios.create({
-  baseURL: "http://localhost:8080/customers/",
+  baseURL: "http://localhost:8080/customers",
   headers: { "Content-Type": "application/json" },
   withCredentials: true
 });
@@ -32,3 +32,4 @@ apiConstCustomerService.interceptors.response.use(
 );
 
 export default apiConstCustomerService;
+

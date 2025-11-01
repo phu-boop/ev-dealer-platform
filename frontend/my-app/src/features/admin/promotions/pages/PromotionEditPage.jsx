@@ -20,7 +20,7 @@ export const PromotionEditPage = ({ promotion, onBack }) => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setTimeout(() => {
         onBack();
-      }, 2000);
+      }, 1000);
     } else {
       setAlert({
         show: true,

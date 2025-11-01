@@ -48,11 +48,15 @@ public enum ErrorCode {
     DATABASE_ERROR("5006", "Database error", HttpStatus.INTERNAL_SERVER_ERROR),
     CONSTRAINT_VIOLATION("5007", "Database constraint violation", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD("5008", "Invalid password", HttpStatus.BAD_REQUEST),
+    INVALID_JSON_FORMAT("5009","Invalid json format", HttpStatus.BAD_REQUEST),
 
     // ===== 6xxx - Business logic errors =====
     paymentT_FAILED("6001", "paymentt failed", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_BALANCE("6002", "Insufficient balance", HttpStatus.BAD_REQUEST),
     PRODUCT_OUT_OF_STOCK("6004", "Product out of stock", HttpStatus.CONFLICT),
+    ORDER_NOT_FOUND("6005", "Order not found", HttpStatus.NOT_FOUND),
+    INVALID_DATA("6006", "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
+    INVALID_STATE("6007", "Trạng thái nghiệp vụ không hợp lệ", HttpStatus.BAD_REQUEST),
 
     // ===== 7xxx - Vehicle service errors =====
     VEHICLE_MODEL_NOT_FOUND("7001", "Vehicle model not found", HttpStatus.NOT_FOUND),
@@ -60,6 +64,7 @@ public enum ErrorCode {
     VEHICLE_VARIANT_NOT_FOUND("7003", "Vehicle variant not found", HttpStatus.NOT_FOUND),
     FEATURE_NOT_FOUND("7004", "Feature not found", HttpStatus.NOT_FOUND),
     VEHICLE_VARIANT_SKU_ALREADY_EXISTS("7005", "A vehicle variant with this SKU code already exists", HttpStatus.CONFLICT),
+    VARIANT_FEATURE_NOT_FOUND("7006","A feature for variant not found", HttpStatus.NOT_FOUND),
 
     // ===== 8xxx - Inventory service errors =====
     INVENTORY_NOT_FOUND("8001", "Inventory record not found for this variant", HttpStatus.NOT_FOUND),

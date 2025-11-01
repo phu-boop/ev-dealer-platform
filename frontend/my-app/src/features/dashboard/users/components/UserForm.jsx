@@ -19,52 +19,106 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
     const [errors, setErrors] = useState({});
     const [isEditing, setIsEditing] = useState(false);
 
-    useEffect(() => {
-        if (initialData) {
-            // Chuyển đổi roles từ object sang string
-            const roles = initialData.roles.map(role => role.name);
-            setFormData({...initialData, roles, password: ""});
-        } else {
-            setFormData({
-                email: "",
-                phone: "",
-                name: "",
-                fullName: "",
-                password: "",
-                address: "",
-                city: "",
-                country: "",
-                birthday: "",
-                gender: "MALE"
-            });
+   useEffect(() => {
+    if (initialData) {
+        // Xác định role từ roles array
+        const roles = initialData.roles || [];
+        const mainRole = roles.length > 0 ? roles[0].name : '';
+        
+        // Chuẩn bị dữ liệu cơ bản
+        const baseData = {
+            ...initialData,
+            role: mainRole,
+            password: "", // Luôn để password trống khi edit
+            gender: initialData.gender || 'MALE' // Đảm bảo gender không null
+        };
+
+        // Thêm dữ liệu profile-specific
+        if (initialData.dealerStaffProfile) {
+            Object.assign(baseData, initialData.dealerStaffProfile);
+        } else if (initialData.dealerManagerProfile) {
+            Object.assign(baseData, initialData.dealerManagerProfile);
+        } else if (initialData.evmStaffProfile) {
+            Object.assign(baseData, initialData.evmStaffProfile);
+        } else if (initialData.adminProfile) {
+            Object.assign(baseData, initialData.adminProfile);
         }
-        setErrors({});
-        setIsEditing(mode === "edit");
-    }, [initialData, isOpen, mode]);
+
+        setFormData(baseData);
+    } else {
+        setFormData({
+            email: "",
+            phone: "",
+            name: "",
+            fullName: "",
+            password: "",
+            address: "",
+            city: "",
+            country: "",
+            birthday: "",
+            gender: "MALE", // Mặc định là MALE
+            role: "",
+            // Dealer Staff fields
+            dealerId: "",
+            position: "",
+            department: "",
+            hireDate: "",
+            salary: "",
+            commissionRate: "",
+            // Dealer Manager fields
+            managementLevel: "",
+            approvalLimit: "",
+            // EVM Staff fields
+            specialization: ""
+        });
+    }
+    setErrors({});
+    setIsEditing(mode === "edit");
+}, [initialData, isOpen, mode]);
 
     if (!isOpen) return null;
 
-    const validateForm = () => {
-        const newErrors = {};
+   const validateForm = () => {
+    const newErrors = {};
 
-        if (!formData.email) newErrors.email = "Email là bắt buộc";
-        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email không hợp lệ";
+    if (!formData.email) newErrors.email = "Email là bắt buộc";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email không hợp lệ";
 
-        if (!formData.phone) newErrors.phone = "Số điện thoại là bắt buộc";
+    if (!formData.phone) newErrors.phone = "Số điện thoại là bắt buộc";
 
-        if (!formData.name) newErrors.name = "Tên là bắt buộc";
+    if (!formData.name) newErrors.name = "Tên là bắt buộc";
 
-        if (!formData.fullName) newErrors.fullName = "Họ và tên là bắt buộc";
+    if (!formData.fullName) newErrors.fullName = "Họ và tên là bắt buộc";
 
-        if (!initialData && !formData.password) {
-            newErrors.password = "Mật khẩu là bắt buộc";
-        } else if (formData.password && formData.password.length < 6) {
-            newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-        }
+    if (!initialData && !formData.password) {
+        newErrors.password = "Mật khẩu là bắt buộc";
+    } else if (formData.password && formData.password.length < 6) {
+        newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+    // Đảm bảo gender không null
+    if (!formData.gender) {
+        newErrors.gender = "Giới tính là bắt buộc";
+    }
+
+    // Role-specific validation
+    if (formData.role === "DEALER_STAFF") {
+        if (!formData.dealerId) newErrors.dealerId = "Mã đại lý là bắt buộc";
+        if (!formData.department) newErrors.department = "Phòng ban là bắt buộc";
+    }
+
+    if (formData.role === "DEALER_MANAGER") {
+        if (!formData.dealerId) newErrors.dealerId = "Mã đại lý là bắt buộc";
+        if (!formData.managementLevel) newErrors.managementLevel = "Cấp quản lý là bắt buộc";
+    }
+
+    if (formData.role === "EVM_STAFF") {
+        if (!formData.department) newErrors.department = "Phòng ban là bắt buộc";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+};
 
     const handleChange = (e) => {
         if (mode === "view" && !isEditing) return; // Không cho phép chỉnh sửa ở chế độ xem khi không bật chỉnh sửa

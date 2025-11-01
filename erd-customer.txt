@@ -1,0 +1,88 @@
+@startuml CustomerService_ERD
+
+package "Customer Service Database" {
+  entity "customers" as CUST_CUSTOMERS {
+    * customer_id [PK]
+    --
+    first_name
+    last_name
+    email
+    phone
+    address
+    id_number
+    customer_type
+    registration_date
+    status
+    preferred_dealer_id [FK]
+  }
+  
+  entity "customer_profiles" as CUST_PROFILES {
+    * profile_id [PK]
+    * customer_id [FK]
+    --
+    preferences_json
+    budget_range
+    interested_models_json
+    communication_pref
+  }
+  
+  entity "test_drive_appointments" as CUST_TESTDRIVE {
+    * appointment_id [PK]
+    * customer_id [FK]
+    * dealer_id [FK]
+    * model_id [FK]
+    * staff_id [FK]
+    --
+    appointment_date
+    duration_minutes
+    status
+    feedback_rating
+    feedback_comment
+  }
+  
+  entity "complaints" as CUST_COMPLAINTS {
+    * complaint_id [PK]
+    * customer_id [FK]
+    * dealer_id [FK]
+    * order_id [FK]
+    --
+    complaint_date
+    complaint_type
+    description
+    priority
+    status
+    resolution
+    resolved_date
+  }
+  
+  entity "customer_feedback" as CUST_FEEDBACK {
+    * feedback_id [PK]
+    * customer_id [FK]
+    * order_id [FK]
+    --
+    rating
+    comments
+    feedback_date
+    category
+  }
+  
+  entity "communication_history" as CUST_COMM {
+    * comm_id [PK]
+    * customer_id [FK]
+    --
+    communication_type
+    content
+    sent_date
+    status
+    staff_id [FK]
+  }
+}
+
+' --- RELATIONSHIPS ---
+CUST_CUSTOMERS ||--|| CUST_PROFILES : "1:1"
+CUST_CUSTOMERS ||--o{ CUST_TESTDRIVE : "1:N"
+CUST_CUSTOMERS ||--o{ CUST_COMPLAINTS : "1:N"
+CUST_CUSTOMERS ||--o{ CUST_FEEDBACK : "1:N"
+CUST_CUSTOMERS ||--o{ CUST_COMM : "1:N"
+
+@enduml

@@ -10,6 +10,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -25,8 +26,8 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 
     //  Danh sách path được bỏ qua xác thực
     private static final List<String> EXCLUDED_PATHS = List.of(
-            "/auth/",
-            "/users/"
+            "/auth",
+            "/users"
     );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {
@@ -37,6 +38,11 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
+
+        // 1. Luôn cho phép các request OPTIONS (dùng cho CORS) đi qua
+        if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
+            return chain.filter(exchange);
+        }
 
         // Ngoại lệ
         if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
@@ -59,6 +65,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             String email = jwtUtil.extractEmail(token);
             String role = jwtUtil.extractRole(token);
             Long userId = jwtUtil.extractUserId(token);
+            String profileId = jwtUtil.extractProfileId(token);
 
             if (!jwtUtil.isTokenValid(token, email)) {
             return this.onError(exchange, ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage(), ErrorCode.TOKEN_INVALID.getHttpStatus());
@@ -69,6 +76,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
                         headers.add("X-User-Email", email);
                         headers.add("X-User-Role", role);
                         headers.add("X-User-Id", String.valueOf(userId));
+                        headers.add("X-User-ProfileId", profileId);
                     }))
                     .build();
 

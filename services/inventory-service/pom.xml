@@ -99,10 +99,10 @@
             <scope>runtime</scope>
         </dependency>
         <!-- kafka -->
-        <!-- <dependency>
+        <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
-        </dependency> -->
+        </dependency>
         <!-- poi (Xuất báo cáo) -->
         <dependency>
             <groupId>org.apache.poi</groupId>

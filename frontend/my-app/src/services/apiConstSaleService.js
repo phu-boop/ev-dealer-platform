@@ -3,7 +3,7 @@ import axios from "axios";
 const apiConstSaleService = axios.create({
   baseURL: "http://localhost:8080/sales/",
   headers: { "Content-Type": "application/json" },
-  withCredentials: true
+  withCredentials: true,
 });
 
 // Lấy token từ sessionStorage

@@ -52,7 +52,17 @@ export default function OAuthSuccess() {
                         showConfirmButton: true, // hiển thị nút OK
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            navigate('/', {replace: true});
+                            const roles = userData.roles.map((role) => role.name);
+                            
+                            if (roles.includes("ADMIN") || roles.includes("EVM_STAFF")) {
+                                navigate('/admin', {replace: true});
+                            } else if (roles.includes("DEALER_MANAGER")) {
+                                navigate('/dealer', {replace: true});
+                            } else if (roles.includes("DEALER_STAFF")) {
+                                navigate('/staff', {replace: true});
+                            } else {
+                                navigate('/', {replace: true});
+                            }
                         }
                     });
 

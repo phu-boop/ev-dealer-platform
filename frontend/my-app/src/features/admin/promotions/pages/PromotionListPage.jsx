@@ -7,7 +7,10 @@ import {
   TrashIcon,
   EyeIcon,
   CheckIcon,
-  CalendarIcon
+  CalendarIcon,
+  FunnelIcon,
+  ArrowUpIcon,
+  ArrowDownIcon
 } from '@heroicons/react/24/outline';
 import { usePromotions } from '../hooks/usePromotions';
 import PromotionStats from '../components/PromotionStats';
@@ -33,9 +36,13 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
-  const [alert, setAlert] = useState({ show: false, type: '', message: '' }); // State cho Alert
+  const [alert, setAlert] = useState({ show: false, type: '', message: '' });
+  const [sortConfig, setSortConfig] = useState({
+    key: 'status', // Mặc định sort theo trạng thái
+    direction: 'asc' // asc: DRAFT lên đầu, desc: ACTIVE/EXPIRED lên đầu
+  });
 
-  const filteredPromotions = useMemo(() => {
+  const sortedAndFilteredPromotions = useMemo(() => {
     let filtered = promotions;
 
     // Filter by status
@@ -52,8 +59,39 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
       );
     }
 
-    return filtered;
-  }, [promotions, selectedStatus, searchTerm]);
+    // Sort promotions
+    return filtered.sort((a, b) => {
+      // Ưu tiên sort theo trạng thái: DRAFT lên đầu
+      if (sortConfig.key === 'status') {
+        const statusPriority = {
+          'DRAFT': 1,    // Cao nhất
+          'NEAR': 2,     // Thêm NEAR vào priority
+          'ACTIVE': 3,
+          'INACTIVE': 4,
+          'EXPIRED': 5   // Thấp nhất
+        };
+
+        const aPriority = statusPriority[a.status] || 6;
+        const bPriority = statusPriority[b.status] || 6;
+
+        if (aPriority !== bPriority) {
+          return sortConfig.direction === 'asc' 
+            ? aPriority - bPriority  // DRAFT -> NEAR -> ACTIVE -> INACTIVE -> EXPIRED
+            : bPriority - aPriority; // EXPIRED -> INACTIVE -> ACTIVE -> NEAR -> DRAFT
+        }
+      }
+
+      // Nếu cùng trạng thái hoặc sort theo key khác, sort theo ngày tạo (mới nhất lên đầu)
+      const dateA = new Date(a.startDate);
+      const dateB = new Date(b.startDate);
+      
+      if (sortConfig.direction === 'asc') {
+        return dateB - dateA; // Mới nhất lên đầu
+      } else {
+        return dateA - dateB; // Cũ nhất lên đầu
+      }
+    });
+  }, [promotions, selectedStatus, searchTerm, sortConfig]);
 
   const showAlert = (type, message) => {
     setAlert({
@@ -61,12 +99,35 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
       type,
       message
     });
-    // Kéo lên top khi hiển thị alert
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCloseAlert = () => {
     setAlert({ show: false, type: '', message: '' });
+  };
+
+  const handleSort = (key) => {
+    setSortConfig(prevConfig => ({
+      key,
+      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <FunnelIcon className="h-4 w-4 opacity-50" />;
+    }
+    
+    return sortConfig.direction === 'asc' 
+      ? <ArrowUpIcon className="h-4 w-4" />
+      : <ArrowDownIcon className="h-4 w-4" />;
+  };
+
+  const getSortLabel = () => {
+    if (sortConfig.key === 'status') {
+      return sortConfig.direction === 'asc' ? 'Chưa duyệt trước' : 'Đã duyệt trước';
+    }
+    return sortConfig.direction === 'asc' ? 'Mới nhất trước' : 'Cũ nhất trước';
   };
 
   const handleApprove = async (id) => {
@@ -145,6 +206,11 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
         color: 'bg-yellow-100 text-yellow-800 border-yellow-200', 
         text: 'Chờ xác thực',
         icon: '⏳'
+      },
+      NEAR: { 
+        color: 'bg-blue-100 text-blue-800 border-blue-200', 
+        text: 'Sắp diễn ra',
+        icon: '📅'
       },
       ACTIVE: { 
         color: 'bg-green-100 text-green-800 border-green-200', 
@@ -232,11 +298,25 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
               </div>
             </div>
             
-            <StatusFilter
-              selectedStatus={selectedStatus}
-              onStatusChange={setSelectedStatus}
-              onClearFilters={() => setSelectedStatus('ALL')}
-            />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <StatusFilter
+                selectedStatus={selectedStatus}
+                onStatusChange={setSelectedStatus}
+                onClearFilters={() => setSelectedStatus('ALL')}
+              />
+
+              {/* Sort Button */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600 whitespace-nowrap">Sắp xếp:</span>
+                <button
+                  onClick={() => handleSort('status')}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  <span className="mr-2">{getSortLabel()}</span>
+                  {getSortIcon('status')}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -250,6 +330,18 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
             />
           </div>
         )}
+
+        {/* Sort Info Banner */}
+        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-6">
+          <div className="flex items-center text-blue-800">
+            <FunnelIcon className="h-4 w-4 mr-2" />
+            <span className="text-sm">
+              Đang hiển thị: {sortedAndFilteredPromotions.length} khuyến mãi • 
+              Sắp xếp: {getSortLabel()} • 
+              {sortConfig.key === 'status' && ' Mới nhất lên đầu khi cùng trạng thái'}
+            </span>
+          </div>
+        </div>
 
         {/* Promotions Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -281,9 +373,15 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredPromotions.length > 0 ? (
-                      filteredPromotions.map((promotion) => (
-                        <tr key={promotion.promotionId} className="hover:bg-gray-50 transition-colors">
+                    {sortedAndFilteredPromotions.length > 0 ? (
+                      sortedAndFilteredPromotions.map((promotion) => (
+                        <tr 
+                          key={promotion.promotionId} 
+                          className={`hover:bg-gray-50 transition-colors ${
+                            promotion.status === 'DRAFT' ? 'bg-yellow-50 border-l-4 border-l-yellow-400' : 
+                            promotion.status === 'NEAR' ? 'bg-blue-50 border-l-4 border-l-blue-400' : ''
+                          }`}
+                        >
                           <td className="px-6 py-4">
                             <div className="flex items-start space-x-3">
                               <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center">
@@ -294,6 +392,16 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                                   <p className="text-sm font-medium text-gray-900 truncate">
                                     {promotion.promotionName}
                                   </p>
+                                  {promotion.status === 'DRAFT' && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                      Cần duyệt
+                                    </span>
+                                  )}
+                                  {promotion.status === 'NEAR' && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                      Sắp diễn ra
+                                    </span>
+                                  )}
                                 </div>
                                 {promotion.description && (
                                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">
@@ -406,11 +514,26 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
               </div>
               
               {/* Summary */}
-              {filteredPromotions.length > 0 && (
+              {sortedAndFilteredPromotions.length > 0 && (
                 <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700">
-                      Hiển thị <span className="font-medium">{filteredPromotions.length}</span> khuyến mãi
+                      Hiển thị <span className="font-medium">{sortedAndFilteredPromotions.length}</span> khuyến mãi • 
+                      <span className="ml-2">
+                        <span className="text-yellow-600 font-medium">
+                          {sortedAndFilteredPromotions.filter(p => p.status === 'DRAFT').length} chờ duyệt
+                        </span>
+                        {sortedAndFilteredPromotions.filter(p => p.status === 'NEAR').length > 0 && (
+                          <span className="ml-2 text-blue-600">
+                            {sortedAndFilteredPromotions.filter(p => p.status === 'NEAR').length} sắp diễn ra
+                          </span>
+                        )}
+                        {sortedAndFilteredPromotions.filter(p => p.status === 'ACTIVE').length > 0 && (
+                          <span className="ml-2 text-green-600">
+                            {sortedAndFilteredPromotions.filter(p => p.status === 'ACTIVE').length} đang hoạt động
+                          </span>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>

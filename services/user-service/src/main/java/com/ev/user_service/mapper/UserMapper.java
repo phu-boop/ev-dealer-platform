@@ -8,6 +8,7 @@ import com.ev.user_service.entity.User;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
     User userRequesttoUser(UserRequest userRequest);
+    @Mapping(source = "url", target = "url")
     UserRespond usertoUserRespond(User user);
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "password", ignore = true)
