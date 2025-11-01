@@ -19,6 +19,7 @@ public class VariantDetailDto {
     private Float chargingTime;
     private Integer rangeKm;
     private Integer motorPower;
+    private Long modelId;
     
     private List<FeatureDto> features; 
 }

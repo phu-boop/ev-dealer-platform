@@ -21,6 +21,8 @@ import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.j
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
+import QuotationManagement from "../features/dealer/sales/pages/QuotationManagement.jsx";
+
 // customer pages
 import CustomerList from "../features/customers/pages/CustomerList.jsx";
 import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
@@ -180,6 +182,10 @@ export default function AppRoutes() {
                 path="manager/customers/:id/edit"
                 element={<EditCustomer />}
               />
+              <Route
+                  path="manager/quotations/*"
+                  element={<QuotationManagement />}
+              />
 
               {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
@@ -206,6 +212,11 @@ export default function AppRoutes() {
               <Route
                 path="staff/customers/:id/edit"
                 element={<EditCustomer />}
+              />
+
+              <Route
+                  path="staff/quotations/*"
+                  element={<QuotationManagement />}
               />
 
               {/* Promotions */}

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/promotions")
@@ -57,5 +58,18 @@ public class PromotionController {
     public ResponseEntity<List<Promotion>> getPromotionsByStatus(@PathVariable PromotionStatus status) {
         List<Promotion> list = promotionService.getPromotionsByStatus(status);
         return ResponseEntity.ok(list);
+    }
+
+    /**
+     * API cho frontend (Form Báo giá) lấy các KM đang active của đại lý
+     */
+    @GetMapping("/dealer/active")
+    public ResponseEntity<List<Promotion>> getActivePromotionsForDealer(
+            @RequestHeader("X-Dealer-Id") UUID dealerId,
+            @RequestParam(required = false) Long modelId) { // <-- THÊM THAM SỐ NÀY
+
+        // Truyền modelId (có thể null) vào service
+        List<Promotion> activePromotions = promotionService.getActivePromotionsForDealer(dealerId, Optional.ofNullable(modelId));
+        return ResponseEntity.ok(activePromotions);
     }
 }
