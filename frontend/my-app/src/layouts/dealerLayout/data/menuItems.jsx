@@ -267,7 +267,7 @@ export const dealerStaffMenuItems = [
       {
         icon: FiFileText,
         label: "Quản Lý Báo Giá",
-        path: "/dealer/manager/quotations",
+        path: "/dealer/staff/quotations",
       },
       {
         icon: FiClipboard,
