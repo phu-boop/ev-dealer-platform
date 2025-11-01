@@ -1,5 +1,6 @@
+
 // features/customer/promotions/pages/PromotionViewPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCustomerPromotions } from '../hooks/useCustomerPromotions';
 import PromotionFilter from '../components/PromotionFilter';
 import PromotionGrid from '../components/PromotionGrid';
@@ -10,6 +11,16 @@ import {
 } from '@heroicons/react/24/outline';
 
 export const PromotionViewPage = () => {
+  const [currentDealerId, setCurrentDealerId] = useState(null);
+  const [filteredPromotions, setFilteredPromotions] = useState([]);
+
+  useEffect(() => {
+    // Lấy dealerId từ sessionStorage khi component mount
+    const dealerId = sessionStorage.getItem('dealerId');
+    console.log('Current dealerId from sessionStorage:', dealerId);
+    setCurrentDealerId(dealerId);
+  }, []);
+
   const {
     promotions,
     loading,
@@ -23,6 +34,43 @@ export const PromotionViewPage = () => {
     getDealersByIds,
     getModelsByIds,
   } = useCustomerPromotions();
+
+  // Lọc khuyến mãi theo dealerId và status
+  useEffect(() => {
+    if (currentDealerId && promotions && promotions.length > 0) {
+      console.log('Filtering promotions for dealer:', currentDealerId);
+      console.log('All promotions:', promotions);
+      
+      const filtered = promotions.filter(promotion => {
+        try {
+          // Parse dealerIdJson từ chuỗi JSON thành mảng
+          const dealerIds = JSON.parse(promotion.dealerIdJson);
+          console.log(`Promotion ${promotion.promotionId} dealerIds:`, dealerIds);
+          
+          // Kiểm tra xem dealerId hiện tại có trong mảng dealerIds không
+          // VÀ chỉ lấy những promotion có status ACTIVE hoặc NEAR
+          const shouldInclude = dealerIds.includes(currentDealerId) && 
+                               (promotion.status === 'ACTIVE' || promotion.status === 'NEAR');
+          
+          console.log(`Should include promotion ${promotion.promotionId}:`, shouldInclude);
+          return shouldInclude;
+        } catch (error) {
+          console.error('Error parsing dealerIdJson for promotion:', promotion.promotionId, error);
+          return false;
+        }
+      });
+      
+      console.log('Filtered promotions:', filtered);
+      setFilteredPromotions(filtered);
+    } else {
+      console.log('No current dealerId or promotions, setting empty array');
+      setFilteredPromotions([]);
+    }
+  }, [promotions, currentDealerId]);
+
+  // Tính toán lại số lượng khuyến mãi sau khi lọc
+  const activePromotionsCountFiltered = filteredPromotions.filter(p => p.status === 'ACTIVE').length;
+  const upcomingPromotionsCountFiltered = filteredPromotions.filter(p => p.status === 'NEAR').length;
 
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,40 +113,59 @@ export const PromotionViewPage = () => {
     );
   }
 
+  // Hiển thị thông báo nếu chưa có dealerId
+  if (!currentDealerId && !loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center p-4">
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-gray-100 p-8 max-w-md text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-amber-200/50">
+            <div className="text-2xl">🔒</div>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Không có quyền truy cập</h2>
+          <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+            Không tìm thấy thông tin đại lý. Vui lòng đăng nhập lại.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50/30">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <h1 className=" text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-            
-          <div className="inline-flex items-center justify-center w-15 h-15 mr-5 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-3xl shadow-sm border border-blue-200/50 mb-6">
-            <GiftIcon className="h-10 w-10 text-blue-600" />
-          </div>
-          
-          Ưu Đãi & Khuyến Mãi
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            <div className="inline-flex items-center justify-center w-15 h-15 mr-5 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-3xl shadow-sm border border-blue-200/50 mb-6">
+              <GiftIcon className="h-10 w-10 text-blue-600" />
+            </div>
+            Ưu Đãi & Khuyến Mãi
           </h1>
+          {currentDealerId && (
+            <p className="text-gray-600 text-sm">
+              Hiển thị khuyến mãi cho đại lý của bạn
+            </p>
+          )}
         </div>
 
         {/* Filter Section */}
         <PromotionFilter
           selectedFilter={filter}
           onFilterChange={setFilter}
-          activePromotionsCount={activePromotionsCount}
-          upcomingPromotionsCount={upcomingPromotionsCount}
-          totalCount={promotions.length}
+          activePromotionsCount={activePromotionsCountFiltered}
+          upcomingPromotionsCount={upcomingPromotionsCountFiltered} // Đã đổi từ upcomingPromotionsCount sang NEAR
+          totalCount={filteredPromotions.length}
         />
-
         {/* Refresh and Info Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center space-x-4 text-sm text-gray-500">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
-              <span>Đang hoạt động: {activePromotionsCount}</span>
+              <span>Đang hoạt động: {activePromotionsCountFiltered}</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span>Sắp diễn ra: {upcomingPromotionsCount}</span>
+              <span>Sắp diễn ra: {upcomingPromotionsCountFiltered}</span>
             </div>
             {lastUpdated && (
               <div className="flex items-center space-x-2">
@@ -122,13 +189,13 @@ export const PromotionViewPage = () => {
 
         {/* Promotions Grid */}
         <PromotionGrid
-          promotions={promotions}
+          promotions={filteredPromotions}
           onViewDetails={handleViewDetails}
           loading={loading}
         />
 
         {/* Empty State */}
-        {!loading && promotions.length === 0 && (
+        {!loading && filteredPromotions.length === 0 && currentDealerId && (
           <div className="flex justify-center items-center py-16 px-4">
             <div className="text-center max-w-md">
               <div className="w-32 h-32 bg-gradient-to-br from-slate-100 to-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-200">
@@ -143,8 +210,8 @@ export const PromotionViewPage = () => {
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
                   {filter === 'ACTIVE' ? 
-                    'Hiện tại không có chương trình ưu đãi nào đang hoạt động. Vui lòng quay lại sau!' :
-                    'Các ưu đãi sắp diễn ra sẽ được hiển thị tại đây. Hãy theo dõi để không bỏ lỡ!'}
+                    'Hiện tại đại lý của bạn không có chương trình ưu đãi nào đang hoạt động.' :
+                    'Đại lý của bạn chưa có ưu đãi nào sắp diễn ra.'}
                 </p>
 
                 {filter !== 'ACTIVE' && (
