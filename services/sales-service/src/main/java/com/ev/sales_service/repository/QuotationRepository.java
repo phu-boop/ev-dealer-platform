@@ -21,4 +21,10 @@ public interface QuotationRepository extends JpaRepository<Quotation, UUID> {
      * (Phục vụ EDMS-35, để Manager lọc các báo giá PENDING)
      */
     List<Quotation> findByDealerIdAndStatus(UUID dealerId, QuotationStatus status);
+
+    /**
+     * Tìm báo giá theo ID của nhân viên
+     * (Phục vụ Dealer Staff)
+     */
+    List<Quotation> findByStaffId(UUID staffId);
 }

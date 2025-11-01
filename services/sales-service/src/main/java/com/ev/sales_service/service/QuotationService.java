@@ -3,8 +3,9 @@ package com.ev.sales_service.service;
 import com.ev.common_lib.exception.AppException; // Bạn cần import AppException từ common-lib
 import com.ev.common_lib.exception.ErrorCode; // Bạn cần import ErrorCode từ common-lib
 import com.ev.sales_service.dto.outbound.PromotionDTO;
-import com.ev.sales_service.dto.outbound.QuotationRequestDTO;
-import com.ev.sales_service.dto.outbound.QuotationResponseDTO;
+import com.ev.sales_service.dto.request.QuotationRequestDTO;
+import com.ev.sales_service.dto.response.QuotationResponseDTO;
+import com.ev.sales_service.dto.outbound.VehicleVariantDTO;
 import com.ev.sales_service.entity.Promotion;
 import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.enums.PromotionStatus;
@@ -13,8 +14,15 @@ import com.ev.sales_service.repository.PromotionRepository;
 import com.ev.sales_service.repository.QuotationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.core.ParameterizedTypeReference; // <-- THÊM
+import org.springframework.http.HttpMethod; // <-- THÊM
+import org.springframework.http.ResponseEntity; // <-- THÊM
+import com.ev.sales_service.dto.response.ApiRespondDTO; // <-- THÊM
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,6 +43,56 @@ public class QuotationService {
     // private final VehicleServiceClient vehicleServiceClient; // Tương lai sẽ dùng
     // private final CustomerServiceClient customerServiceClient; // Tương lai sẽ dùng
 
+    private final RestTemplate restTemplate; // (Phải import AppConfig.java của bạn)
+
+    @Value("${vehicle-service.uri}")
+    private String vehicleServiceUri;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    /**
+     * HÀM MỚI: Gọi VehicleService (cổng 8087) để lấy thông tin xe
+     */
+    public VehicleVariantDTO getVehicleDetails(Long variantId) {
+        try {
+            // URL đúng
+            String url = vehicleServiceUri + "/vehicle-catalog/variants/" + variantId;
+
+            // BƯỚC 1: Lấy response dưới dạng String thô
+            ResponseEntity<String> rawResponseEntity =
+                    restTemplate.exchange(url, HttpMethod.GET, null, String.class);
+
+            String rawJsonBody = rawResponseEntity.getBody();
+
+            // BƯỚC 2: GHI LOG JSON THÔ (QUAN TRỌNG NHẤT)
+            log.info("RAW JSON RESPONSE from VehicleService: {}", rawJsonBody);
+
+            // BƯỚC 3: Định nghĩa kiểu trả về
+            ParameterizedTypeReference<ApiRespondDTO<VehicleVariantDTO>> responseType =
+                    new ParameterizedTypeReference<>() {};
+
+            // BƯỚC 4: Tự convert (parse) String JSON thô sang Object
+            ApiRespondDTO<VehicleVariantDTO> apiRespond =
+                    objectMapper.readValue(rawJsonBody,
+                            objectMapper.getTypeFactory().constructType(responseType.getType())); // <-- THÊM .getType()
+
+            // Bước 5: Kiểm tra và lấy 'data'
+            if (apiRespond == null || apiRespond.getData() == null) {
+                log.error("Không thể phân tích 'data' từ JSON: {}", rawJsonBody);
+                throw new AppException(ErrorCode.DATA_NOT_FOUND);
+            }
+
+            // BƯỚC 6: Ghi log DTO sau khi convert
+            log.info("Deserialized (Đã convert) VehicleVariantDTO: {}", apiRespond.getData());
+
+            return apiRespond.getData(); // <-- Trả về đối tượng VehicleVariantDTO
+
+        } catch (Exception e) {
+            // Sửa log này để in ra lỗi chi tiết
+            log.error("Lỗi khi gọi hoặc phân tích VehicleService (variantId: {}): {}", variantId, e.getMessage(), e);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+    }
+
     @Transactional
     public QuotationResponseDTO createQuotation(QuotationRequestDTO request, UUID staffId, UUID dealerId) {
 
@@ -43,9 +101,9 @@ public class QuotationService {
         // UUID dealerId = UUID.fromString("5542f79e..."); // <-- XÓA DÒNG NÀY
 
         // --- Bước 2: Gọi VehicleService (Hardcode) ---
-        BigDecimal basePrice = getHardcodedPrice(request.getVariantId());
-        Long modelId = getHardcodedModelId(request.getVariantId());
-        log.info("Vehicle variantId: {}, modelId: {}, basePrice: {}", request.getVariantId(), modelId, basePrice);
+        VehicleVariantDTO vehicle = getVehicleDetails(request.getVariantId());
+        BigDecimal basePrice = vehicle.getPrice();
+        Long modelId = vehicle.getModelId();
 
         // --- Bước 3: Xử lý Khuyến mãi (Logic EDMS-44) ---
         Set<Promotion> appliedPromotions = new HashSet<>();
@@ -103,26 +161,41 @@ public class QuotationService {
      * @return DTO báo giá đã được cập nhật
      */
     @Transactional
-    public QuotationResponseDTO updateQuotation(UUID quotationId, QuotationRequestDTO request, UUID staffId, UUID dealerId) {
-        log.info("Attempting to update quotationId: {}", quotationId);
+    public QuotationResponseDTO updateQuotation(UUID quotationId, QuotationRequestDTO request, UUID staffId, UUID dealerId, String userRole) {
+        log.info("Attempting to update quotationId: {} by user: {}", quotationId, staffId);
 
-        // --- Bước 1: Lấy thông tin User ---
-        // UUID staffId = ...; // <-- XÓA DÒNG NÀY
-        // UUID dealerId = ...; // <-- XÓA DÒNG NÀY
-
-        // --- Bước 2: Tìm báo giá cũ ---
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
 
-        // --- Bước 3: Kiểm tra trạng thái ---
-        if (quotation.getStatus() != QuotationStatus.PENDING && quotation.getStatus() != QuotationStatus.DRAFT) {
-            log.warn("Quotation {} cannot be edited. Current state: {}", quotationId, quotation.getStatus());
-            throw new AppException(ErrorCode.INVALID_STATE);
+        boolean canUpdate = false;
+        if (userRole == null) {
+            log.warn("User {} FORBIDDEN to update quote {}. Role is NULL", staffId, quotationId);
+            throw new AppException(ErrorCode.FORBIDDEN); // Lỗi 403
+        }
+
+        // 1. Manager có thể sửa bất kỳ quote PENDING/DRAFT nào trong đại lý của họ
+        if (userRole.contains("DEALER_MANAGER")) { // <-- SỬA: Dùng .contains()
+            if (quotation.getDealerId().equals(dealerId) &&
+                    (quotation.getStatus() == QuotationStatus.PENDING || quotation.getStatus() == QuotationStatus.DRAFT)) {
+                canUpdate = true;
+            }
+        }
+        // 2. Staff chỉ có thể sửa quote DRAFT của chính MÌNH
+        else if (userRole.contains("DEALER_STAFF")) { // <-- SỬA: Dùng .contains()
+            if (quotation.getStaffId().equals(staffId) && quotation.getStatus() == QuotationStatus.DRAFT) {
+                canUpdate = true;
+            }
+        }
+
+        if (!canUpdate) {
+            log.warn("User {} FORBIDDEN to update quote {}. Role: {}, Status: {}", staffId, quotationId, userRole, quotation.getStatus());
+            throw new AppException(ErrorCode.FORBIDDEN); // Lỗi 403
         }
 
         // --- Bước 4: Lấy thông tin xe ---
-        BigDecimal basePrice = getHardcodedPrice(request.getVariantId());
-        Long modelId = getHardcodedModelId(request.getVariantId());
+        VehicleVariantDTO vehicle = getVehicleDetails(request.getVariantId());
+        BigDecimal basePrice = vehicle.getPrice();
+        Long modelId = vehicle.getModelId();
 
         // --- Bước 5: Xử lý Khuyến mãi (SỬA: Dùng dealerId từ tham số) ---
         Set<Promotion> appliedPromotions = new HashSet<>();
@@ -272,6 +345,47 @@ public class QuotationService {
     }
 
     /**
+     * Lấy báo giá của MỘT Staff (cho Staff)
+     */
+    public List<QuotationResponseDTO> getMyQuotations(UUID staffId) {
+        log.info("Fetching all quotations for staffId: {}", staffId);
+        List<Quotation> quotations = quotationRepository.findByStaffId(staffId);
+        return quotations.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy báo giá của MỘT Staff theo status (cho Staff)
+     */
+    public List<QuotationResponseDTO> getMyQuotationsByStatus(UUID staffId, QuotationStatus status) {
+        log.info("Fetching quotations for staffId: {} with status: {}", staffId, status);
+
+        // Bạn có thể tạo hàm findByStaffIdAndStatus trong Repository
+        // Hoặc lọc bằng Java Stream như sau:
+        List<Quotation> quotations = quotationRepository.findByStaffId(staffId).stream()
+                .filter(q -> q.getStatus() == status)
+                .collect(Collectors.toList());
+
+        return quotations.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy chi tiết một báo giá bằng ID
+     * (Phục vụ trang Chi tiết & Chỉnh sửa)
+     */
+    public QuotationResponseDTO getQuotationDetailsById(UUID quotationId) {
+        log.info("Fetching details for quotationId: {}", quotationId);
+
+        Quotation quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+
+        return mapToResponseDTO(quotation);
+    }
+
+    /**
      * Cập nhật trạng thái của một báo giá
      *
      * @param quotationId ID của báo giá cần cập nhật
@@ -279,7 +393,13 @@ public class QuotationService {
      * @return DTO báo giá đã được cập nhật
      */
     @Transactional
-    public QuotationResponseDTO updateQuotationStatus(UUID quotationId, QuotationStatus newStatus) {
+    public QuotationResponseDTO updateQuotationStatus(UUID quotationId, QuotationStatus newStatus, String userRole) { // <-- THÊM userRole
+
+        if (userRole == null || !userRole.contains("DEALER_MANAGER")) {
+            log.warn("User with role {} FORBIDDEN to update status.", userRole);
+            throw new AppException(ErrorCode.FORBIDDEN); // Chỉ Manager được duyệt
+        }
+
         log.info("Attempting to update status for quotationId: {} to {}", quotationId, newStatus);
 
         // 1. Chỉ cho phép cập nhật sang 2 trạng thái này
@@ -315,35 +435,5 @@ public class QuotationService {
 
         // 5. Trả về DTO
         return mapToResponseDTO(updatedQuotation);
-    }
-
-
-    // --- CÁC HÀM GIẢ LẬP (SẼ XÓA KHI KẾT NỐI MICROSERVICE) ---
-
-    private BigDecimal getHardcodedPrice(Long variantId) {
-        // Lấy dữ liệu giả lập từ vehicle_db
-        if (variantId == 4L) { // VF 9 Eco
-            return new BigDecimal("1491000000.00");
-        }
-        if (variantId == 5L) { // VF 9 Plus
-            return new BigDecimal("1684000000.00");
-        }
-        if (variantId == 10L) { // VF 6 Plus
-            return new BigDecimal("1309000000.00");
-        }
-        // Mặc định
-        return new BigDecimal("1000000000.00");
-    }
-
-    private Long getHardcodedModelId(Long variantId) {
-        // Lấy dữ liệu giả lập từ vehicle_db
-        if (variantId == 4L || variantId == 5L) {
-            return 3L; // Model VF 9
-        }
-        if (variantId == 9L || variantId == 10L) {
-            return 6L; // Model VF 6
-        }
-        // Mặc định
-        return 1L;
     }
 }

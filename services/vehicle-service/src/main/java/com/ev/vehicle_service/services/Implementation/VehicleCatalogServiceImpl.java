@@ -539,10 +539,11 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         // 1. Lấy đối tượng Model cha để sử dụng cho việc kế thừa
         VehicleModel model = variant.getVehicleModel();
         VariantDetailDto dto = new VariantDetailDto();
-    
+
         // 2. Map các thông tin cơ bản, không cần logic kế thừa
         dto.setVariantId(variant.getVariantId());
         dto.setVersionName(variant.getVersionName());
+        dto.setModelId(model.getModelId());
         dto.setColor(variant.getColor());
         dto.setSkuCode(variant.getSkuCode());
         dto.setPrice(variant.getPrice());
