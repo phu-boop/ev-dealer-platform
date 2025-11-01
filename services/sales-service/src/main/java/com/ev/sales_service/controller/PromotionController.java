@@ -65,11 +65,17 @@ public class PromotionController {
      */
     @GetMapping("/dealer/active")
     public ResponseEntity<List<Promotion>> getActivePromotionsForDealer(
+<<<<<<< HEAD
             @RequestHeader("X-Dealer-Id") UUID dealerId,
             @RequestParam(required = false) Long modelId) { // <-- THÊM THAM SỐ NÀY
 
         // Truyền modelId (có thể null) vào service
         List<Promotion> activePromotions = promotionService.getActivePromotionsForDealer(dealerId, Optional.ofNullable(modelId));
+=======
+            @RequestHeader("X-Dealer-Id") UUID dealerId) {
+
+        List<Promotion> activePromotions = promotionService.getActivePromotionsForDealer(dealerId);
+>>>>>>> 179a883 (fix bug Quotation)
         return ResponseEntity.ok(activePromotions);
     }
 }
