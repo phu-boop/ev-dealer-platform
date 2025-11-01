@@ -49,6 +49,7 @@ public class SecurityConfig {
                         // Thêm tiền tố /sales/ vào trước
                         "/sales/promotions/**",
                         "/sales/quotations/**",
+                        "/sales/**",
                         // "/sales/**" // Dòng này của bạn đã đúng, nhưng 2 dòng trên rõ ràng hơn
                         
                         // vehicle-service

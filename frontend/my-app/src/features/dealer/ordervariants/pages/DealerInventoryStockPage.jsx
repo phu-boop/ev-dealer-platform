@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FiSearch, FiEdit } from "react-icons/fi";
 import { getMyStock } from "../services/dealerSalesService";
-import DealerReorderModal from "../../promotions/components/DealerReorderModal";
+import DealerReorderModal from "../components/DealerReorderModal";
 
 // Component Badge (copy từ InventoryStatusTab)
 const StatusBadge = ({ status }) => {

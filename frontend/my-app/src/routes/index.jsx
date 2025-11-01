@@ -21,6 +21,7 @@ import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.j
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
+import QuotationManagement from "../features/dealer/sales/pages/QuotationManagement.jsx";
 // customer pages
 import CustomerList from "../features/customers/pages/CustomerList.jsx";
 import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
@@ -35,10 +36,10 @@ import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx"
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 
 // Dealer
-import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
-import B2BOrderForm from "../features/dealer/promotions/pages/B2BOrderForm.jsx";
-import DealerInventoryStockPage from "../features/dealer/promotions/pages/DealerInventoryStockPage.jsx";
-import DealerProductCatalogPage from "../features/dealer/promotions/pages/DealerProductCatalogPage.jsx";
+import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPage.jsx";
+import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
+import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
+import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -182,7 +183,6 @@ export default function AppRoutes() {
                 path="manager/customers/:id/edit"
                 element={<EditCustomer />}
               />
-
               <Route
                 path="manager/quotations/*"
                 element={<QuotationManagement />}
@@ -227,6 +227,11 @@ export default function AppRoutes() {
                 element={<EditCustomer />}
               />
 
+              <Route
+                path="staff/quotations/*"
+                element={<QuotationManagement />}
+              />
+
               {/* Danh mục xe & báo cáo */}
               {/* Xe có sẵn trong kho đại lí */}
               <Route
@@ -237,11 +242,6 @@ export default function AppRoutes() {
               <Route
                 path="staff/vehicles/all"
                 element={<DealerProductCatalogPage />}
-              />
-
-              <Route
-                path="staff/quotations/*"
-                element={<QuotationManagement />}
               />
 
               {/* Promotions */}
