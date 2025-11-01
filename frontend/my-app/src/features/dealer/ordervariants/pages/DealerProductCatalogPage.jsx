@@ -4,7 +4,7 @@ import {
   getAllVariantsPaginated,
   getComparisonDetails,
   getVariantDetails,
-} from "../services/vehicleCatalogService";
+} from "../../promotions/services/vehicleCatalogService";
 import VariantDetailsModal from "../../../../components/common/detail/VariantDetailsModal";
 import ProductCard from "../../../../components/common/ProductCard";
 import CompareTray from "../../../../components/common/CompareTray";

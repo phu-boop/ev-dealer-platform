@@ -45,8 +45,11 @@ public class SecurityConfig {
                         // payment-service
                         "/payments/**",
                         
-                        // sales-service
-                        "/sales/**",
+                        // === SỬA LẠI ĐƯỜNG DẪN CHO SALES-SERVICE ===
+                        // Thêm tiền tố /sales/ vào trước
+                        "/sales/promotions/**",
+                        "/sales/quotations/**",
+                        // "/sales/**" // Dòng này của bạn đã đúng, nhưng 2 dòng trên rõ ràng hơn
                         
                         // vehicle-service
                         "/vehicles/**"

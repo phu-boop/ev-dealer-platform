@@ -77,6 +77,11 @@ export const dealerManagerMenuItems = [
     path: "/dealer/manager/sales",
     submenu: [
       {
+        icon: FiFileText,
+        label: "Quản Lý Báo Giá",
+        path: "/dealer/manager/quotations",
+      },
+      {
         icon: FiClipboard,
         label: "Đơn Hàng Mới",
         path: "/dealer/manager/orders/create",
@@ -259,6 +264,11 @@ export const dealerStaffMenuItems = [
     label: "Quy Trình Bán Hàng",
     path: "/dealer/staff/sales",
     submenu: [
+      {
+        icon: FiFileText,
+        label: "Quản Lý Báo Giá",
+        path: "/dealer/manager/quotations",
+      },
       {
         icon: FiClipboard,
         label: "Đơn Hàng Mới",
