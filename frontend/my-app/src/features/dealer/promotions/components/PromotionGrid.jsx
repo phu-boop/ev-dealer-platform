@@ -5,31 +5,20 @@ import PromotionCard from './PromotionCard';
 export const PromotionGrid = ({ promotions, onViewDetails, loading }) => {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(6)].map((_, index) => (
-          <div key={index} className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-lg border border-white/50 p-8 animate-pulse">
-            <div className="flex flex-col items-center">
-              {/* Discount circle skeleton */}
-              <div className="w-24 h-24 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full mb-6 border border-gray-300/50"></div>
-              
-              {/* Status badge skeleton */}
-              <div className="h-6 bg-gray-200 rounded-full w-32 mb-4"></div>
-              
-              {/* Title skeleton */}
-              <div className="h-5 bg-gray-200 rounded w-4/5 mb-3"></div>
-              <div className="h-5 bg-gray-200 rounded w-3/5 mb-4"></div>
-              
-              {/* Description skeleton */}
-              <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-5/6 mb-4"></div>
-              
-              {/* Date skeletons */}
-              <div className="h-12 bg-gray-200 rounded-xl w-full mb-3"></div>
-              <div className="h-12 bg-gray-200 rounded-xl w-full mb-6"></div>
-              
-              {/* Button skeleton */}
-              <div className="h-12 bg-gray-200 rounded-xl w-full"></div>
+          <div key={index} className="bg-white rounded-lg border p-6 animate-pulse">
+            <div className="flex justify-between mb-4">
+              <div className="h-6 bg-gray-200 rounded w-20"></div>
+              <div className="h-8 bg-gray-200 rounded w-12"></div>
             </div>
+            <div className="h-5 bg-gray-200 rounded w-4/5 mb-3"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/5 mb-4"></div>
+            <div className="space-y-2 mb-4">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded"></div>
+            </div>
+            <div className="h-10 bg-gray-200 rounded"></div>
           </div>
         ))}
       </div>
@@ -38,23 +27,22 @@ export const PromotionGrid = ({ promotions, onViewDetails, loading }) => {
 
   if (promotions.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-lg border border-white/50 p-12 max-w-md mx-auto">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-blue-200/50">
-            <div className="text-3xl">🎁</div>
+      <div className="text-center py-12">
+        <div className="bg-white rounded-lg border p-8 max-w-md mx-auto">
+          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">🎁</span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">Không có khuyến mãi</h3>
-          <p className="text-gray-600 mb-6 leading-relaxed">
-            Hiện tại không có chương trình khuyến mãi nào phù hợp với bộ lọc của bạn.
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Không có khuyến mãi</h3>
+          <p className="text-gray-600 text-sm">
+            Hiện tại không có chương trình khuyến mãi nào phù hợp.
           </p>
-          <div className="w-16 h-1 bg-gradient-to-r from-gray-300 to-transparent rounded-full mx-auto"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {promotions.map((promotion) => (
         <PromotionCard
           key={promotion.promotionId}
