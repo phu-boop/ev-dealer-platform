@@ -103,3 +103,17 @@ export const getQuotationById = (id) => {
     return apiConstSaleService.get(API_URL.GET_BY_ID(id));
 };
 
+/**
+ * Lấy tất cả khuyến mãi đang ACTIVE cho đại lý hiện tại
+ * @param {string} dealerId - UUID của đại lý (từ context)
+ * @returns {Promise<Array>} Danh sách khuyến mãi
+ */
+export const getActiveDealerPromotions = (dealerId) => {
+    // URL sẽ là: http://localhost:8080/sales/promotions/dealer/active
+    return apiConstSaleService.get("/promotions/dealer/active", {
+        headers: {
+            "X-Dealer-Id": dealerId,
+        },
+    });
+};
+

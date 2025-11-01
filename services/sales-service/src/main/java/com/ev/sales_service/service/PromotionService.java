@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import java.util.stream.Collectors;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -131,6 +132,42 @@ public class PromotionService {
                 .orElseThrow(() -> new EntityNotFoundException("Promotion not found"));
         existing.setStatus(PromotionStatus.ACTIVE);
         return promotionRepository.save(existing);
+    }
+
+    /**
+     * Lấy các KM đang ACTIVE cho một đại lý cụ thể
+     * (Phục vụ cho Form tạo báo giá)
+     *
+     * @param dealerId ID của đại lý (lấy từ header)
+     * @return List<Promotion>
+     */
+    public List<Promotion> getActivePromotionsForDealer(UUID dealerId) {
+        // 1. Lấy tất cả KM đang ACTIVE
+        List<Promotion> allActivePromotions = promotionRepository.findByStatus(PromotionStatus.ACTIVE);
+
+        // 2. Lọc danh sách
+        return allActivePromotions.stream()
+                .filter(promo -> {
+                    String dealerJson = promo.getDealerIdJson();
+                    LocalDateTime now = LocalDateTime.now();
+
+                    // 2.1. Kiểm tra ngày (phòng trường hợp cron job chưa chạy)
+                    if (promo.getStartDate() != null && promo.getStartDate().isAfter(now)) {
+                        return false;
+                    }
+                    if (promo.getEndDate() != null && promo.getEndDate().isBefore(now)) {
+                        return false;
+                    }
+
+                    // 2.2. Nếu là KM chung (không áp dụng cho đại lý cụ thể) -> Thêm vào
+                    if (dealerJson == null || dealerJson.isEmpty() || dealerJson.equals("[]")) {
+                        return true;
+                    }
+
+                    // 2.3. Nếu là KM riêng, kiểm tra xem ID của đại lý có nằm trong chuỗi JSON không
+                    return dealerJson.contains(dealerId.toString());
+                })
+                .collect(Collectors.toList());
     }
 }
 

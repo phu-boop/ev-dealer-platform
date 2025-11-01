@@ -58,4 +58,15 @@ public class PromotionController {
         List<Promotion> list = promotionService.getPromotionsByStatus(status);
         return ResponseEntity.ok(list);
     }
+
+    /**
+     * API cho frontend (Form Báo giá) lấy các KM đang active của đại lý
+     */
+    @GetMapping("/dealer/active")
+    public ResponseEntity<List<Promotion>> getActivePromotionsForDealer(
+            @RequestHeader("X-Dealer-Id") UUID dealerId) {
+
+        List<Promotion> activePromotions = promotionService.getActivePromotionsForDealer(dealerId);
+        return ResponseEntity.ok(activePromotions);
+    }
 }

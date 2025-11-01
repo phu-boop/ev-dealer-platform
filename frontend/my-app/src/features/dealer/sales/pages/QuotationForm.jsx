@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthContext } from '../../../auth/AuthProvider';
-import { createQuotation, getQuotationById, updateQuotation } from '../services/salesService';
+import { createQuotation, getQuotationById, updateQuotation, getActiveDealerPromotions } from '../services/salesService';
 import Swal from 'sweetalert2';
 
 // Import UI thật của bạn
@@ -20,10 +20,13 @@ const QuotationForm = () => {
     const [formData, setFormData] = useState({
         variantId: '',
         customerId: '',
-        promotionIds: '', // Sẽ là chuỗi UUIDs cách nhau bằng dấu phẩy
+        promotionIds: [], // Chuyển từ chuỗi '' thành mảng rỗng []
         termsConditions: '',
         saveAsDraft: false,
     });
+
+    const [promoOptions, setPromoOptions] = useState([]);
+    const [promoLoading, setPromoLoading] = useState(true);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -38,8 +41,8 @@ const QuotationForm = () => {
                     setFormData({
                         variantId: quote.variantId.toString(),
                         customerId: quote.customerId.toString(),
-                        // Chuyển mảng promotions thành chuỗi ID cách nhau bằng dấu phẩy
-                        promotionIds: quote.appliedPromotions.map(p => p.id).join(', '),
+                        // Chuyển mảng promotions thành mảng các chuỗi ID
+                        promotionIds: quote.appliedPromotions.map(p => p.id),
                         termsConditions: quote.termsConditions || '',
                         saveAsDraft: quote.status === 'DRAFT',
                     });
@@ -52,13 +55,38 @@ const QuotationForm = () => {
         }
     }, [id, isEditMode]);
 
+    // Bước 1.5 - Lấy danh sách Khuyến mãi
+    useEffect(() => {
+        if (dealerId) {
+            setPromoLoading(true);
+            getActiveDealerPromotions(dealerId)
+                .then(response => {
+                    setPromoOptions(response.data);
+                })
+                .catch(err => {
+                    console.error("Lỗi khi tải khuyến mãi:", err);
+                    // Không báo lỗi lớn, chỉ ghi nhận
+                })
+                .finally(() => setPromoLoading(false));
+        }
+    }, [dealerId]); // Chạy lại khi dealerId có
+
     // Bước 2: Xử lý thay đổi trên form
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value,
-        }));
+        const { name, value, type, checked, options } = e.target;
+
+        if (name === "promotionIds" && type === "select-multiple") {
+            // SỬA: Logic cho ô multi-select
+            const selectedIds = Array.from(options)
+                .filter(option => option.selected)
+                .map(option => option.value);
+            setFormData(prev => ({ ...prev, promotionIds: selectedIds }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value,
+            }));
+        }
     };
 
     // Bước 3: Xử lý khi nhấn "Lưu"
@@ -78,7 +106,7 @@ const QuotationForm = () => {
             variantId: parseInt(formData.variantId, 10),
             customerId: parseInt(formData.customerId, 10),
             // Chuyển chuỗi UUID (cách nhau bằng dấu phẩy) thành mảng
-            promotionIds: formData.promotionIds.split(',').map(id => id.trim()).filter(Boolean),
+            promotionIds: formData.promotionIds,
             termsConditions: formData.termsConditions,
             saveAsDraft: formData.saveAsDraft,
         };
@@ -138,13 +166,34 @@ const QuotationForm = () => {
                     required
                 />
 
-                <Input
-                    label="ID Khuyến mãi (cách nhau bằng dấu phẩy)"
-                    name="promotionIds"
-                    value={formData.promotionIds}
-                    onChange={handleChange}
-                    placeholder="Ví dụ: uuid-1, uuid-2"
-                />
+                <div>
+                    <label htmlFor="promotionIds" className="block text-sm font-medium text-gray-700 mb-1">
+                        Chọn Khuyến mãi
+                    </label>
+                    <select
+                        id="promotionIds"
+                        name="promotionIds"
+                        multiple={true} // Cho phép chọn nhiều
+                        value={formData.promotionIds} // Giá trị là một mảng
+                        onChange={handleChange}
+                        disabled={promoLoading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        size={5} // Hiển thị 5 dòng
+                    >
+                        {promoLoading ? (
+                            <option disabled>Đang tải khuyến mãi...</option>
+                        ) : promoOptions.length === 0 ? (
+                            <option disabled>Hiện không có khuyến mãi nào được áp dụng</option>
+                        ) : (
+                            promoOptions.map(promo => (
+                                <option key={promo.promotionId} value={promo.promotionId}>
+                                    {promo.promotionName} ({promo.discountRate * 100}%)
+                                </option>
+                            ))
+                        )}
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều khuyến mãi.</p>
+                </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">

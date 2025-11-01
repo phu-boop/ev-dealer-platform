@@ -110,16 +110,20 @@ public class QuotationService {
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
 
         boolean canUpdate = false;
+        if (userRole == null) {
+            log.warn("User {} FORBIDDEN to update quote {}. Role is NULL", staffId, quotationId);
+            throw new AppException(ErrorCode.FORBIDDEN); // Lỗi 403
+        }
 
         // 1. Manager có thể sửa bất kỳ quote PENDING/DRAFT nào trong đại lý của họ
-        if ("DEALER_MANAGER".equals(userRole)) {
+        if (userRole.contains("DEALER_MANAGER")) { // <-- SỬA: Dùng .contains()
             if (quotation.getDealerId().equals(dealerId) &&
                     (quotation.getStatus() == QuotationStatus.PENDING || quotation.getStatus() == QuotationStatus.DRAFT)) {
                 canUpdate = true;
             }
         }
         // 2. Staff chỉ có thể sửa quote DRAFT của chính MÌNH
-        else if ("DEALER_STAFF".equals(userRole)) {
+        else if (userRole.contains("DEALER_STAFF")) { // <-- SỬA: Dùng .contains()
             if (quotation.getStaffId().equals(staffId) && quotation.getStatus() == QuotationStatus.DRAFT) {
                 canUpdate = true;
             }
@@ -332,7 +336,7 @@ public class QuotationService {
     @Transactional
     public QuotationResponseDTO updateQuotationStatus(UUID quotationId, QuotationStatus newStatus, String userRole) { // <-- THÊM userRole
 
-        if (!"DEALER_MANAGER".equals(userRole)) {
+        if (userRole == null || !userRole.contains("DEALER_MANAGER")) {
             log.warn("User with role {} FORBIDDEN to update status.", userRole);
             throw new AppException(ErrorCode.FORBIDDEN); // Chỉ Manager được duyệt
         }
