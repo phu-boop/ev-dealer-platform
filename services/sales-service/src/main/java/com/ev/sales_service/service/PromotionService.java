@@ -100,17 +100,34 @@ public class PromotionService {
         List<Promotion> promotions = promotionRepository.findAll();
 
         for (Promotion promotion : promotions) {
-            if (promotion.getStartDate() != null && promotion.getEndDate() != null) {
-                if (promotion.getStatus().equals(PromotionStatus.ACTIVE)) {
-                    if (promotion.getEndDate().isBefore(now)) {
-                        promotion.setStatus(PromotionStatus.EXPIRED);
-                    } else if (promotion.getStartDate().isAfter(now)) {
-                        promotion.setStatus(PromotionStatus.INACTIVE);
-                    }
+            if (promotion.getStartDate() == null || promotion.getEndDate() == null) continue;
+
+            // Bỏ qua nếu đã xóa
+            if (promotion.getStatus().equals(PromotionStatus.DELETED)) continue;
+
+            // Hết hạn
+            if (promotion.getEndDate().isBefore(now)) {
+                promotion.setStatus(PromotionStatus.EXPIRED);
+                continue;
+            }
+
+            // Chưa đến ngày bắt đầu
+            if (promotion.getStartDate().isAfter(now)) {
+                if (promotion.getStatus().equals(PromotionStatus.DRAFT)) {
+                    promotion.setStatus(PromotionStatus.NEAR); // Đã duyệt nhưng chưa tới hạn
                 }
+                continue;
+            }
+            // Đang trong thời gian hoạt động
+            if (promotion.getStartDate().isBefore(now) && promotion.getEndDate().isAfter(now)) {
+                if (promotion.getStatus().equals(PromotionStatus.DRAFT)) {
+                    promotion.setStatus(PromotionStatus.INACTIVE); // Đã tới ngày nhưng chưa kích hoạt
+                } else if (promotion.getStatus().equals(PromotionStatus.NEAR)) {
+                    promotion.setStatus(PromotionStatus.ACTIVE); // Đã duyệt và tới ngày
+                }
+
             }
         }
-
         promotionRepository.saveAll(promotions);
     }
 
@@ -129,7 +146,7 @@ public class PromotionService {
     public Promotion authenticPromotion(UUID id) {
         Promotion existing = promotionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Promotion not found"));
-        existing.setStatus(PromotionStatus.ACTIVE);
+        existing.setStatus(PromotionStatus.NEAR);
         return promotionRepository.save(existing);
     }
 }

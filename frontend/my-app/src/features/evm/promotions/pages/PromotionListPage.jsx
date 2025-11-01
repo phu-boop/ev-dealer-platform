@@ -1,4 +1,3 @@
-// pages/PromotionListPage.js (Final version with proper data mapping)
 import PromotionSkeleton from "./../components/PromotionSkeleton";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { promotionService } from "../services/promotionService";
@@ -21,7 +20,7 @@ import {
   EnvelopeIcon,
   XCircleIcon
 } from "@heroicons/react/24/outline";
-import { format, parseISO, isBefore, isAfter } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 // Services
@@ -38,7 +37,8 @@ export default function PromotionListPage({ onCreate }) {
     pending: 0,
     active: 0,
     expired: 0,
-    inactive: 0
+    inactive: 0,
+    near: 0
   });
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -64,11 +64,20 @@ export default function PromotionListPage({ onCreate }) {
     setError(null);
     promotionService.getAll()
       .then((res) => {
-        const promotionsWithAutoStatus = res.data.map(promo => ({
-          ...promo,
-          autoStatus: calculateAutoStatus(promo)
-        }));
-        setPromotions(promotionsWithAutoStatus);
+        // Sử dụng trực tiếp status từ backend, không tính toán autoStatus
+        if(sessionStorage.getItem("roles").includes("DEALER_MANAGER")){
+          const dealerCurrent = sessionStorage.getItem("dealerId");
+          console.log("Filtering promotions for dealer manager:", dealerCurrent);
+          const filtered = [];
+          res.data.filter(promo => {
+            if(promo.dealerIdJson && promo.dealerIdJson.includes(dealerCurrent)){
+              filtered.push(promo);
+            }
+          });
+          setPromotions(filtered);
+        }else{
+          setPromotions(res.data);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -106,24 +115,15 @@ export default function PromotionListPage({ onCreate }) {
     }
   }, []);
 
-  const calculateAutoStatus = useCallback((promotion) => {
-    const now = new Date();
-    const startDate = new Date(promotion.startDate);
-    const endDate = new Date(promotion.endDate);
-
-    if (isBefore(now, startDate)) return "DRAFT";
-    if (isAfter(now, endDate)) return "EXPIRED";
-    if (isAfter(now, startDate) && isBefore(now, endDate)) return "ACTIVE";
-    return "INACTIVE";
-  }, []);
-
+  // Sửa hàm calculateStats để chỉ dùng status từ backend
   const calculateStats = useCallback(() => {
     const newStats = {
       total: promotions.length,
-      pending: promotions.filter(p => p.status === "DRAFT" || p.autoStatus === "DRAFT").length,
-      active: promotions.filter(p => p.status === "ACTIVE" || p.autoStatus === "ACTIVE").length,
-      expired: promotions.filter(p => p.status === "EXPIRED" || p.autoStatus === "EXPIRED").length,
-      inactive: promotions.filter(p => p.status === "INACTIVE").length
+      pending: promotions.filter(p => p.status === "DRAFT").length,
+      active: promotions.filter(p => p.status === "ACTIVE").length,
+      expired: promotions.filter(p => p.status === "EXPIRED").length,
+      inactive: promotions.filter(p => p.status === "INACTIVE").length,
+      near: promotions.filter(p => p.status === "NEAR").length
     };
     setStats(newStats);
   }, [promotions]);
@@ -135,18 +135,14 @@ export default function PromotionListPage({ onCreate }) {
     } else {
       promotionService.getByStatus(status)
         .then((res) => {
-          const promotionsWithAutoStatus = res.data.map(promo => ({
-            ...promo,
-            autoStatus: calculateAutoStatus(promo)
-          }));
-          setPromotions(promotionsWithAutoStatus);
+          setPromotions(res.data);
         })
         .catch((err) => {
           console.error(err);
           setError("Lỗi khi lọc khuyến mãi!");
         });
     }
-  }, [loadPromotions, calculateAutoStatus]);
+  }, [loadPromotions]);
 
   const handleViewDetails = useCallback(async (promotion) => {
     const mainEl = document.querySelector('main.flex-1');
@@ -162,7 +158,7 @@ export default function PromotionListPage({ onCreate }) {
     setSelectedPromotion(null);
   }, []);
 
-  // Hàm lấy thông tin đầy đủ của models từ ID - ĐÃ SỬA
+  // Hàm lấy thông tin đầy đủ của models từ ID
   const getApplicableModelsDetails = useCallback((promotion) => {
     try {
       if (!promotion.applicableModelsJson) return [];
@@ -191,7 +187,7 @@ export default function PromotionListPage({ onCreate }) {
     }
   }, [allModels]);
 
-  // Hàm lấy thông tin đầy đủ của dealers từ ID - ĐÃ SỬA
+  // Hàm lấy thông tin đầy đủ của dealers từ ID
   const getApplicableDealersDetails = useCallback((promotion) => {
     try {
       if (!promotion.dealerIdJson) return [];
@@ -240,6 +236,14 @@ export default function PromotionListPage({ onCreate }) {
         borderColor: "border-yellow-200",
         icon: ClockIcon,
       },
+      NEAR: {
+        label: "Sắp diễn ra",
+        description: "Chương trình sắp được áp dụng",
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-200",
+        icon: ClockIcon,
+      },
       ACTIVE: {
         label: "Đang hoạt động",
         description: "Chương trình đang được áp dụng",
@@ -269,14 +273,25 @@ export default function PromotionListPage({ onCreate }) {
     return configs[status] || configs.DRAFT;
   }, []);
 
+  // Sửa hàm getStatusBadge để chỉ dùng status từ backend
   const getStatusBadge = useCallback((promotion) => {
-    const displayStatus = promotion.status === "DRAFT" ? "DRAFT" : promotion.autoStatus;
+    const displayStatus = promotion.status;
     
     const statusConfig = {
       DRAFT: { 
         color: "bg-yellow-100 text-yellow-800 border-yellow-200", 
         text: "Đang chờ xác thực",
         icon: "⏳"
+      },
+      NEAR: { 
+        color: "bg-blue-100 text-blue-800 border-blue-200", 
+        text: "Sắp diễn ra",
+        icon: "📅"
+      },
+      INACTIVE: { 
+        color: "bg-gray-100 text-gray-800 border-gray-200", 
+        text: "Không hoạt động",
+        icon: "⏸️"
       },
       ACTIVE: { 
         color: "bg-green-100 text-green-800 border-green-200", 
@@ -287,11 +302,6 @@ export default function PromotionListPage({ onCreate }) {
         color: "bg-red-100 text-red-800 border-red-200", 
         text: "Đã hết hạn",
         icon: "❌"
-      },
-      INACTIVE: { 
-        color: "bg-gray-100 text-gray-800 border-gray-200", 
-        text: "Không hoạt động",
-        icon: "⏸️"
       }
     };
     
@@ -361,16 +371,17 @@ export default function PromotionListPage({ onCreate }) {
     return { days, hours, minutes };
   }, []);
 
-  // Render Detail Modal với dữ liệu đã được map chính xác
+  // Render Detail Modal - sử dụng status từ backend
   const renderDetailModal = () => {
     if (!selectedPromotion) return null;
 
-    const statusConfig = getStatusConfig(selectedPromotion.autoStatus);
+    // Sử dụng status trực tiếp từ backend
+    const statusConfig = getStatusConfig(selectedPromotion.status);
     const StatusIcon = statusConfig.icon;
     const duration = calculateDuration(selectedPromotion.startDate, selectedPromotion.endDate);
     const dateStatus = getDateStatus(selectedPromotion.startDate, selectedPromotion.endDate);
 
-    // Lấy thông tin đầy đủ của models và dealers - ĐÃ SỬA
+    // Lấy thông tin đầy đủ của models và dealers
     const applicableModels = getApplicableModelsDetails(selectedPromotion);
     const applicableDealers = getApplicableDealersDetails(selectedPromotion);
 
@@ -650,7 +661,7 @@ export default function PromotionListPage({ onCreate }) {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -672,6 +683,19 @@ export default function PromotionListPage({ onCreate }) {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Chờ xác thực</p>
                 <p className="text-2xl font-semibold text-yellow-600">{stats.pending}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 text-sm">📅</span>
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Sắp diễn ra</p>
+                <p className="text-2xl font-semibold text-blue-600">{stats.near}</p>
               </div>
             </div>
           </div>
@@ -738,6 +762,7 @@ export default function PromotionListPage({ onCreate }) {
               {[
                 { value: "ALL", label: "Tất cả", color: "gray" },
                 { value: "DRAFT", label: "Chờ xác thực", color: "yellow" },
+                { value: "NEAR", label: "Sắp diễn ra", color: "blue" },
                 { value: "ACTIVE", label: "Đang hoạt động", color: "green" },
                 { value: "EXPIRED", label: "Đã hết hạn", color: "red" },
                 { value: "INACTIVE", label: "Không hoạt động", color: "gray" }
