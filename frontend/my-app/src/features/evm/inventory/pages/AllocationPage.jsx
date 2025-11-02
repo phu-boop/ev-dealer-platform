@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FiCheck, FiTruck, FiList, FiTrash2, FiXCircle } from "react-icons/fi";
+import Swal from "sweetalert2";
 import {
   getB2BOrders,
   approveB2BOrder,
@@ -7,7 +8,7 @@ import {
   cancelOrderByStaff,
   deleteOrder,
 } from "../services/evmSalesService"; // Service của EVM/Admin
-import { getAllDealersList } from "../../../dealer/promotions/services/dealerSalesService"; // Service để lấy tên dealer
+import { getAllDealersList } from "../../../dealer/ordervariants/services/dealerSalesService"; // Service để lấy tên dealer
 import ShipmentModal from "../components/ShipmentModal"; // Modal nhập VIN khi giao hàng
 
 // (Bạn có thể tách StatusBadge thành component riêng nếu muốn)
@@ -122,35 +123,100 @@ const AllocationPage = () => {
 
   // --- Các hàm xử lý hành động ---
   const handleApprove = async (orderId) => {
-    if (!window.confirm("Duyệt đơn hàng này và giữ hàng trong kho?")) return;
-    try {
-      await approveB2BOrder(orderId);
-      alert("Đã duyệt đơn hàng thành công!");
-      fetchOrders(activeTab, pagination.page); // Tải lại trang hiện tại
-    } catch (error) {
-      alert(`Lỗi duyệt đơn: ${error.response?.data?.message || error.message}`);
+    // Thay thế window.confirm
+    const result = await Swal.fire({
+      title: "Duyệt đơn hàng?",
+      text: "Gửi yêu cầu duyệt đơn hàng này và phân bổ kho?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#28a745", // Màu xanh lá
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Đúng, duyệt ngay!",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await approveB2BOrder(orderId);
+        // Thay thế alert
+        Swal.fire(
+          "Đã gửi!",
+          "Yêu cầu duyệt đã được gửi. Đang tải lại danh sách...",
+          "success"
+        );
+        fetchOrders(activeTab, pagination.page);
+      } catch (error) {
+        // Thay thế alert
+        Swal.fire(
+          "Lỗi!",
+          `Lỗi gửi yêu cầu: ${error.response?.data?.message || error.message}`,
+          "error"
+        );
+      }
     }
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm("Bạn chắc chắn muốn hủy đơn hàng này?")) return;
-    try {
-      await cancelOrderByStaff(orderId);
-      alert("Hủy đơn hàng thành công!");
-      fetchOrders(activeTab, pagination.page);
-    } catch (error) {
-      alert(`Lỗi hủy đơn: ${error.response?.data?.message || error.message}`);
+    // Thay thế window.confirm
+    const result = await Swal.fire({
+      title: "Hủy đơn hàng?",
+      text: "Bạn chắc chắn muốn gửi yêu cầu hủy đơn hàng này?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33", // Màu đỏ
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Đúng, hủy đơn!",
+      cancelButtonText: "Không",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await cancelOrderByStaff(orderId);
+        // Thay thế alert
+        Swal.fire(
+          "Đã gửi!",
+          "Yêu cầu hủy đơn đã được gửi. Đang tải lại...",
+          "success"
+        );
+        fetchOrders(activeTab, pagination.page);
+      } catch (error) {
+        // Thay thế alert
+        Swal.fire(
+          "Lỗi!",
+          `Lỗi hủy đơn: ${error.response?.data?.message || error.message}`,
+          "error"
+        );
+      }
     }
   };
 
   const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm("XÓA VĨNH VIỄN đơn hàng đã hủy này?")) return;
-    try {
-      await deleteOrder(orderId);
-      alert("Xóa đơn hàng thành công!");
-      fetchOrders(activeTab, pagination.page);
-    } catch (error) {
-      alert(`Lỗi xóa đơn: ${error.response?.data?.message || error.message}`);
+    // Thay thế window.confirm
+    const result = await Swal.fire({
+      title: "Xóa vĩnh viễn?",
+      text: "Đơn hàng đã hủy này sẽ bị xóa vĩnh viễn! Không thể hoàn tác.",
+      icon: "error",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa ngay!",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await deleteOrder(orderId);
+        // Thay thế alert
+        Swal.fire("Đã xóa!", "Xóa đơn hàng thành công.", "success");
+        fetchOrders(activeTab, pagination.page);
+      } catch (error) {
+        // Thay thế alert
+        Swal.fire(
+          "Lỗi!",
+          `Lỗi xóa đơn: ${error.response?.data?.message || error.message}`,
+          "error"
+        );
+      }
     }
   };
 

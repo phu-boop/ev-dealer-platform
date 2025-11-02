@@ -6,15 +6,21 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
+import com.ev.common_lib.event.B2BOrderPlacedEvent; 
+import com.ev.common_lib.event.OrderCancelledEvent;
+import com.ev.common_lib.event.OrderDeliveredEvent;
 import com.ev.sales_service.dto.request.CreateB2BOrderRequest;
 import com.ev.sales_service.entity.OrderItem;
 import com.ev.sales_service.entity.OrderTracking;
 import com.ev.sales_service.entity.SalesOrder;
+import com.ev.sales_service.entity.Outbox;
 import com.ev.sales_service.enums.OrderStatus;
-// Giả sử bạn có QuotationRepository, nếu không, hãy xóa import này
+
 // import com.ev.sales_service.repository.QuotationRepository; 
+import com.ev.sales_service.repository.OutboxRepository;
 import com.ev.sales_service.repository.SalesOrderRepository;
 import com.ev.sales_service.service.Interface.SalesOrderService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -23,19 +29,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpEntity;
+// import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.security.core.Authentication; 
-import org.springframework.security.core.context.SecurityContextHolder;
+// import org.springframework.web.client.HttpClientErrorException;
+// import org.springframework.security.core.Authentication; 
+// import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -52,11 +58,11 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     // private final QuotationRepository quotationRepository; // Bỏ comment nếu bạn dùng logic báo giá
     private final RestTemplate restTemplate;
 
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
+
     @Value("${app.services.catalog.url}")
     private String vehicleCatalogUrl;
-
-    @Value("${app.services.inventory.url}")
-    private String inventoryServiceUrl;
 
     private static final Logger log = LoggerFactory.getLogger(SalesOrderServiceImpl.class);
 
@@ -70,7 +76,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         order.setOrderDate(LocalDateTime.now());
         order.setOrderStatus(OrderStatus.PENDING);
         order.setManagerApproval(false);
-        // Tương lai: Lấy staffId từ email hoặc userId (từ header)
+        // Lấy staffId từ email hoặc userId (từ header)
         // order.setStaffId(findStaffIdByEmail(email)); 
 
         List<OrderItem> orderItems = new ArrayList<>();
@@ -91,16 +97,16 @@ public class SalesOrderServiceImpl implements SalesOrderService {
                 );
             } catch (Exception e) {
                 log.error("Error calling vehicle-catalog service for variant {}: {}", itemRequest.getVariantId(), e.getMessage());
-                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
             }
 
             // Kiểm tra response
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || response.getBody().getData() == null) {
                 log.error("Invalid response from vehicle-catalog for variant {}: {}", itemRequest.getVariantId(), response.getStatusCode());
-                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
             }
 
-            VariantDetailDto variantDetails = response.getBody().getData(); // Lấy DTO 1 LẦN
+            VariantDetailDto variantDetails = response.getBody().getData(); 
             
             // Logic lấy giá
             BigDecimal unitPrice = variantDetails.getWholesalePrice();
@@ -111,7 +117,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
             // Kiểm tra null lần cuối
             if (unitPrice == null) {
                  log.error("Cannot determine unit price for variant {}", variantDetails.getVariantId());
-                 throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
+                 throw new AppException(ErrorCode.BAD_REQUEST); 
             }
             
             BigDecimal itemFinalPrice = unitPrice.multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
@@ -142,7 +148,26 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         
         order.setOrderTrackings(List.of(tracking)); // Khởi tạo list
 
-        return salesOrderRepository.save(order);
+        // Lưu đơn hàng vào DB
+        SalesOrder savedOrder = salesOrderRepository.save(order);
+
+        // TẠO SỰ KIỆN OUTBOX (thay vì gọi Kafka/notification)
+        B2BOrderPlacedEvent eventPayload = B2BOrderPlacedEvent.builder()
+                .orderId(savedOrder.getOrderId())
+                .dealerId(savedOrder.getDealerId())
+                .totalAmount(savedOrder.getTotalAmount())
+                .orderDate(savedOrder.getOrderDate())
+                .placedByEmail(email)
+                .build();
+        
+        saveOutboxEvent(
+            savedOrder.getOrderId(), 
+            "SalesOrder", 
+            "B2BOrderPlaced", // Tên sự kiện
+            eventPayload        // Dữ liệu sự kiện
+        );
+
+        return savedOrder;
     }
     
     @Override
@@ -185,52 +210,26 @@ public class SalesOrderServiceImpl implements SalesOrderService {
             }).collect(Collectors.toList());
         allocationRequest.setItems(items);
 
-        try {
-            String allocUrl = inventoryServiceUrl + "/inventory/allocate";
-            
-            // Lấy header từ request gốc để chuyển tiếp xác thực
-            HttpHeaders headers = buildHeadersFromCurrentRequest(email);
+        SalesOrder savedOrder = salesOrderRepository.save(order);
 
-            HttpEntity<AllocationRequestDto> requestEntity = new HttpEntity<>(allocationRequest, headers);
+        saveOutboxEvent(
+            savedOrder.getOrderId(), 
+            "SalesOrder", 
+            "OrderApproved",    // Tên sự kiện
+            allocationRequest   // Payload là DTO cho inventory-service
+        );
 
-            // Dùng .exchange() để xử lý lỗi và kiểu generic tốt hơn
-            ResponseEntity<ApiRespond<Void>> response = restTemplate.exchange(
-                allocUrl,
-                HttpMethod.POST,
-                requestEntity,
-                new ParameterizedTypeReference<ApiRespond<Void>>() {}
-            );
-            
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("Inventory allocation failed for order {} with status: {}", orderId, response.getStatusCode());
-                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
-            }
-            
-            log.info("Successfully called inventory allocation for order {}", orderId);
-
-        } catch (HttpClientErrorException e) { // Bắt lỗi HTTP rõ ràng
-             log.error("HTTP Error calling inventory allocation for order {}: {} - {}", orderId, e.getStatusCode(), e.getResponseBodyAsString(), e);
-             // Nếu bạn CHƯA sửa AppException, hãy dùng constructor 1 tham số
-             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
-             // Nếu BẠN ĐÃ SỬA AppException, hãy dùng constructor 2 tham số để message rõ hơn:
-             // throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE, "Lỗi từ inventory service: " + e.getResponseBodyAsString());
-        } catch (Exception e) {
-            log.error("Failed to allocate stock for order {}: {}", orderId, e.getMessage(), e); 
-            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
-        }
-
-        return salesOrderRepository.save(order);
+        return savedOrder;
     }
 
     @Override
     @Transactional
-    // Bỏ các tham số role, userId, profileId thừa
     public SalesOrder shipB2BOrder(UUID orderId, ShipmentRequestDto shipmentRequest, String email) {
         SalesOrder order = salesOrderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); 
             
         if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
-            throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
+            throw new AppException(ErrorCode.BAD_REQUEST); 
         }
 
         order.setOrderStatus(OrderStatus.IN_TRANSIT);
@@ -247,43 +246,22 @@ public class SalesOrderServiceImpl implements SalesOrderService {
          }
         order.getOrderTrackings().add(tracking);
 
-        try {
-            String shipUrl = inventoryServiceUrl + "/inventory/ship-b2b"; 
-            
-            // Lấy header từ request gốc để chuyển tiếp xác thực
-            HttpHeaders headers = buildHeadersFromCurrentRequest(email);
-            headers.setContentType(MediaType.APPLICATION_JSON);
+        // 1. Lưu trạng thái đơn hàng
+        SalesOrder savedOrder = salesOrderRepository.save(order);
 
-            shipmentRequest.setOrderId(orderId);
-            shipmentRequest.setDealerId(order.getDealerId());
-            
-            HttpEntity<ShipmentRequestDto> requestEntity = new HttpEntity<>(shipmentRequest, headers);
-            
-            // Dùng .exchange()
-            ResponseEntity<ApiRespond<Void>> response = restTemplate.exchange(
-                shipUrl,
-                HttpMethod.POST,
-                requestEntity,
-                new ParameterizedTypeReference<ApiRespond<Void>>() {}
-            );
+        // 2. Chuẩn bị payload cho sự kiện
+        shipmentRequest.setOrderId(orderId);
+        shipmentRequest.setDealerId(order.getDealerId());
 
-            if (!response.getStatusCode().is2xxSuccessful()){
-                 log.error("Inventory shipping failed for order {} with status: {}", orderId, response.getStatusCode());
-                 throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
-            }
-            
-            log.info("Successfully called inventory shipping for order {}", orderId);
+        // 3. TẠO SỰ KIỆN OUTBOX
+        saveOutboxEvent(
+            savedOrder.getOrderId(), 
+            "SalesOrder", 
+            "OrderShipped",     // Tên sự kiện
+            shipmentRequest     // Payload là DTO cho inventory-service
+        );
 
-        } catch (HttpClientErrorException e) { // Bắt lỗi HTTP
-            log.error("HTTP Error shipping stock for order {}: {} - {}", orderId, e.getStatusCode(), e.getResponseBodyAsString(), e);
-             // Ném lỗi 1 tham số
-            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
-        } catch (Exception e) {
-            log.error("Failed to ship stock for order {}: {}", orderId, e.getMessage(), e);
-            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); // Dùng constructor 1 tham số
-        }
-
-        return salesOrderRepository.save(order);
+        return savedOrder;
     }
     
     @Override
@@ -317,7 +295,18 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         
         SalesOrder savedOrder = salesOrderRepository.save(order);
         
-        // kafkaTemplate.send("order_delivered_events", savedOrder.getOrderId());
+        OrderDeliveredEvent eventPayload = new OrderDeliveredEvent(
+            savedOrder.getOrderId(), 
+            savedOrder.getDealerId(),
+            savedOrder.getDeliveryDate()
+        );
+        
+        saveOutboxEvent(
+            savedOrder.getOrderId(), 
+            "SalesOrder", 
+            "OrderDelivered", 
+            eventPayload
+        );
         
         return savedOrder;
     }
@@ -463,11 +452,58 @@ public class SalesOrderServiceImpl implements SalesOrderService {
 
     private void performCancel(SalesOrder order, String cancelledByEmail) {
         order.setOrderStatus(OrderStatus.CANCELLED);
-        // Optional: Ghi lại ai đã hủy
-        // order.setCancelledBy(cancelledByEmail);
+        // order.setCancelledBy(cancelledByEmail); // Tùy chọn
+        
         salesOrderRepository.save(order);
 
-        // Optional: Gửi sự kiện hủy đơn
-        // kafkaTemplate.send("order_cancelled_events", order.getOrderId());
+        OrderCancelledEvent eventPayload = new OrderCancelledEvent(
+            order.getOrderId(), 
+            cancelledByEmail, 
+            LocalDateTime.now()
+        );
+
+        saveOutboxEvent(
+            order.getOrderId(), 
+            "SalesOrder", 
+            "OrderCancelled", 
+            eventPayload
+        );
     }
+
+    /**
+     * HÀM HELPER MỚI: Dùng chung để lưu mọi sự kiện outbox
+     * * @param aggregateId ID của đối tượng (ví dụ: orderId)
+     * @param aggregateType Loại đối tượng (ví dụ: "SalesOrder")
+     * @param eventType Tên sự kiện (ví dụ: "OrderApproved")
+     * @param payloadObject Đối tượng DTO chứa dữ liệu sự kiện
+     */
+    private void saveOutboxEvent(UUID aggregateId, String aggregateType, String eventType, Object payloadObject) {
+        try {
+            // 1. Chuyển DTO thành chuỗi JSON
+            String payload = objectMapper.writeValueAsString(payloadObject);
+            String eventId = UUID.randomUUID().toString();
+
+            // 2. Xây dựng đối tượng Outbox
+            Outbox out = Outbox.builder()
+                    .id(eventId)
+                    .aggregateType(aggregateType)
+                    .aggregateId(aggregateId.toString())
+                    .eventType(eventType)
+                    .payload(payload)
+                    .status("NEW") // Trạng thái mới, chưa xử lý
+                    .attempts(0)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            // 3. Lưu vào DB (nằm trong cùng transaction)
+            outboxRepository.save(out);
+            
+        } catch (Exception e) {
+            log.error("CRITICAL: Failed to create and save outbox event for {}: {}", eventType, aggregateId, e);
+            // Ném lỗi này sẽ khiến toàn bộ transaction (cả việc lưu SalesOrder)
+            // bị ROLLBACK, đảm bảo tính nhất quán (atomicity).
+            throw new AppException(ErrorCode.DATABASE_ERROR);
+        }
+    }
+
 }

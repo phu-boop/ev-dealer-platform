@@ -40,8 +40,10 @@ import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx"
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 
 // Dealer
-import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
-import B2BOrderForm from "../features/dealer/promotions/pages/B2BOrderForm.jsx";
+import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPage.jsx";
+import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
+import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
+import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -194,6 +196,11 @@ export default function AppRoutes() {
 
               {/* Quotation Management */}
               <Route
+                path="manager/quotations/*"
+                element={<QuotationManagement />}
+              />
+
+              <Route
                   path="manager/quotations/*"
                   element={<QuotationManagement />}
               />
@@ -232,6 +239,13 @@ export default function AppRoutes() {
               />
 
               {/* Quotation Management */}
+              <Route
+                path="staff/quotations/*"
+                element={<QuotationManagement />}
+              />
+
+              {/* Danh mục xe & báo cáo */}
+              {/* Xe có sẵn trong kho đại lí */}
               <Route
                   path="staff/quotations/*"
                   element={<QuotationManagement />}

@@ -11,7 +11,7 @@ import io.github.cdimascio.dotenv.Dotenv;
         org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
         org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
 })
-public class GatewayApplication {
+public class    GatewayApplication {
 
 	public static void main(String[] args) {
 		Dotenv dotenv = Dotenv.configure()
