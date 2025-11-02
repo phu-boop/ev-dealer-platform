@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface DealerManagerProfileRepository extends JpaRepository<DealerManagerProfile, UUID> {
     Optional<DealerManagerProfile> findByUserId(UUID userID);
+    boolean existsByDealerId(UUID dealerId);
 }

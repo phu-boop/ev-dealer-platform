@@ -38,7 +38,4 @@ public class DealerRequest {
 
     @Size(max = 50, message = "Tax number must not exceed 50 characters")
     private String taxNumber;
-
-    @Size(max = 20, message = "Status must not exceed 20 characters")
-    private String status;
 }
