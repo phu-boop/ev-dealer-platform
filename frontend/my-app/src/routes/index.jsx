@@ -156,10 +156,13 @@ export default function AppRoutes() {
                 element={<AllocationPage />}
               />
               {/* --------------------------------MANAGE DEALER-------------------------------------------------- */}
-
               <Route
                 path="staff/dealers/list"
                 element = {<DealersPage />}
+              />
+              <Route
+                path="staff/dealers/dealer-accounts"
+                element={<UserManagement />}
               />
             </Route>
           </Route>
@@ -204,6 +207,12 @@ export default function AppRoutes() {
               <Route
                   path="manager/quotations/*"
                   element={<QuotationManagement />}
+              />
+              {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
+
+              <Route
+                  path="manager/settings/staff*"
+                  element={<UserManagement />}
               />
 
               {/* Promotions */}

@@ -19,7 +19,19 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
     const [errors, setErrors] = useState({});
     const [isEditing, setIsEditing] = useState(false);
     const [dealers, setDealers] = useState([]); // Thêm state cho danh sách dealers
+    const [availableRoles, setAvailableRoles] = useState([]);
 
+    useEffect(() => {
+        const roles = sessionStorage.getItem("roles");
+
+        if (roles?.includes("ADMIN")) {
+        setAvailableRoles(["ADMIN", "EVM_STAFF", "DEALER_MANAGER"]);
+        } else if (roles?.includes("EVM_STAFF")) {
+        setAvailableRoles(["DEALER_MANAGER"]);
+        } else {
+        setAvailableRoles(["DEALER_STAFF"]);
+        } 
+    }, []);
     // Thêm useEffect để fetch danh sách dealers
     useEffect(() => {
         const fetchDealers = async () => {
@@ -237,7 +249,7 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                 readOnly={isReadOnly}
                                 className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                                     errors.email ? "border-red-500" : "border-gray-300"
-                                } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                                } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed"}`}
                             />
                         </div>
                         {errors.email && (
@@ -451,10 +463,12 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                     isReadOnly ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
                                 }`}
                             >
-                                <option value="">-- Chọn vai trò --</option>
-                                <option value="EVM_STAFF">EVM Staff</option>
-                                <option value="DEALER_MANAGER">Dealer Manager</option>
-                                <option value="ADMIN">Admin</option>
+                                  <option value="">Tất cả</option>
+                                    {availableRoles.map((role) => (
+                                    <option key={role} value={role}>
+                                        {role}
+                                    </option>
+                                    ))}
                             </select>
                         </div>
 
@@ -591,11 +605,18 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                             } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
                                         >
                                             <option value="">-- Chọn đại lý --</option>
-                                            {dealers.map((dealer) => (
+                                            {sessionStorage.getItem("roles")?.includes("DEALER_MANAGER") ? (
+                                                <option
+                                                    value={sessionStorage.getItem("dealerId")
+                                                }>
+                                                    Đại lý của tôi
+                                                </option>
+                                            ) :   
+                                            (dealers.map((dealer) => (
                                                 <option key={dealer.dealerId} value={dealer.dealerId}>
                                                     {dealer.dealerName}
                                                 </option>
-                                            ))}
+                                            ))) }
                                         </select>
                                         {errors.dealerId && (
                                             <p className="mt-1 text-sm text-red-600">{errors.dealerId}</p>
