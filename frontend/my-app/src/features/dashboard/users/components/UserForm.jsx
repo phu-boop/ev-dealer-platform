@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 import {X, Save, User, Mail, Phone, MapPin, Calendar, Eye, EyeOff, Edit} from "lucide-react";
-
+import {dealerService} from "../services/dealerService";
 export default function UserForm({isOpen, onClose, onSubmit, initialData, mode = "add"}) {
     const [formData, setFormData] = useState({
         email: "",
@@ -18,6 +18,26 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
 
     const [errors, setErrors] = useState({});
     const [isEditing, setIsEditing] = useState(false);
+    const [dealers, setDealers] = useState([]); // Thêm state cho danh sách dealers
+
+    // Thêm useEffect để fetch danh sách dealers
+    useEffect(() => {
+        const fetchDealers = async () => {
+            try {
+                const response = (await dealerService.getAll()).data;
+                console.log("Fetched dealers:", response);
+                if (response.code === "1000") {
+                    setDealers(response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching dealers:", error);
+            }
+        };
+
+        if (isOpen) {
+            fetchDealers();
+        }
+    }, [isOpen]);
 
    useEffect(() => {
     if (initialData) {
@@ -434,7 +454,6 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                 <option value="">-- Chọn vai trò --</option>
                                 <option value="EVM_STAFF">EVM Staff</option>
                                 <option value="DEALER_MANAGER">Dealer Manager</option>
-                                <option value="DEALER_STAFF">Dealer Staff</option>
                                 <option value="ADMIN">Admin</option>
                             </select>
                         </div>
@@ -475,20 +494,30 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                         {/* Dealer Manager */}
                         {formData.role === "DEALER_MANAGER" && (
                             <>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Dealer ID *
-                                    </label>
-                                    <input
-                                        name="dealerId"
-                                        type="number"
-                                        placeholder="Nhập mã đại lý"
-                                        value={formData.dealerId || ""}
-                                        onChange={handleChange}
-                                        readOnly={isReadOnly}
-                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
+                                <div className="mb-4">
+                            <label className="block text-sm font-semibold text-indigo-700 mb-2">
+                                Dealer ID <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                name="dealerId"
+                                value={formData.dealerId || ""}
+                                onChange={handleChange}
+                                disabled={isReadOnly}
+                                className={`w-full px-4 py-2 border-2 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 transition-colors duration-200 ${
+                                    errors.dealerId ? "border-red-500 bg-red-50" : "border-gray-300 bg-white hover:bg-indigo-50"
+                                } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                            >
+                                <option value="">-- Chọn đại lý --</option>
+                                {dealers.map((dealer) => (
+                                    <option key={dealer.dealerId} value={dealer.dealerId}>
+                                        {dealer.dealerName}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.dealerId && (
+                                <p className="mt-1 text-sm text-red-600">{errors.dealerId}</p>
+                            )}
+                        </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -530,9 +559,12 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                         value={formData.approvalLimit || ""}
                                         onChange={handleChange}
                                         readOnly={isReadOnly}
-                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                        className=""
                                     />
                                 </div>
+                                <button>
+                                    xem 
+                                </button>
                             </>
                         )}
 
@@ -549,15 +581,25 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mã đại lý *
                                         </label>
-                                        <input
+                                        <select
                                             name="dealerId"
-                                            type="number"
-                                            placeholder="Nhập mã đại lý"
                                             value={formData.dealerId || ""}
                                             onChange={handleChange}
-                                            readOnly={isReadOnly}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white"
-                                        />
+                                            disabled={isReadOnly}
+                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                                                errors.dealerId ? "border-red-500" : "border-gray-300"
+                                            } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                                        >
+                                            <option value="">-- Chọn đại lý --</option>
+                                            {dealers.map((dealer) => (
+                                                <option key={dealer.dealerId} value={dealer.dealerId}>
+                                                    {dealer.dealerName}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.dealerId && (
+                                            <p className="mt-1 text-sm text-red-600">{errors.dealerId}</p>
+                                        )}
                                     </div>
 
                                     {/* Department */}
