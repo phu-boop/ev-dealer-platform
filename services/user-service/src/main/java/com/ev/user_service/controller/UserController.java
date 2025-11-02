@@ -3,8 +3,6 @@ package com.ev.user_service.controller;
 import com.ev.user_service.dto.request.ProfileRequest;
 import com.ev.user_service.dto.request.UpdateProfileRequest;
 import com.ev.user_service.dto.respond.ProfileRespond;
-import com.ev.user_service.entity.User;
-import com.ev.user_service.entity.UserDevice;
 import com.ev.user_service.service.UserDeviceService;
 import com.ev.user_service.validation.group.*;
 import jakarta.validation.Valid;
@@ -22,8 +20,6 @@ import com.ev.user_service.dto.request.UserRequest;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.user_service.dto.respond.UserRespond;
 import com.ev.user_service.service.UserService;
-
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/users")
@@ -111,6 +107,15 @@ public class UserController {
     ) {
         String message = userDeviceService.saveFCMToken(userId, body);
         return ResponseEntity.ok(ApiRespond.success(message,null));
+    }
+
+    /**
+     * Lấy danh sách FCM tokens của user (dành cho microservices khác gọi để gửi notification)
+     */
+    @GetMapping("/{userId}/fcm-tokens")
+    public ResponseEntity<ApiRespond<List<String>>> getFcmTokens(@PathVariable UUID userId) {
+        List<String> tokens = userDeviceService.getFcmTokensByUserId(userId);
+        return ResponseEntity.ok(ApiRespond.success("Get FCM tokens successfully", tokens));
     }
 
     //xem chi tiết profile

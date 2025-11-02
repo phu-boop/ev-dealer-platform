@@ -29,6 +29,9 @@ import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
 import EditCustomer from "../features/customers/pages/EditCustomer.jsx";
 import CustomerDetail from "../features/customers/pages/CustomerDetail.jsx";
 
+// test drive pages
+import TestDriveManagement from "../pages/TestDrive/TestDriveManagement.jsx";
+
 // EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
 import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.jsx";
@@ -182,6 +185,14 @@ export default function AppRoutes() {
                 path="manager/customers/:id/edit"
                 element={<EditCustomer />}
               />
+              
+              {/* Test Drive Management */}
+              <Route
+                path="manager/testdrives"
+                element={<TestDriveManagement />}
+              />
+
+              {/* Quotation Management */}
               <Route
                   path="manager/quotations/*"
                   element={<QuotationManagement />}
@@ -214,6 +225,13 @@ export default function AppRoutes() {
                 element={<EditCustomer />}
               />
 
+              {/* Test Drive Management */}
+              <Route
+                path="staff/testdrives"
+                element={<TestDriveManagement />}
+              />
+
+              {/* Quotation Management */}
               <Route
                   path="staff/quotations/*"
                   element={<QuotationManagement />}

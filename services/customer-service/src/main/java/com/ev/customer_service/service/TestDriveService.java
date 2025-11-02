@@ -1,26 +1,38 @@
 package com.ev.customer_service.service;
 
+import com.ev.customer_service.dto.request.CancelTestDriveRequest;
+import com.ev.customer_service.dto.request.TestDriveFilterRequest;
 import com.ev.customer_service.dto.request.TestDriveRequest;
+import com.ev.customer_service.dto.request.UpdateTestDriveRequest;
+import com.ev.customer_service.dto.response.TestDriveCalendarResponse;
 import com.ev.customer_service.dto.response.TestDriveResponse;
+import com.ev.customer_service.dto.response.TestDriveStatisticsResponse;
 import com.ev.customer_service.entity.Customer;
 import com.ev.customer_service.entity.TestDriveAppointment;
 import com.ev.customer_service.exception.ResourceNotFoundException;
 import com.ev.customer_service.repository.CustomerRepository;
 import com.ev.customer_service.repository.TestDriveAppointmentRepository;
+import com.ev.customer_service.specification.TestDriveSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TestDriveService {
 
     private final TestDriveAppointmentRepository appointmentRepository;
     private final CustomerRepository customerRepository;
+    private final TestDriveNotificationService notificationService;
     private final ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
@@ -39,33 +51,352 @@ public class TestDriveService {
 
     @Transactional
     public TestDriveResponse createAppointment(TestDriveRequest request) {
+        // 1. Validate customer exists
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + request.getCustomerId()));
 
+        // 2. Kiểm tra trùng lịch
+        validateNoConflicts(request.getStaffId(), request.getModelId(), request.getVariantId(),
+                          request.getAppointmentDate(), request.getDurationMinutes(), null);
+
+        // 3. Tạo appointment
         TestDriveAppointment appointment = modelMapper.map(request, TestDriveAppointment.class);
         appointment.setCustomer(customer);
-        if (appointment.getStatus() == null) {
-            appointment.setStatus("SCHEDULED");
+        appointment.setStatus("SCHEDULED");
+        appointment.setNotificationSent(false);
+        appointment.setReminderSent(false);
+        
+        if (appointment.getDurationMinutes() == null) {
+            appointment.setDurationMinutes(60); // Default 60 phút
         }
         
         TestDriveAppointment savedAppointment = appointmentRepository.save(appointment);
+
+        // 4. Gửi thông báo xác nhận
+        try {
+            notificationService.sendAppointmentConfirmation(
+                savedAppointment,
+                customer.getEmail(),
+                customer.getPhone(),
+                customer.getFirstName() + " " + customer.getLastName()
+            );
+            savedAppointment.setNotificationSent(true);
+            appointmentRepository.save(savedAppointment);
+        } catch (Exception e) {
+            log.error("Failed to send confirmation notification", e);
+        }
+
+        // 5. Gửi thông báo cho nhân viên (nếu có)
+        if (savedAppointment.getStaffId() != null) {
+            try {
+                // TODO: Lấy thông tin staff từ User Service
+                // notificationService.sendStaffNotification(savedAppointment, staffEmail, staffName);
+            } catch (Exception e) {
+                log.error("Failed to send staff notification", e);
+            }
+        }
+
         return mapToResponse(savedAppointment);
     }
 
     @Transactional
-    public TestDriveResponse updateAppointment(Long id, TestDriveRequest request) {
+    public TestDriveResponse updateAppointment(Long id, UpdateTestDriveRequest request) {
         TestDriveAppointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
 
-        modelMapper.map(request, appointment);
+        // Không cho phép cập nhật lịch đã hủy hoặc đã hoàn thành
+        if ("CANCELLED".equals(appointment.getStatus()) || "COMPLETED".equals(appointment.getStatus())) {
+            throw new IllegalStateException("Cannot update cancelled or completed appointment");
+        }
+
+        // Kiểm tra trùng lịch nếu thay đổi thời gian/staff/xe
+        if (request.getAppointmentDate() != null || request.getStaffId() != null || 
+            request.getModelId() != null || request.getVariantId() != null) {
+            
+            LocalDateTime newDate = request.getAppointmentDate() != null ? 
+                                   request.getAppointmentDate() : appointment.getAppointmentDate();
+            Integer newDuration = request.getDurationMinutes() != null ? 
+                                 request.getDurationMinutes() : appointment.getDurationMinutes();
+            Long newStaffId = request.getStaffId() != null ? request.getStaffId() : appointment.getStaffId();
+            Long newModelId = request.getModelId() != null ? request.getModelId() : appointment.getModelId();
+            Long newVariantId = request.getVariantId() != null ? request.getVariantId() : appointment.getVariantId();
+
+            validateNoConflicts(newStaffId, newModelId, newVariantId, newDate, newDuration, id);
+        }
+
+        // Cập nhật các trường
+        if (request.getAppointmentDate() != null) {
+            appointment.setAppointmentDate(request.getAppointmentDate());
+        }
+        if (request.getDurationMinutes() != null) {
+            appointment.setDurationMinutes(request.getDurationMinutes());
+        }
+        if (request.getModelId() != null) {
+            appointment.setModelId(request.getModelId());
+        }
+        if (request.getVariantId() != null) {
+            appointment.setVariantId(request.getVariantId());
+        }
+        if (request.getStaffId() != null) {
+            appointment.setStaffId(request.getStaffId());
+        }
+        if (request.getTestDriveLocation() != null) {
+            appointment.setTestDriveLocation(request.getTestDriveLocation());
+        }
+        if (request.getStaffNotes() != null) {
+            appointment.setStaffNotes(request.getStaffNotes());
+        }
+        if (request.getUpdatedBy() != null) {
+            appointment.setUpdatedBy(request.getUpdatedBy());
+        }
+
         TestDriveAppointment updatedAppointment = appointmentRepository.save(appointment);
+
+        // Gửi thông báo cập nhật
+        try {
+            Customer customer = appointment.getCustomer();
+            notificationService.sendAppointmentUpdate(
+                updatedAppointment,
+                customer.getEmail(),
+                customer.getPhone(),
+                customer.getFirstName() + " " + customer.getLastName()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send update notification", e);
+        }
+
         return mapToResponse(updatedAppointment);
     }
 
+    @Transactional
+    public void cancelAppointment(Long id, CancelTestDriveRequest request) {
+        TestDriveAppointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+
+        if ("CANCELLED".equals(appointment.getStatus())) {
+            throw new IllegalStateException("Appointment is already cancelled");
+        }
+
+        appointment.setStatus("CANCELLED");
+        appointment.setCancellationReason(request.getCancellationReason());
+        appointment.setCancelledBy(request.getCancelledBy());
+        appointment.setCancelledAt(LocalDateTime.now());
+
+        appointmentRepository.save(appointment);
+
+        // Gửi thông báo hủy
+        try {
+            Customer customer = appointment.getCustomer();
+            notificationService.sendAppointmentCancellation(
+                appointment,
+                customer.getEmail(),
+                customer.getPhone(),
+                customer.getFirstName() + " " + customer.getLastName()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send cancellation notification", e);
+        }
+    }
+
+    @Transactional
+    public void confirmAppointment(Long id) {
+        TestDriveAppointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+
+        appointment.setStatus("CONFIRMED");
+        appointment.setConfirmedAt(LocalDateTime.now());
+        appointmentRepository.save(appointment);
+    }
+
+    @Transactional
+    public void completeAppointment(Long id) {
+        TestDriveAppointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+
+        appointment.setStatus("COMPLETED");
+        appointment.setCompletedAt(LocalDateTime.now());
+        appointmentRepository.save(appointment);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TestDriveResponse> filterAppointments(TestDriveFilterRequest filter) {
+        Specification<TestDriveAppointment> spec = TestDriveSpecification.filterBy(filter);
+        return appointmentRepository.findAll(spec).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TestDriveCalendarResponse> getCalendarView(Long dealerId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<TestDriveAppointment> appointments = appointmentRepository.findByDealerIdAndDateRange(
+            dealerId, startDate, endDate
+        );
+
+        return appointments.stream()
+                .map(this::mapToCalendarResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public TestDriveStatisticsResponse getStatistics(Long dealerId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<TestDriveAppointment> appointments = appointmentRepository.findByDealerIdAndDateRange(
+            dealerId, startDate, endDate
+        );
+
+        long total = appointments.size();
+        long scheduled = appointments.stream().filter(a -> "SCHEDULED".equals(a.getStatus())).count();
+        long confirmed = appointments.stream().filter(a -> "CONFIRMED".equals(a.getStatus())).count();
+        long completed = appointments.stream().filter(a -> "COMPLETED".equals(a.getStatus())).count();
+        long cancelled = appointments.stream().filter(a -> "CANCELLED".equals(a.getStatus())).count();
+
+        double completionRate = total > 0 ? (completed * 100.0 / total) : 0.0;
+        double cancellationRate = total > 0 ? (cancelled * 100.0 / total) : 0.0;
+
+        // Thống kê theo model
+        Map<String, Long> byModel = appointments.stream()
+            .collect(Collectors.groupingBy(
+                a -> "Model " + a.getModelId(),
+                Collectors.counting()
+            ));
+
+        // Thống kê theo staff
+        Map<String, Long> byStaff = appointments.stream()
+            .filter(a -> a.getStaffId() != null)
+            .collect(Collectors.groupingBy(
+                a -> "Staff " + a.getStaffId(),
+                Collectors.counting()
+            ));
+
+        // Thống kê theo ngày
+        Map<String, Long> byDay = appointments.stream()
+            .collect(Collectors.groupingBy(
+                a -> a.getAppointmentDate().toLocalDate().toString(),
+                Collectors.counting()
+            ));
+
+        return TestDriveStatisticsResponse.builder()
+            .totalAppointments(total)
+            .scheduledCount(scheduled)
+            .confirmedCount(confirmed)
+            .completedCount(completed)
+            .cancelledCount(cancelled)
+            .completionRate(completionRate)
+            .cancellationRate(cancellationRate)
+            .appointmentsByModel(byModel)
+            .appointmentsByStaff(byStaff)
+            .appointmentsByDay(byDay)
+            .build();
+    }
+
+    /**
+     * Kiểm tra trùng lịch của staff hoặc xe
+     */
+    private void validateNoConflicts(Long staffId, Long modelId, Long variantId,
+                                    LocalDateTime startTime, Integer durationMinutes, Long excludeAppointmentId) {
+        if (startTime == null || durationMinutes == null) {
+            return;
+        }
+
+        LocalDateTime endTime = startTime.plusMinutes(durationMinutes);
+
+        // Kiểm tra trùng lịch nhân viên
+        if (staffId != null) {
+            List<TestDriveAppointment> staffConflicts = appointmentRepository.findConflictingAppointmentsByStaff(
+                staffId, startTime, endTime
+            );
+            
+            // Loại trừ appointment hiện tại nếu đang update
+            if (excludeAppointmentId != null) {
+                staffConflicts = staffConflicts.stream()
+                    .filter(a -> !a.getAppointmentId().equals(excludeAppointmentId))
+                    .collect(Collectors.toList());
+            }
+
+            if (!staffConflicts.isEmpty()) {
+                throw new IllegalStateException("Staff is not available at this time. Conflicting appointment ID: " + 
+                                              staffConflicts.get(0).getAppointmentId());
+            }
+        }
+
+        // Kiểm tra trùng lịch xe
+        if (modelId != null) {
+            List<TestDriveAppointment> vehicleConflicts = appointmentRepository.findConflictingAppointmentsByVehicle(
+                modelId, variantId, startTime, endTime
+            );
+
+            // Loại trừ appointment hiện tại nếu đang update
+            if (excludeAppointmentId != null) {
+                vehicleConflicts = vehicleConflicts.stream()
+                    .filter(a -> !a.getAppointmentId().equals(excludeAppointmentId))
+                    .collect(Collectors.toList());
+            }
+
+            if (!vehicleConflicts.isEmpty()) {
+                throw new IllegalStateException("Vehicle is not available at this time. Conflicting appointment ID: " + 
+                                              vehicleConflicts.get(0).getAppointmentId());
+            }
+        }
+    }
+
     private TestDriveResponse mapToResponse(TestDriveAppointment appointment) {
-        TestDriveResponse response = modelMapper.map(appointment, TestDriveResponse.class);
-        response.setCustomerId(appointment.getCustomer().getCustomerId());
-        response.setCustomerName(appointment.getCustomer().getFirstName() + " " + appointment.getCustomer().getLastName());
+        Customer customer = appointment.getCustomer();
+        
+        return TestDriveResponse.builder()
+            .appointmentId(appointment.getAppointmentId())
+            .customerId(customer.getCustomerId())
+            .customerName(customer.getFirstName() + " " + customer.getLastName())
+            .customerPhone(customer.getPhone())
+            .customerEmail(customer.getEmail())
+            .dealerId(appointment.getDealerId())
+            .modelId(appointment.getModelId())
+            .variantId(appointment.getVariantId())
+            .staffId(appointment.getStaffId())
+            .appointmentDate(appointment.getAppointmentDate())
+            .durationMinutes(appointment.getDurationMinutes())
+            .endTime(appointment.getEndTime())
+            .testDriveLocation(appointment.getTestDriveLocation())
+            .status(appointment.getStatus())
+            .cancellationReason(appointment.getCancellationReason())
+            .cancelledBy(appointment.getCancelledBy())
+            .cancelledAt(appointment.getCancelledAt())
+            .confirmedAt(appointment.getConfirmedAt())
+            .completedAt(appointment.getCompletedAt())
+            .customerNotes(appointment.getCustomerNotes())
+            .staffNotes(appointment.getStaffNotes())
+            .notificationSent(appointment.getNotificationSent())
+            .reminderSent(appointment.getReminderSent())
+            .feedbackRating(appointment.getFeedbackRating())
+            .feedbackComment(appointment.getFeedbackComment())
+            .createdBy(appointment.getCreatedBy())
+            .createdAt(appointment.getCreatedAt())
+            .updatedBy(appointment.getUpdatedBy())
+            .updatedAt(appointment.getUpdatedAt())
+            .build();
+    }
+
+    private TestDriveCalendarResponse mapToCalendarResponse(TestDriveAppointment appointment) {
+        Customer customer = appointment.getCustomer();
+        String title = String.format("Lái thử Model %d - %s", 
+                                    appointment.getModelId(),
+                                    customer.getFirstName() + " " + customer.getLastName());
+
+        TestDriveCalendarResponse response = TestDriveCalendarResponse.builder()
+            .appointmentId(appointment.getAppointmentId())
+            .title(title)
+            .start(appointment.getAppointmentDate())
+            .end(appointment.getEndTime())
+            .customerId(customer.getCustomerId())
+            .customerName(customer.getFirstName() + " " + customer.getLastName())
+            .customerPhone(customer.getPhone())
+            .modelId(appointment.getModelId())
+            .variantId(appointment.getVariantId())
+            .staffId(appointment.getStaffId())
+            .location(appointment.getTestDriveLocation())
+            .customerNotes(appointment.getCustomerNotes())
+            .staffNotes(appointment.getStaffNotes())
+            .build();
+
+        response.setStatusWithColor(appointment.getStatus());
         return response;
     }
 }
