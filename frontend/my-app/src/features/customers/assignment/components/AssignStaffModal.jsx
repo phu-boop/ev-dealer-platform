@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { FiX, FiUser, FiUsers, FiFileText, FiAlertCircle, FiCheck } from "react-icons/fi";
 import PropTypes from "prop-types";
 import staffService from "../services/staffService";
-import customerService from "../services/customerService";
+import customerService from "../../management/services/customerService";
 
 const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
   const [staffList, setStaffList] = useState([]);

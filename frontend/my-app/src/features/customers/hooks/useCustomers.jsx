@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import customerService from '../services/customerService';
+import customerService from '../management/services/customerService';
 
 export const useCustomers = (initialSearchTerm = '') => {
   const [customers, setCustomers] = useState([]);

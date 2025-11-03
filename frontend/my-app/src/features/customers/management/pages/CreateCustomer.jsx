@@ -6,8 +6,8 @@ import {
   FiCheck, FiAlertCircle, FiChevronDown, FiUsers
 } from "react-icons/fi";
 import customerService from "../services/customerService";
-import staffService from "../services/staffService";
-import { useAuthContext } from "../../auth/AuthProvider";
+import staffService from "../../assignment/services/staffService";
+import { useAuthContext } from "../../../auth/AuthProvider";
 
 const CreateCustomer = () => {
   const navigate = useNavigate();
@@ -349,7 +349,7 @@ const CreateCustomer = () => {
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start">
               <FiAlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-800">
-                <p className="font-semibold mb-1">� Lưu ý:</p>
+                <p className="font-semibold mb-1">💡 Lưu ý:</p>
                 <p>Khách hàng mới sẽ tự động được gán trạng thái <span className="font-bold">"Khách hàng mới"</span>. Bạn có thể cập nhật trạng thái sau khi tạo.</p>
               </div>
             </div>
