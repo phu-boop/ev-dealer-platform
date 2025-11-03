@@ -3,10 +3,12 @@ import { toast } from 'react-toastify';
 import { Plus, Calendar as CalendarIcon, List, BarChart3 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-import TestDriveFormModal from '../../components/TestDrive/TestDriveFormModal';
-import TestDriveCard from '../../components/TestDrive/TestDriveCard';
-import TestDriveFilter from '../../components/TestDrive/TestDriveFilter';
+// Import components từ testdrive/components
+import TestDriveFormModal from '../components/TestDriveFormModal';
+import TestDriveCard from '../components/TestDriveCard';
+import TestDriveFilter from '../components/TestDriveFilter';
 
+// Import services từ testdrive/services
 import {
   getTestDrivesByDealer,
   createTestDrive,
@@ -15,10 +17,12 @@ import {
   confirmTestDrive,
   completeTestDrive,
   filterTestDrives,
-} from '../../services/testDriveService';
+} from '../services/testDriveService';
 
-import { getAllModels, getModelDetails } from '../../services/vehicleService';
-import staffService from '../../features/customers/services/staffService';
+import { getAllModels, getModelDetails } from '../services/vehicleService';
+
+// Import staffService từ assignment sub-feature
+import staffService from '../../assignment/services/staffService';
 
 const TestDriveManagement = () => {
   const [appointments, setAppointments] = useState([]);
@@ -109,11 +113,9 @@ const TestDriveManagement = () => {
   const handleSubmit = async (formData) => {
     try {
       if (editingAppointment) {
-        // Update
         await updateTestDrive(editingAppointment.appointmentId, formData);
         toast.success('Cập nhật lịch hẹn thành công!');
       } else {
-        // Create
         await createTestDrive(formData);
         toast.success('Tạo lịch hẹn thành công!');
       }
@@ -214,7 +216,6 @@ const TestDriveManagement = () => {
 
   const handleFilter = async (filterData) => {
     try {
-      // Add dealerId to filter
       const fullFilter = {
         ...filterData,
         dealerId,

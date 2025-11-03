@@ -24,13 +24,12 @@ import NotificationManagement from "../features/admin/notifications/Notification
 import QuotationManagement from "../features/dealer/sales/pages/QuotationManagement.jsx";
 
 // customer pages
-import CustomerList from "../features/customers/pages/CustomerList.jsx";
-import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
-import EditCustomer from "../features/customers/pages/EditCustomer.jsx";
-import CustomerDetail from "../features/customers/pages/CustomerDetail.jsx";
+import CustomerList from "../features/customers/management/pages/CustomerList.jsx";
+import CreateCustomer from "../features/customers/management/pages/CreateCustomer.jsx";
+import CustomerDetail from "../features/customers/management/pages/CustomerDetail.jsx";
 
 // test drive pages
-import TestDriveManagement from "../pages/TestDrive/TestDriveManagement.jsx";
+import TestDriveManagement from "../features/customers/testdrive/pages/TestDriveManagement.jsx";
 
 // EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
@@ -183,10 +182,6 @@ export default function AppRoutes() {
                 path="manager/customers/:id"
                 element={<CustomerDetail />}
               />
-              <Route
-                path="manager/customers/:id/edit"
-                element={<EditCustomer />}
-              />
               
               {/* Test Drive Management */}
               <Route
@@ -227,10 +222,6 @@ export default function AppRoutes() {
               />
               <Route path="staff/customers/list" element={<CustomerList />} />
               <Route path="staff/customers/:id" element={<CustomerDetail />} />
-              <Route
-                path="staff/customers/:id/edit"
-                element={<EditCustomer />}
-              />
 
               {/* Test Drive Management */}
               <Route

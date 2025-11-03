@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, User, X, ChevronDown } from 'lucide-react';
-import apiConstCustomerService from '../../services/apiConstCustomerService';
+import apiConstCustomerService from '../../../../services/apiConstCustomerService';
 
 const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);

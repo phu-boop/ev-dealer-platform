@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FiPlus, FiUser, FiSearch, FiMail, FiPhone, FiMapPin, FiCalendar, FiEye, FiEdit, FiTrash2, FiChevronLeft, FiChevronRight, FiUsers } from "react-icons/fi";
-import { useCustomers } from "../hooks/useCustomers";
-import AssignStaffModal from "../components/AssignStaffModal";
-import { useAuthContext } from "../../auth/AuthProvider";
+import { useCustomers } from "../../hooks/useCustomers";
+import AssignStaffModal from "../../assignment/components/AssignStaffModal";
+import { useAuthContext } from "../../../auth/AuthProvider";
 
 const CustomerList = () => {
   const navigate = useNavigate();

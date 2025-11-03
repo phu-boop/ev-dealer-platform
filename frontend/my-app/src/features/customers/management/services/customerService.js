@@ -1,5 +1,5 @@
 // Import axios instance for customer API calls
-import apiConstCustomerService from "../../../services/apiConstCustomerService";
+import apiConstCustomerService from "../../../../services/apiConstCustomerService";
 
 // Customer service methods using the axios instance directly
 const customerService = {

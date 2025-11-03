@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit, FiClock, FiUser, FiUsers } from "react-icons/fi";
 import customerService from "../services/customerService";
-import staffService from "../services/staffService";
-import { useAuthContext } from "../../../features/auth/AuthProvider";
-import AssignStaffModal from "../components/AssignStaffModal";
+import staffService from "../../assignment/services/staffService";
+import { useAuthContext } from "../../../auth/AuthProvider";
+import AssignStaffModal from "../../assignment/components/AssignStaffModal";
 
 const CustomerDetail = () => {
   const { id } = useParams();

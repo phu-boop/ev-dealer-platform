@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { X, Users, ChevronDown } from 'lucide-react';
-import { toast } from 'react-toastify';
-import staffService from '../../features/customers/services/staffService';
-import { getModelDetails } from '../../services/vehicleService';
+import { X, Users, ChevronDown } from "lucide-react";
+import { toast } from "react-toastify";
+import staffService from "../../assignment/services/staffService";
+import { getModelDetails } from "../services/vehicleService";
 import CustomerSelect from './CustomerSelect';
 
 const TestDriveFormModal = ({ isOpen, onClose, onSubmit, initialData = null, vehicles = [] }) => {

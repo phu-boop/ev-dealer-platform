@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, ChevronDown, Search, X } from 'lucide-react';
-import apiConstCustomerService from '../../services/apiConstCustomerService';
+import apiConstCustomerService from '../../../../services/apiConstCustomerService';
 
 const CustomerSelect = ({ value, onChange, error, disabled = false }) => {
   const [customers, setCustomers] = useState([]);

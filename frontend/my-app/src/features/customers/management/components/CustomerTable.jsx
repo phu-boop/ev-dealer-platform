@@ -102,34 +102,32 @@ const CustomerTable = ({ customers, onView, onEdit, onDelete, loading }) => {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(customer.status)}`}>
+                  <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(customer.status)}`}>
                     {customer.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end space-x-2">
-                    <button
-                      onClick={() => onView(customer.id)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Xem chi tiết"
-                    >
-                      <FiEye className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => onEdit(customer.id)}
-                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                      title="Chỉnh sửa"
-                    >
-                      <FiEdit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(customer.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Xóa"
-                    >
-                      <FiTrash2 className="w-5 h-5" />
-                    </button>
-                  </div>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                  <button
+                    onClick={() => onView(customer.id)}
+                    className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Xem chi tiết"
+                  >
+                    <FiEye className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => onEdit(customer.id)}
+                    className="inline-flex items-center p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                    title="Chỉnh sửa"
+                  >
+                    <FiEdit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(customer.id)}
+                    className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Xóa"
+                  >
+                    <FiTrash2 className="w-4 h-4" />
+                  </button>
                 </td>
               </tr>
             ))}

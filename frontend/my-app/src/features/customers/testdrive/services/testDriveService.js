@@ -1,4 +1,5 @@
-import apiConstTestDrive from './apiConstTestDrive';
+// Import axios instance từ services dùng chung
+import apiConstTestDrive from '../../../../services/apiConstTestDrive';
 
 // ==================== Test Drive Appointments ====================
 
@@ -84,4 +85,17 @@ export const getStatistics = async (dealerId, startDate, endDate) => {
     params: { dealerId, startDate, endDate }
   });
   return response.data;
+};
+
+export default {
+  getTestDrivesByDealer,
+  getTestDriveById,
+  createTestDrive,
+  updateTestDrive,
+  cancelTestDrive,
+  confirmTestDrive,
+  completeTestDrive,
+  filterTestDrives,
+  getCalendarView,
+  getStatistics,
 };
