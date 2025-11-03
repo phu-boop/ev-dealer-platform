@@ -49,7 +49,7 @@ public enum ErrorCode {
     CONSTRAINT_VIOLATION("5007", "Database constraint violation", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD("5008", "Invalid password", HttpStatus.BAD_REQUEST),
     INVALID_JSON_FORMAT("5009","Invalid json format", HttpStatus.BAD_REQUEST),
-
+    DEALER_MANAGER_ALREADY_EXISTS("5010", "Dealer already has a manager", HttpStatus.BAD_REQUEST),
     // ===== 6xxx - Business logic errors =====
     paymentT_FAILED("6001", "paymentt failed", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_BALANCE("6002", "Insufficient balance", HttpStatus.BAD_REQUEST),

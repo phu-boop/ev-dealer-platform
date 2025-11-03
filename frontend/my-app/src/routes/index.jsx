@@ -44,6 +44,9 @@ import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.js
 import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
 import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
 
+//Manage Dealer
+import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -109,7 +112,6 @@ export default function AppRoutes() {
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route
-                path="admin/products/promotions/*"
                 element={<AdminPromotionManager />}
               />
               <Route path="admin/system/users" element={<UserManagement />} />
@@ -121,6 +123,10 @@ export default function AppRoutes() {
               <Route
                 path="admin/distribution/allocation"
                 element={<AllocationPage />}
+              />
+              <Route
+                path="admin/dealers/list"
+                element={<DealersPage />}
               />
             </Route>
             {/* Staff only */}
@@ -150,6 +156,15 @@ export default function AppRoutes() {
               <Route
                 path="staff/distribution/allocation"
                 element={<AllocationPage />}
+              />
+              {/* --------------------------------MANAGE DEALER-------------------------------------------------- */}
+              <Route
+                path="staff/dealers/list"
+                element = {<DealersPage />}
+              />
+              <Route
+                path="staff/dealers/dealer-accounts"
+                element={<UserManagement />}
               />
             </Route>
           </Route>
@@ -198,6 +213,12 @@ export default function AppRoutes() {
               <Route
                   path="manager/quotations/*"
                   element={<QuotationManagement />}
+              />
+              {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
+
+              <Route
+                  path="manager/settings/staff*"
+                  element={<UserManagement />}
               />
 
               {/* Promotions */}

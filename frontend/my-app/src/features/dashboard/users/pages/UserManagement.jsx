@@ -40,11 +40,30 @@ export default function UserManagement() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await mngUserService.getAll();
-            if (response.data.code === "1000") {
-                setUsers(response.data.data);
-            } else {
-                showMessage("Lỗi khi tải danh sách user");
+            if( sessionStorage.getItem("roles").includes("EVM_STAFF")){
+                const response = await mngUserService.getAllDealerManager();
+                console.log("Fetched users:", response);
+                if (response.data.code === "1000") {
+                    setUsers(response.data.data);
+                } else {
+                    showMessage("Lỗi khi tải danh sách user");
+                }
+            }else if( sessionStorage.getItem("roles").includes("DEALER_MANAGER")){
+                const response = await mngUserService.getAllDealerStaff();
+                console.log("Fetched users:", response);
+                if (response.data.code === "1000") {
+                    setUsers(response.data.data);
+                } else {
+                    showMessage("Lỗi khi tải danh sách user");
+                }
+            }
+            else{
+                const response = await mngUserService.getAll();
+                if (response.data.code === "1000") {
+                    setUsers(response.data.data);
+                } else {
+                    showMessage("Lỗi khi tải danh sách user");
+                }
             }
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -128,15 +147,117 @@ export default function UserManagement() {
     try {
         if (mode === "edit") {
             console.log("Original user data:", userData);
-            
-            const updateData = formatUserDataForUpdate(userData, 'edit');
-            console.log("Formatted update data for API:", updateData);
-            
-            const response = await mngUserService.update(userData.id, updateData);
-            console.log("Update response:", response);
-            
+
+        // 🧩 Tạo payload đầy đủ theo role
+        let updateData = {
+            email: userData.email || "",
+            phone: userData.phone || "",
+            name: userData.name || "",
+            fullName: userData.fullName || "",
+            password: userData.password || "",
+            address: userData.address || "",
+            city: userData.city || "",
+            country: userData.country || "",
+            birthday: userData.birthday || "",
+            gender: userData.gender || "",
+            role: userData.role || "",
+            dealerId: userData.dealerId || "",
+            position: userData.position || "",
+            department: userData.department || "",
+            hireDate: userData.hireDate || "",
+            salary: userData.salary || "",
+            commissionRate: userData.commissionRate || "",
+            managementLevel: userData.managementLevel || "",
+            approvalLimit: userData.approvalLimit || "",
+            specialization: userData.specialization || ""
+        };
+
+        // 🧩 Bỏ roles nếu có (tránh gửi lên API)
+        delete updateData.roles;
+
+        // 🧩 Tùy theo role chỉnh field
+        switch (userData.role) {
+            case "EVM_STAFF":
+                updateData = {
+                    ...updateData,
+                    dealerId: "", // Không dùng
+                    position: "",
+                    hireDate: "",
+                    salary: "",
+                    commissionRate: "",
+                    managementLevel: "",
+                    approvalLimit: "",
+                };
+                break;
+
+            case "DEALER_STAFF":
+                updateData = {
+                    ...updateData,
+                    managementLevel: "",
+                    approvalLimit: "",
+                    specialization: ""
+                };
+                break;
+
+            case "DEALER_MANAGER":
+                updateData = {
+                    ...updateData,
+                    position: "",
+                    hireDate: "",
+                    salary: "",
+                    commissionRate: "",
+                    specialization: ""
+                };
+                break;
+
+            case "ADMIN":
+                updateData = {
+                    ...updateData,
+                    dealerId: "",
+                    position: "",
+                    hireDate: "",
+                    salary: "",
+                    commissionRate: "",
+                    approvalLimit: ""
+                };
+                break;
+
+            default:
+                console.error("❌ Unknown role:", userData.role);
+                throw new Error("Unknown user role");
+        }
+
+        console.log("Formatted update data for API (no roles):", updateData);
+
+        // 🧩 Gọi API update đúng theo role
+        try {
+            let response;
+
+            switch (userData.role) {
+                case "EVM_STAFF":
+                    response = await mngUserService.updateEvmStaff(updateData);
+                    break;
+                case "DEALER_MANAGER":
+                    response = await mngUserService.updateDealerManager(updateData);
+                    break;
+                case "DEALER_STAFF":
+                    response = await mngUserService.updateDealerStaff(updateData);
+                    break;
+                case "ADMIN":
+                    response = await mngUserService.updateEvmAdmin(updateData);
+                    break;
+                default:
+                    throw new Error("Unknown user role");
+            }
+
+            console.log("✅ Update response:", response);
             showMessage("Cập nhật user thành công");
-            
+        } catch (error) {
+            console.error("❌ Update failed:", error.response?.data || error.message);
+            showMessage("Lỗi khi cập nhật user!");
+        }
+
+
         } else {
             // Tạo user mới
             console.log("Creating new user:", userData);
