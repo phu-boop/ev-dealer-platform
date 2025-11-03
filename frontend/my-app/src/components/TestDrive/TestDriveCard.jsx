@@ -9,7 +9,7 @@ const statusConfig = {
   CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: '🔴' },
 };
 
-const TestDriveCard = ({ appointment, onEdit, onCancel, onConfirm, onComplete }) => {
+const TestDriveCard = ({ appointment, onEdit, onCancel, onConfirm, onComplete, vehicles = [], staffList = [] }) => {
   const status = statusConfig[appointment.status] || statusConfig.SCHEDULED;
 
   const formatDate = (dateString) => {
@@ -19,6 +19,27 @@ const TestDriveCard = ({ appointment, onEdit, onCancel, onConfirm, onComplete })
       return dateString;
     }
   };
+
+  // Find vehicle info
+  const vehicle = vehicles.find(v => v.modelId === appointment.modelId);
+  const vehicleName = vehicle ? `${vehicle.modelName}` : `Model ${appointment.modelId}`;
+  
+  // Find variant info
+  let variantName = '';
+  if (appointment.variantId && vehicle) {
+    const variant = vehicle.variants?.find(v => v.variantId === appointment.variantId);
+    variantName = variant ? ` - ${variant.versionName} (${variant.color})` : ` - Variant ${appointment.variantId}`;
+  }
+
+  // Find staff info by staffId
+  const staff = staffList.find(s => s.staffId === appointment.staffId);
+  
+  // Staff name: dùng fullName hoặc name, fallback về email
+  const staffName = staff 
+    ? `${staff.fullName || staff.name || 'Unknown'} (${staff.email})` 
+    : appointment.staffId 
+      ? `Staff ${appointment.staffId}` 
+      : 'Chưa phân công';
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
@@ -65,19 +86,16 @@ const TestDriveCard = ({ appointment, onEdit, onCancel, onConfirm, onComplete })
         <div className="flex items-start text-sm text-gray-700">
           <User className="w-4 h-4 mr-2 mt-0.5 text-blue-600" />
           <span>
-            <strong>Mẫu xe:</strong> Model {appointment.modelId}
-            {appointment.variantId && ` - Variant ${appointment.variantId}`}
+            <strong>Mẫu xe:</strong> {vehicleName}{variantName}
           </span>
         </div>
 
-        {appointment.staffId && (
-          <div className="flex items-start text-sm text-gray-700">
-            <User className="w-4 h-4 mr-2 mt-0.5 text-blue-600" />
-            <span>
-              <strong>Nhân viên:</strong> Staff {appointment.staffId}
-            </span>
-          </div>
-        )}
+        <div className="flex items-start text-sm text-gray-700">
+          <User className="w-4 h-4 mr-2 mt-0.5 text-blue-600" />
+          <span>
+            <strong>Nhân viên:</strong> {staffName}
+          </span>
+        </div>
 
         {appointment.customerNotes && (
           <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">

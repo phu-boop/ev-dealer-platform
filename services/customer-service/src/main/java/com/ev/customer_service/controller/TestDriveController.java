@@ -29,7 +29,7 @@ import java.util.List;
  * - CUSTOMER: Có thể xem lịch hẹn của mình
  */
 @RestController
-@RequestMapping("/api/test-drives")
+@RequestMapping("/customers/api/test-drives")
 @RequiredArgsConstructor
 public class TestDriveController {
 

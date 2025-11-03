@@ -26,7 +26,7 @@ public class TestDriveRequest {
 
     private Long variantId; // Phiên bản xe cụ thể (optional)
 
-    private Long staffId;
+    private String staffId; // UUID từ user-service
 
     @NotNull(message = "Appointment date is required")
     @Future(message = "Appointment date must be in the future")

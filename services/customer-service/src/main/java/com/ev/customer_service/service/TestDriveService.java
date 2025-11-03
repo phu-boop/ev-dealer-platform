@@ -117,7 +117,7 @@ public class TestDriveService {
                                    request.getAppointmentDate() : appointment.getAppointmentDate();
             Integer newDuration = request.getDurationMinutes() != null ? 
                                  request.getDurationMinutes() : appointment.getDurationMinutes();
-            Long newStaffId = request.getStaffId() != null ? request.getStaffId() : appointment.getStaffId();
+            String newStaffId = request.getStaffId() != null ? request.getStaffId() : appointment.getStaffId();
             Long newModelId = request.getModelId() != null ? request.getModelId() : appointment.getModelId();
             Long newVariantId = request.getVariantId() != null ? request.getVariantId() : appointment.getVariantId();
 
@@ -291,7 +291,7 @@ public class TestDriveService {
     /**
      * Kiểm tra trùng lịch của staff hoặc xe
      */
-    private void validateNoConflicts(Long staffId, Long modelId, Long variantId,
+    private void validateNoConflicts(String staffId, Long modelId, Long variantId,
                                     LocalDateTime startTime, Integer durationMinutes, Long excludeAppointmentId) {
         if (startTime == null || durationMinutes == null) {
             return;
@@ -300,7 +300,7 @@ public class TestDriveService {
         LocalDateTime endTime = startTime.plusMinutes(durationMinutes);
 
         // Kiểm tra trùng lịch nhân viên
-        if (staffId != null) {
+        if (staffId != null && !staffId.isEmpty()) {
             List<TestDriveAppointment> staffConflicts = appointmentRepository.findConflictingAppointmentsByStaff(
                 staffId, startTime, endTime
             );
@@ -313,8 +313,11 @@ public class TestDriveService {
             }
 
             if (!staffConflicts.isEmpty()) {
-                throw new IllegalStateException("Staff is not available at this time. Conflicting appointment ID: " + 
-                                              staffConflicts.get(0).getAppointmentId());
+                TestDriveAppointment conflict = staffConflicts.get(0);
+                String conflictTime = conflict.getAppointmentDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                throw new IllegalStateException(
+                    String.format("⚠️ Nhân viên đã có lịch hẹn vào lúc %s. Vui lòng chọn thời gian khác!", conflictTime)
+                );
             }
         }
 
@@ -332,8 +335,11 @@ public class TestDriveService {
             }
 
             if (!vehicleConflicts.isEmpty()) {
-                throw new IllegalStateException("Vehicle is not available at this time. Conflicting appointment ID: " + 
-                                              vehicleConflicts.get(0).getAppointmentId());
+                TestDriveAppointment conflict = vehicleConflicts.get(0);
+                String conflictTime = conflict.getAppointmentDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                throw new IllegalStateException(
+                    String.format("⚠️ Xe đã có lịch lái thử vào lúc %s. Vui lòng chọn xe hoặc thời gian khác!", conflictTime)
+                );
             }
         }
     }

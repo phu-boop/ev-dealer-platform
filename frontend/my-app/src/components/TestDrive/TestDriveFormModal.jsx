@@ -3,8 +3,9 @@ import { X, Users, ChevronDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 import staffService from '../../features/customers/services/staffService';
 import { getModelDetails } from '../../services/vehicleService';
+import CustomerSelect from './CustomerSelect';
 
-const TestDriveFormModal = ({ isOpen, onClose, onSubmit, initialData = null, customers = [], vehicles = [] }) => {
+const TestDriveFormModal = ({ isOpen, onClose, onSubmit, initialData = null, vehicles = [] }) => {
   const [formData, setFormData] = useState({
     customerId: '',
     dealerId: 1, // TODO: Get from context/auth
@@ -24,14 +25,15 @@ const TestDriveFormModal = ({ isOpen, onClose, onSubmit, initialData = null, cus
   const [variants, setVariants] = useState([]);
   const [loadingVariants, setLoadingVariants] = useState(false);
 
-  const dealerId = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId');
+  // Dealer UUID để load staff
+  const dealerUUID = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId') || '6c8c229d-c8f6-43d8-b2f6-01261b46baa3';
 
   // Load staff list when modal opens
   useEffect(() => {
-    if (isOpen && dealerId) {
+    if (isOpen && dealerUUID) {
       fetchStaffList();
     }
-  }, [isOpen, dealerId]);
+  }, [isOpen, dealerUUID]);
 
   // Load initial data
   useEffect(() => {
@@ -53,7 +55,7 @@ const TestDriveFormModal = ({ isOpen, onClose, onSubmit, initialData = null, cus
   const fetchStaffList = async () => {
     setLoadingStaff(true);
     try {
-      const data = await staffService.getStaffByDealerId(dealerId);
+      const data = await staffService.getStaffByDealerId(dealerUUID);
       setStaffList(data);
     } catch (error) {
       console.error("Error fetching staff list:", error);
@@ -112,11 +114,25 @@ const TestDriveFormModal = ({ isOpen, onClose, onSubmit, initialData = null, cus
     e.preventDefault();
     
     if (validate()) {
-      // Format date to ISO string
+      // Không convert sang ISO để giữ nguyên timezone local
+      // Backend sẽ parse theo định dạng yyyy-MM-ddTHH:mm
       const submitData = {
         ...formData,
-        appointmentDate: new Date(formData.appointmentDate).toISOString(),
+        appointmentDate: formData.appointmentDate, // Giữ nguyên format yyyy-MM-ddTHH:mm
       };
+      
+      console.log('📅 Submitting datetime:', submitData.appointmentDate);
+      
+      // Xóa staffId nếu không chọn (empty string không parse được thành Long)
+      if (!submitData.staffId) {
+        delete submitData.staffId;
+      }
+      
+      // Xóa createdBy nếu empty
+      if (!submitData.createdBy) {
+        delete submitData.createdBy;
+      }
+      
       onSubmit(submitData);
     }
   };
@@ -150,29 +166,18 @@ const TestDriveFormModal = ({ isOpen, onClose, onSubmit, initialData = null, cus
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Customer */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              👤 Khách hàng *
-            </label>
-            <select
-              name="customerId"
-              value={formData.customerId}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.customerId ? 'border-red-500' : 'border-gray-300'
-              }`}
-              disabled={!!initialData}
-            >
-              <option value="">-- Chọn khách hàng --</option>
-              {customers.map(customer => (
-                <option key={customer.customerId} value={customer.customerId}>
-                  {customer.firstName} {customer.lastName} - {customer.phone}
-                </option>
-              ))}
-            </select>
-            {errors.customerId && <p className="text-red-500 text-sm mt-1">{errors.customerId}</p>}
-          </div>
+          {/* Customer Select */}
+          <CustomerSelect
+            value={formData.customerId}
+            onChange={(customerId) => {
+              setFormData(prev => ({ ...prev, customerId }));
+              if (errors.customerId) {
+                setErrors(prev => ({ ...prev, customerId: '' }));
+              }
+            }}
+            error={errors.customerId}
+            disabled={!!initialData}
+          />
 
           {/* Vehicle Model */}
           <div className="grid grid-cols-2 gap-4">

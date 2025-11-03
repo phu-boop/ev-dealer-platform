@@ -21,7 +21,7 @@ public class UpdateTestDriveRequest {
     
     private Long variantId;
     
-    private Long staffId;
+    private String staffId; // UUID
     
     @Future(message = "Appointment date must be in the future")
     private LocalDateTime appointmentDate;

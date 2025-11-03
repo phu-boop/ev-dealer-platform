@@ -24,7 +24,7 @@ public class TestDriveResponse {
     private String modelName;
     private Long variantId;
     private String variantName;
-    private Long staffId;
+    private String staffId; // UUID
     private String staffName;
     private String staffPhone;
     private LocalDateTime appointmentDate;

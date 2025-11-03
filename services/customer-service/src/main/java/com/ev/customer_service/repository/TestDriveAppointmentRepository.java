@@ -32,12 +32,13 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
      * Kiểm tra trùng lịch của nhân viên
      * Tìm các lịch hẹn của staff trong khoảng thời gian chồng lấp
      */
-    @Query("SELECT t FROM TestDriveAppointment t WHERE t.staffId = :staffId " +
+    @Query(value = "SELECT * FROM test_drive_appointments t WHERE t.staff_id = :staffId " +
            "AND t.status IN ('SCHEDULED', 'CONFIRMED') " +
-           "AND t.appointmentDate < :endTime " +
-           "AND FUNCTION('DATE_ADD', t.appointmentDate, FUNCTION('INTERVAL', t.durationMinutes, 'MINUTE')) > :startTime")
+           "AND t.appointment_date < :endTime " +
+           "AND DATE_ADD(t.appointment_date, INTERVAL t.duration_minutes MINUTE) > :startTime",
+           nativeQuery = true)
     List<TestDriveAppointment> findConflictingAppointmentsByStaff(
-            @Param("staffId") Long staffId,
+            @Param("staffId") String staffId,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
 
@@ -45,11 +46,12 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
      * Kiểm tra trùng lịch của xe (model hoặc variant)
      * Tìm các lịch hẹn của xe trong khoảng thời gian chồng lấp
      */
-    @Query("SELECT t FROM TestDriveAppointment t WHERE " +
-           "(t.modelId = :modelId OR t.variantId = :variantId) " +
+    @Query(value = "SELECT * FROM test_drive_appointments t WHERE " +
+           "(t.model_id = :modelId OR t.variant_id = :variantId) " +
            "AND t.status IN ('SCHEDULED', 'CONFIRMED') " +
-           "AND t.appointmentDate < :endTime " +
-           "AND FUNCTION('DATE_ADD', t.appointmentDate, FUNCTION('INTERVAL', t.durationMinutes, 'MINUTE')) > :startTime")
+           "AND t.appointment_date < :endTime " +
+           "AND DATE_ADD(t.appointment_date, INTERVAL t.duration_minutes MINUTE) > :startTime",
+           nativeQuery = true)
     List<TestDriveAppointment> findConflictingAppointmentsByVehicle(
             @Param("modelId") Long modelId,
             @Param("variantId") Long variantId,
@@ -76,7 +78,7 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
            "AND t.appointmentDate BETWEEN :startDate AND :endDate " +
            "ORDER BY t.appointmentDate ASC")
     List<TestDriveAppointment> findByStaffIdAndDateRange(
-            @Param("staffId") Long staffId,
+            @Param("staffId") String staffId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 

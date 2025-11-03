@@ -21,19 +21,16 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <ToastContainer 
         position="top-right" 
-        autoClose={5000}
-        hideProgressBar={true}
-        newestOnTop={false}
-        closeOnClick={false}
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick={true}
         rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
+        pauseOnFocusLoss={false}
+        draggable={true}
+        pauseOnHover={true}
         theme="light"
-        toastClassName="!p-0 !m-0 !bg-transparent !shadow-none !min-h-0"
-        bodyClassName="!p-0 !m-0"
-        className="!top-4 !right-4 !z-[9999] !max-w-sm"
-        limit={3}
+        limit={5}
       />
       <AppRoutes/>
     </BrowserRouter>

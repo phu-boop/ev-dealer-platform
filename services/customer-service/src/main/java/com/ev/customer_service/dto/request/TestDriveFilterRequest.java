@@ -24,7 +24,7 @@ public class TestDriveFilterRequest {
     
     private Long variantId;
     
-    private Long staffId;
+    private String staffId; // UUID
     
     private List<String> statuses; // SCHEDULED, CONFIRMED, COMPLETED, CANCELLED
     

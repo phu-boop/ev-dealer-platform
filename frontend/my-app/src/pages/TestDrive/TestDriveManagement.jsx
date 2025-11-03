@@ -17,8 +17,8 @@ import {
   filterTestDrives,
 } from '../../services/testDriveService';
 
-import apiConstCustomerService from '../../services/apiConstCustomerService';
-import { getAllModels } from '../../services/vehicleService';
+import { getAllModels, getModelDetails } from '../../services/vehicleService';
+import staffService from '../../features/customers/services/staffService';
 
 const TestDriveManagement = () => {
   const [appointments, setAppointments] = useState([]);
@@ -31,10 +31,13 @@ const TestDriveManagement = () => {
   const [editingAppointment, setEditingAppointment] = useState(null);
 
   // Data for dropdowns
-  const [customers, setCustomers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [staffList, setStaffList] = useState([]);
 
-  const dealerId = 1; // TODO: Get from auth context
+  // TODO: Sửa lại khi backend hỗ trợ dealer UUID
+  // Tạm dùng dealerId = 1 vì backend expect Long, không phải UUID
+  const dealerId = 1;
+  const dealerUUID = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId') || '6c8c229d-c8f6-43d8-b2f6-01261b46baa3';
 
   useEffect(() => {
     loadData();
@@ -50,21 +53,39 @@ const TestDriveManagement = () => {
       setAppointments(appointmentsData);
       setFilteredAppointments(appointmentsData);
 
-      // Load customers
-      try {
-        const customersRes = await apiConstCustomerService.get('/');
-        setCustomers(customersRes.data.data || []);
-      } catch (error) {
-        console.error('Error loading customers:', error);
-      }
-
-      // Load vehicles from vehicle service
+      // Load vehicles from vehicle service with variants
       try {
         const vehiclesRes = await getAllModels();
-        setVehicles(vehiclesRes.data || []);
+        const modelsData = vehiclesRes.data || [];
+        
+        // Load variants cho từng model
+        const modelsWithVariants = await Promise.all(
+          modelsData.map(async (model) => {
+            try {
+              const detailRes = await getModelDetails(model.modelId);
+              return {
+                ...model,
+                variants: detailRes.data?.variants || []
+              };
+            } catch (error) {
+              console.error(`Error loading variants for model ${model.modelId}:`, error);
+              return { ...model, variants: [] };
+            }
+          })
+        );
+        
+        setVehicles(modelsWithVariants);
       } catch (error) {
         console.error('Error loading vehicles:', error);
         toast.error('Không thể tải danh sách xe');
+      }
+
+      // Load staff list (dùng UUID)
+      try {
+        const staffData = await staffService.getStaffByDealerId(dealerUUID);
+        setStaffList(staffData || []);
+      } catch (error) {
+        console.error('Error loading staff:', error);
       }
 
     } catch (error) {
@@ -90,11 +111,11 @@ const TestDriveManagement = () => {
       if (editingAppointment) {
         // Update
         await updateTestDrive(editingAppointment.appointmentId, formData);
-        toast.success('✅ Cập nhật lịch hẹn thành công!');
+        toast.success('Cập nhật lịch hẹn thành công!');
       } else {
         // Create
         await createTestDrive(formData);
-        toast.success('✅ Tạo lịch hẹn thành công!');
+        toast.success('Tạo lịch hẹn thành công!');
       }
       
       setShowModal(false);
@@ -103,7 +124,7 @@ const TestDriveManagement = () => {
     } catch (error) {
       console.error('Error submitting:', error);
       const message = error.response?.data?.message || 'Có lỗi xảy ra';
-      toast.error(`❌ ${message}`);
+      toast.error(message);
     }
   };
 
@@ -122,12 +143,12 @@ const TestDriveManagement = () => {
 
       if (result.isConfirmed) {
         await confirmTestDrive(appointmentId);
-        toast.success('✅ Đã xác nhận lịch hẹn!');
+        toast.success('Đã xác nhận lịch hẹn!');
         loadData();
       }
     } catch (error) {
       console.error('Error confirming:', error);
-      toast.error('❌ Không thể xác nhận lịch hẹn');
+      toast.error('Không thể xác nhận lịch hẹn');
     }
   };
 
@@ -146,12 +167,12 @@ const TestDriveManagement = () => {
 
       if (result.isConfirmed) {
         await completeTestDrive(appointmentId);
-        toast.success('✅ Đã đánh dấu hoàn thành!');
+        toast.success('Đã đánh dấu hoàn thành!');
         loadData();
       }
     } catch (error) {
       console.error('Error completing:', error);
-      toast.error('❌ Không thể hoàn thành lịch hẹn');
+      toast.error('Không thể hoàn thành lịch hẹn');
     }
   };
 
@@ -182,12 +203,12 @@ const TestDriveManagement = () => {
           cancellationReason: reason,
           cancelledBy: 'staff@dealer.com' // TODO: Get from auth
         });
-        toast.success('✅ Đã hủy lịch hẹn!');
+        toast.success('Đã hủy lịch hẹn!');
         loadData();
       }
     } catch (error) {
       console.error('Error cancelling:', error);
-      toast.error('❌ Không thể hủy lịch hẹn');
+      toast.error('Không thể hủy lịch hẹn');
     }
   };
 
@@ -201,10 +222,10 @@ const TestDriveManagement = () => {
 
       const response = await filterTestDrives(fullFilter);
       setFilteredAppointments(response.data || []);
-      toast.success('✅ Đã áp dụng bộ lọc');
+      toast.success('Đã áp dụng bộ lọc');
     } catch (error) {
       console.error('Error filtering:', error);
-      toast.error('❌ Không thể lọc dữ liệu');
+      toast.error('Không thể lọc dữ liệu');
     }
   };
 
@@ -345,6 +366,8 @@ const TestDriveManagement = () => {
                 <TestDriveCard
                   key={appointment.appointmentId}
                   appointment={appointment}
+                  vehicles={vehicles}
+                  staffList={staffList}
                   onEdit={handleEdit}
                   onCancel={handleCancel}
                   onConfirm={handleConfirm}
@@ -389,7 +412,6 @@ const TestDriveManagement = () => {
         }}
         onSubmit={handleSubmit}
         initialData={editingAppointment}
-        customers={customers}
         vehicles={vehicles}
       />
     </div>

@@ -29,7 +29,7 @@ public class TestDriveCalendarResponse {
     private String modelName;
     private Long variantId;
     private String variantName;
-    private Long staffId;
+    private String staffId; // UUID
     private String staffName;
     private String location;
     private String customerNotes;

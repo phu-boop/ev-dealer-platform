@@ -39,8 +39,8 @@ public class TestDriveAppointment {
     @Column(name = "variant_id")
     private Long variantId; // Phiên bản xe cụ thể (optional)
 
-    @Column(name = "staff_id")
-    private Long staffId;
+    @Column(name = "staff_id", length = 50)
+    private String staffId; // UUID từ user-service
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDateTime appointmentDate;
