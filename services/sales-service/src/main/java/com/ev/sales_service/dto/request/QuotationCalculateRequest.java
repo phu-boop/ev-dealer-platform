@@ -1,0 +1,25 @@
+package com.ev.sales_service.dto.request;
+
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+// QuotationCalculateRequest.java
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class QuotationCalculateRequest {
+    private List<UUID> promotionIds;
+
+    @DecimalMax(value = "100.0", message = "Custom discount cannot exceed 100%")
+    @DecimalMin(value = "0.0", message = "Custom discount cannot be negative")
+    private BigDecimal additionalDiscountRate;
+}

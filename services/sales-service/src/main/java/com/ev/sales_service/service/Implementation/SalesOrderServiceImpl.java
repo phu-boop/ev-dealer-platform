@@ -17,6 +17,7 @@ import com.ev.sales_service.entity.Outbox;
 import com.ev.sales_service.enums.OrderStatus;
 
 // import com.ev.sales_service.repository.QuotationRepository; 
+import com.ev.sales_service.enums.SaleOderType;
 import com.ev.sales_service.repository.OutboxRepository;
 import com.ev.sales_service.repository.SalesOrderRepository;
 import com.ev.sales_service.service.Interface.SalesOrderService;
@@ -148,6 +149,8 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         
         order.setOrderTrackings(List.of(tracking)); // Khởi tạo list
 
+        //set type
+        order.setTypeOder(SaleOderType.B2B);
         // Lưu đơn hàng vào DB
         SalesOrder savedOrder = salesOrderRepository.save(order);
 
@@ -174,7 +177,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Transactional
     // Bỏ các tham số role, userId, profileId thừa
     public SalesOrder approveB2BOrder(UUID orderId, String email) {
-        SalesOrder order = salesOrderRepository.findById(orderId)
+        SalesOrder order = salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
 
         if (order.getOrderStatus() != OrderStatus.PENDING) {
@@ -225,7 +228,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     @Transactional
     public SalesOrder shipB2BOrder(UUID orderId, ShipmentRequestDto shipmentRequest, String email) {
-        SalesOrder order = salesOrderRepository.findById(orderId)
+        SalesOrder order = salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); 
             
         if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
@@ -267,7 +270,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     @Transactional
     public SalesOrder confirmDelivery(UUID orderId, String email, UUID dealerId) {
-        SalesOrder order = salesOrderRepository.findById(orderId)
+        SalesOrder order = salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
             
         if (!order.getDealerId().equals(dealerId)) {
@@ -315,9 +318,9 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Transactional(readOnly = true)
     public Page<SalesOrder> getAllB2BOrders(OrderStatus status, Pageable pageable) {
         if (status != null) {
-            return salesOrderRepository.findAllByOrderStatus(status, pageable);
+            return salesOrderRepository.findAllByTypeOderAndOrderStatus(SaleOderType.B2B, status, pageable);
         } else {
-            return salesOrderRepository.findAll(pageable);
+            return salesOrderRepository.findAllByTypeOder(SaleOderType.B2B, pageable);
         }
     }
 
@@ -333,10 +336,10 @@ public class SalesOrderServiceImpl implements SalesOrderService {
 
         if (status != null) {
             // Trường hợp 1: Có lọc theo status
-            return salesOrderRepository.findAllByDealerIdAndOrderStatus(dealerId, status, pageable);
+            return salesOrderRepository.findAllByDealerIdAndTypeOderAndOrderStatus(dealerId, SaleOderType.B2B, status, pageable);
         } else {
             // Trường hợp 2: Không lọc, lấy tất cả đơn của đại lý đó
-            return salesOrderRepository.findAllByDealerId(dealerId, pageable);
+            return salesOrderRepository.findAllByDealerIdAndTypeOder(dealerId, SaleOderType.B2B, pageable);
         }
     }
 
@@ -376,7 +379,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     @Transactional
     public void deleteCancelledOrder(UUID orderId) {
-        SalesOrder order = salesOrderRepository.findById(orderId)
+        SalesOrder order = salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         if (order.getOrderStatus() != OrderStatus.CANCELLED) {
@@ -446,7 +449,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
      }
 
     private SalesOrder findOrderByIdOrThrow(UUID orderId) {
-        return salesOrderRepository.findById(orderId)
+        return salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
     }
 

@@ -1,6 +1,7 @@
 package com.ev.sales_service.entity;
 
 import com.ev.sales_service.enums.OrderStatus;
+import com.ev.sales_service.enums.SaleOderType;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -55,6 +56,10 @@ public class SalesOrder {
 
     @Column(name = "approved_by", columnDefinition = "BINARY(16)")
     private UUID approvedBy;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_oder", length = 50)
+    private SaleOderType typeOder;
 
     @Column(name = "approval_date")
     private LocalDateTime approvalDate;

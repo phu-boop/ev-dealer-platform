@@ -42,7 +42,7 @@ public class SalesOrderController {
     @PostMapping("/b2b")
     @PreAuthorize("hasRole('DEALER_MANAGER')") // Chỉ quản lý đại lý được đặt hàng
     public ResponseEntity<ApiRespond<SalesOrderDto>> createB2BOrder(
-            @Valid @RequestBody CreateB2BOrderRequest request,
+                @Valid @RequestBody CreateB2BOrderRequest request,
             @RequestHeader("X-User-Email") String email,
             @RequestHeader("X-User-ProfileId") UUID dealerId) {
         

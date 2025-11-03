@@ -1,159 +1,98 @@
 package com.ev.sales_service.controller;
 
-import com.ev.sales_service.dto.request.QuotationRequestDTO;
-import com.ev.sales_service.dto.response.QuotationResponseDTO;
-import com.ev.sales_service.enums.QuotationStatus;
-import com.ev.sales_service.dto.outbound.UpdateQuotationStatusDTO;
-import com.ev.sales_service.dto.outbound.VehicleVariantDTO;
-import com.ev.sales_service.service.QuotationService;
-import jakarta.validation.Valid; // <-- Import để kích hoạt validation
+import com.ev.sales_service.dto.request.QuotationCalculateRequest;
+import com.ev.sales_service.dto.request.QuotationCreateRequest;
+import com.ev.sales_service.dto.request.QuotationFilterRequest;
+import com.ev.sales_service.dto.request.QuotationSendRequest;
+import com.ev.sales_service.dto.response.CustomerResponseRequest;
+import com.ev.sales_service.dto.response.PromotionResponse;
+import com.ev.sales_service.dto.response.QuotationResponse;
+import com.ev.sales_service.service.Interface.QuotationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.ev.common_lib.dto.respond.ApiRespond;
 
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/quotations")
+@RequestMapping("/api/v1/quotations")
 @RequiredArgsConstructor
+@Validated
+@Slf4j
 public class QuotationController {
-
     private final QuotationService quotationService;
 
-    /**
-     * API để tạo báo giá mới
-     * @param request DTO chứa variantId, customerId và danh sách promotionIds
-     * @return DTO chứa thông tin báo giá đã được tính toán
-     */
-    @PostMapping
-    public ResponseEntity<QuotationResponseDTO> createQuotation(
-            @Valid @RequestBody QuotationRequestDTO request,
-            @RequestHeader("X-Staff-Id") UUID staffId,
-            @RequestHeader("X-Dealer-Id") UUID dealerId) {
-
-        // SỬA: Truyền ID vào service
-        QuotationResponseDTO response = quotationService.createQuotation(request, staffId, dealerId);
-
-        return ResponseEntity.ok(response);
+    @PostMapping("/draft")
+    public ResponseEntity<ApiRespond<QuotationResponse>> createDraftQuotation(
+            @RequestBody @Valid QuotationCreateRequest request) {
+        QuotationResponse response = quotationService.createDraftQuotation(request);
+        return ResponseEntity.ok(ApiRespond.success("Quotation created successfully", response));
     }
 
-    /**
-     * API MỚI: Cho Staff lấy báo giá của CHÍNH MÌNH
-     */
-    @GetMapping("/my")
-    public ResponseEntity<List<QuotationResponseDTO>> getMyQuotations(
-            @RequestHeader("X-Staff-Id") UUID staffId,
-            @RequestParam(required = false) QuotationStatus status) {
-
-        List<QuotationResponseDTO> response;
-        if (status != null) {
-            response = quotationService.getMyQuotationsByStatus(staffId, status);
-        } else {
-            response = quotationService.getMyQuotations(staffId);
-        }
-        return ResponseEntity.ok(response);
+    @PutMapping("/{quotationId}/calculate")
+    public ResponseEntity<ApiRespond<QuotationResponse>> calculateQuotationPrice(
+            @PathVariable UUID quotationId,
+            @RequestBody @Valid QuotationCalculateRequest request) {
+        QuotationResponse response = quotationService.calculateQuotationPrice(quotationId, request);
+        return ResponseEntity.ok(ApiRespond.success("Quotation calculated successfully", response));
     }
 
-    /**
-     * API lấy chi tiết một báo giá
-     * (Phục vụ EDMS-35: Xem chi tiết & Chỉnh sửa)
-     */
+    @PutMapping("/{quotationId}/send")
+    public ResponseEntity<ApiRespond<QuotationResponse>> sendQuotationToCustomer(
+            @PathVariable UUID quotationId,
+            @RequestBody @Valid QuotationSendRequest request) {
+        QuotationResponse response = quotationService.sendQuotationToCustomer(quotationId, request);
+        return ResponseEntity.ok(ApiRespond.success("Quotation sent to customer successfully", response));
+    }
+
+    @PutMapping("/{quotationId}/customer-response")
+    public ResponseEntity<ApiRespond<QuotationResponse>> handleCustomerResponse(
+            @PathVariable UUID quotationId,
+            @RequestBody @Valid CustomerResponseRequest request) {
+        QuotationResponse response = quotationService.handleCustomerResponse(quotationId, request);
+        return ResponseEntity.ok(ApiRespond.success("Customer response handled successfully", response));
+    }
+
+//    @PostMapping("/{quotationId}/convert-to-order")
+//    public ResponseEntity<ApiRespond<SalesOrderResponse>> convertToSalesOrder(@PathVariable UUID quotationId) {
+//        SalesOrderResponse response = quotationService.convertToSalesOrder(quotationId);
+//        return ResponseEntity.ok(ApiRespond.success("Quotation converted to order successfully", response));
+//    }
+
     @GetMapping("/{quotationId}")
-    public ResponseEntity<QuotationResponseDTO> getQuotationById(
-            @PathVariable UUID quotationId) {
-
-        QuotationResponseDTO response = quotationService.getQuotationDetailsById(quotationId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<ApiRespond<QuotationResponse>> getQuotationById(@PathVariable UUID quotationId) {
+        QuotationResponse response = quotationService.getQuotationById(quotationId);
+        return ResponseEntity.ok(ApiRespond.success("Quotation fetched successfully", response));
     }
 
-    /**
-     * API cho Manager lấy danh sách báo giá của đại lý
-     * Có thể lọc theo trạng thái (ví dụ: ?status=PENDING)
-     *
-     * @param dealerId ID của đại lý (truyền qua URL)
-     * @param status Trạng thái (truyền qua query param, không bắt buộc)
-     * @return Danh sách báo giá
-     */
-    @GetMapping("/dealer/{dealerId}")
-    public ResponseEntity<List<QuotationResponseDTO>> getQuotationsForDealer(
-            @PathVariable UUID dealerId,
-            @RequestParam(required = false) QuotationStatus status) {
-
-        List<QuotationResponseDTO> response;
-
-        if (status != null) {
-            // Nếu có lọc status (ví dụ: ?status=PENDING)
-            response = quotationService.getQuotationsByDealerIdAndStatus(dealerId, status);
-        } else {
-            // Lấy tất cả
-            response = quotationService.getQuotationsByDealerId(dealerId);
-        }
-
-        return ResponseEntity.ok(response);
+    @GetMapping
+    public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotations(
+            @ModelAttribute QuotationFilterRequest filterRequest) {
+        List<QuotationResponse> responses = quotationService.getQuotationsByFilters(filterRequest);
+        return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully", responses));
     }
 
-    /**
-     * API cho Manager duyệt (APPROVE) hoặc từ chối (REJECT) báo giá
-     *
-     * @param quotationId ID của báo giá (từ URL)
-     * @param request     Body chứa status mới (APPROVED hoặc REJECTED)
-     * @return Báo giá đã được cập nhật
-     */
-    @PutMapping("/{quotationId}/status")
-    public ResponseEntity<QuotationResponseDTO> updateQuotationStatus(
-            @PathVariable UUID quotationId,
-            @Valid @RequestBody UpdateQuotationStatusDTO request,
-            @RequestHeader("X-User-Role") String userRole) {
+//    @GetMapping("/search")
+//    public ResponseEntity<ApiRespond<Page<QuotationResponse>>> getQuotationsWithPagination(
+//            @ModelAttribute QuotationFilterRequest filterRequest,
+//            @PageableDefault(size = 20, sort = "quotationDate", direction = Sort.Direction.DESC) Pageable pageable) {
+//        Page<QuotationResponse> responses = quotationService.getQuotationsWithPagination(filterRequest, pageable);
+//        return ResponseEntity.ok(ApiRespond.success("Quotations fetched with pagination successfully", responses));
+//    }
 
-        // Gọi service để xử lý logic
-        QuotationResponseDTO response = quotationService.updateQuotationStatus(
-                quotationId,
-                request.getStatus(),
-                userRole
-        );
-
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * API cho Manager chỉnh sửa báo giá đang ở trạng thái PENDING hoặc DRAFT
-     *
-     * @param quotationId ID của báo giá cần sửa (từ URL)
-     * @param request     Body chứa thông tin báo giá mới (dùng lại QuotationRequestDTO)
-     * @return Báo giá đã được cập nhật
-     */
-    @PutMapping("/{quotationId}")
-    public ResponseEntity<QuotationResponseDTO> updateQuotation(
-            @PathVariable UUID quotationId,
-            @Valid @RequestBody QuotationRequestDTO request,
-            @RequestHeader("X-Staff-Id") UUID staffId,
-            @RequestHeader("X-Dealer-Id") UUID dealerId,
-            @RequestHeader("X-User-Role") String userRole) {
-
-        QuotationResponseDTO response = quotationService.updateQuotation(
-                quotationId,
-                request,
-                staffId,
-                dealerId,
-                userRole
-        );
-
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * API Passthrough: Giúp frontend lấy thông tin xe từ VehicleService
-     */
-    @GetMapping("/vehicle-info/{variantId}")
-    public ResponseEntity<VehicleVariantDTO> getVehicleInfo(
-            @PathVariable Long variantId) {
-
-        VehicleVariantDTO response = quotationService.getVehicleDetails(variantId);
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping("/{quotationId}/available-promotions")
+//    public ResponseEntity<ApiRespond<List<PromotionResponse>>> getAvailablePromotions(@PathVariable UUID quotationId) {
+//        List<PromotionResponse> responses = quotationService.getAvailablePromotionsForQuotation(quotationId);
+//        return ResponseEntity.ok(ApiRespond.success("Available promotions fetched successfully", responses));
+//    }
 }
