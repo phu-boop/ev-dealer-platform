@@ -53,4 +53,7 @@ public interface VehicleCatalogService {
      * Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
      */
     Page<VariantDetailDto> getAllVariantsPaginated(String search, Pageable pageable);
+
+    List<VariantDetailDto> getVariantsByModelId(Long modelId);
+
 }

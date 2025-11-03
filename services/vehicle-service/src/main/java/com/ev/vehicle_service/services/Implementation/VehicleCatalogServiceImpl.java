@@ -540,4 +540,16 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         
         variantHistoryRepository.save(history);
     }
+
+    @Override
+    public List<VariantDetailDto> getVariantsByModelId(Long modelId) {
+        VehicleModel model = findModelById(modelId); // Tự động ném AppException nếu không tìm thấy
+
+        List<VehicleVariant> variants = variantRepository.findByVehicleModel_ModelId(modelId);
+
+        return variants.stream()
+                .map(this::mapToVariantDetailDto)
+                .collect(Collectors.toList());
+    }
+
 }

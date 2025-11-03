@@ -305,7 +305,6 @@ import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.j
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
-import QuotationManagement from "../features/dealer/sales/pages/QuotationManagement.jsx";
 
 // customer pages
 import CustomerList from "../features/customers/pages/CustomerList.jsx";
@@ -329,6 +328,11 @@ import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/Dea
 // Manage Dealer
 import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
 
+
+// Staff Dealer
+import QuotationCreatePage from "../features/dealer/sales/quotation/pages/QuotationCreatePage.jsx";
+
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -336,6 +340,7 @@ export default function AppRoutes() {
         {/* ================================================================== */}
         {/* ======================= PUBLIC ROUTES ============================ */}
         {/* ================================================================== */}
+
         <Route path="/" element={<UserLayout />}>
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
@@ -451,10 +456,7 @@ export default function AppRoutes() {
               />
 
               {/* Quotation Management */}
-              <Route
-                path="manager/quotations/*"
-                element={<QuotationManagement />}
-              />
+              
 
               {/* Inventory Management */}
               <Route
@@ -499,10 +501,8 @@ export default function AppRoutes() {
               />
 
               {/* Quotation Management */}
-              <Route
-                path="staff/quotations/*"
-                element={<QuotationManagement />}
-              />
+              <Route path="staff/quotations" element={<QuotationCreatePage />} />
+             
 
               {/* Inventory Management */}
               <Route

@@ -1,8 +1,10 @@
 package com.ev.sales_service.dto.response;
 
 import com.ev.sales_service.enums.QuotationStatus;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,6 +13,8 @@ import java.util.UUID;
 
 @Data
 @Builder
+@NoArgsConstructor   // ✅ BẮT BUỘC CÓ
+@AllArgsConstructor
 public class QuotationResponse {
     private UUID quotationId;
     private UUID dealerId;

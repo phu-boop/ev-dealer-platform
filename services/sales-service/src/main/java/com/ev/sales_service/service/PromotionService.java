@@ -201,5 +201,31 @@ public class PromotionService {
                 })
                 .collect(Collectors.toList());
     }
+    /**
+     * Lấy tất cả khuyến mãi đang ACTIVE (tùy chọn lọc theo modelId)
+     */
+    public List<Promotion> getActivePromotions(Optional<Long> modelId) {
+        List<Promotion> allActivePromotions = promotionRepository.findByStatus(PromotionStatus.ACTIVE);
+        LocalDateTime now = LocalDateTime.now();
+
+        return allActivePromotions.stream()
+                .filter(promo -> {
+                    // Kiểm tra thời gian hợp lệ
+                    if (promo.getStartDate() != null && promo.getStartDate().isAfter(now)) return false;
+                    if (promo.getEndDate() != null && promo.getEndDate().isBefore(now)) return false;
+
+                    // Nếu có modelId, lọc theo model
+                    if (modelId.isPresent()) {
+                        String modelJson = promo.getApplicableModelsJson();
+                        Long mId = modelId.get();
+                        if (modelJson != null && !modelJson.isEmpty() && !modelJson.equals("[]")) {
+                            return modelJson.contains(mId.toString());
+                        }
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+    }
+
 }
 
