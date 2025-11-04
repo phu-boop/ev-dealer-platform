@@ -1,9 +1,13 @@
 package com.ev.sales_service.service.Implementation;
 
+import com.ev.common_lib.dto.respond.ApiRespond;
+import com.ev.common_lib.exception.AppException;
+import com.ev.common_lib.exception.ErrorCode;
 import com.ev.sales_service.dto.request.QuotationCalculateRequest;
 import com.ev.sales_service.dto.request.QuotationCreateRequest;
 import com.ev.sales_service.dto.request.QuotationFilterRequest;
 import com.ev.sales_service.dto.request.QuotationSendRequest;
+import com.ev.sales_service.dto.response.CustomerResponse;
 import com.ev.sales_service.dto.response.CustomerResponseRequest;
 import com.ev.sales_service.dto.response.PromotionResponse;
 import com.ev.sales_service.dto.response.QuotationResponse;
@@ -13,9 +17,9 @@ import com.ev.sales_service.enums.PromotionStatus;
 import com.ev.sales_service.enums.QuotationStatus;
 import com.ev.sales_service.repository.PromotionRepository;
 import com.ev.sales_service.repository.QuotationRepository;
+import com.ev.sales_service.client.CustomerClient;
+import com.ev.sales_service.service.Interface.EmailService;
 import com.ev.sales_service.service.Interface.QuotationService;
-import com.ev.sales_service.service.Interface.SalesOrderService;
-import com.ev.sales_service.config.ModelMapperConfig;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +39,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class QuotationServiceImpl implements QuotationService {
-
+    private final CustomerClient customerClient;
     private final QuotationRepository quotationRepository;
     private final PromotionRepository promotionRepository;
-    //private final SalesOrderService salesOrderService;
+    private final EmailService emailService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -66,11 +70,11 @@ public class QuotationServiceImpl implements QuotationService {
         log.info("Calculating price for quotation: {}", quotationId);
 
         Quotation quotation = quotationRepository.findById(quotationId)
-                .orElseThrow(() -> new RuntimeException("Quotation not found with id: " + quotationId));
+                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
         // Validate quotation status
         if (quotation.getStatus() != QuotationStatus.DRAFT && quotation.getStatus() != QuotationStatus.PENDING) {
-            throw new RuntimeException("Quotation cannot be calculated in current status: " + quotation.getStatus());
+            throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
         }
 
         // Lấy danh sách promotion để áp dụng
@@ -87,6 +91,8 @@ public class QuotationServiceImpl implements QuotationService {
                             .multiply(promotion.getDiscountRate())
                             .divide(BigDecimal.valueOf(100));
                     totalDiscount = totalDiscount.add(discountAmount);
+                } else {
+                    throw new AppException(ErrorCode.PROMOTION_NOT_APPLICABLE);
                 }
             }
         }
@@ -116,17 +122,18 @@ public class QuotationServiceImpl implements QuotationService {
         return mapToResponse(updatedQuotation);
     }
 
+    // phương thức sendQuotationToCustomer
     @Override
     public QuotationResponse sendQuotationToCustomer(UUID quotationId, QuotationSendRequest request) {
         Quotation quotation = quotationRepository.findById(quotationId)
-                .orElseThrow(() -> new RuntimeException("Quotation not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
         if (quotation.getStatus() != QuotationStatus.PENDING) {
-            throw new RuntimeException("Quotation must be in PENDING status to send");
+            throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
         }
 
         if (quotation.getFinalPrice() == null) {
-            throw new RuntimeException("Quotation must be calculated before sending");
+            throw new AppException(ErrorCode.QUOTATION_NOT_CALCULATED);
         }
 
         quotation.setValidUntil(request.getValidUntil());
@@ -136,109 +143,153 @@ public class QuotationServiceImpl implements QuotationService {
 
         Quotation updatedQuotation = quotationRepository.save(quotation);
 
-        // TODO: Gửi email/thông báo cho khách hàng
-        log.info("Quotation {} sent to customer, valid until: {}", quotationId, request.getValidUntil());
+        // Gửi email cho khách hàng
+        try {
+            CustomerResponse customer = getCustomerInfo(quotation.getCustomerId());
+            emailService.sendQuotationEmail(updatedQuotation, customer);
+            log.info("Quotation email sent to customer: {}", customer.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send quotation email for quotation: {}", quotationId, e);
+            // Không throw exception để tránh ảnh hưởng đến business logic chính
+        }
 
+        log.info("Quotation {} sent to customer, valid until: {}", quotationId, request.getValidUntil());
         return mapToResponse(updatedQuotation);
     }
 
+    //  phương thức handleCustomerResponse
     @Override
     public QuotationResponse handleCustomerResponse(UUID quotationId, CustomerResponseRequest request) {
         Quotation quotation = quotationRepository.findById(quotationId)
-                .orElseThrow(() -> new RuntimeException("Quotation not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
         if (quotation.getStatus() != QuotationStatus.SENT) {
-            throw new RuntimeException("Quotation must be in SENT status to accept/reject");
+            throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
         }
 
-        if (request.getAccepted()) {
-            quotation.setStatus(QuotationStatus.ACCEPTED);
-            log.info("Quotation {} accepted by customer", quotationId);
-        } else {
-            quotation.setStatus(QuotationStatus.REJECTED);
-            log.info("Quotation {} rejected by customer. Reason: {}", quotationId, request.getCustomerNote());
+        if (quotation.getValidUntil() != null && quotation.getValidUntil().isBefore(LocalDateTime.now())) {
+            quotation.setStatus(QuotationStatus.EXPIRED);
+            quotationRepository.save(quotation);
+            throw new AppException(ErrorCode.QUOTATION_EXPIRED);
+        }
+
+        // Gửi email dựa trên phản hồi của khách hàng
+        try {
+            CustomerResponse customer = getCustomerInfo(quotation.getCustomerId());
+
+            if (request.getAccepted()) {
+                quotation.setStatus(QuotationStatus.ACCEPTED);
+                emailService.sendQuotationAcceptedEmail(quotation, customer);
+                log.info("Quotation accepted email sent to customer: {}", customer.getEmail());
+            } else {
+                quotation.setStatus(QuotationStatus.REJECTED);
+                emailService.sendQuotationRejectedEmail(quotation, customer);
+                log.info("Quotation rejected email sent to customer: {}", customer.getEmail());
+            }
+        } catch (Exception e) {
+            log.error("Failed to send customer response email for quotation: {}", quotationId, e);
+            // Vẫn tiếp tục xử lý business logic chính
+            if (request.getAccepted()) {
+                quotation.setStatus(QuotationStatus.ACCEPTED);
+            } else {
+                quotation.setStatus(QuotationStatus.REJECTED);
+            }
         }
 
         Quotation updatedQuotation = quotationRepository.save(quotation);
         return mapToResponse(updatedQuotation);
     }
 
+    // Helper method để lấy thông tin khách hàng
+    private CustomerResponse getCustomerInfo(Long customerId) {
+        try {
+            ApiRespond<CustomerResponse> response = customerClient.getCustomerById(customerId);
+            if (response != null && response.getCode().equals("1000") && response.getData() != null) {
+                return response.getData();
+            }
+            throw new AppException(ErrorCode.CUSTOMER_NOT_FOUND);
+        } catch (Exception e) {
+            log.error("Failed to get customer info for id: {}", customerId, e);
+            throw new AppException(ErrorCode.CUSTOMER_SERVICE_UNAVAILABLE);
+        }
+    }
 //    @Override
 //    public SalesOrderResponse convertToSalesOrder(UUID quotationId) {
 //        Quotation quotation = quotationRepository.findById(quotationId)
-//                .orElseThrow(() -> new RuntimeException("Quotation not found"));
+//                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 //
 //        if (quotation.getStatus() != QuotationStatus.ACCEPTED) {
-//            throw new RuntimeException("Quotation must be ACCEPTED to convert to sales order");
+//            throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
 //        }
 //
 //        if (quotation.getSalesOrder() != null) {
-//            throw new RuntimeException("Sales order already exists for this quotation");
+//            throw new AppException(ErrorCode.SALES_ORDER_ALREADY_EXISTS);
 //        }
 //
 //        return salesOrderService.createSalesOrderFromQuotation(quotationId);
 //    }
 
-    @Override
-    public List<QuotationResponse> getQuotationsByFilters(QuotationFilterRequest filterRequest) {
-        List<Quotation> quotations = quotationRepository.findByFilters(
-                filterRequest.getDealerId(),
-                filterRequest.getCustomerId(),
-                filterRequest.getStaffId(),
-                filterRequest.getStatus(),
-                filterRequest.getStartDate(),
-                filterRequest.getEndDate()
-        );
+        @Override
+        public List<QuotationResponse> getQuotationsByFilters (QuotationFilterRequest filterRequest){
+            List<Quotation> quotations = quotationRepository.findByFilters(
+                    filterRequest.getDealerId(),
+                    filterRequest.getCustomerId(),
+                    filterRequest.getStaffId(),
+                    filterRequest.getStatus(),
+                    filterRequest.getStartDate(),
+                    filterRequest.getEndDate()
+            );
 
-        return quotations.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
+            return quotations.stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
 
-    @Override
-    public void expireOldQuotations() {
-        LocalDateTime now = LocalDateTime.now();
-        List<Quotation> expiringQuotations = quotationRepository.findExpiringQuotations(now, now.plusDays(1));
+        @Override
+        public void expireOldQuotations () {
+            LocalDateTime now = LocalDateTime.now();
+            List<Quotation> expiringQuotations = quotationRepository.findExpiringQuotations(now, now.plusDays(1));
 
-        for (Quotation quotation : expiringQuotations) {
-            if (quotation.getValidUntil().isBefore(now)) {
-                quotation.setStatus(QuotationStatus.EXPIRED);
-                quotationRepository.save(quotation);
-                log.info("Quotation {} expired", quotation.getQuotationId());
+            for (Quotation quotation : expiringQuotations) {
+                if (quotation.getValidUntil().isBefore(now)) {
+                    quotation.setStatus(QuotationStatus.EXPIRED);
+                    quotationRepository.save(quotation);
+                    log.info("Quotation {} expired", quotation.getQuotationId());
+                }
             }
         }
-    }
 
-    // Helper methods
-    private boolean isPromotionApplicable(Promotion promotion, Quotation quotation) {
-        if (promotion.getStatus() != PromotionStatus.ACTIVE) return false;
+        // Helper methods
+        private boolean isPromotionApplicable (Promotion promotion, Quotation quotation){
+            if (promotion.getStatus() != PromotionStatus.ACTIVE) return false;
 
-        LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(promotion.getStartDate()) || now.isAfter(promotion.getEndDate())) {
-            return false;
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isBefore(promotion.getStartDate()) || now.isAfter(promotion.getEndDate())) {
+                return false;
+            }
+
+            // TODO: Implement JSON parsing for dealer and model validation
+            return true;
         }
 
-        // TODO: Implement JSON parsing for dealer and model validation
-        return true;
-    }
+        private QuotationResponse mapToResponse (Quotation quotation){
+            QuotationResponse response = modelMapper.map(quotation, QuotationResponse.class);
 
-    private QuotationResponse mapToResponse(Quotation quotation) {
-        QuotationResponse response = modelMapper.map(quotation, QuotationResponse.class);
+            // Map promotions
+            if (quotation.getPromotions() != null) {
+                List<PromotionResponse> promotionResponses = quotation.getPromotions().stream()
+                        .map(p -> modelMapper.map(p, PromotionResponse.class))
+                        .collect(Collectors.toList());
+                response.setAppliedPromotions(promotionResponses);
+            }
 
-        // Map promotions
-        if (quotation.getPromotions() != null) {
-            List<PromotionResponse> promotionResponses = quotation.getPromotions().stream()
-                    .map(p -> modelMapper.map(p, PromotionResponse.class))
-                    .collect(Collectors.toList());
-            response.setAppliedPromotions(promotionResponses);
+            return response;
         }
 
-        return response;
+        @Override
+        public QuotationResponse getQuotationById (UUID quotationId){
+            Quotation quotation = quotationRepository.findById(quotationId)
+                    .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
+            return mapToResponse(quotation);
+        }
     }
-    @Override
-    public QuotationResponse getQuotationById(UUID quotationId) {
-        Quotation quotation = quotationRepository.findById(quotationId)
-                .orElseThrow(() -> new RuntimeException("Quotation not found with id: " + quotationId));
-        return mapToResponse(quotation);
-    }
-}

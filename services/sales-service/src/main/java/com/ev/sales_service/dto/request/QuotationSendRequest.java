@@ -16,10 +16,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuotationSendRequest {
-    @NotNull(message = "Valid until date is required")
-    @Future(message = "Valid until must be in the future")
+    @NotNull(message = "Customer ID is required")
+    private Long customerId;
+    @NotNull(message = "VALID_UNTIL_REQUIRED")
+    @Future(message = "VALID_UNTIL_FUTURE")
     private LocalDateTime validUntil;
 
-    @NotBlank(message = "Terms conditions are required")
+    @NotBlank(message = "TERMS_CONDITIONS_REQUIRED")
     private String termsConditions;
 }

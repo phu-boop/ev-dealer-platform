@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Lỗi Phản Hồi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 500px;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .error-icon {
+            font-size: 80px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            background: #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #e74c3c;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">❌</div>
+        <h1>Đã Xảy Ra Lỗi</h1>
+
+        <div class="error-message" th:text="${errorMessage}"></div>
+
+        <p>Vui lòng thử lại hoặc liên hệ bộ phận hỗ trợ khách hàng.</p>
+
+        <a href="http://localhost:5173" class="btn">Quay về trang chủ</a>
+        <a href="javascript:history.back()" class="btn" style="background: #95a5a6;">Thử lại</a>
+    </div>
+</body>
+</html>

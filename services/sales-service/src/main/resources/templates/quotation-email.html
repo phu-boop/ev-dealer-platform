@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Báo Giá Xe - EV Automotive</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .price {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .info-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+        }
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 0 10px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .btn-accept {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-reject {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>EV Automotive</h1>
+            <h2>Báo Giá Xe Của Quý Khách</h2>
+        </div>
+
+        <div class="content">
+            <p>Kính gửi Quý khách <strong th:text="${customer.fullName}"></strong>,</p>
+
+            <p>Cảm ơn Quý khách đã quan tâm đến sản phẩm của EV Automotive. Dưới đây là báo giá chi tiết:</p>
+
+            <div class="info-item">
+                <strong>Mã báo giá:</strong> <span th:text="${quotation.quotationId}"></span>
+            </div>
+
+            <div class="info-item">
+                <strong>Ngày báo giá:</strong> <span th:text="${quotationDate}"></span>
+            </div>
+
+            <div class="info-item">
+                <strong>Hiệu lực đến:</strong> <span th:text="${validUntil}"></span>
+            </div>
+
+            <h3>Thông tin giá:</h3>
+            <div class="info-item">
+                <strong>Giá cơ bản:</strong> <span class="price" th:text="${#numbers.formatDecimal(quotation.basePrice, 0, 'COMMA', 2, 'POINT') + ' VND'}"></span>
+            </div>
+
+            <div class="info-item">
+                <strong>Giảm giá:</strong> <span class="price" th:text="${#numbers.formatDecimal(quotation.discountAmount, 0, 'COMMA', 2, 'POINT') + ' VND'}"></span>
+            </div>
+
+            <div class="info-item">
+                <strong>Giá cuối cùng:</strong> <span class="price" th:text="${#numbers.formatDecimal(quotation.finalPrice, 0, 'COMMA', 2, 'POINT') + ' VND'}"></span>
+            </div>
+
+            <h3>Điều khoản và điều kiện:</h3>
+            <p th:text="${quotation.termsConditions}"></p>
+
+            <!-- ACTION BUTTONS -->
+            <div class="action-buttons">
+                <p><strong>Vui lòng phản hồi báo giá này:</strong></p>
+                <a th:href="${'http://localhost:8080/sendmail/customer-response/quotation/' + quotation.quotationId + '/accept'}"
+                   class="btn btn-accept">✅ Chấp Nhận Báo Giá</a>
+                <a th:href="${'http://localhost:8080/sendmail/customer-response/quotation/' + quotation.quotationId + '/reject'}"
+                   class="btn btn-reject">❌ Từ Chối Báo Giá</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Trân trọng,<br>
+            <strong>Đội ngũ EV Automotive</strong><br>
+            Email: sales@ev-automotive.com<br>
+            Hotline: 1800-xxxx</p>
+        </div>
+    </div>
+</body>
+</html>

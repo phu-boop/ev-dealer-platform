@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerResponseRequest {
-    @NotNull(message = "Response status is required")
+    @NotNull(message = "ACCEPTED_FIELD_REQUIRED")
     private Boolean accepted;
 
     private String customerNote; // Lý do từ chối hoặc ghi chú

@@ -11,29 +11,28 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-// QuotationCreateRequest.java
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuotationCreateRequest {
-    @NotNull(message = "Dealer ID is required")
+    @NotNull(message = "DEALER_ID_REQUIRED")
     private UUID dealerId;
 
-    @NotNull(message = "Customer ID is required")
+    @NotNull(message = "CUSTOMER_ID_REQUIRED")
     private Long customerId;
 
-    @NotNull(message = "Model ID is required")
+    @NotNull(message = "MODEL_ID_REQUIRED")
     private Long modelId;
 
-    @NotNull(message = "Variant ID is required")
+    @NotNull(message = "VARIANT_ID_REQUIRED")
     private Long variantId;
 
-    @NotNull(message = "Staff ID is required")
+    @NotNull(message = "STAFF_ID_REQUIRED")
     private UUID staffId;
 
-    @NotNull(message = "Base price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Base price must be greater than 0")
+    @NotNull(message = "BASE_PRICE_REQUIRED")
+    @DecimalMin(value = "0.0", inclusive = false, message = "BASE_PRICE_POSITIVE")
     private BigDecimal basePrice;
 
     private String termsConditions;
