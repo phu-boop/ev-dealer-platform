@@ -33,6 +33,7 @@ import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.
 import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
+import InventoryReportPage from "../features/evm/reports/pages/InventoryReportPage.jsx";
 
 // Dealer
 import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
@@ -102,6 +103,11 @@ export default function AppRoutes() {
               <Route
                 path="admin/distribution/inventory"
                 element={<InventoryCentral />}
+              />
+              {/* Reports - Inventory report (UI only) */}
+              <Route
+                path="admin/reports/inventory-report"
+                element={<InventoryReportPage />}
               />
             </Route>
 

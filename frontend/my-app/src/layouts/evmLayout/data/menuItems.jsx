@@ -137,6 +137,11 @@ export const adminMenuItems = [
         label: "Doanh Số", 
         path: "/evm/admin/reports/sales" 
       },
+      {
+        icon: FiPieChart,
+        label: "Báo Cáo Tồn Kho",
+        path: "/evm/admin/reports/inventory-report",
+      },
       { 
         icon: FiCpu, 
         label: "Dự Báo AI", 
