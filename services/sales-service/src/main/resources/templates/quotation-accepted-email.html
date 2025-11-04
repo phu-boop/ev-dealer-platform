@@ -3,29 +3,156 @@
 <head>
     <title>Xác Nhận Chấp Nhận Báo Giá</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #f8f9fa; padding: 10px; text-align: center; }
-        .content { margin: 20px 0; }
-        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #666; }
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #3b82f6;
+            --accent: #f59e0b;
+            --dark: #1f2937;
+            --light: #f8fafc;
+            --gray: #6b7280;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            margin-right: 15px;
+        }
+
+        .logo-circle {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.8);
+        }
+
+        .logo-spinner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            border-top-color: transparent;
+            top: 10px;
+            left: 10px;
+            animation: spin 8s linear infinite;
+        }
+
+        .logo-leaf {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 20px;
+        }
+
+        .logo-car {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .brand-name {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.9em;
+            color: var(--gray);
+            text-align: center;
+        }
+
+        .highlight-box {
+            background: #f0fdf9;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Xác Nhận Chấp Nhận Báo Giá</h1>
+            <div class="logo-container">
+                <div class="logo">
+                    <div class="logo-circle"></div>
+                    <div class="logo-spinner"></div>
+                    <div class="logo-leaf">🌿</div>
+                    <div class="logo-car">🚗</div>
+                </div>
+                <div class="brand-name">VinEV</div>
+            </div>
+            <h1 style="margin: 0; font-weight: 600;">Xác Nhận Chấp Nhận Báo Giá</h1>
         </div>
         <div class="content">
             <p>Kính gửi Quý khách <strong th:text="${customer.fullName}"></strong>,</p>
 
-            <p>Chúng tôi xin xác nhận rằng Quý khách đã chấp nhận báo giá <strong th:text="${quotation.quotationId}"></strong>.</p>
+            <div class="highlight-box">
+                <p>Chúng tôi xin xác nhận rằng Quý khách đã chấp nhận báo giá <strong th:text="${quotation.quotationId}"></strong>.</p>
+            </div>
 
             <p>Chúng tôi sẽ liên hệ với Quý khách trong thời gian sớm nhất để hoàn tất thủ tục.</p>
 
             <p>Trân trọng cảm ơn!</p>
         </div>
         <div class="footer">
-            <p>Trân trọng,<br>Đội ngũ bán hàng</p>
+            <p>Trân trọng,<br><strong>Đội ngũ VinEV</strong></p>
+            <p style="font-size: 0.8em; margin-top: 10px; color: #9ca3af;">
+                Email: support@vinev.com • Hotline: 1800-xxxx
+            </p>
         </div>
     </div>
+</body>
 </html>

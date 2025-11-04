@@ -32,8 +32,10 @@ public interface QuotationService {
 
     // Quản lý và tìm kiếm
     QuotationResponse getQuotationById(UUID quotationId);
+
     List<QuotationResponse> getQuotationsByFilters(QuotationFilterRequest filterRequest);
-//    Page<QuotationResponse> getQuotationsWithPagination(QuotationFilterRequest filterRequest, Pageable pageable);
+
+    //    Page<QuotationResponse> getQuotationsWithPagination(QuotationFilterRequest filterRequest, Pageable pageable);
 //    QuotationResponse updateQuotation(UUID quotationId, QuotationCreateRequest request);
 //    void deleteQuotation(UUID quotationId);
     void expireOldQuotations();
@@ -42,4 +44,9 @@ public interface QuotationService {
 //    List<PromotionResponse> getAvailablePromotionsForQuotation(UUID quotationId);
 //    boolean validateQuotationForOrder(UUID quotationId);
 //    SalesOrderB2CResponse convertToSalesOrderB2C(UUID quotationId)
+    List<QuotationResponse> getQuotationsByStaff(UUID staffId);
+
+    List<QuotationResponse> getQuotationsByDealer(UUID dealerId);
+    void deleteQuotation(UUID quotationId);
+
 }

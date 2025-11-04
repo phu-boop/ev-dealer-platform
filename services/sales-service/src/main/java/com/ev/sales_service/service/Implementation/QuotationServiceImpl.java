@@ -363,4 +363,34 @@ public class QuotationServiceImpl implements QuotationService {
                 .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
         return mapToResponse(quotation);
     }
+
+    @Override
+    public List<QuotationResponse> getQuotationsByDealer(UUID dealerId) {
+        List<Quotation> quotations = quotationRepository.findByDealerId(dealerId);
+        return quotations.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<QuotationResponse> getQuotationsByStaff(UUID staffId) {
+        List<Quotation> quotations = quotationRepository.findByStaffId(staffId);
+        return quotations.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+    @Override
+public void deleteQuotation(UUID quotationId) {
+    Quotation quotation = quotationRepository.findById(quotationId)
+            .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
+
+    // Chỉ cho phép xóa các quotation chưa được gửi hoặc đang ở trạng thái DRAFT/PENDING
+    if (quotation.getStatus() != QuotationStatus.DRAFT && quotation.getStatus() != QuotationStatus.PENDING) {
+        throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
+    }
+
+    quotationRepository.delete(quotation);
+    log.info("Quotation {} deleted successfully", quotationId);
+}
+
 }

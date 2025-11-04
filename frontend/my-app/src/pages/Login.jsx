@@ -62,7 +62,7 @@ export default function Login() {
         sessionStorage.setItem("dealerId", userData.dealerId || "");
         sessionStorage.setItem("memberId", userData.memberId || "");
       }
-        sessionStorage.setItem("prfileId", userData.memberId || "");
+        sessionStorage.setItem("profileId", userData.memberId || "");
 
       Swal.fire({
     title: "Chúc mừng!",

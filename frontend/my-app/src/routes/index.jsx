@@ -331,7 +331,7 @@ import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx"
 
 // Staff Dealer
 import QuotationCreatePage from "../features/dealer/sales/quotation/pages/QuotationCreatePage.jsx";
-
+import QuotationListPage from "../features/dealer/sales/quotations/pages/QuotationListPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -459,6 +459,8 @@ export default function AppRoutes() {
 
               <Route path="manager/quotes/create" element={<QuotationCreatePage />} />
 
+              <Route path="manager/list/quotations" element={<QuotationListPage />} />
+
               {/* Inventory Management */}
               <Route
                 path="manager/inventory/stock"
@@ -503,7 +505,8 @@ export default function AppRoutes() {
 
               {/* Quotation Management */}
               <Route path="staff/quotations" element={<QuotationCreatePage />} />
-             
+
+              <Route path="staff/list/quotations" element={<QuotationListPage />} />
 
               {/* Inventory Management */}
               <Route

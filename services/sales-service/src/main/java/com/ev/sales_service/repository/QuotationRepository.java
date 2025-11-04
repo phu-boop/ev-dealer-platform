@@ -45,4 +45,5 @@ public interface QuotationRepository extends JpaRepository<Quotation, UUID> {
     boolean existsByQuotationIdAndStatus(UUID quotationId, QuotationStatus status);
 
     Quotation save(Quotation quotation);
+
 }

@@ -100,4 +100,28 @@ public class QuotationController {
 //        List<PromotionResponse> responses = quotationService.getAvailablePromotionsForQuotation(quotationId);
 //        return ResponseEntity.ok(ApiRespond.success("Available promotions fetched successfully", responses));
 //    }
+    @GetMapping("/staff/{staffId}")
+    public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotationsByStaff(
+            @PathVariable UUID staffId) {
+        log.info("Fetching quotations for staff: {}", staffId);
+        List<QuotationResponse> responses = quotationService.getQuotationsByStaff(staffId);
+        return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for staff", responses));
+    }
+
+    @GetMapping("/dealer/{dealerId}")
+public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotationsByDealer(
+        @PathVariable UUID dealerId) {
+    log.info("Fetching quotations for dealer: {}", dealerId);
+    List<QuotationResponse> responses = quotationService.getQuotationsByDealer(dealerId);
+    return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for dealer", responses));
+}
+@DeleteMapping("/{quotationId}")
+public ResponseEntity<ApiRespond<String>> deleteQuotation(
+        @PathVariable UUID quotationId) {
+    log.info("Deleting quotation: {}", quotationId);
+    quotationService.deleteQuotation(quotationId);
+    return ResponseEntity.ok(ApiRespond.success("Quotation deleted successfully", "Deleted"));
+}
+
+
 }
