@@ -98,9 +98,9 @@ export default function AppRoutes() {
               />
               <Route path="admin/system/users" element={<UserManagement />} />
               <Route path="admin/notifications" element={<UserManagement />} />
-              {/* Reports - Inventory for ADMIN */}
+              {/* Distribution - Inventory for ADMIN */}
               <Route
-                path="admin/reports/inventory"
+                path="admin/distribution/inventory"
                 element={<InventoryCentral />}
               />
             </Route>

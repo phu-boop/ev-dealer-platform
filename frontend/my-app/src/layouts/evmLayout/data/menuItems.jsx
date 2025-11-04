@@ -75,6 +75,11 @@ export const adminMenuItems = [
         path: "/evm/admin/distribution/warehouse",
       },
       {
+        icon: FiPieChart,
+        label: "Tồn Kho",
+        path: "/evm/admin/distribution/inventory",
+      },
+      {
         icon: FiNavigation,
         label: "Điều Phối Xe",
         path: "/evm/admin/distribution/allocation",
@@ -131,11 +136,6 @@ export const adminMenuItems = [
         icon: FiTrendingUp, 
         label: "Doanh Số", 
         path: "/evm/admin/reports/sales" 
-      },
-      { 
-        icon: FiPieChart, 
-        label: "Tồn Kho", 
-        path: "/evm/admin/reports/inventory" 
       },
       { 
         icon: FiCpu, 
