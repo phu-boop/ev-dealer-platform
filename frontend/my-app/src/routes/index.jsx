@@ -98,6 +98,11 @@ export default function AppRoutes() {
               />
               <Route path="admin/system/users" element={<UserManagement />} />
               <Route path="admin/notifications" element={<UserManagement />} />
+              {/* Reports - Inventory for ADMIN */}
+              <Route
+                path="admin/reports/inventory"
+                element={<InventoryCentral />}
+              />
             </Route>
 
             {/* Admin only */}
@@ -144,6 +149,11 @@ export default function AppRoutes() {
               <Route
                 path="staff/distribution/allocation"
                 element={<AllocationPage />}
+              />
+              {/* Reports - Inventory for EVM_STAFF */}
+              <Route
+                path="staff/reports/inventory"
+                element={<InventoryCentral />}
               />
             </Route>
           </Route>
