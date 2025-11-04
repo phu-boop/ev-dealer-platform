@@ -1,6 +1,6 @@
 package com.ev.sales_service.dto.response;
 
-import com.ev.sales_service.enums.OrderStatus;
+import com.ev.sales_service.enums.OrderStatusB2B;
 import com.ev.sales_service.enums.ContractStatus; // Giả sử bạn có enum này
 import lombok.Data;
 import java.math.BigDecimal;
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Data
-public class SalesOrderDto {
+public class SalesOrderDtoB2B {
 
     // Từ SalesOrder
     private UUID orderId;
@@ -18,7 +18,7 @@ public class SalesOrderDto {
     private UUID staffId;
     private LocalDateTime orderDate;
     private LocalDateTime deliveryDate;
-    private OrderStatus orderStatus;
+    private OrderStatusB2B orderStatus;
     private BigDecimal totalAmount;
     private Boolean managerApproval;
     private UUID approvedBy;

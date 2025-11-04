@@ -1,6 +1,7 @@
 package com.ev.sales_service.entity;
 
-import com.ev.sales_service.enums.OrderStatus;
+import com.ev.sales_service.enums.OrderStatusB2B;
+import com.ev.sales_service.enums.OrderStatusB2C;
 import com.ev.sales_service.enums.SaleOderType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -43,7 +44,11 @@ public class SalesOrder {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", length = 50)
-    private OrderStatus orderStatus;
+    private OrderStatusB2B orderStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status_b2c", length = 50)
+    private OrderStatusB2C orderStatusB2C;
 
     @Column(name = "total_amount", precision = 15, scale = 2)
     private BigDecimal totalAmount;

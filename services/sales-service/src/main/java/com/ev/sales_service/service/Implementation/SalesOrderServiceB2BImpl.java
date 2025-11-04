@@ -14,13 +14,13 @@ import com.ev.sales_service.entity.OrderItem;
 import com.ev.sales_service.entity.OrderTracking;
 import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.entity.Outbox;
-import com.ev.sales_service.enums.OrderStatus;
+import com.ev.sales_service.enums.OrderStatusB2B;
 
 // import com.ev.sales_service.repository.QuotationRepository; 
 import com.ev.sales_service.enums.SaleOderType;
 import com.ev.sales_service.repository.OutboxRepository;
-import com.ev.sales_service.repository.SalesOrderRepository;
-import com.ev.sales_service.service.Interface.SalesOrderService;
+import com.ev.sales_service.repository.SalesOrderRepositoryB2B;
+import com.ev.sales_service.service.Interface.SalesOrderServiceB2B;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -53,9 +53,9 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class SalesOrderServiceImpl implements SalesOrderService {
+public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
 
-    private final SalesOrderRepository salesOrderRepository;
+    private final SalesOrderRepositoryB2B salesOrderRepositoryB2B;
     // private final QuotationRepository quotationRepository; // Bỏ comment nếu bạn dùng logic báo giá
     private final RestTemplate restTemplate;
 
@@ -65,7 +65,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Value("${app.services.catalog.url}")
     private String vehicleCatalogUrl;
 
-    private static final Logger log = LoggerFactory.getLogger(SalesOrderServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(SalesOrderServiceB2BImpl.class);
 
     @Override
     @Transactional
@@ -75,7 +75,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         order.setDealerId(dealerId);
         order.setCustomerId(null); // B2B
         order.setOrderDate(LocalDateTime.now());
-        order.setOrderStatus(OrderStatus.PENDING);
+        order.setOrderStatus(OrderStatusB2B.PENDING);
         order.setManagerApproval(false);
         // Lấy staffId từ email hoặc userId (từ header)
         // order.setStaffId(findStaffIdByEmail(email)); 
@@ -152,7 +152,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         //set type
         order.setTypeOder(SaleOderType.B2B);
         // Lưu đơn hàng vào DB
-        SalesOrder savedOrder = salesOrderRepository.save(order);
+        SalesOrder savedOrder = salesOrderRepositoryB2B.save(order);
 
         // TẠO SỰ KIỆN OUTBOX (thay vì gọi Kafka/notification)
         B2BOrderPlacedEvent eventPayload = B2BOrderPlacedEvent.builder()
@@ -177,14 +177,14 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Transactional
     // Bỏ các tham số role, userId, profileId thừa
     public SalesOrder approveB2BOrder(UUID orderId, String email) {
-        SalesOrder order = salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
+        SalesOrder order = salesOrderRepositoryB2B.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
 
-        if (order.getOrderStatus() != OrderStatus.PENDING) {
+        if (order.getOrderStatus() != OrderStatusB2B.PENDING) {
             throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
         }
 
-        order.setOrderStatus(OrderStatus.CONFIRMED);
+        order.setOrderStatus(OrderStatusB2B.CONFIRMED);
         order.setManagerApproval(true);
         order.setApprovalDate(LocalDateTime.now());
         // order.setApprovedBy(findStaffIdByEmail(email)); // Logic lấy UUID người duyệt
@@ -213,7 +213,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
             }).collect(Collectors.toList());
         allocationRequest.setItems(items);
 
-        SalesOrder savedOrder = salesOrderRepository.save(order);
+        SalesOrder savedOrder = salesOrderRepositoryB2B.save(order);
 
         saveOutboxEvent(
             savedOrder.getOrderId(), 
@@ -228,14 +228,14 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     @Transactional
     public SalesOrder shipB2BOrder(UUID orderId, ShipmentRequestDto shipmentRequest, String email) {
-        SalesOrder order = salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
+        SalesOrder order = salesOrderRepositoryB2B.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); 
             
-        if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
+        if (order.getOrderStatus() != OrderStatusB2B.CONFIRMED) {
             throw new AppException(ErrorCode.BAD_REQUEST); 
         }
 
-        order.setOrderStatus(OrderStatus.IN_TRANSIT);
+        order.setOrderStatus(OrderStatusB2B.IN_TRANSIT);
 
         OrderTracking tracking = OrderTracking.builder()
                 .salesOrder(order)
@@ -250,7 +250,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         order.getOrderTrackings().add(tracking);
 
         // 1. Lưu trạng thái đơn hàng
-        SalesOrder savedOrder = salesOrderRepository.save(order);
+        SalesOrder savedOrder = salesOrderRepositoryB2B.save(order);
 
         // 2. Chuẩn bị payload cho sự kiện
         shipmentRequest.setOrderId(orderId);
@@ -270,18 +270,18 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     @Transactional
     public SalesOrder confirmDelivery(UUID orderId, String email, UUID dealerId) {
-        SalesOrder order = salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
+        SalesOrder order = salesOrderRepositoryB2B.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
             
         if (!order.getDealerId().equals(dealerId)) {
             throw new AppException(ErrorCode.FORBIDDEN); // Dùng constructor 1 tham số
         }
             
-        if (order.getOrderStatus() != OrderStatus.IN_TRANSIT) {
+        if (order.getOrderStatus() != OrderStatusB2B.IN_TRANSIT) {
             throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
         }
         
-        order.setOrderStatus(OrderStatus.DELIVERED);
+        order.setOrderStatus(OrderStatusB2B.DELIVERED);
         order.setDeliveryDate(LocalDateTime.now());
         
         OrderTracking tracking = OrderTracking.builder()
@@ -296,7 +296,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
          }
         order.getOrderTrackings().add(tracking);
         
-        SalesOrder savedOrder = salesOrderRepository.save(order);
+        SalesOrder savedOrder = salesOrderRepositoryB2B.save(order);
         
         OrderDeliveredEvent eventPayload = new OrderDeliveredEvent(
             savedOrder.getOrderId(), 
@@ -316,17 +316,17 @@ public class SalesOrderServiceImpl implements SalesOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<SalesOrder> getAllB2BOrders(OrderStatus status, Pageable pageable) {
+    public Page<SalesOrder> getAllB2BOrders(OrderStatusB2B status, Pageable pageable) {
         if (status != null) {
-            return salesOrderRepository.findAllByTypeOderAndOrderStatus(SaleOderType.B2B, status, pageable);
+            return salesOrderRepositoryB2B.findAllByTypeOderAndOrderStatus(SaleOderType.B2B, status, pageable);
         } else {
-            return salesOrderRepository.findAllByTypeOder(SaleOderType.B2B, pageable);
+            return salesOrderRepositoryB2B.findAllByTypeOder(SaleOderType.B2B, pageable);
         }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<SalesOrder> getMyB2BOrders(UUID dealerId, OrderStatus status, Pageable pageable) {
+    public Page<SalesOrder> getMyB2BOrders(UUID dealerId, OrderStatusB2B status, Pageable pageable) {
         
         // Cần dealerId để lọc
         if (dealerId == null) {
@@ -336,10 +336,10 @@ public class SalesOrderServiceImpl implements SalesOrderService {
 
         if (status != null) {
             // Trường hợp 1: Có lọc theo status
-            return salesOrderRepository.findAllByDealerIdAndTypeOderAndOrderStatus(dealerId, SaleOderType.B2B, status, pageable);
+            return salesOrderRepositoryB2B.findAllByDealerIdAndTypeOderAndOrderStatus(dealerId, SaleOderType.B2B, status, pageable);
         } else {
             // Trường hợp 2: Không lọc, lấy tất cả đơn của đại lý đó
-            return salesOrderRepository.findAllByDealerIdAndTypeOder(dealerId, SaleOderType.B2B, pageable);
+            return salesOrderRepositoryB2B.findAllByDealerIdAndTypeOder(dealerId, SaleOderType.B2B, pageable);
         }
     }
 
@@ -349,7 +349,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         SalesOrder order = findOrderByIdOrThrow(orderId);
 
         // Kiểm tra trạng thái
-        if (order.getOrderStatus() != OrderStatus.PENDING) {
+        if (order.getOrderStatus() != OrderStatusB2B.PENDING) {
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
 
@@ -368,7 +368,7 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         SalesOrder order = findOrderByIdOrThrow(orderId);
 
         // Kiểm tra trạng thái
-        if (order.getOrderStatus() != OrderStatus.PENDING) {
+        if (order.getOrderStatus() != OrderStatusB2B.PENDING) {
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
 
@@ -379,14 +379,14 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     @Transactional
     public void deleteCancelledOrder(UUID orderId) {
-        SalesOrder order = salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
+        SalesOrder order = salesOrderRepositoryB2B.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        if (order.getOrderStatus() != OrderStatus.CANCELLED) {
+        if (order.getOrderStatus() != OrderStatusB2B.CANCELLED) {
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
 
-        salesOrderRepository.delete(order);
+        salesOrderRepositoryB2B.delete(order);
     }
 
     // --- CÁC HÀM HELPER ĐỂ LẤY HEADER ---
@@ -449,15 +449,15 @@ public class SalesOrderServiceImpl implements SalesOrderService {
      }
 
     private SalesOrder findOrderByIdOrThrow(UUID orderId) {
-        return salesOrderRepository.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
+        return salesOrderRepositoryB2B.findByOrderIdAndTypeOder(orderId, SaleOderType.B2B)
                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
     }
 
     private void performCancel(SalesOrder order, String cancelledByEmail) {
-        order.setOrderStatus(OrderStatus.CANCELLED);
+        order.setOrderStatus(OrderStatusB2B.CANCELLED);
         // order.setCancelledBy(cancelledByEmail); // Tùy chọn
         
-        salesOrderRepository.save(order);
+        salesOrderRepositoryB2B.save(order);
 
         OrderCancelledEvent eventPayload = new OrderCancelledEvent(
             order.getOrderId(), 

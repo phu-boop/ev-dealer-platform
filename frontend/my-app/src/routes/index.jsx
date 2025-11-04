@@ -456,7 +456,8 @@ export default function AppRoutes() {
               />
 
               {/* Quotation Management */}
-              
+
+              <Route path="manager/quotes/create" element={<QuotationCreatePage />} />
 
               {/* Inventory Management */}
               <Route

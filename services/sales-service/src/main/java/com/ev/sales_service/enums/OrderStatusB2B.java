@@ -1,6 +1,6 @@
 package com.ev.sales_service.enums;
 
-public enum OrderStatus {
+public enum OrderStatusB2B {
     // B2B
     PENDING,        // Chờ Hãng (EVM) xác nhận
     CONFIRMED,      // Hãng đã xác nhận (đã gọi API "allocate" kho)

@@ -7,10 +7,7 @@ import com.ev.sales_service.dto.request.QuotationCalculateRequest;
 import com.ev.sales_service.dto.request.QuotationCreateRequest;
 import com.ev.sales_service.dto.request.QuotationFilterRequest;
 import com.ev.sales_service.dto.request.QuotationSendRequest;
-import com.ev.sales_service.dto.response.CustomerResponse;
-import com.ev.sales_service.dto.response.CustomerResponseRequest;
-import com.ev.sales_service.dto.response.PromotionResponse;
-import com.ev.sales_service.dto.response.QuotationResponse;
+import com.ev.sales_service.dto.response.*;
 import com.ev.sales_service.entity.Promotion;
 import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.enums.PromotionStatus;
@@ -20,10 +17,14 @@ import com.ev.sales_service.repository.QuotationRepository;
 import com.ev.sales_service.client.CustomerClient;
 import com.ev.sales_service.service.Interface.EmailService;
 import com.ev.sales_service.service.Interface.QuotationService;
+import com.ev.sales_service.service.Interface.SalesOrderServiceB2C;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -44,6 +45,10 @@ public class QuotationServiceImpl implements QuotationService {
     private final PromotionRepository promotionRepository;
     private final EmailService emailService;
     private final ModelMapper modelMapper;
+
+    private final SalesOrderServiceB2C salesOrderServiceB2C;
+    @Autowired
+    private final ObjectMapper objectMapper;
 
     @Override
     public QuotationResponse createDraftQuotation(QuotationCreateRequest request) {
@@ -213,83 +218,149 @@ public class QuotationServiceImpl implements QuotationService {
             throw new AppException(ErrorCode.CUSTOMER_SERVICE_UNAVAILABLE);
         }
     }
-//    @Override
-//    public SalesOrderResponse convertToSalesOrder(UUID quotationId) {
-//        Quotation quotation = quotationRepository.findById(quotationId)
-//                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
-//
-//        if (quotation.getStatus() != QuotationStatus.ACCEPTED) {
-//            throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
-//        }
-//
-//        if (quotation.getSalesOrder() != null) {
-//            throw new AppException(ErrorCode.SALES_ORDER_ALREADY_EXISTS);
-//        }
-//
-//        return salesOrderService.createSalesOrderFromQuotation(quotationId);
-//    }
 
-        @Override
-        public List<QuotationResponse> getQuotationsByFilters (QuotationFilterRequest filterRequest){
-            List<Quotation> quotations = quotationRepository.findByFilters(
-                    filterRequest.getDealerId(),
-                    filterRequest.getCustomerId(),
-                    filterRequest.getStaffId(),
-                    filterRequest.getStatus(),
-                    filterRequest.getStartDate(),
-                    filterRequest.getEndDate()
-            );
+    @Override
+    public SalesOrderB2CResponse convertToSalesOrderB2C(UUID quotationId) {
+        log.info("Converting quotation to sales order: {}", quotationId);
 
-            return quotations.stream()
-                    .map(this::mapToResponse)
-                    .collect(Collectors.toList());
+        Quotation quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
+
+        if (quotation.getStatus() != QuotationStatus.ACCEPTED) {
+            throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
         }
 
-        @Override
-        public void expireOldQuotations () {
-            LocalDateTime now = LocalDateTime.now();
-            List<Quotation> expiringQuotations = quotationRepository.findExpiringQuotations(now, now.plusDays(1));
+        if (quotation.getSalesOrder() != null) {
+            throw new AppException(ErrorCode.SALES_ORDER_ALREADY_EXISTS);
+        }
 
-            for (Quotation quotation : expiringQuotations) {
-                if (quotation.getValidUntil().isBefore(now)) {
-                    quotation.setStatus(QuotationStatus.EXPIRED);
-                    quotationRepository.save(quotation);
-                    log.info("Quotation {} expired", quotation.getQuotationId());
-                }
+        // Use B2C service for customer orders
+        SalesOrderB2CResponse salesOrderResponse = salesOrderServiceB2C.createSalesOrderFromQuotation(quotationId);
+
+        // Convert to common response format
+        return convertToSalesOrderResponseB2C(salesOrderResponse);
+    }
+
+    private SalesOrderB2CResponse convertToSalesOrderResponseB2C(SalesOrderB2CResponse salesOrderB2C) {
+        if (salesOrderB2C == null) {
+            throw new AppException(ErrorCode.SALES_ORDER_NOT_FOUND);
+        }
+
+        SalesOrderB2CResponse response = new SalesOrderB2CResponse();
+        response.setOrderId(salesOrderB2C.getOrderId());
+        response.setDealerId(salesOrderB2C.getDealerId());
+        response.setCustomerId(salesOrderB2C.getCustomerId());
+        response.setStaffId(salesOrderB2C.getStaffId());
+        response.setOrderDate(salesOrderB2C.getOrderDate());
+        response.setDeliveryDate(salesOrderB2C.getDeliveryDate());
+        response.setOrderStatusB2C(salesOrderB2C.getOrderStatusB2C());
+        response.setTotalAmount(salesOrderB2C.getTotalAmount());
+        response.setDownPayment(salesOrderB2C.getDownPayment());
+        response.setManagerApproval(salesOrderB2C.getManagerApproval());
+        response.setApprovedBy(salesOrderB2C.getApprovedBy());
+        response.setTypeOder(salesOrderB2C.getTypeOder());
+        response.setApprovalDate(salesOrderB2C.getApprovalDate());
+
+        // Copy thêm các detail object
+        response.setQuotation(salesOrderB2C.getQuotation());
+        response.setSalesContract(salesOrderB2C.getSalesContract());
+        response.setOrderItems(salesOrderB2C.getOrderItems());
+        response.setOrderTrackings(salesOrderB2C.getOrderTrackings());
+
+        return response;
+    }
+
+
+    @Override
+    public List<QuotationResponse> getQuotationsByFilters(QuotationFilterRequest filterRequest) {
+        List<Quotation> quotations = quotationRepository.findByFilters(
+                filterRequest.getDealerId(),
+                filterRequest.getCustomerId(),
+                filterRequest.getStaffId(),
+                filterRequest.getStatus(),
+                filterRequest.getStartDate(),
+                filterRequest.getEndDate()
+        );
+
+        return quotations.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void expireOldQuotations() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Quotation> expiringQuotations = quotationRepository.findExpiringQuotations(now, now.plusDays(1));
+
+        for (Quotation quotation : expiringQuotations) {
+            if (quotation.getValidUntil().isBefore(now)) {
+                quotation.setStatus(QuotationStatus.EXPIRED);
+                quotationRepository.save(quotation);
+                log.info("Quotation {} expired", quotation.getQuotationId());
             }
-        }
-
-        // Helper methods
-        private boolean isPromotionApplicable (Promotion promotion, Quotation quotation){
-            if (promotion.getStatus() != PromotionStatus.ACTIVE) return false;
-
-            LocalDateTime now = LocalDateTime.now();
-            if (now.isBefore(promotion.getStartDate()) || now.isAfter(promotion.getEndDate())) {
-                return false;
-            }
-
-            // TODO: Implement JSON parsing for dealer and model validation
-            return true;
-        }
-
-        private QuotationResponse mapToResponse (Quotation quotation){
-            QuotationResponse response = modelMapper.map(quotation, QuotationResponse.class);
-
-            // Map promotions
-            if (quotation.getPromotions() != null) {
-                List<PromotionResponse> promotionResponses = quotation.getPromotions().stream()
-                        .map(p -> modelMapper.map(p, PromotionResponse.class))
-                        .collect(Collectors.toList());
-                response.setAppliedPromotions(promotionResponses);
-            }
-
-            return response;
-        }
-
-        @Override
-        public QuotationResponse getQuotationById (UUID quotationId){
-            Quotation quotation = quotationRepository.findById(quotationId)
-                    .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
-            return mapToResponse(quotation);
         }
     }
+
+    // Helper methods
+    private boolean isPromotionApplicable(Promotion promotion, Quotation quotation) {
+        if (promotion.getStatus() != PromotionStatus.ACTIVE) return false;
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(promotion.getStartDate()) || now.isAfter(promotion.getEndDate())) {
+            return false;
+        }
+
+        try {
+            // 1. Check dealer
+            if (promotion.getDealerIdJson() != null && !promotion.getDealerIdJson().isEmpty()) {
+                Set<UUID> dealerIds = objectMapper.readValue(
+                        promotion.getDealerIdJson(),
+                        new TypeReference<Set<UUID>>() {
+                        }
+                );
+                if (!dealerIds.contains(quotation.getDealerId())) {
+                    return false;
+                }
+            }
+
+            // 2. Check model
+            if (promotion.getApplicableModelsJson() != null && !promotion.getApplicableModelsJson().isEmpty()) {
+                Set<Long> modelIds = objectMapper.readValue(
+                        promotion.getApplicableModelsJson(),
+                        new TypeReference<Set<Long>>() {
+                        }
+                );
+                if (!modelIds.contains(quotation.getModelId())) {
+                    return false;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    private QuotationResponse mapToResponse(Quotation quotation) {
+        QuotationResponse response = modelMapper.map(quotation, QuotationResponse.class);
+
+        // Map promotions
+        if (quotation.getPromotions() != null) {
+            List<PromotionResponse> promotionResponses = quotation.getPromotions().stream()
+                    .map(p -> modelMapper.map(p, PromotionResponse.class))
+                    .collect(Collectors.toList());
+            response.setAppliedPromotions(promotionResponses);
+        }
+
+        return response;
+    }
+
+    @Override
+    public QuotationResponse getQuotationById(UUID quotationId) {
+        Quotation quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
+        return mapToResponse(quotation);
+    }
+}

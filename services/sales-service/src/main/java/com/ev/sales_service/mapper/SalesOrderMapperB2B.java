@@ -1,7 +1,7 @@
 // Đây là lớp logic để chuyển đổi từ SalesOrder (Entity) sang SalesOrderDto (DTO).
 package com.ev.sales_service.mapper;
 
-import com.ev.sales_service.dto.response.SalesOrderDto;
+import com.ev.sales_service.dto.response.SalesOrderDtoB2B;
 import com.ev.sales_service.entity.OrderItem;
 import com.ev.sales_service.entity.OrderTracking;
 import com.ev.sales_service.entity.SalesContract;
@@ -12,15 +12,15 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component
-public class SalesOrderMapper {
+public class SalesOrderMapperB2B {
 
     // Hàm chính để chuyển đổi
-    public SalesOrderDto toDto(SalesOrder order) {
+    public SalesOrderDtoB2B toDto(SalesOrder order) {
         if (order == null) {
             return null;
         }
 
-        SalesOrderDto dto = new SalesOrderDto();
+        SalesOrderDtoB2B dto = new SalesOrderDtoB2B();
         dto.setOrderId(order.getOrderId());
         dto.setDealerId(order.getDealerId());
         dto.setCustomerId(order.getCustomerId());
@@ -63,9 +63,9 @@ public class SalesOrderMapper {
 
     // --- Các hàm helper để map các đối tượng con ---
 
-    private SalesOrderDto.OrderItemDto toOrderItemDto(OrderItem item) {
+    private SalesOrderDtoB2B.OrderItemDto toOrderItemDto(OrderItem item) {
         if (item == null) return null;
-        SalesOrderDto.OrderItemDto dto = new SalesOrderDto.OrderItemDto();
+        SalesOrderDtoB2B.OrderItemDto dto = new SalesOrderDtoB2B.OrderItemDto();
         dto.setOrderItemId(item.getOrderItemId());
         dto.setVariantId(item.getVariantId()); 
         dto.setQuantity(item.getQuantity());
@@ -75,9 +75,9 @@ public class SalesOrderMapper {
         return dto;
     }
 
-    private SalesOrderDto.OrderTrackingDto toOrderTrackingDto(OrderTracking tracking) {
+    private SalesOrderDtoB2B.OrderTrackingDto toOrderTrackingDto(OrderTracking tracking) {
         if (tracking == null) return null;
-        SalesOrderDto.OrderTrackingDto dto = new SalesOrderDto.OrderTrackingDto();
+        SalesOrderDtoB2B.OrderTrackingDto dto = new SalesOrderDtoB2B.OrderTrackingDto();
         dto.setTrackId(tracking.getTrackId());
         dto.setStatus(tracking.getStatus());
         dto.setUpdateDate(tracking.getUpdateDate());
@@ -86,9 +86,9 @@ public class SalesOrderMapper {
         return dto;
     }
 
-    private SalesOrderDto.ContractInfoInOrderDto toContractInfoInOrderDto(SalesContract contract) {
+    private SalesOrderDtoB2B.ContractInfoInOrderDto toContractInfoInOrderDto(SalesContract contract) {
         if (contract == null) return null;
-        SalesOrderDto.ContractInfoInOrderDto dto = new SalesOrderDto.ContractInfoInOrderDto();
+        SalesOrderDtoB2B.ContractInfoInOrderDto dto = new SalesOrderDtoB2B.ContractInfoInOrderDto();
         dto.setContractId(contract.getContractId());
         dto.setContractDate(contract.getContractDate());
         dto.setContractStatus(contract.getContractStatus());

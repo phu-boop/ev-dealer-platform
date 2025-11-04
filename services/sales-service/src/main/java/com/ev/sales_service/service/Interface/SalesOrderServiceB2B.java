@@ -3,13 +3,13 @@ package com.ev.sales_service.service.Interface;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
 import com.ev.sales_service.dto.request.CreateB2BOrderRequest;
 import com.ev.sales_service.entity.SalesOrder;
-import com.ev.sales_service.enums.OrderStatus;
+import com.ev.sales_service.enums.OrderStatusB2B;
 import java.util.UUID;
-import java.util.List;
+
 import org.springframework.data.domain.Page; 
 import org.springframework.data.domain.Pageable;
 
-public interface SalesOrderService {
+public interface SalesOrderServiceB2B {
 
     /**
      * Luồng B2B: Đại lý tạo một đơn hàng mới (Trạng thái PENDING).
@@ -37,12 +37,12 @@ public interface SalesOrderService {
      * Luồng B2B: EVM Staff/Admin lấy danh sách tất cả đơn hàng.
      * Hỗ trợ lọc theo trạng thái (nếu status = null, lấy tất cả) và phân trang.
      */
-    Page<SalesOrder> getAllB2BOrders(OrderStatus status, Pageable pageable);
+    Page<SalesOrder> getAllB2BOrders(OrderStatusB2B status, Pageable pageable);
 
     /**
      * Lấy danh sách đơn hàng B2B của một đại lý cụ thể (đại lý đang đăng nhập)
      */
-    Page<SalesOrder> getMyB2BOrders(UUID dealerId, OrderStatus status, Pageable pageable);
+    Page<SalesOrder> getMyB2BOrders(UUID dealerId, OrderStatusB2B status, Pageable pageable);
 
     /**
      * Hủy đơn hàng bởi Dealer Manager (chỉ hủy được đơn của chính họ khi PENDING).
