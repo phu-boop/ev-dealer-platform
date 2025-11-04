@@ -15,20 +15,21 @@ public class InventorySummaryByRegion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false)
-    private String modelId;
+    private Long modelId;
     private String modelName;
     
     @Column(nullable = false)
-    private String variantId;
+    private Long variantId;
     private String variantName;
     
     @Column(nullable = false)
     private String region;
     
-    private int totalStock;
+    private Long totalStock;
+    
     
     @Column(name = "last_updated_at")
     private Timestamp lastUpdatedAt;

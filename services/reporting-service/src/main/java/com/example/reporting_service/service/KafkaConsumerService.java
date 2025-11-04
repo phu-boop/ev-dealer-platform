@@ -14,7 +14,7 @@ public class KafkaConsumerService {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @KafkaListener(topics = "stock_events_final_v2", groupId = "reporting-service-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "stock_events_dealerEVM", groupId = "reporting-service-group", containerFactory = "kafkaListenerContainerFactory")
     public void handleInventoryEvent(String message) {
         
         System.out.println("Nhận được chuỗi JSON từ Kafka: " + message);
