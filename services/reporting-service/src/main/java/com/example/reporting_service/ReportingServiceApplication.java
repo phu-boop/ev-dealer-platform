@@ -5,7 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {
+    "com.example.reporting_service", 
+    "com.ev.common_lib"       
+})
 @EnableKafka
 @EnableTransactionManagement
 public class ReportingServiceApplication {

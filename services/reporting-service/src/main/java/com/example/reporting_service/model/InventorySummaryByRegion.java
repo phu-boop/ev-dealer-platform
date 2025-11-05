@@ -7,7 +7,12 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 @Entity
-@Table(name = "inventory_summary_by_region")
+@Table(name = "inventory_summary_by_region",
+       uniqueConstraints = @UniqueConstraint(
+           name = "idx_inventory_logical_key", // Tên của Khóa duy nhất
+           columnNames = {"region", "variantId"} // Các cột tạo nên khóa
+       )
+)
 @Data // Tự động tạo getters, setters, toString, equals/hashCode 
 @NoArgsConstructor
 @AllArgsConstructor

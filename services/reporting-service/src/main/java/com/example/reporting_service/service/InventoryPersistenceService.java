@@ -2,33 +2,48 @@ package com.example.reporting_service.service;
 
 import com.example.reporting_service.dto.EnrichedInventoryStockEvent;
 import com.example.reporting_service.repository.InventorySummaryRepository;
+import com.example.reporting_service.repository.DealerStockSnapshotRepository;
+import com.example.reporting_service.model.DealerStockSnapshotId;
+import com.example.reporting_service.model.DealerStockSnapshot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import java.util.UUID;
 
 @Service
-public class InventoryPersistenceService { // Lớp mới, chuyên trách Transaction DB
+@RequiredArgsConstructor // Dùng @RequiredArgsConstructor
+public class InventoryPersistenceService {
 
-    @Autowired
-    private InventorySummaryRepository inventoryRepository;
+    private final InventorySummaryRepository inventoryRepository;
+    // (Bảng cache này lưu trữ số tồn kho CUỐI CÙNG của từng ĐẠI LÝ)
+    private final DealerStockSnapshotRepository snapshotRepo; 
 
-    /**
-     * Phương thức được gọi từ KafkaConsumerService.
-     * Transactional được đặt ở đây để BẮT BUỘC Spring kích hoạt Transaction và commit.
-     */
     @Transactional
     public void saveInventorySummary(EnrichedInventoryStockEvent event) {
         
-        // Thêm log để xác nhận Transaction đã được gọi
-        System.out.println("LOGGING: Transactional save initiated for " + event.getModelId());
+        // 1. Tìm tồn kho cũ của đại lý này (từ snapshot)
+        UUID dealerId = event.getDealerId();
+        Long variantId = event.getVariantId();
+        Long oldStock = snapshotRepo.findById(new DealerStockSnapshotId(dealerId, variantId))
+                            .map(DealerStockSnapshot::getCurrentStock)
+                            .orElse(0L);
+        
+        Long newStock = event.getStockOnHand();
+        Long delta = newStock - oldStock; // Thay đổi (chênh lệch)
 
-        inventoryRepository.upsertInventorySummary(
-            event.getModelId(),
-            event.getModelName(),
-            event.getVariantId(),
-            event.getVariantName(),
+        // 2. Cập nhật snapshot với giá trị MỚI
+        snapshotRepo.save(new DealerStockSnapshot(dealerId, variantId, newStock));
+
+        // 3. CẬP NHẬT BẢNG TỔNG HỢP VỚI "DELTA"
+        // (Đây là logic an toàn để cập nhật tổng kho khu vực)
+        inventoryRepository.updateStockByDelta(
             event.getRegion(),
-            event.getStockOnHand()
+            event.getVariantId(),
+            delta, // Chỉ cộng/trừ phần chênh lệch
+            event.getModelId(), 
+            event.getModelName(), 
+            event.getVariantName()
         );
     }
 }
