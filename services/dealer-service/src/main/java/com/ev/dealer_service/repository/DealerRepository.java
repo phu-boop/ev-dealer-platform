@@ -8,10 +8,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @Repository
-public interface DealerRepository extends JpaRepository<Dealer, Long> {
+public interface DealerRepository extends JpaRepository<Dealer, UUID> {
 
     Optional<Dealer> findByDealerCode(String dealerCode);
 

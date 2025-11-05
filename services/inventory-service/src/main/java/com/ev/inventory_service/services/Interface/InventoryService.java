@@ -3,6 +3,7 @@ package com.ev.inventory_service.services.Interface;
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
 import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
+import com.ev.common_lib.dto.inventory.VinValidationResultDto;
 
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
@@ -78,4 +79,12 @@ public interface InventoryService {
      * Lấy thông tin tồn kho chi tiết (cả kho TT và kho đại lý) cho việc so sánh.
      */
     List<InventoryComparisonDto> getDetailedInventoryByIds(List<Long> variantIds, UUID dealerId);
+
+    /**
+     * Kiểm tra một danh sách VIN xem chúng có sẵn sàng để giao không.
+     */
+    VinValidationResultDto validateVinsForShipment(List<String> vins);
+
+    // Lấy số VIN khả dụng trong kho
+    List<String> getAvailableVinsForVariant(Long variantId);
 }

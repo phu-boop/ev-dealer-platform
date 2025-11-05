@@ -11,13 +11,15 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class DealerContractRequest {
 
     @NotNull(message = "Dealer ID is required")
-    private Long dealerId;
+    private UUID dealerId;
 
     @NotBlank(message = "Contract number is required")
     @Size(max = 100, message = "Contract number must not exceed 100 characters")

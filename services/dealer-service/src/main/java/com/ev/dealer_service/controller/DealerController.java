@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/dealers")
@@ -40,7 +41,7 @@ public class DealerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<DealerResponse>> getDealerById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<DealerResponse>> getDealerById(@PathVariable UUID id) {
         DealerResponse dealer = dealerService.getDealerById(id);
         return ResponseEntity.ok(ApiResponse.success(dealer));
     }
@@ -61,14 +62,14 @@ public class DealerController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<DealerResponse>> updateDealer(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody DealerRequest request) {
         DealerResponse dealer = dealerService.updateDealer(id, request);
         return ResponseEntity.ok(ApiResponse.success("Dealer updated successfully", dealer));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteDealer(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteDealer(@PathVariable UUID id) {
         dealerService.deleteDealer(id);
         return ResponseEntity.ok(ApiResponse.success("Dealer deleted successfully", null));
     }

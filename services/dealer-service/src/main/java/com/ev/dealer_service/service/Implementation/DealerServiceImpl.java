@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +35,7 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
 
     @Override
     @Transactional(readOnly = true)
-    public DealerResponse getDealerById(Long id) {
+    public DealerResponse getDealerById(UUID id) {
         Dealer dealer = dealerRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + id));
         return modelMapper.map(dealer, DealerResponse.class);
@@ -78,7 +79,7 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
 
     @Override
     @Transactional
-    public DealerResponse updateDealer(Long id, DealerRequest request) {
+    public DealerResponse updateDealer(UUID id, DealerRequest request) {
         Dealer dealer = dealerRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + id));
 
@@ -95,7 +96,7 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
 
     @Override
     @Transactional
-    public void deleteDealer(Long id) {
+    public void deleteDealer(UUID id) {
         if (!dealerRepository.existsById(id)) {
             throw new ResourceNotFoundException("Dealer not found with id: " + id);
         }
