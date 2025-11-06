@@ -1,4 +1,4 @@
- import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
 // layouts
@@ -43,9 +43,14 @@ import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPag
 import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
 import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
 import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
-
 //Manage Dealer
 import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
+// Reporting
+import SalesReportPage from "../features/admin/reporting/pages/SalesReportPage.jsx";
+import InventoryReportPage from "../features/admin/reporting/pages/InventoryReportPage.jsx";
+
+// SYSTEM (ADMIN)
+import BackfillPage from "../features/admin/system/pages/BackfillPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -107,15 +112,6 @@ export default function AppRoutes() {
               />
               <Route path="admin/system/users" element={<UserManagement />} />
               <Route path="admin/notifications" element={<UserManagement />} />
-            </Route>
-
-            {/* Admin only */}
-            <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-              <Route
-                element={<AdminPromotionManager />}
-              />
-              <Route path="admin/system/users" element={<UserManagement />} />
-              <Route path="admin/notifications" element={<UserManagement />} />
               <Route
                 path="admin/reports/notifications"
                 element={<NotificationManagement />}
@@ -124,9 +120,43 @@ export default function AppRoutes() {
                 path="admin/distribution/allocation"
                 element={<AllocationPage />}
               />
+              <Route path="admin/dealers/list" element={<DealersPage />} />
+
+              {/* Quản lý danh mục xe */}
               <Route
-                path="admin/dealers/list"
-                element={<DealersPage />}
+                path="admin/products/catalog"
+                element={<VehicleCatalogManager />}
+              />
+
+              {/* Quản lý phiên bản, màu sắc xe (thiếu tiềm kiếm (lọc theo màu, phiên bản)) */}
+              <Route
+                path="admin/products/variants"
+                element={<VariantManager />}
+              />
+
+              {/* Giá Sỉ & Chiết Khấu */}
+              <Route
+                path="admin/products/promotions"
+                element={<MainPromotion />}
+              />
+
+              {/* Quản lý phân phối & kho */}
+              <Route
+                path="admin/distribution/inventory/central"
+                element={<InventoryCentral />}
+              />
+
+              {/* Báo cáo */}
+              <Route path="admin/reports/sales" element={<SalesReportPage />} />
+              <Route
+                path="admin/reports/inventory"
+                element={<InventoryReportPage />}
+              />
+
+              {/* Khôi phục dữ liệu cho báo cáo */}
+              <Route
+                path="admin/system/data-backfill"
+                element={<BackfillPage />}
               />
             </Route>
             {/* Staff only */}
@@ -158,10 +188,7 @@ export default function AppRoutes() {
                 element={<AllocationPage />}
               />
               {/* --------------------------------MANAGE DEALER-------------------------------------------------- */}
-              <Route
-                path="staff/dealers/list"
-                element = {<DealersPage />}
-              />
+              <Route path="staff/dealers/list" element={<DealersPage />} />
               <Route
                 path="staff/dealers/dealer-accounts"
                 element={<UserManagement />}
@@ -197,7 +224,7 @@ export default function AppRoutes() {
                 path="manager/customers/:id"
                 element={<CustomerDetail />}
               />
-              
+
               {/* Test Drive Management */}
               <Route
                 path="manager/testdrives"
@@ -211,14 +238,19 @@ export default function AppRoutes() {
               />
 
               <Route
-                  path="manager/quotations/*"
-                  element={<QuotationManagement />}
+                path="manager/quotations/*"
+                element={<QuotationManagement />}
+              />
+
+              <Route
+                path="manager/vehicles/all"
+                element={<DealerProductCatalogPage />}
               />
               {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
 
               <Route
-                  path="manager/settings/staff*"
-                  element={<UserManagement />}
+                path="manager/settings/staff*"
+                element={<UserManagement />}
               />
 
               {/* Promotions */}
@@ -227,6 +259,13 @@ export default function AppRoutes() {
               {/* System */}
               <Route path="manager/system/users" element={<UserManagement />} />
 
+              {/* Xem tồn kho đại lí */}
+              <Route
+                path="manager/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+
+              {/* Đặt xe từ hãng và xem trạng thái đơn hàng */}
               <Route
                 path="manager/inventory/order"
                 element={<B2BOrderForm />}
@@ -234,7 +273,7 @@ export default function AppRoutes() {
               <Route path="manager/inventory/info" element={<B2BOrderPage />} />
             </Route>
 
-            {/* Dealer Staff Routes */}
+            {/* --- DEALER STAFF ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
               {/* Customer Management */}
               <Route
@@ -259,8 +298,20 @@ export default function AppRoutes() {
               {/* Danh mục xe & báo cáo */}
               {/* Xe có sẵn trong kho đại lí */}
               <Route
-                  path="staff/quotations/*"
-                  element={<QuotationManagement />}
+                path="staff/quotations/*"
+                element={<QuotationManagement />}
+              />
+
+              {/* Danh mục xe & báo cáo */}
+              {/* Xe có sẵn trong kho đại lí */}
+              <Route
+                path="staff/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+              {/* Tất cả phiên bảng (hãng) */}
+              <Route
+                path="staff/vehicles/all"
+                element={<DealerProductCatalogPage />}
               />
 
               {/* Promotions */}

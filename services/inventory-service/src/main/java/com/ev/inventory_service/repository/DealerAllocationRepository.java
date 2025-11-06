@@ -18,4 +18,9 @@ public interface DealerAllocationRepository extends JpaRepository<DealerAllocati
 
     // Tìm tất cả các phân bổ của một dealer
     List<DealerAllocation> findByDealerId(UUID dealerId);
+
+    /**
+     * Tìm phiên bảng xe ở kho đại lí
+     */
+    List<DealerAllocation> findByVariantIdInAndDealerId(List<Long> variantIds, UUID dealerId);
 }

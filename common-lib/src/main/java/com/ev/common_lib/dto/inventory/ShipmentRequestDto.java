@@ -25,5 +25,9 @@ public class ShipmentRequestDto {
         
         @NotEmpty
         private List<String> vins; // Danh sách các số VIN cụ thể được giao
+
+        private Long modelId; 
+        private String modelName;
+        private String variantName;
     }
 }

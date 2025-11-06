@@ -2,6 +2,9 @@ package com.ev.inventory_service.controller;
 
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
+import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
+import com.ev.common_lib.dto.inventory.DetailedInventoryRequest;
+import com.ev.common_lib.dto.inventory.VinValidationResultDto;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
@@ -18,6 +21,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -149,6 +155,34 @@ public class InventoryController {
         return ResponseEntity.ok(ApiRespond.success("Transfer request created successfully", null));
     }
 
+    /**
+     * API Chỉ kiểm tra VINs (read-only)
+     */
+    @PostMapping("/vehicles/validate-vins")
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')")
+    public ResponseEntity<ApiRespond<VinValidationResultDto>> validateVins(
+            @RequestBody List<String> vins) {
+        
+        // Gọi service
+        VinValidationResultDto result = inventoryService.validateVinsForShipment(vins);
+        
+        // Trả về kết quả
+        return ResponseEntity.ok(
+            ApiRespond.success("VINs validated successfully.", result)
+        );
+    }
+
+    @GetMapping("/vehicles/available-vins")
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") 
+    public ResponseEntity<ApiRespond<List<String>>> getAvailableVins(
+            @RequestParam Long variantId) {
+                
+        List<String> vins = inventoryService.getAvailableVinsForVariant(variantId);
+        return ResponseEntity.ok(
+            ApiRespond.success("Fetched available VINs", vins)
+        );
+    }
+
     // ==========================================================
     //            ENDPOINTS FOR CONFIGURATION (CẤU HÌNH)
     // ==========================================================
@@ -178,6 +212,23 @@ public class InventoryController {
         
         inventoryService.updateDealerReorderLevel(dealerId, request);
         return ResponseEntity.ok(ApiRespond.success("Reorder level updated successfully", null));
+    }
+
+    /**
+     * Nhận yêu cầu phân bổ đồng bộ từ SalesService.
+     * Sẽ ném lỗi (vd: INSUFFICIENT_STOCK) nếu thất bại.
+     */
+    @PostMapping("/allocate-sync")
+    public ResponseEntity<ApiRespond<Void>> allocateStockSync(@RequestBody AllocationRequestDto request) {
+        
+        // Lấy email/role từ SecurityContext (giống như trong các hàm khác của bạn)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String staffEmail = authentication.getName(); 
+        
+        // Gọi hàm service 'allocateStockForOrder' mà bạn đã có sẵn
+        inventoryService.allocateStockForOrder(request, staffEmail);
+        
+        return ResponseEntity.ok(ApiRespond.success("Phân bổ kho thành công (Sync)", null));
     }
     
     // ==========================================================

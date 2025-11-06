@@ -4,17 +4,25 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.common_lib.model.enums.*;
-
+import com.ev.common_lib.dto.inventory.VinValidationResultDto;
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
+import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
+import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
 import com.ev.inventory_service.model.PhysicalVehicle;
 import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
-import com.ev.inventory_service.model.Enum.InventoryLevelStatus;
 // import com.ev.inventory_service.dto.response.DealerInventoryDto;
+// import com.ev.inventory_service.dto.response.DealerInventoryDto
+// Sự kiện Kafka
+import com.ev.common_lib.event.DealerStockUpdatedEvent;
+
+
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
+import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.CentralInventory;
 import com.ev.inventory_service.model.DealerAllocation;
 import com.ev.inventory_service.model.InventoryTransaction;
@@ -40,6 +48,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+
 // import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Value;
 import org.apache.poi.ss.usermodel.*;
@@ -55,6 +66,8 @@ import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
+import java.sql.Timestamp; 
+import java.time.Instant;
 // import java.lang.RuntimeException;
 //PDF Lib
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -83,6 +96,8 @@ public class InventoryServiceImpl implements InventoryService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PhysicalVehicleRepository physicalVehicleRepo;
     private final TransferRequestRepository transferRequestRepo;
+
+    public static final String TOPIC_DEALER_STOCK_UPDATED = "stock_events_dealerEVM";
 
     @Value("${app.services.catalog.url}")
     private String vehicleCatalogUrl;
@@ -462,9 +477,33 @@ public class InventoryServiceImpl implements InventoryService {
                     return newAlloc; // 
                 });
             
-            // (Tạm thời) coi như hàng đến ngay
             allocation.setAvailableQuantity(allocation.getAvailableQuantity() + quantity); 
-            dealerRepo.save(allocation);
+            DealerAllocation savedAllocation = dealerRepo.save(allocation);
+
+            try {
+                DealerStockUpdatedEvent event = DealerStockUpdatedEvent.builder()
+                    // Lấy từ dữ liệu "làm giàu" (Bước 2)
+                    .variantId(item.getVariantId())
+                    .variantName(item.getVariantName()) 
+                    .modelId(item.getModelId())         
+                    .modelName(item.getModelName())   
+                    
+                    // Lấy từ dữ liệu vừa save
+                    .dealerId(savedAllocation.getDealerId())
+                    .newAvailableQuantity(savedAllocation.getAvailableQuantity())
+                    .newAllocatedQuantity(savedAllocation.getAllocatedQuantity())
+                    
+                    // Thêm thời gian
+                    .lastUpdatedAt(Timestamp.from(Instant.now())) 
+                    .build();
+
+                // Gửi sự kiện lên Topic
+                kafkaTemplate.send(TOPIC_DEALER_STOCK_UPDATED, event);
+
+            } catch (Exception e) {
+                // Chỉ log lỗi, không dừng transaction
+                System.err.println("WARN: Gửi sự kiện Kafka thất bại (dealer stock updated): " + e.getMessage());
+            }
 
             // 3. Cập nhật bảng VIN (xe vật lý)
             List<PhysicalVehicle> vehicles = physicalVehicleRepo.findAllById(vins);
@@ -518,6 +557,105 @@ public class InventoryServiceImpl implements InventoryService {
                 // Gọi hàm helper đã sửa (chỉ 2 tham số)
                 return mapToInventoryStatusDto(inventory, id);
             })
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventoryComparisonDto> getDetailedInventoryByIds(List<Long> variantIds, UUID dealerId) {
+        if (variantIds == null || variantIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, CentralInventory> centralMap = centralRepo.findByVariantIdIn(variantIds).stream()
+                .collect(Collectors.toMap(CentralInventory::getVariantId, inv -> inv));
+
+        // (Bạn cần thêm phương thức findByVariantIdInAndDealerId vào DealerAllocationRepository)
+        Map<Long, DealerAllocation> dealerMap = dealerRepo.findByVariantIdInAndDealerId(variantIds, dealerId).stream()
+                .collect(Collectors.toMap(DealerAllocation::getVariantId, alloc -> alloc));
+
+        return variantIds.stream()
+            .map(id -> {
+                CentralInventory central = centralMap.get(id);
+                DealerAllocation dealer = dealerMap.get(id);
+
+                InventoryComparisonDto dto = new InventoryComparisonDto();
+                dto.setVariantId(id);
+
+                // Lấy tồn kho trung tâm
+                int centralStock = (central != null) ? central.getAvailableQuantity() : 0;
+                dto.setCentralStockAvailable(centralStock);
+
+                // Lấy tồn kho đại lý
+                int dealerStock = (dealer != null) ? dealer.getAvailableQuantity() : 0;
+                dto.setDealerStockAvailable(dealerStock);
+
+                // Xác định trạng thái chung (ưu tiên tồn kho đại lý, sau đó đến kho hãng)
+                if (dealerStock > 0) {
+                    dto.setStatus(InventoryLevelStatus.IN_STOCK);
+                } else if (centralStock > 0) {
+                    dto.setStatus(InventoryLevelStatus.IN_STOCK);
+                } else {
+                    dto.setStatus(InventoryLevelStatus.OUT_OF_STOCK);
+                }
+
+                return dto;
+            })
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true) // Quan trọng: Đây là thao tác chỉ đọc
+    public VinValidationResultDto validateVinsForShipment(List<String> vins) {
+        
+        List<String> validVinsList = new ArrayList<>();
+        Map<String, String> invalidVinsMap = new java.util.HashMap<>();
+
+        // 1. Tìm tất cả VINs trong DB (chỉ 1 query)
+        List<PhysicalVehicle> foundVehicles = physicalVehicleRepo.findAllById(vins);
+        
+        // 2. Chuyển sang Map để tra cứu nhanh
+        Map<String, PhysicalVehicle> vehicleMap = foundVehicles.stream()
+            .collect(Collectors.toMap(PhysicalVehicle::getVin, v -> v));
+
+        // 3. Lặp qua danh sách VINs mà user nhập để kiểm tra
+        for (String vin : vins) {
+            if (!vehicleMap.containsKey(vin)) {
+                // Lỗi 1: Không tìm thấy VIN
+                invalidVinsMap.put(vin, "Không tìm thấy VIN trong kho.");
+            } else {
+                PhysicalVehicle vehicle = vehicleMap.get(vin);
+                
+                // Lỗi 2: VIN có trạng thái không phù hợp
+                if (vehicle.getStatus() != VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE) {
+                    invalidVinsMap.put(vin, "Xe không ở kho trung tâm (Trạng thái: " + 
+                                       getVehicleStatusMessage(vehicle.getStatus()) + ").");
+                } else {
+                    // Hợp lệ!
+                    validVinsList.add(vin);
+                }
+            }
+        }
+
+        return VinValidationResultDto.builder()
+            .invalidVins(invalidVinsMap)
+            .validVins(validVinsList)
+            .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getAvailableVinsForVariant(Long variantId) {
+        // Tìm tất cả xe có variantId này
+        // VÀ đang ở trạng thái sẵn sàng tại kho trung tâm
+        List<PhysicalVehicle> vehicles = physicalVehicleRepo.findByVariantIdAndStatus(
+            variantId, 
+            VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE
+        );
+
+        // Trả về danh sách VINs
+        return vehicles.stream()
+            .map(PhysicalVehicle::getVin)
             .collect(Collectors.toList());
     }
 
@@ -611,5 +749,86 @@ public class InventoryServiceImpl implements InventoryService {
         font.setBold(true);
         style.setFont(font);
         return style;
+    }
+
+    /**
+     * Lấy tồn kho của Đại lý và gộp với thông tin chi tiết từ Vehicle-Service.
+     */
+    @Override
+    public List<DealerInventoryDto> getDealerInventory(UUID dealerId, String search, HttpHeaders headers) {
+        
+        // Lấy tất cả tồn kho (SKU) của Đại lý này
+        List<DealerAllocation> dealerStock = dealerRepo.findByDealerId(dealerId);
+        
+        // Lấy tất cả ID sản phẩm mà đại lý này có
+        List<Long> variantIds = dealerStock.stream()
+                                    .map(DealerAllocation::getVariantId)
+                                    .collect(Collectors.toList());
+
+        // Nếu đại lý không có xe nào, trả về danh sách rỗng
+        if (variantIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String url = vehicleCatalogUrl + "/vehicle-catalog/variants/details-by-ids";
+        HttpEntity<List<Long>> requestEntity = new HttpEntity<>(variantIds, headers); 
+
+        ResponseEntity<ApiRespond<List<VariantDetailDto>>> response;
+        try {
+            response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>>() {}
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to call vehicle-service /details-by-ids: " + e.getMessage());
+            e.printStackTrace(); 
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+
+        if (response.getBody() == null || response.getBody().getData() == null) {
+             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+
+        // Map<VariantID, ThôngTinChiTiếtXe>
+        Map<Long, VariantDetailDto> variantDetailsMap = response.getBody().getData().stream()
+                .collect(Collectors.toMap(VariantDetailDto::getVariantId, v -> v));
+
+        // Map<VariantID, ThôngTinKho>
+        Map<Long, DealerAllocation> inventoryMap = dealerStock.stream()
+                .collect(Collectors.toMap(DealerAllocation::getVariantId, s -> s));
+
+        // Gộp dữ liệu và Lọc (nếu có)
+        List<DealerInventoryDto> mergedList = variantIds.stream()
+            .map(id -> {
+                VariantDetailDto details = variantDetailsMap.get(id);
+                DealerAllocation stock = inventoryMap.get(id);
+                return DealerInventoryDto.merge(details, stock);
+            })
+            .filter(dto -> { // Lọc client-side (vì số lượng ít)
+                if (search == null || search.isBlank()) return true;
+                String query = search.toLowerCase();
+                return (dto.getModelName() != null && dto.getModelName().toLowerCase().contains(query)) ||
+                       (dto.getVersionName() != null && dto.getVersionName().toLowerCase().contains(query)) ||
+                       (dto.getColor() != null && dto.getColor().toLowerCase().contains(query)) ||
+                       (dto.getSkuCode() != null && dto.getSkuCode().toLowerCase().contains(query));
+            })
+            .collect(Collectors.toList());
+
+        return mergedList;
+    }
+
+    /**
+     * Hàm Helper để trả về thông báo lỗi thân thiện
+     */
+    private String getVehicleStatusMessage(VehiclePhysicalStatus status) {
+        switch (status) {
+            case AT_DEALER: return "Đã ở kho đại lý";
+            case SOLD: return "Đã bán cho khách hàng";
+            case IN_TRANSIT: return "Đang vận chuyển";
+            case IN_CENTRAL_WAREHOUSE: return "Sẵn sàng (Kho trung tâm)";
+            default: return status.name(); // Trả về tên Enum nếu không rõ
+        }
     }
 }

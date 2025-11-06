@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
+import java.util.List;
+import java.time.LocalDateTime;
 
 @Repository
 public interface SalesOrderRepository extends JpaRepository<SalesOrder, UUID>, JpaSpecificationExecutor<SalesOrder> {
@@ -27,4 +29,10 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, UUID>, J
      */
     Page<SalesOrder> findAllByDealerIdAndOrderStatus(UUID dealerId, OrderStatus status, Pageable pageable);
     
+
+    List<SalesOrder> findAllByOrderStatusAndDeliveryDateBetween(
+        OrderStatus status, 
+        LocalDateTime startDate, 
+        LocalDateTime endDate
+    );
 }

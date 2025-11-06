@@ -5,31 +5,40 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 
-// Kế thừa JpaSpecificationExecutor để có thể query động theo region, modelId
+// Kế thừa JpaSpecificationExecutor để có thể query động
 public interface InventorySummaryRepository 
-    extends JpaRepository<InventorySummaryByRegion, Integer>, JpaSpecificationExecutor<InventorySummaryByRegion> {
+    extends JpaRepository<InventorySummaryByRegion, Long>, JpaSpecificationExecutor<InventorySummaryByRegion> {
 
     /**
-     * Thực hiện thao tác UPSERT (INSERT OR UPDATE) để cập nhật tồn kho.
-     * Logic này giúp tổng hợp dữ liệu từ Kafka vào bảng riêng của service này.
+     * HÀM MỚI BẠN CẦN THÊM VÀO
+     * Phương thức UPSERT này CỘNG DỒN 'delta' (thay đổi) vào total_stock.
+     * Đây là phương thức mà InventoryPersistenceService đang gọi.
      */
-    
     @Modifying
+    @Transactional
     @Query(value = """
-        INSERT INTO inventory_summary_by_region
-            (model_id, model_name, variant_id, variant_name, region, total_stock)
-        VALUES
-            (:modelId, :modelName, :variantId, :variantName, :region, :stock)
+        INSERT INTO inventory_summary_by_region (
+            region, variant_id, model_id, model_name, variant_name, 
+            total_stock, last_updated_at
+        ) VALUES (
+            :region, :variantId, :modelId, :modelName, :variantName, 
+            :delta, CURRENT_TIMESTAMP
+        )
         ON DUPLICATE KEY UPDATE
+            total_stock = inventory_summary_by_region.total_stock + VALUES(total_stock),
+            model_id = VALUES(model_id),
             model_name = VALUES(model_name),
             variant_name = VALUES(variant_name),
-            total_stock = VALUES(total_stock),
             last_updated_at = CURRENT_TIMESTAMP
     """, nativeQuery = true)
-    void upsertInventorySummary(
-        String modelId, String modelName, 
-        String variantId, String variantName, 
-        String region, int stock
+    void updateStockByDelta(
+        String region, 
+        Long variantId, 
+        Long delta, // Đây là phần chênh lệch (VD: +5 hoặc -2)
+        Long modelId, 
+        String modelName, 
+        String variantName
     );
 }

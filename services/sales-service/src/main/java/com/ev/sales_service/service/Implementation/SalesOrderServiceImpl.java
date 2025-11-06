@@ -32,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 // import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -39,12 +40,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.client.HttpClientErrorException;
 // import org.springframework.web.client.HttpClientErrorException;
 // import org.springframework.security.core.Authentication; 
 // import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -63,6 +67,9 @@ public class SalesOrderServiceImpl implements SalesOrderService {
 
     @Value("${app.services.catalog.url}")
     private String vehicleCatalogUrl;
+
+    @Value("${app.services.inventory.url}")
+    private String inventoryServiceUrl;
 
     private static final Logger log = LoggerFactory.getLogger(SalesOrderServiceImpl.class);
 
@@ -172,52 +179,74 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     
     @Override
     @Transactional
-    // Bỏ các tham số role, userId, profileId thừa
     public SalesOrder approveB2BOrder(UUID orderId, String email) {
         SalesOrder order = salesOrderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); // Dùng constructor 1 tham số
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
 
         if (order.getOrderStatus() != OrderStatus.PENDING) {
-            throw new AppException(ErrorCode.BAD_REQUEST); // Dùng constructor 1 tham số
+            throw new AppException(ErrorCode.BAD_REQUEST);
         }
 
+        AllocationRequestDto allocationRequest = new AllocationRequestDto();
+        allocationRequest.setOrderId(orderId);
+        List<AllocationRequestDto.AllocationItem> items = order.getOrderItems().stream()
+                .map(item -> {
+                    AllocationRequestDto.AllocationItem allocItem = new AllocationRequestDto.AllocationItem();
+                    allocItem.setVariantId(item.getVariantId());
+                    allocItem.setQuantity(item.getQuantity());
+                    return allocItem;
+                }).collect(Collectors.toList());
+        allocationRequest.setItems(items);
+
+       try {
+            String inventoryUrl = inventoryServiceUrl + "/inventory/allocate-sync"; 
+            
+            HttpHeaders headers = buildHeadersFromCurrentRequest(email); 
+            HttpEntity<AllocationRequestDto> requestEntity = new HttpEntity<>(allocationRequest, headers);
+
+            log.info("Đang gọi (SYNC) đến inventory-service (/allocate-sync) cho Order ID: {}", orderId);
+            
+            // GỌI API ĐỒNG BỘ
+            restTemplate.exchange(
+                inventoryUrl,
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<ApiRespond<Void>>() {}
+            );
+            
+            log.info("Gọi inventory-service (/allocate-sync) THÀNH CÔNG cho Order ID: {}", orderId);
+
+        } catch (HttpClientErrorException e) {
+            // LỖI TỪ INVENTORY-SERVICE (ví dụ: HẾT HÀNG)
+            String errorMessage = e.getResponseBodyAsString();
+            log.error("Lỗi (4xx) từ inventory-service khi đang phân bổ: {}", errorMessage, e);
+            
+            throw new AppException(ErrorCode.INSUFFICIENT_STOCK); 
+
+        } catch (Exception e) {
+            // Lỗi 5xx, timeout...
+            log.error("Lỗi (5xx) khi gọi inventory-service: {}", e.getMessage(), e);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+
+       // CẬP NHẬT TRẠNG THÁI VÀ LƯU
         order.setOrderStatus(OrderStatus.CONFIRMED);
         order.setManagerApproval(true);
         order.setApprovalDate(LocalDateTime.now());
-        // order.setApprovedBy(findStaffIdByEmail(email)); // Logic lấy UUID người duyệt
 
         OrderTracking tracking = OrderTracking.builder()
                 .salesOrder(order)
-                .status("ĐÃ TIẾP NHẬN ĐẶT XE")
+                .status("ĐÃ TIẾP NHẬN ĐẶT XE") // Bạn có thể đổi thành "ĐÃ GIỮ HÀNG"
                 .updateDate(LocalDateTime.now())
-                .notes("EVM Staff (" + email + ") đã xác nhận đơn hàng.")
-                //.updatedBy(...) // Gán ID người duyệt
+                .notes("EVM Staff (" + email + ") đã xác nhận đơn hàng và kho đã giữ hàng.") // <-- Ghi chú rõ hơn
                 .build();
         if (order.getOrderTrackings() == null) {
              order.setOrderTrackings(new ArrayList<>());
         }
         order.getOrderTrackings().add(tracking);
 
-        // Chuẩn bị gọi API inventory-service
-        AllocationRequestDto allocationRequest = new AllocationRequestDto();
-        allocationRequest.setOrderId(orderId);
-        List<AllocationRequestDto.AllocationItem> items = order.getOrderItems().stream()
-            .map(item -> {
-                AllocationRequestDto.AllocationItem allocItem = new AllocationRequestDto.AllocationItem();
-                allocItem.setVariantId(item.getVariantId());
-                allocItem.setQuantity(item.getQuantity());
-                return allocItem;
-            }).collect(Collectors.toList());
-        allocationRequest.setItems(items);
-
         SalesOrder savedOrder = salesOrderRepository.save(order);
 
-        saveOutboxEvent(
-            savedOrder.getOrderId(), 
-            "SalesOrder", 
-            "OrderApproved",    // Tên sự kiện
-            allocationRequest   // Payload là DTO cho inventory-service
-        );
 
         return savedOrder;
     }
@@ -227,11 +256,91 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     public SalesOrder shipB2BOrder(UUID orderId, ShipmentRequestDto shipmentRequest, String email) {
         SalesOrder order = salesOrderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND)); 
-            
+                
         if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
+            // Đơn hàng phải được "CONFIRMED" (đã giữ hàng) mới được giao
             throw new AppException(ErrorCode.BAD_REQUEST); 
         }
 
+        // 1. "LÀM GIÀU" (ENRICH) DTO 
+        // -----------------------------------------------------------------
+        shipmentRequest.setOrderId(orderId);
+        shipmentRequest.setDealerId(order.getDealerId());
+
+        log.info("Bắt đầu làm giàu DTO giao hàng cho Order ID: {}", orderId);
+        for (ShipmentRequestDto.ShipmentItem item : shipmentRequest.getItems()) {
+            
+            String url = vehicleCatalogUrl + "/vehicle-catalog/variants/" + item.getVariantId();
+            ResponseEntity<ApiRespond<VariantDetailDto>> response;
+            try {
+                response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null, 
+                    new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {}
+                );
+            } catch (Exception e) {
+                log.error("Lỗi khi gọi vehicle-catalog service (cho variant {}): {}", item.getVariantId(), e.getMessage());
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
+            }
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || response.getBody().getData() == null) {
+                log.error("Response không hợp lệ từ vehicle-catalog (cho variant {}): {}", item.getVariantId(), response.getStatusCode());
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
+            }
+            
+            VariantDetailDto variantDetails = response.getBody().getData();
+
+            // Gán dữ liệu làm giàu
+            item.setModelId(variantDetails.getModelId());
+            item.setModelName(variantDetails.getModelName());
+            item.setVariantName(variantDetails.getVersionName()); // Dùng versionName cho variantName
+        }
+        log.info("Làm giàu DTO giao hàng thành công.");
+        // -----------------------------------------------------------------
+
+
+        // 2. GỌI API ĐỒNG BỘ (SYNC CALL) ĐẾN INVENTORY-SERVICE
+        // -----------------------------------------------------------------
+        try {
+            // Đây là endpoint /ship-b2b mà bạn đã có trong InventoryController
+            String inventoryUrl = inventoryServiceUrl + "/inventory/ship-b2b"; 
+            
+            // Chuyển tiếp headers (chứa token, email, role...)
+            HttpHeaders headers = buildHeadersFromCurrentRequest(email); 
+            HttpEntity<ShipmentRequestDto> requestEntity = new HttpEntity<>(shipmentRequest, headers);
+
+            log.info("Đang gọi (SYNC) đến inventory-service (ship-b2b) cho Order ID: {}", orderId);
+            
+            // GỌI API ĐỒNG BỘ
+            restTemplate.exchange(
+                inventoryUrl,
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<ApiRespond<Void>>() {} // Mong đợi nhận về ApiRespond
+            );
+            
+            log.info("Gọi inventory-service (ship-b2b) THÀNH CÔNG cho Order ID: {}", orderId);
+
+        } catch (HttpClientErrorException e) {
+            // === BẮT LỖI TỪ INVENTORY-SERVICE VÀ TRẢ VỀ FRONTEND ===
+            // Đây là nơi lỗi "Xe VIN123 đã có ở kho" sẽ bị bắt
+            String errorMessage = e.getResponseBodyAsString();
+            log.error("Lỗi (4xx) từ inventory-service khi đang giao hàng: {}", errorMessage, e);
+            
+            // Ném lỗi này về lại Controller -> Frontend sẽ nhận được HTTP 400
+            throw new AppException(ErrorCode.BAD_REQUEST); 
+
+        } catch (Exception e) {
+            // Bắt các lỗi khác (5xx, timeout, không kết nối được...)
+            log.error("Lỗi (5xx) khi gọi inventory-service: {}", e.getMessage(), e);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+        // -----------------------------------------------------------------
+
+
+        // 3. CẬP NHẬT TRẠNG THÁI (Chỉ chạy nếu Bước 2 thành công)
+        // -----------------------------------------------------------------
         order.setOrderStatus(OrderStatus.IN_TRANSIT);
 
         OrderTracking tracking = OrderTracking.builder()
@@ -239,28 +348,21 @@ public class SalesOrderServiceImpl implements SalesOrderService {
                 .status("ĐANG VẬN CHUYỂN")
                 .updateDate(LocalDateTime.now())
                 .notes("Hàng đã được xuất kho trung tâm, đang trên đường đến đại lý.")
-                // .updatedBy(...) // Gán ID người thực hiện
+                // .updatedBy(...) 
                 .build();
-         if (order.getOrderTrackings() == null) {
+        
+        if (order.getOrderTrackings() == null) {
               order.setOrderTrackings(new ArrayList<>());
-         }
+        }
         order.getOrderTrackings().add(tracking);
 
-        // 1. Lưu trạng thái đơn hàng
         SalesOrder savedOrder = salesOrderRepository.save(order);
 
-        // 2. Chuẩn bị payload cho sự kiện
-        shipmentRequest.setOrderId(orderId);
-        shipmentRequest.setDealerId(order.getDealerId());
-
-        // 3. TẠO SỰ KIỆN OUTBOX
-        saveOutboxEvent(
-            savedOrder.getOrderId(), 
-            "SalesOrder", 
-            "OrderShipped",     // Tên sự kiện
-            shipmentRequest     // Payload là DTO cho inventory-service
-        );
-
+        // 4. --- BỎ OUTBOX ---
+        // Chúng ta không cần lưu sự kiện "OrderShipped" vào Outbox nữa
+        // vì luồng đã được xử lý đồng bộ.
+        // saveOutboxEvent(...) // <-- BỎ DÒNG NÀY
+        
         return savedOrder;
     }
     
@@ -295,12 +397,22 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         
         SalesOrder savedOrder = salesOrderRepository.save(order);
         
-        OrderDeliveredEvent eventPayload = new OrderDeliveredEvent(
-            savedOrder.getOrderId(), 
-            savedOrder.getDealerId(),
-            savedOrder.getDeliveryDate()
-        );
-        
+        List<OrderDeliveredEvent.OrderItemDetail> itemDetails = savedOrder.getOrderItems().stream()
+        .map(orderItem -> OrderDeliveredEvent.OrderItemDetail.builder()
+                .variantId(orderItem.getVariantId())
+                .quantity(orderItem.getQuantity())
+                .finalPrice(orderItem.getFinalPrice())
+                .build())
+        .collect(Collectors.toList());
+
+        OrderDeliveredEvent eventPayload = OrderDeliveredEvent.builder()
+                .orderId(savedOrder.getOrderId())
+                .dealerId(savedOrder.getDealerId())
+                .deliveryDate(savedOrder.getDeliveryDate())
+                .totalAmount(savedOrder.getTotalAmount())
+                .items(itemDetails)
+                .build();
+    
         saveOutboxEvent(
             savedOrder.getOrderId(), 
             "SalesOrder", 
@@ -384,6 +496,19 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         }
 
         salesOrderRepository.delete(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SalesOrder> getCompletedOrdersForReport(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+        
+        return salesOrderRepository.findAllByOrderStatusAndDeliveryDateBetween(
+            OrderStatus.DELIVERED, 
+            startDateTime, 
+            endDateTime
+        );
     }
 
     // --- CÁC HÀM HELPER ĐỂ LẤY HEADER ---
@@ -504,6 +629,17 @@ public class SalesOrderServiceImpl implements SalesOrderService {
             // bị ROLLBACK, đảm bảo tính nhất quán (atomicity).
             throw new AppException(ErrorCode.DATABASE_ERROR);
         }
+    }
+
+    private VariantDetailDto callCatalogService(Long variantId) {
+        String url = vehicleCatalogUrl + "/vehicle-catalog/variants/" + variantId;
+        ResponseEntity<ApiRespond<VariantDetailDto>> response = restTemplate.exchange(
+            url, HttpMethod.GET, null, new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {}
+        );
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || response.getBody().getData() == null) {
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
+        }
+        return response.getBody().getData();
     }
 
 }
