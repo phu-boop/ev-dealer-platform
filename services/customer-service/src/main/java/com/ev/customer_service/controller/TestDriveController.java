@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Controller cho quản lý lịch hẹn lái thử xe
  * 
@@ -31,6 +33,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/customers/api/test-drives")
 @RequiredArgsConstructor
+@Slf4j
 public class TestDriveController {
 
     private final TestDriveService testDriveService;
@@ -96,13 +99,305 @@ public class TestDriveController {
     }
 
     /**
-     * Xác nhận lịch hẹn
+     * Xác nhận lịch hẹn (dành cho staff)
      */
     @PutMapping("/{id}/confirm")
     @PreAuthorize("hasRole('DEALER_STAFF')")
     public ResponseEntity<ApiResponse<Void>> confirmTestDrive(@PathVariable Long id) {
         testDriveService.confirmAppointment(id);
         return ResponseEntity.ok(ApiResponse.success("Test drive appointment confirmed successfully", null));
+    }
+
+    /**
+     * Xác nhận lịch hẹn qua token (từ link trong email)
+     * Endpoint này không cần authentication vì khách hàng click từ email
+     */
+    @GetMapping("/{id}/confirm-by-token")
+    public ResponseEntity<String> confirmTestDriveByToken(
+            @PathVariable Long id,
+            @RequestParam String token) {
+        try {
+            testDriveService.confirmAppointmentByToken(id, token);
+            
+            // Trả về HTML page đẹp thông báo thành công
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Xác nhận thành công</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            margin: 0;
+                            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
+                        }
+                        .container {
+                            background: white;
+                            padding: 50px;
+                            border-radius: 15px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                            text-align: center;
+                            max-width: 500px;
+                        }
+                        .success-icon {
+                            font-size: 80px;
+                            color: #28a745;
+                            margin-bottom: 20px;
+                        }
+                        h1 {
+                            color: #333;
+                            margin-bottom: 20px;
+                        }
+                        p {
+                            color: #666;
+                            line-height: 1.6;
+                            margin-bottom: 30px;
+                        }
+                        .btn {
+                            display: inline-block;
+                            padding: 12px 30px;
+                            background: #667eea;
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 5px;
+                            font-weight: bold;
+                        }
+                        .btn:hover {
+                            background: #5568d3;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="success-icon">✅</div>
+                        <h1>Xác nhận thành công!</h1>
+                        <p>
+                            Lịch hẹn lái thử xe của bạn đã được xác nhận thành công.<br>
+                            Chúng tôi sẽ liên hệ với bạn trước ngày hẹn.<br><br>
+                            Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi!
+                        </p>
+                        <a href="http://localhost:5173/test-drives" class="btn">Xem lịch hẹn</a>
+                    </div>
+                </body>
+                </html>
+                """;
+            
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(html);
+                    
+        } catch (Exception e) {
+            log.error("Failed to confirm appointment by token", e);
+            
+            String errorHtml = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Xác nhận thất bại</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            margin: 0;
+                            background: linear-gradient(135deg, #f093fb 0%%, #f5576c 100%%);
+                        }
+                        .container {
+                            background: white;
+                            padding: 50px;
+                            border-radius: 15px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                            text-align: center;
+                            max-width: 500px;
+                        }
+                        .error-icon {
+                            font-size: 80px;
+                            color: #dc3545;
+                            margin-bottom: 20px;
+                        }
+                        h1 {
+                            color: #333;
+                            margin-bottom: 20px;
+                        }
+                        p {
+                            color: #666;
+                            line-height: 1.6;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error-icon">❌</div>
+                        <h1>Xác nhận thất bại</h1>
+                        <p>
+                            Không thể xác nhận lịch hẹn. Có thể link đã hết hạn hoặc không hợp lệ.<br><br>
+                            Vui lòng liên hệ với chúng tôi để được hỗ trợ:<br>
+                            📞 Hotline: 1900-xxxx<br>
+                            📧 Email: support@evdealer.com
+                        </p>
+                    </div>
+                </body>
+                </html>
+                """;
+            
+            return ResponseEntity.badRequest()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(errorHtml);
+        }
+    }
+
+    /**
+     * Hủy lịch hẹn qua token (từ link trong email)
+     * Endpoint này không cần authentication vì khách hàng click từ email
+     */
+    @GetMapping("/{id}/cancel-by-token")
+    public ResponseEntity<String> cancelTestDriveByToken(
+            @PathVariable Long id,
+            @RequestParam String token) {
+        try {
+            testDriveService.cancelAppointmentByToken(id, token);
+            
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Hủy lịch thành công</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            margin: 0;
+                            background: linear-gradient(135deg, #868f96 0%%, #596164 100%%);
+                        }
+                        .container {
+                            background: white;
+                            padding: 50px;
+                            border-radius: 15px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                            text-align: center;
+                            max-width: 500px;
+                        }
+                        .info-icon {
+                            font-size: 80px;
+                            color: #ffc107;
+                            margin-bottom: 20px;
+                        }
+                        h1 {
+                            color: #333;
+                            margin-bottom: 20px;
+                        }
+                        p {
+                            color: #666;
+                            line-height: 1.6;
+                            margin-bottom: 30px;
+                        }
+                        .btn {
+                            display: inline-block;
+                            padding: 12px 30px;
+                            background: #667eea;
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 5px;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="info-icon">ℹ️</div>
+                        <h1>Đã hủy lịch hẹn</h1>
+                        <p>
+                            Lịch hẹn lái thử xe của bạn đã được hủy thành công.<br><br>
+                            Nếu bạn muốn đặt lịch mới, vui lòng liên hệ với chúng tôi:<br>
+                            📞 Hotline: 1900-xxxx<br>
+                            📧 Email: support@evdealer.com
+                        </p>
+                        <a href="http://localhost:5173" class="btn">Về trang chủ</a>
+                    </div>
+                </body>
+                </html>
+                """;
+            
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(html);
+                    
+        } catch (Exception e) {
+            log.error("Failed to cancel appointment by token", e);
+            
+            String errorHtml = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Hủy lịch thất bại</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            margin: 0;
+                            background: linear-gradient(135deg, #f093fb 0%%, #f5576c 100%%);
+                        }
+                        .container {
+                            background: white;
+                            padding: 50px;
+                            border-radius: 15px;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                            text-align: center;
+                            max-width: 500px;
+                        }
+                        .error-icon {
+                            font-size: 80px;
+                            color: #dc3545;
+                            margin-bottom: 20px;
+                        }
+                        h1 {
+                            color: #333;
+                            margin-bottom: 20px;
+                        }
+                        p {
+                            color: #666;
+                            line-height: 1.6;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error-icon">❌</div>
+                        <h1>Không thể hủy lịch</h1>
+                        <p>
+                            Không thể hủy lịch hẹn. Có thể link đã hết hạn hoặc không hợp lệ.<br><br>
+                            Vui lòng liên hệ với chúng tôi để được hỗ trợ:<br>
+                            📞 Hotline: 1900-xxxx<br>
+                            📧 Email: support@evdealer.com
+                        </p>
+                    </div>
+                </body>
+                </html>
+                """;
+            
+            return ResponseEntity.badRequest()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(errorHtml);
+        }
     }
 
     /**

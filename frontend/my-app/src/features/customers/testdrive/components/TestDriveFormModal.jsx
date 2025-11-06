@@ -114,18 +114,40 @@ const TestDriveFormModal = ({ isOpen, onClose, onSubmit, initialData = null, veh
     e.preventDefault();
     
     if (validate()) {
-      // Không convert sang ISO để giữ nguyên timezone local
-      // Backend sẽ parse theo định dạng yyyy-MM-ddTHH:mm
+      // Get vehicle model name
+      const selectedVehicle = vehicles.find(v => v.modelId === parseInt(formData.modelId));
+      const vehicleModelName = selectedVehicle?.modelName || '';
+      
+      // Get variant name with color
+      const selectedVariant = variants.find(v => v.variantId === parseInt(formData.variantId));
+      const vehicleVariantName = selectedVariant 
+        ? `${selectedVariant.versionName} (${selectedVariant.color})`
+        : '';
+      
+      // Get staff name
+      const selectedStaff = staffList.find(s => s.staffId === formData.staffId);
+      const staffName = selectedStaff
+        ? `${selectedStaff.fullName || selectedStaff.name || 'Unknown'} (${selectedStaff.email})`
+        : '';
+      
       const submitData = {
         ...formData,
-        appointmentDate: formData.appointmentDate, // Giữ nguyên format yyyy-MM-ddTHH:mm
+        appointmentDate: formData.appointmentDate,
+        vehicleModelName, // Gửi tên xe
+        vehicleVariantName, // Gửi tên variant + màu
+        staffName, // Gửi tên nhân viên
       };
       
-      console.log('📅 Submitting datetime:', submitData.appointmentDate);
+      console.log('� Submitting with vehicle/staff names:', {
+        vehicleModelName,
+        vehicleVariantName,
+        staffName
+      });
       
       // Xóa staffId nếu không chọn (empty string không parse được thành Long)
       if (!submitData.staffId) {
         delete submitData.staffId;
+        delete submitData.staffName;
       }
       
       // Xóa createdBy nếu empty

@@ -8,9 +8,11 @@ import com.ev.user_service.repository.UserDeviceRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserDeviceService {
@@ -45,5 +47,13 @@ public class UserDeviceService {
             userDeviceRepository.save(device);
         }
         return "Token saved";
+    }
+
+    public List<String> getFcmTokensByUserId(UUID userId) {
+        List<UserDevice> devices = userDeviceRepository.findByUserId(userId);
+        return devices.stream()
+                .map(UserDevice::getFcmToken)
+                .filter(token -> token != null && !token.isEmpty())
+                .collect(Collectors.toList());
     }
 }

@@ -33,6 +33,7 @@ public class TestDriveService {
     private final TestDriveAppointmentRepository appointmentRepository;
     private final CustomerRepository customerRepository;
     private final TestDriveNotificationService notificationService;
+    private final EmailConfirmationService emailConfirmationService;
     private final ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
@@ -65,25 +66,48 @@ public class TestDriveService {
         appointment.setStatus("SCHEDULED");
         appointment.setNotificationSent(false);
         appointment.setReminderSent(false);
+        appointment.setIsConfirmed(false); // Chưa xác nhận
         
         if (appointment.getDurationMinutes() == null) {
             appointment.setDurationMinutes(60); // Default 60 phút
         }
         
+        // Lưu tên xe và nhân viên từ request (frontend đã resolve)
+        appointment.setVehicleModelName(request.getVehicleModelName());
+        appointment.setVehicleVariantName(request.getVehicleVariantName());
+        appointment.setStaffName(request.getStaffName());
+        
+        // Generate confirmation token
+        String token = java.util.UUID.randomUUID().toString();
+        appointment.setConfirmationToken(token);
+        appointment.setConfirmationSentAt(LocalDateTime.now());
+        appointment.setConfirmationExpiresAt(LocalDateTime.now().plusDays(3)); // Hết hạn sau 3 ngày
+        
         TestDriveAppointment savedAppointment = appointmentRepository.save(appointment);
 
-        // 4. Gửi thông báo xác nhận
+        // 4. Gửi email xác nhận với link - lấy tên xe/nhân viên từ DB
         try {
-            notificationService.sendAppointmentConfirmation(
+            String customerName = customer.getFirstName() + " " + customer.getLastName();
+            
+            log.info("� Sending email - Vehicle: {} - {}, Staff: {}", 
+                    savedAppointment.getVehicleModelName(), 
+                    savedAppointment.getVehicleVariantName(),
+                    savedAppointment.getStaffName());
+            
+            emailConfirmationService.sendConfirmationEmail(
                 savedAppointment,
                 customer.getEmail(),
-                customer.getPhone(),
-                customer.getFirstName() + " " + customer.getLastName()
+                customerName,
+                savedAppointment.getVehicleModelName(),
+                savedAppointment.getVehicleVariantName(),
+                savedAppointment.getStaffName()
             );
             savedAppointment.setNotificationSent(true);
             appointmentRepository.save(savedAppointment);
+            log.info("✅ Sent confirmation email for appointment ID: {}", savedAppointment.getAppointmentId());
         } catch (Exception e) {
-            log.error("Failed to send confirmation notification", e);
+            log.error("❌ Failed to send confirmation email", e);
+            // Không throw exception để vẫn tạo được appointment
         }
 
         // 5. Gửi thông báo cho nhân viên (nếu có)
@@ -205,7 +229,88 @@ public class TestDriveService {
 
         appointment.setStatus("CONFIRMED");
         appointment.setConfirmedAt(LocalDateTime.now());
+        appointment.setIsConfirmed(true);
         appointmentRepository.save(appointment);
+    }
+
+    /**
+     * Xác nhận lịch hẹn bằng token (từ link email)
+     */
+    @Transactional
+    public void confirmAppointmentByToken(Long id, String token) {
+        TestDriveAppointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+
+        // Validate token
+        if (appointment.getConfirmationToken() == null || 
+            !appointment.getConfirmationToken().equals(token)) {
+            throw new IllegalArgumentException("Invalid confirmation token");
+        }
+
+        // Kiểm tra đã hết hạn chưa
+        if (appointment.getConfirmationExpiresAt() != null && 
+            appointment.getConfirmationExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Confirmation link has expired");
+        }
+
+        // Kiểm tra đã hủy hoặc hoàn thành chưa
+        if ("CANCELLED".equals(appointment.getStatus()) || 
+            "EXPIRED".equals(appointment.getStatus()) ||
+            "COMPLETED".equals(appointment.getStatus())) {
+            throw new IllegalStateException("Cannot confirm a " + appointment.getStatus().toLowerCase() + " appointment");
+        }
+
+        // Xác nhận
+        appointment.setStatus("CONFIRMED");
+        appointment.setConfirmedAt(LocalDateTime.now());
+        appointment.setIsConfirmed(true);
+        appointmentRepository.save(appointment);
+
+        log.info("✅ Appointment ID: {} confirmed by customer via email link", id);
+    }
+
+    /**
+     * Hủy lịch hẹn bằng token (từ link email)
+     */
+    @Transactional
+    public void cancelAppointmentByToken(Long id, String token) {
+        TestDriveAppointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+
+        // Validate token
+        if (appointment.getConfirmationToken() == null || 
+            !appointment.getConfirmationToken().equals(token)) {
+            throw new IllegalArgumentException("Invalid confirmation token");
+        }
+
+        // Kiểm tra đã hủy hoặc hoàn thành chưa
+        if ("CANCELLED".equals(appointment.getStatus()) || 
+            "EXPIRED".equals(appointment.getStatus()) ||
+            "COMPLETED".equals(appointment.getStatus())) {
+            throw new IllegalStateException("Appointment is already " + appointment.getStatus().toLowerCase());
+        }
+
+        // Hủy
+        appointment.setStatus("CANCELLED");
+        appointment.setCancellationReason("Khách hàng hủy qua link email");
+        appointment.setCancelledBy("CUSTOMER");
+        appointment.setCancelledAt(LocalDateTime.now());
+        appointmentRepository.save(appointment);
+
+        log.info("✅ Appointment ID: {} cancelled by customer via email link", id);
+
+        // Gửi thông báo hủy
+        try {
+            Customer customer = appointment.getCustomer();
+            notificationService.sendAppointmentCancellation(
+                appointment,
+                customer.getEmail(),
+                customer.getPhone(),
+                customer.getFirstName() + " " + customer.getLastName()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send cancellation notification", e);
+        }
     }
 
     @Transactional
@@ -371,6 +476,11 @@ public class TestDriveService {
             .staffNotes(appointment.getStaffNotes())
             .notificationSent(appointment.getNotificationSent())
             .reminderSent(appointment.getReminderSent())
+            .isConfirmed(appointment.getIsConfirmed())
+            .confirmationSentAt(appointment.getConfirmationSentAt())
+            .confirmationExpiresAt(appointment.getConfirmationExpiresAt())
+            .firstReminderSentAt(appointment.getFirstReminderSentAt())
+            .secondReminderSentAt(appointment.getSecondReminderSentAt())
             .feedbackRating(appointment.getFeedbackRating())
             .feedbackComment(appointment.getFeedbackComment())
             .createdBy(appointment.getCreatedBy())

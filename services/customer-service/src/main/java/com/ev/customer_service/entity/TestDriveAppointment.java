@@ -39,8 +39,18 @@ public class TestDriveAppointment {
     @Column(name = "variant_id")
     private Long variantId; // Phiên bản xe cụ thể (optional)
 
+    // Vehicle information (denormalized for email display)
+    @Column(name = "vehicle_model_name", length = 100)
+    private String vehicleModelName; // Tên mẫu xe: "VF 8S", "VF 9"
+    
+    @Column(name = "vehicle_variant_name", length = 200)
+    private String vehicleVariantName; // Tên phiên bản: "Plus 4WD (Màu lỏ vãi)"
+
     @Column(name = "staff_id", length = 50)
     private String staffId; // UUID từ user-service
+    
+    @Column(name = "staff_name", length = 255)
+    private String staffName; // Tên nhân viên: "Unknown (staff@email.com)"
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDateTime appointmentDate;
@@ -80,6 +90,25 @@ public class TestDriveAppointment {
 
     @Column(name = "reminder_sent")
     private Boolean reminderSent = false; // Đã gửi nhắc nhở chưa
+
+    // Confirmation tracking fields
+    @Column(name = "confirmation_token", length = 255)
+    private String confirmationToken; // Token để xác nhận qua email
+
+    @Column(name = "confirmation_sent_at")
+    private LocalDateTime confirmationSentAt; // Thời gian gửi email xác nhận
+
+    @Column(name = "confirmation_expires_at")
+    private LocalDateTime confirmationExpiresAt; // Hết hạn xác nhận (3 ngày sau khi gửi)
+
+    @Column(name = "first_reminder_sent_at")
+    private LocalDateTime firstReminderSentAt; // Thời gian gửi reminder lần 1
+
+    @Column(name = "second_reminder_sent_at")
+    private LocalDateTime secondReminderSentAt; // Thời gian gửi reminder lần 2
+
+    @Column(name = "is_confirmed")
+    private Boolean isConfirmed = false; // Khách hàng đã xác nhận chưa
 
     @Column(name = "feedback_rating")
     private Integer feedbackRating; // 1-5

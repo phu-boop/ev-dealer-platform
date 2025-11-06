@@ -25,8 +25,13 @@ public class TestDriveRequest {
     private Long modelId;
 
     private Long variantId; // Phiên bản xe cụ thể (optional)
+    
+    // Vehicle names (frontend already has this info from Vehicle Service)
+    private String vehicleModelName; // "VF 8S", "VF 9"
+    private String vehicleVariantName; // "Plus 4WD (Màu lỏ vãi)"
 
     private String staffId; // UUID từ user-service
+    private String staffName; // Tên nhân viên (frontend has from staff list)
 
     @NotNull(message = "Appointment date is required")
     @Future(message = "Appointment date must be in the future")
