@@ -24,6 +24,11 @@ public class TestDriveResponse {
     private String modelName;
     private Long variantId;
     private String variantName;
+    
+    // Denormalized names for display
+    private String vehicleModelName; // "VF 8S"
+    private String vehicleVariantName; // "Plus 4WD (Màu lỏ vãi)"
+    
     private String staffId; // UUID
     private String staffName;
     private String staffPhone;
@@ -41,6 +46,14 @@ public class TestDriveResponse {
     private String staffNotes;
     private Boolean notificationSent;
     private Boolean reminderSent;
+    
+    // Confirmation tracking fields
+    private Boolean isConfirmed;
+    private LocalDateTime confirmationSentAt;
+    private LocalDateTime confirmationExpiresAt;
+    private LocalDateTime firstReminderSentAt;
+    private LocalDateTime secondReminderSentAt;
+    
     private Integer feedbackRating;
     private String feedbackComment;
     private String createdBy;

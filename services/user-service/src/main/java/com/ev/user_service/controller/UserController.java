@@ -69,6 +69,15 @@ public class UserController {
         return ResponseEntity.ok(ApiRespond.success("Get User Successfully", userService.getUserById(id)));
     }
 
+    /**
+     * Public endpoint để các microservice khác lấy thông tin user
+     * KHÔNG cần authentication (dùng cho inter-service communication)
+     */
+    @GetMapping("/internal/{id}")
+    public ResponseEntity<ApiRespond<UserRespond>> getUserByIdInternal(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiRespond.success("Get User Successfully", userService.getUserById(id)));
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/register")
     public ResponseEntity<ApiRespond<UserRespond>> createUser(@Validated(OnCreate.class) @RequestBody UserRequest userRequest) {
