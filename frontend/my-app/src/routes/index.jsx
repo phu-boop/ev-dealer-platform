@@ -41,6 +41,13 @@ import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.js
 import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
 import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
 
+// Reporting
+import SalesReportPage from "../features/admin/reporting/pages/SalesReportPage.jsx";
+import InventoryReportPage from "../features/admin/reporting/pages/InventoryReportPage.jsx";
+
+// SYSTEM (ADMIN)
+import BackfillPage from "../features/admin/system/pages/BackfillPage.jsx";
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -118,6 +125,16 @@ export default function AppRoutes() {
               <Route
                 path="admin/distribution/allocation"
                 element={<AllocationPage />}
+              />
+
+              <Route path="admin/reports/sales" element={<SalesReportPage />} />
+              <Route
+                path="admin/reports/inventory"
+                element={<InventoryReportPage />}
+              />
+              <Route
+                path="admin/system/data-backfill"
+                element={<BackfillPage />}
               />
             </Route>
             {/* Staff only */}

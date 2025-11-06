@@ -1,6 +1,6 @@
 package com.ev.dealer_service.repository;
 
-import com.ev.dealer_service.dto.response.DealerBasicDto;
+import com.ev.common_lib.dto.dealer.DealerBasicDto;
 import com.ev.dealer_service.entity.Dealer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -35,8 +35,10 @@ public interface DealerRepository extends JpaRepository<Dealer, UUID> {
     List<Dealer> searchDealers(@Param("keyword") String keyword);
 
     /**
-     * Lấy danh sách rút gọn của tất cả các đại lý, chỉ bao gồm ID và Tên.
+     * Lấy danh sách rút gọn của tất cả các đại lý
      */
-    @Query("SELECT new com.ev.dealer_service.dto.response.DealerBasicDto(d.dealerId, d.dealerName) FROM Dealer d")
+    @Query("SELECT new com.ev.common_lib.dto.dealer.DealerBasicDto(d.dealerId, d.dealerName, d.region) FROM Dealer d")
     List<DealerBasicDto> findAllBasicInfo();
+
+    List<Dealer> findByRegionAndDealerName(String region, String dealerName);
 }

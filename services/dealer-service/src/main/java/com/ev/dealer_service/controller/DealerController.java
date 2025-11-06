@@ -1,7 +1,7 @@
 package com.ev.dealer_service.controller;
 
 import com.ev.common_lib.dto.respond.ApiRespond;
-import com.ev.dealer_service.dto.response.DealerBasicDto;
+import com.ev.common_lib.dto.dealer.DealerBasicDto;
 import com.ev.dealer_service.dto.request.DealerRequest;
 import com.ev.dealer_service.dto.response.ApiResponse;
 import com.ev.dealer_service.dto.response.DealerResponse;

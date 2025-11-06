@@ -47,6 +47,8 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -395,12 +397,22 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         
         SalesOrder savedOrder = salesOrderRepository.save(order);
         
-        OrderDeliveredEvent eventPayload = new OrderDeliveredEvent(
-            savedOrder.getOrderId(), 
-            savedOrder.getDealerId(),
-            savedOrder.getDeliveryDate()
-        );
-        
+        List<OrderDeliveredEvent.OrderItemDetail> itemDetails = savedOrder.getOrderItems().stream()
+        .map(orderItem -> OrderDeliveredEvent.OrderItemDetail.builder()
+                .variantId(orderItem.getVariantId())
+                .quantity(orderItem.getQuantity())
+                .finalPrice(orderItem.getFinalPrice())
+                .build())
+        .collect(Collectors.toList());
+
+        OrderDeliveredEvent eventPayload = OrderDeliveredEvent.builder()
+                .orderId(savedOrder.getOrderId())
+                .dealerId(savedOrder.getDealerId())
+                .deliveryDate(savedOrder.getDeliveryDate())
+                .totalAmount(savedOrder.getTotalAmount())
+                .items(itemDetails)
+                .build();
+    
         saveOutboxEvent(
             savedOrder.getOrderId(), 
             "SalesOrder", 
@@ -484,6 +496,19 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         }
 
         salesOrderRepository.delete(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SalesOrder> getCompletedOrdersForReport(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+        
+        return salesOrderRepository.findAllByOrderStatusAndDeliveryDateBetween(
+            OrderStatus.DELIVERED, 
+            startDateTime, 
+            endDateTime
+        );
     }
 
     // --- CÁC HÀM HELPER ĐỂ LẤY HEADER ---
@@ -604,6 +629,17 @@ public class SalesOrderServiceImpl implements SalesOrderService {
             // bị ROLLBACK, đảm bảo tính nhất quán (atomicity).
             throw new AppException(ErrorCode.DATABASE_ERROR);
         }
+    }
+
+    private VariantDetailDto callCatalogService(Long variantId) {
+        String url = vehicleCatalogUrl + "/vehicle-catalog/variants/" + variantId;
+        ResponseEntity<ApiRespond<VariantDetailDto>> response = restTemplate.exchange(
+            url, HttpMethod.GET, null, new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {}
+        );
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || response.getBody().getData() == null) {
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
+        }
+        return response.getBody().getData();
     }
 
 }

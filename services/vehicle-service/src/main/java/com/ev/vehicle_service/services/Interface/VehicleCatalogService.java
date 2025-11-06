@@ -61,4 +61,7 @@ public interface VehicleCatalogService {
      * Lấy phiên bản xe để so sánh
      */
     List<ComparisonDto> getComparisonData(List<Long> variantIds, UUID dealerId, HttpHeaders headers);
+
+    // Lấy tất cả phiên bản xe cho report
+    List<VariantDetailDto> getAllVariantsForBackfill();
 }

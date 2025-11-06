@@ -6,6 +6,7 @@ import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.enums.OrderStatus;
 import java.util.UUID;
 import java.util.List;
+import java.time.LocalDate;
 import org.springframework.data.domain.Page; 
 import org.springframework.data.domain.Pageable;
 
@@ -58,5 +59,7 @@ public interface SalesOrderService {
      * Xóa đơn hàng B2B
      */
     void deleteCancelledOrder(UUID orderId);
+
+    List<SalesOrder> getCompletedOrdersForReport(LocalDate startDate, LocalDate endDate);
     
 }

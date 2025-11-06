@@ -213,6 +213,16 @@ public class VehicleCatalogController {
         return ResponseEntity.ok(ApiRespond.success("Fetched comparison data successfully", results));
     }
 
+    /**
+     * API MỚI: Lấy TẤT CẢ các phiên bản (không phân trang).
+     * Phục vụ riêng cho việc backfill cache của reporting-service.
+     */
+    @GetMapping("/variants/all-for-backfill")
+    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getAllVariantsForBackfill() {
+        List<VariantDetailDto> results = vehicleCatalogService.getAllVariantsForBackfill();
+        return ResponseEntity.ok(ApiRespond.success("Fetched all variants for backfill", results));
+    }
+
     // ==========================================================
     //          ENDPOINTS FOR FEATURES
     // ==========================================================

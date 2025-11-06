@@ -479,6 +479,18 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<VariantDetailDto> getAllVariantsForBackfill() {
+        // Gọi thẳng repository để lấy tất cả, không phân trang
+        List<VehicleVariant> variants = variantRepository.findAll(); 
+
+        // Map sang DTO
+        return variants.stream()
+            .map(this::mapToVariantDetailDto)
+            .collect(Collectors.toList());
+    }
+
     // --- Helper Methods ---
 
     private VehicleModel findModelById(Long modelId) {

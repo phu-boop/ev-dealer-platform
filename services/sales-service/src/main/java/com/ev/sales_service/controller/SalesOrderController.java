@@ -10,6 +10,8 @@ import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.ev.sales_service.enums.OrderStatus; 
 import org.springframework.data.domain.Page; 
@@ -205,6 +207,16 @@ public class SalesOrderController {
         salesOrderService.deleteCancelledOrder(orderId);
         // Trả về 204 No Content khi xóa thành công
         return ResponseEntity.noContent().build();
+    }
+
+    // API lấy báo cáo doanh số theo khu vực đại lí
+    @GetMapping("/b2b/report-completed")
+    public ResponseEntity<ApiRespond<List<SalesOrder>>> getCompletedOrdersForReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+                
+        List<SalesOrder> orders = salesOrderService.getCompletedOrdersForReport(startDate, endDate);
+        return ResponseEntity.ok(ApiRespond.success("Lấy dữ liệu báo cáo thành công", orders));
     }
     
 }
