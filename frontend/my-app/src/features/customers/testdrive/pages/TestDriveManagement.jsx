@@ -1,47 +1,38 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Plus, Calendar as CalendarIcon, List, BarChart3 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 // Import components từ testdrive/components
-import TestDriveFormModal from '../components/TestDriveFormModal';
 import TestDriveCard from '../components/TestDriveCard';
 import TestDriveFilter from '../components/TestDriveFilter';
+import FeedbackModal from '../components/FeedbackModal';
 
 // Import services từ testdrive/services
 import {
   getTestDrivesByDealer,
-  createTestDrive,
-  updateTestDrive,
   cancelTestDrive,
   confirmTestDrive,
   completeTestDrive,
   filterTestDrives,
+  submitFeedback,
 } from '../services/testDriveService';
 
-import { getAllModels, getModelDetails } from '../services/vehicleService';
-
-// Import staffService từ assignment sub-feature
-import staffService from '../../assignment/services/staffService';
-
 const TestDriveManagement = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list', 'calendar', 'statistics'
   
-  // Modal states
-  const [showModal, setShowModal] = useState(false);
-  const [editingAppointment, setEditingAppointment] = useState(null);
-
-  // Data for dropdowns
-  const [vehicles, setVehicles] = useState([]);
-  const [staffList, setStaffList] = useState([]);
+  // Feedback modal state
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackAppointment, setFeedbackAppointment] = useState(null);
 
   // TODO: Sửa lại khi backend hỗ trợ dealer UUID
   // Tạm dùng dealerId = 1 vì backend expect Long, không phải UUID
   const dealerId = 1;
-  const dealerUUID = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId') || '6c8c229d-c8f6-43d8-b2f6-01261b46baa3';
 
   useEffect(() => {
     loadData();
@@ -57,41 +48,6 @@ const TestDriveManagement = () => {
       setAppointments(appointmentsData);
       setFilteredAppointments(appointmentsData);
 
-      // Load vehicles from vehicle service with variants
-      try {
-        const vehiclesRes = await getAllModels();
-        const modelsData = vehiclesRes.data || [];
-        
-        // Load variants cho từng model
-        const modelsWithVariants = await Promise.all(
-          modelsData.map(async (model) => {
-            try {
-              const detailRes = await getModelDetails(model.modelId);
-              return {
-                ...model,
-                variants: detailRes.data?.variants || []
-              };
-            } catch (error) {
-              console.error(`Error loading variants for model ${model.modelId}:`, error);
-              return { ...model, variants: [] };
-            }
-          })
-        );
-        
-        setVehicles(modelsWithVariants);
-      } catch (error) {
-        console.error('Error loading vehicles:', error);
-        toast.error('Không thể tải danh sách xe');
-      }
-
-      // Load staff list (dùng UUID)
-      try {
-        const staffData = await staffService.getStaffByDealerId(dealerUUID);
-        setStaffList(staffData || []);
-      } catch (error) {
-        console.error('Error loading staff:', error);
-      }
-
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Không thể tải dữ liệu');
@@ -101,33 +57,41 @@ const TestDriveManagement = () => {
   };
 
   const handleCreate = () => {
-    setEditingAppointment(null);
-    setShowModal(true);
+    // Lấy roles từ sessionStorage (là JSON array)
+    const rolesString = sessionStorage.getItem('roles');
+    let basePath = '/dealer/staff'; // default
+    
+    try {
+      const roles = rolesString ? JSON.parse(rolesString) : [];
+      if (roles.includes('DEALER_MANAGER')) {
+        basePath = '/dealer/manager';
+      } else if (roles.includes('DEALER_STAFF')) {
+        basePath = '/dealer/staff';
+      }
+    } catch (error) {
+      console.error('Error parsing roles:', error);
+    }
+    
+    navigate(`${basePath}/testdrives/create`);
   };
 
   const handleEdit = (appointment) => {
-    setEditingAppointment(appointment);
-    setShowModal(true);
-  };
-
-  const handleSubmit = async (formData) => {
+    // Navigate to edit page instead of opening modal
+    const rolesString = sessionStorage.getItem('roles');
+    let basePath = '/dealer/staff'; // default
+    
     try {
-      if (editingAppointment) {
-        await updateTestDrive(editingAppointment.appointmentId, formData);
-        toast.success('Cập nhật lịch hẹn thành công!');
-      } else {
-        await createTestDrive(formData);
-        toast.success('Tạo lịch hẹn thành công!');
+      const roles = rolesString ? JSON.parse(rolesString) : [];
+      if (roles.includes('DEALER_MANAGER')) {
+        basePath = '/dealer/manager';
+      } else if (roles.includes('DEALER_STAFF')) {
+        basePath = '/dealer/staff';
       }
-      
-      setShowModal(false);
-      setEditingAppointment(null);
-      loadData();
     } catch (error) {
-      console.error('Error submitting:', error);
-      const message = error.response?.data?.message || 'Có lỗi xảy ra';
-      toast.error(message);
+      console.error('Error parsing roles:', error);
     }
+    
+    navigate(`${basePath}/testdrives/edit/${appointment.appointmentId}`);
   };
 
   const handleConfirm = async (appointmentId) => {
@@ -233,6 +197,26 @@ const TestDriveManagement = () => {
   const handleResetFilter = () => {
     setFilteredAppointments(appointments);
     toast.info('ℹ️ Đã đặt lại bộ lọc');
+  };
+
+  const handleFeedback = (appointment) => {
+    setFeedbackAppointment(appointment);
+    setShowFeedbackModal(true);
+  };
+
+  const handleSubmitFeedback = async (appointmentId, feedbackData) => {
+    try {
+      await submitFeedback(appointmentId, feedbackData);
+      toast.success('✅ Đã ghi kết quả lái thử thành công!');
+      setShowFeedbackModal(false);
+      setFeedbackAppointment(null);
+      loadData(); // Reload để hiển thị feedback mới
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      const message = error.response?.data?.message || 'Không thể ghi kết quả';
+      toast.error(message);
+      throw error; // Để FeedbackModal xử lý loading state
+    }
   };
 
   // Statistics
@@ -367,12 +351,11 @@ const TestDriveManagement = () => {
                 <TestDriveCard
                   key={appointment.appointmentId}
                   appointment={appointment}
-                  vehicles={vehicles}
-                  staffList={staffList}
                   onEdit={handleEdit}
                   onCancel={handleCancel}
                   onConfirm={handleConfirm}
                   onComplete={handleComplete}
+                  onFeedback={handleFeedback}
                 />
               ))
             )}
@@ -404,17 +387,18 @@ const TestDriveManagement = () => {
         )}
       </div>
 
-      {/* Form Modal */}
-      <TestDriveFormModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setEditingAppointment(null);
-        }}
-        onSubmit={handleSubmit}
-        initialData={editingAppointment}
-        vehicles={vehicles}
-      />
+      {/* Feedback Modal */}
+      {feedbackAppointment && (
+        <FeedbackModal
+          isOpen={showFeedbackModal}
+          onClose={() => {
+            setShowFeedbackModal(false);
+            setFeedbackAppointment(null);
+          }}
+          appointment={feedbackAppointment}
+          onSubmit={handleSubmitFeedback}
+        />
+      )}
     </div>
   );
 };

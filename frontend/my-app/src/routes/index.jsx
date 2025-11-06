@@ -30,6 +30,8 @@ import CustomerDetail from "../features/customers/management/pages/CustomerDetai
 
 // test drive pages
 import TestDriveManagement from "../features/customers/testdrive/pages/TestDriveManagement.jsx";
+import CreateTestDrive from "../features/customers/testdrive/pages/CreateTestDrive.jsx";
+import EditTestDrive from "../features/customers/testdrive/pages/EditTestDrive.jsx";
 
 // EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
@@ -192,6 +194,10 @@ export default function AppRoutes() {
                 path="manager/customers/create"
                 element={<CreateCustomer />}
               />
+              <Route
+                path="manager/customers/:id/edit"
+                element={<CreateCustomer />}
+              />
               <Route path="manager/customers/list" element={<CustomerList />} />
               <Route
                 path="manager/customers/:id"
@@ -202,6 +208,14 @@ export default function AppRoutes() {
               <Route
                 path="manager/testdrives"
                 element={<TestDriveManagement />}
+              />
+              <Route
+                path="manager/testdrives/create"
+                element={<CreateTestDrive />}
+              />
+              <Route
+                path="manager/testdrives/edit/:id"
+                element={<EditTestDrive />}
               />
 
               {/* Quotation Management */}
@@ -241,6 +255,10 @@ export default function AppRoutes() {
                 path="staff/customers/create"
                 element={<CreateCustomer />}
               />
+              <Route
+                path="staff/customers/:id/edit"
+                element={<CreateCustomer />}
+              />
               <Route path="staff/customers/list" element={<CustomerList />} />
               <Route path="staff/customers/:id" element={<CustomerDetail />} />
 
@@ -248,6 +266,14 @@ export default function AppRoutes() {
               <Route
                 path="staff/testdrives"
                 element={<TestDriveManagement />}
+              />
+              <Route
+                path="staff/testdrives/create"
+                element={<CreateTestDrive />}
+              />
+              <Route
+                path="staff/testdrives/edit/:id"
+                element={<EditTestDrive />}
               />
 
               {/* Quotation Management */}

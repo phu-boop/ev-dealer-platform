@@ -17,22 +17,8 @@ try {
 }
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
     <BrowserRouter>
-      <ToastContainer 
-        position="top-right" 
-        autoClose={4000}
-        hideProgressBar={false}
-        newestOnTop={true}
-        closeOnClick={true}
-        rtl={false}
-        pauseOnFocusLoss={false}
-        draggable={true}
-        pauseOnHover={true}
-        theme="light"
-        limit={5}
-      />
+      <ToastContainer />
       <AppRoutes/>
     </BrowserRouter>
-  </StrictMode>
 )

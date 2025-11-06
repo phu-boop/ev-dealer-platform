@@ -1,6 +1,7 @@
 package com.ev.customer_service.controller;
 
 import com.ev.customer_service.dto.request.CancelTestDriveRequest;
+import com.ev.customer_service.dto.request.TestDriveFeedbackRequest;
 import com.ev.customer_service.dto.request.TestDriveFilterRequest;
 import com.ev.customer_service.dto.request.TestDriveRequest;
 import com.ev.customer_service.dto.request.UpdateTestDriveRequest;
@@ -448,5 +449,30 @@ public class TestDriveController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         TestDriveStatisticsResponse statistics = testDriveService.getStatistics(dealerId, startDate, endDate);
         return ResponseEntity.ok(ApiResponse.success(statistics));
+    }
+
+    /**
+     * Ghi lại kết quả lái thử và phản hồi của khách hàng
+     * Chỉ staff/manager mới được ghi feedback
+     */
+    @PostMapping("/{id}/feedback")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER')")
+    public ResponseEntity<ApiResponse<TestDriveResponse>> submitFeedback(
+            @PathVariable Long id,
+            @Valid @RequestBody TestDriveFeedbackRequest request) {
+        TestDriveResponse response = testDriveService.submitFeedback(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Lấy danh sách appointments đã có feedback
+     * Để xem lịch sử phản hồi và thống kê
+     */
+    @GetMapping("/with-feedback")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER')")
+    public ResponseEntity<ApiResponse<List<TestDriveResponse>>> getAppointmentsWithFeedback(
+            @RequestParam Long dealerId) {
+        List<TestDriveResponse> appointments = testDriveService.getAppointmentsWithFeedback(dealerId);
+        return ResponseEntity.ok(ApiResponse.success(appointments));
     }
 }

@@ -762,119 +762,73 @@
   scrollbar-width: none;    /* Firefox */
 }
 
-/* Toast Notification Styles - Modern Design */
+/* Toast Notification Styles - Simple & Clean */
 .Toastify__toast-container {
-  width: auto !important;
-  max-width: 550px !important;
-  padding: 16px !important;
+  z-index: 9999 !important;
 }
 
 .Toastify__toast {
-  border-radius: 16px !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
-  padding: 20px 24px !important;
-  padding-right: 56px !important;
-  min-height: 80px !important;
-  width: 420px !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  margin-bottom: 16px !important;
-  position: relative !important;
+  padding: 16px 20px !important;
+  min-height: 64px !important;
+  border-left: 4px solid !important;
 }
 
 .Toastify__toast--success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  color: white !important;
+  background: #ffffff !important;
+  border-left-color: #10b981 !important;
+  color: #1f2937 !important;
 }
 
 .Toastify__toast--error {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-  color: white !important;
+  background: #ffffff !important;
+  border-left-color: #ef4444 !important;
+  color: #1f2937 !important;
 }
 
 .Toastify__toast--warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-  color: white !important;
+  background: #ffffff !important;
+  border-left-color: #f59e0b !important;
+  color: #1f2937 !important;
 }
 
 .Toastify__toast--info {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-  color: white !important;
+  background: #ffffff !important;
+  border-left-color: #3b82f6 !important;
+  color: #1f2937 !important;
 }
 
 .Toastify__toast-body {
-  color: white !important;
-  font-size: 16px !important;
+  color: #1f2937 !important;
+  font-size: 14px !important;
   font-weight: 500 !important;
-  padding: 6px 0 !important;
-  margin: 0 !important;
-  line-height: 1.6 !important;
-  letter-spacing: 0.3px !important;
-  display: flex !important;
-  align-items: center !important;
-  flex: 1 !important;
-}
-
-/* Ẩn icon mặc định */
-.Toastify__toast-icon {
-  display: none !important;
-}
-
-/* Close button styling */
-.Toastify__close-button {
-  position: absolute !important;
-  top: 16px !important;
-  right: 16px !important;
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  min-height: 32px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 8px !important;
-  cursor: pointer !important;
-  opacity: 0.7 !important;
-  transition: all 0.2s ease !important;
   padding: 0 !important;
-  margin: 0 !important;
-  z-index: 10 !important;
-  color: white !important;
+}
+
+.Toastify__close-button {
+  color: #6b7280 !important;
+  opacity: 0.6 !important;
 }
 
 .Toastify__close-button:hover {
   opacity: 1 !important;
-  background: rgba(255, 255, 255, 0.2) !important;
-  transform: scale(1.1) !important;
+  color: #1f2937 !important;
 }
 
-.Toastify__close-button > svg {
-  width: 16px !important;
-  height: 16px !important;
-  fill: white !important;
-  stroke: white !important;
+.Toastify__progress-bar--success {
+  background: #10b981 !important;
 }
 
-.Toastify__progress-bar {
-  background: rgba(255, 255, 255, 0.25) !important;
-  height: 3px !important;
+.Toastify__progress-bar--error {
+  background: #ef4444 !important;
 }
 
-/* Animation */
-@keyframes toastSlideIn {
-  from {
-    transform: translate3d(110%, 0, 0);
-    opacity: 0;
-  }
-  to {
-    transform: translate3d(0, 0, 0);
-    opacity: 1;
-  }
+.Toastify__progress-bar--warning {
+  background: #f59e0b !important;
 }
 
-.Toastify__toast {
-  animation: toastSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+.Toastify__progress-bar--info {
+  background: #3b82f6 !important;
 }

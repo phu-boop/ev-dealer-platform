@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiSave, FiX,
@@ -11,7 +11,9 @@ import { useAuthContext } from "../../../auth/AuthProvider";
 
 const CreateCustomer = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // Get customer ID from URL if editing
   const { roles } = useAuthContext();
+  const isEditMode = Boolean(id); // Check if we're in edit mode
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -31,10 +33,18 @@ const CreateCustomer = () => {
   const [loading, setLoading] = useState(false);
   const [staffList, setStaffList] = useState([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
   
   // Check if user is DEALER_MANAGER
   const isDealerManager = roles?.includes('DEALER_MANAGER');
   const dealerId = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId');
+
+  // Load customer data if editing
+  useEffect(() => {
+    if (isEditMode && id) {
+      fetchCustomerData();
+    }
+  }, [isEditMode, id]);
 
   // Load staff list when component mounts
   useEffect(() => {
@@ -42,6 +52,52 @@ const CreateCustomer = () => {
       fetchStaffList();
     }
   }, [isDealerManager, dealerId]);
+
+  const fetchCustomerData = async () => {
+    setLoadingCustomer(true);
+    try {
+      console.log("🔍 Fetching customer with ID:", id);
+      console.log("📡 API URL:", `http://localhost:8080/customers/${id}`);
+      
+      const customer = await customerService.getCustomerById(id);
+      console.log("✅ Customer data received:", customer);
+      
+      // Check if customer data is valid
+      if (!customer || !customer.customerId) {
+        throw new Error("Invalid customer data received");
+      }
+      
+      setFormData({
+        firstName: customer.firstName || "",
+        lastName: customer.lastName || "",
+        email: customer.email || "",
+        phone: customer.phone || "",
+        address: customer.address || "",
+        idNumber: customer.idNumber || "",
+        customerType: customer.customerType || "INDIVIDUAL",
+        registrationDate: customer.registrationDate || "",
+        assignedStaffId: customer.assignedStaffId || "",
+        preferredDealerId: customer.preferredDealerId || null
+      });
+    } catch (error) {
+      console.error("❌ Error fetching customer:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      
+      const errorMsg = error.response?.data?.message || 
+                       error.message || 
+                       "Không thể tải thông tin khách hàng";
+      toast.error(errorMsg);
+      
+      // Navigate back to list instead of -1 to avoid infinite loop
+      const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
+      setTimeout(() => {
+        navigate(`${base}/customers/list`);
+      }, 1500); // Give user time to see the error
+    } finally {
+      setLoadingCustomer(false);
+    }
+  };
 
   const fetchStaffList = async () => {
     setLoadingStaff(true);
@@ -116,35 +172,55 @@ const CreateCustomer = () => {
         idNumber: formData.idNumber || null,
         customerType: formData.customerType,
         registrationDate: formData.registrationDate || null,
-        assignedStaffId: formData.assignedStaffId || null, // Thêm assignedStaffId
-        // Không truyền status - backend tự động set = NEW
+        assignedStaffId: formData.assignedStaffId || null,
         preferredDealerId: formData.preferredDealerId || null
       };
 
-      const newCustomer = await customerService.createCustomer(customerData);
-      
-      // Nếu có phân công nhân viên, gọi API phân công
-      if (formData.assignedStaffId && newCustomer.customerId) {
-        try {
-          await customerService.assignStaffToCustomer(newCustomer.customerId, {
-            staffId: formData.assignedStaffId,
-            notes: "Phân công khi tạo khách hàng mới"
-          });
-          toast.success("Thêm khách hàng và phân công nhân viên thành công!");
-        } catch (assignError) {
-          console.error("Error assigning staff:", assignError);
-          toast.warning("Khách hàng đã được tạo nhưng không thể phân công nhân viên");
+      if (isEditMode) {
+        // Update existing customer
+        await customerService.updateCustomer(id, customerData);
+        
+        // Handle staff assignment if changed
+        if (formData.assignedStaffId) {
+          try {
+            await customerService.assignStaffToCustomer(id, {
+              staffId: formData.assignedStaffId,
+              notes: "Cập nhật phân công nhân viên"
+            });
+          } catch (assignError) {
+            console.error("Error assigning staff:", assignError);
+          }
         }
+        
+        toast.success("Cập nhật thông tin khách hàng thành công!");
       } else {
-        toast.success("Thêm khách hàng thành công!");
+        // Create new customer
+        const newCustomer = await customerService.createCustomer(customerData);
+        
+        // Nếu có phân công nhân viên, gọi API phân công
+        if (formData.assignedStaffId && newCustomer.customerId) {
+          try {
+            await customerService.assignStaffToCustomer(newCustomer.customerId, {
+              staffId: formData.assignedStaffId,
+              notes: "Phân công khi tạo khách hàng mới"
+            });
+            toast.success("Thêm khách hàng và phân công nhân viên thành công!");
+          } catch (assignError) {
+            console.error("Error assigning staff:", assignError);
+            toast.warning("Khách hàng đã được tạo nhưng không thể phân công nhân viên");
+          }
+        } else {
+          toast.success("Thêm khách hàng thành công!");
+        }
       }
       
       // Navigate based on role
       const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
       navigate(`${base}/customers/list`);
     } catch (error) {
-      console.error("Error creating customer:", error);
-      const errorMessage = error.response?.data?.message || "Không thể thêm khách hàng. Vui lòng thử lại.";
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} customer:`, error);
+      const errorMessage = error.response?.data?.message || 
+        `Không thể ${isEditMode ? 'cập nhật' : 'thêm'} khách hàng. Vui lòng thử lại.`;
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -152,8 +228,20 @@ const CreateCustomer = () => {
   };
 
   const handleCancel = () => {
-    navigate("/dealer/customers/list");
+    const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
+    navigate(`${base}/customers/list`);
   };
+
+  if (loadingCustomer) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải thông tin khách hàng...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8 px-6 lg:px-8">
@@ -163,11 +251,11 @@ const CreateCustomer = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                Thêm Khách Hàng Mới
+                {isEditMode ? 'Cập Nhật Khách Hàng' : 'Thêm Khách Hàng Mới'}
               </h1>
               <p className="text-gray-600 flex items-center">
                 <FiUser className="w-4 h-4 mr-2" />
-                Nhập thông tin chi tiết của khách hàng
+                {isEditMode ? 'Chỉnh sửa thông tin khách hàng' : 'Nhập thông tin chi tiết của khách hàng'}
               </p>
             </div>
             <button
@@ -460,7 +548,7 @@ const CreateCustomer = () => {
                 ) : (
                   <>
                     <FiSave className="w-5 h-5 mr-2" />
-                    Lưu Khách Hàng
+                    {isEditMode ? 'Cập Nhật Khách Hàng' : 'Lưu Khách Hàng'}
                   </>
                 )}
               </button>
