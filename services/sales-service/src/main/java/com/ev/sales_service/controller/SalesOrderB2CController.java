@@ -41,7 +41,7 @@ public class SalesOrderB2CController {
     }
 
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<ApiRespond<List<SalesOrderB2CResponse>>> getSalesOrdersByCustomer(@PathVariable UUID customerId) {
+    public ResponseEntity<ApiRespond<List<SalesOrderB2CResponse>>> getSalesOrdersByCustomer(@PathVariable Long customerId) {
         log.info("Fetching B2C sales orders for customer: {}", customerId);
         List<SalesOrderB2CResponse> responses = salesOrderServiceB2C.getSalesOrdersByCustomer(customerId);
         return ResponseEntity.ok(ApiRespond.success("Sales orders fetched successfully", responses));

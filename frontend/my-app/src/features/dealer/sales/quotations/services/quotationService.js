@@ -46,3 +46,13 @@ export const deleteQuotation = async (quotationId) => {
     throw error;
   }
 };
+
+export const convertToSalesOrder = async (quotationId) => {
+  try {
+    const response = await apiConstSaleService.post(`${BASE_URL}/${quotationId}/convert-to-order`);
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi xóa chuyển ${quotationId}:`, error);
+    throw error;
+  }
+};

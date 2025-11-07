@@ -16,7 +16,7 @@ public interface SalesOrderRepositoryB2C extends JpaRepository<SalesOrder, UUID>
 
     List<SalesOrder> findByDealerIdAndTypeOder(UUID dealerId, SaleOderType typeOder);
 
-    List<SalesOrder> findByCustomerIdAndTypeOder(UUID customerId, SaleOderType typeOder);
+    List<SalesOrder> findByCustomerIdAndTypeOder(Long customerId, SaleOderType typeOder);
 
     List<SalesOrder> findByOrderStatusAndTypeOder(String orderStatus, SaleOderType typeOder);
 

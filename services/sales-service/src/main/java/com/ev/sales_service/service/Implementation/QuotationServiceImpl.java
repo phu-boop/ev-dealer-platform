@@ -247,6 +247,7 @@ public class QuotationServiceImpl implements QuotationService {
         }
 
         SalesOrderB2CResponse response = new SalesOrderB2CResponse();
+
         response.setOrderId(salesOrderB2C.getOrderId());
         response.setDealerId(salesOrderB2C.getDealerId());
         response.setCustomerId(salesOrderB2C.getCustomerId());

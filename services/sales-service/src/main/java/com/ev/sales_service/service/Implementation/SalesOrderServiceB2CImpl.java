@@ -50,7 +50,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         SalesOrder salesOrder = SalesOrder.builder()
                 .quotation(quotation)
                 .dealerId(quotation.getDealerId())
-                .customerId(UUID.fromString(quotation.getCustomerId().toString())) // Convert Long to UUID
+                .customerId(quotation.getCustomerId()) // Convert Long to UUID
                 .staffId(quotation.getStaffId())
                 .orderDate(LocalDateTime.now())
                 .orderStatus(OrderStatusB2B.PENDING)
@@ -115,7 +115,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     }
 
     @Override
-    public List<SalesOrderB2CResponse> getSalesOrdersByCustomer(UUID customerId) {
+    public List<SalesOrderB2CResponse> getSalesOrdersByCustomer(Long customerId) {
         List<SalesOrder> salesOrders = salesOrderRepository.findByCustomerIdAndTypeOder(customerId, SaleOderType.B2C);
         return salesOrders.stream()
                 .map(this::mapToResponse)

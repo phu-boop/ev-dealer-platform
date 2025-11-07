@@ -1,5 +1,5 @@
 import React from 'react';
-
+import {convertToSalesOrder} from '../services/quotationService.js';
 const QuotationModal = ({ quotation, isOpen, onClose }) => {
   if (!isOpen || !quotation) return null;
 
@@ -9,7 +9,9 @@ const QuotationModal = ({ quotation, isOpen, onClose }) => {
       currency: 'VND'
     }).format(amount || 0);
   };
-
+  const handleConvertOder = (quotationId) => {
+      convertToSalesOrder(quotationId);
+  }
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
       year: 'numeric',
@@ -33,7 +35,7 @@ const QuotationModal = ({ quotation, isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-lg">
@@ -57,7 +59,7 @@ const QuotationModal = ({ quotation, isOpen, onClose }) => {
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Thông tin báo giá</h3>
+              <h3 className="text-lg font-medium text-[#c150d8] mb-4">Thông tin báo giá</h3>
               <dl className="space-y-3">
                 <div>
                   <dt className="text-sm font-medium text-gray-500">Ngày tạo</dt>
@@ -68,7 +70,7 @@ const QuotationModal = ({ quotation, isOpen, onClose }) => {
                   <dd className="text-sm text-gray-900">{formatDate(quotation.validUntil)}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Trạng thái</dt>
+                  <dt className="text-sm font-medium text-red-500">Trạng thái</dt>
                   <dd className="text-sm font-medium text-gray-900">{getStatusText(quotation.status)}</dd>
                 </div>
                 <div>
@@ -221,7 +223,16 @@ const QuotationModal = ({ quotation, isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-lg">
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            {quotation.status==="ACCEPTED"?
+            <button
+              onClick={()=>{handleConvertOder(quotation.quotationId)}}
+              className="px-6 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+            >
+              Chuyển thành đơn hàng
+            </button>
+            : <> </>
+          }
             <button
               onClick={onClose}
               className="px-6 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"

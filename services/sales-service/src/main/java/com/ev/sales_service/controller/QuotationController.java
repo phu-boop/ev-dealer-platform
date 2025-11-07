@@ -6,6 +6,7 @@ import com.ev.sales_service.dto.request.QuotationFilterRequest;
 import com.ev.sales_service.dto.request.QuotationSendRequest;
 import com.ev.sales_service.dto.response.CustomerResponseRequest;
 import com.ev.sales_service.dto.response.QuotationResponse;
+import com.ev.sales_service.dto.response.SalesOrderB2CResponse;
 import com.ev.sales_service.service.Interface.QuotationService;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import jakarta.validation.Valid;
@@ -61,13 +62,13 @@ public class QuotationController {
         return ResponseEntity.ok(ApiRespond.success("Customer response handled successfully", response));
     }
 
-//    @PostMapping("/{quotationId}/convert-to-order")
-//    public ResponseEntity<ApiRespond<SalesOrderResponse>> convertToSalesOrder(
-//            @PathVariable UUID quotationId) {
-//        log.info("Converting quotation to sales order: {}", quotationId);
-//        SalesOrderResponse response = quotationService.convertToSalesOrder(quotationId);
-//        return ResponseEntity.ok(ApiRespond.success("Quotation converted to order successfully", response));
-//    }
+    @PostMapping("/{quotationId}/convert-to-order")
+    public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> convertToSalesOrder(
+            @PathVariable String quotationId) {
+        UUID quotationIdUuid = UUID.fromString(quotationId);
+        SalesOrderB2CResponse response = quotationService.convertToSalesOrderB2C(quotationIdUuid);
+        return ResponseEntity.ok(ApiRespond.success("Quotation converted to order successfully", response));
+    }
 
     @GetMapping("/{quotationId}")
     public ResponseEntity<ApiRespond<QuotationResponse>> getQuotationById(
@@ -102,9 +103,10 @@ public class QuotationController {
 //    }
     @GetMapping("/staff/{staffId}")
     public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotationsByStaff(
-            @PathVariable UUID staffId) {
-        log.info("Fetching quotations for staff: {}", staffId);
-        List<QuotationResponse> responses = quotationService.getQuotationsByStaff(staffId);
+            @PathVariable String staffId) {
+        UUID staffIdUuid = UUID.fromString(staffId);
+        log.info("Fetching quotations for staff: {}", staffIdUuid);
+        List<QuotationResponse> responses = quotationService.getQuotationsByStaff(staffIdUuid);
         return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for staff", responses));
     }
 

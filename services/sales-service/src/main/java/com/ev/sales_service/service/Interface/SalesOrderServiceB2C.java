@@ -11,7 +11,7 @@ public interface SalesOrderServiceB2C {
     SalesOrderB2CResponse createSalesOrder(SalesOrderB2CCreateRequest request);
     SalesOrderB2CResponse getSalesOrderById(UUID orderId);
     List<SalesOrderB2CResponse> getSalesOrdersByDealer(UUID dealerId);
-    List<SalesOrderB2CResponse> getSalesOrdersByCustomer(UUID customerId);
+    List<SalesOrderB2CResponse> getSalesOrdersByCustomer(Long customerId);
     SalesOrderB2CResponse updateSalesOrderStatus(UUID orderId, String status);
     SalesOrderB2CResponse approveSalesOrder(UUID orderId, UUID managerId);
     // TODO: Add more methods as needed

@@ -30,8 +30,8 @@ public class SalesOrder {
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id", columnDefinition = "BINARY(16)")
-    private UUID customerId; // Nếu là đơn đặt hàng xe từ hãng thì customerid = null
+    @Column(name = "customer_id")
+    private Long customerId; // Nếu là đơn đặt hàng xe từ hãng thì customerid = null
 
     @Column(name = "staff_id", columnDefinition = "BINARY(16)")
     private UUID staffId;
