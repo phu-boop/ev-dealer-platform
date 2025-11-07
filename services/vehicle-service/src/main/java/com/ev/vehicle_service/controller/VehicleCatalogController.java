@@ -117,6 +117,14 @@ public class VehicleCatalogController {
         
         return new ResponseEntity<>(ApiRespond.success("Variant created successfully", responseDto), HttpStatus.CREATED);
     }
+        /**
+     * Lấy tất cả các phiên bản (variants) thuộc về một mẫu xe cụ thể.
+     */
+    @GetMapping("/models/{modelId}/variants")
+    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getVariantsByModelId(@PathVariable Long modelId) {
+        List<VariantDetailDto> variants = vehicleCatalogService.getVariantsByModelId(modelId);
+        return ResponseEntity.ok(ApiRespond.success("Fetched all variants for model successfully", variants));
+    }
 
     /**
      * Tìm kiếm các variant theo từ khóa và trả về danh sách ID.
@@ -130,6 +138,7 @@ public class VehicleCatalogController {
         List<Long> variantIds = vehicleCatalogService.searchVariantIdsByCriteria(keyword, color, versionName);
         return ResponseEntity.ok(ApiRespond.success("Found variant IDs matching keyword", variantIds));
     }
+
 
     /**
      * Lấy chi tiết một phiên bản xe cụ thể.

@@ -27,7 +27,8 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     //  Danh sách path được bỏ qua xác thực
     private static final List<String> EXCLUDED_PATHS = List.of(
             "/auth",
-            "/users"
+            "/users",
+            "/sendmail"
     );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {

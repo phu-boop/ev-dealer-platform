@@ -13,12 +13,13 @@ export const Header = ({
   isProfileDropdownOpen,
   setIsProfileDropdownOpen,
   handleLogout,
-  navigate 
+  navigate,
+  isSidebarCollapsed // Thêm prop mới để xác định trạng thái sidebar
 }) => {
   return (
     <header className="h-20 mx-6 my-4 rounded-2xl bg-white/90 backdrop-blur-xl shadow-sm border border-gray-200/80 px-7 flex items-center justify-between sticky top-0 z-10">
       <div className="flex items-center">
-        {/* Nút toggle sidebar trên mobile */}
+        {/* Nút toggle sidebar trên mobile - luôn hiển thị FiMenu */}
         <button
           onClick={() => setIsSidebarOpen(prev => !prev)}
           className="p-3 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:shadow-md lg:hidden mr-4"
@@ -26,13 +27,17 @@ export const Header = ({
           <FiMenu className="w-5 h-5 text-gray-600" />
         </button>
 
-        {/* Nút toggle sidebar trên desktop */}
+        {/* Nút toggle sidebar trên desktop - thay đổi icon dựa trên trạng thái */}
         <button
           onClick={() => setIsSidebarOpen(prev => !prev)}
           className="hidden lg:flex p-3 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:shadow-md mr-4"
-          title="Toggle Sidebar"
+          title={isSidebarCollapsed ? "Mở rộng sidebar" : "Thu nhỏ sidebar"}
         >
-          <FiChevronRight className="w-5 h-5 text-gray-600" />
+          {isSidebarCollapsed ? (
+            <FiMenu className="w-5 h-5 text-gray-600" />
+          ) : (
+            <FiChevronRight className="w-5 h-5 text-gray-600" />
+          )}
         </button>
 
         <Breadcrumb menuItems={menuItems} activePath={activePath} />

@@ -72,4 +72,16 @@ public class PromotionController {
         List<Promotion> activePromotions = promotionService.getActivePromotionsForDealer(dealerId, Optional.ofNullable(modelId));
         return ResponseEntity.ok(activePromotions);
     }
+    /**
+     * API cho frontend lấy tất cả khuyến mãi đang ACTIVE (không phụ thuộc dealer)
+     * Có thể truyền modelId để lọc thêm.
+     * Endpoint: GET /promotions/active
+     */
+    @GetMapping("/active")
+    public ResponseEntity<List<Promotion>> getActivePromotions(
+            @RequestParam(required = false) Long modelId) {
+
+        List<Promotion> activePromotions = promotionService.getActivePromotions(Optional.ofNullable(modelId));
+        return ResponseEntity.ok(activePromotions);
+    }
 }

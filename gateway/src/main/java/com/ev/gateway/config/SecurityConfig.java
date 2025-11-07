@@ -53,7 +53,10 @@ public class SecurityConfig {
                         "/vehicles/**",
 
                         // reporting-service
-                        "/reporting/**"
+                        "/reporting/**",
+                        
+                        // sendmail
+                        "/sendmail/customer-response/**"
                     ).permitAll()
                     
                     // ===== Các route khác cần JWT =====
