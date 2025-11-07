@@ -4,6 +4,7 @@ import com.ev.dealer_service.dto.response.DealerBasicDto;
 import com.ev.dealer_service.dto.request.DealerRequest;
 import com.ev.dealer_service.dto.response.DealerResponse;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Interface for Dealer operations.
@@ -21,7 +22,7 @@ public interface DealerService {
      * @param id ID của đại lý
      * @return DealerResponse
      */
-    DealerResponse getDealerById(Long id);
+    DealerResponse getDealerById(UUID id);
 
     /**
      * Lấy đại lý theo mã (code).
@@ -57,17 +58,34 @@ public interface DealerService {
      * @param request thông tin cập nhật
      * @return DealerResponse của đại lý đã cập nhật
      */
-    DealerResponse updateDealer(Long id, DealerRequest request);
+    DealerResponse updateDealer(UUID id, DealerRequest request);
 
     /**
      * Xóa một đại lý.
      * @param id ID của đại lý cần xóa
      */
-    void deleteDealer(Long id);
+    void deleteDealer(UUID id);
 
     /**
      * Lấy danh sách rút gọn (ID và Tên) của tất cả đại lý.
      */
     List<DealerBasicDto> getAllDealersBasicInfo();
+
+     /**
+     * Xóa mềm đại lý (chuyển trạng thái sang SUSPENDED).
+     *
+     * @param id ID của đại lý cần tạm ngừng hoạt động
+     * @return Thông tin đại lý sau khi cập nhật
+     */
+    DealerResponse suspendDealer(UUID id);
+
+    /**
+     * Kích hoạt lại đại lý (chuyển trạng thái sang ACTIVE).
+     *
+     * @param id ID của đại lý cần kích hoạt lại
+     * @return Thông tin đại lý sau khi cập nhật
+     */
+    DealerResponse activateDealer(UUID id);
+
 
 }

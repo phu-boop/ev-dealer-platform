@@ -24,10 +24,12 @@ import NotificationManagement from "../features/admin/notifications/Notification
 import QuotationManagement from "../features/dealer/sales/pages/QuotationManagement.jsx";
 
 // customer pages
-import CustomerList from "../features/customers/pages/CustomerList.jsx";
-import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
-import EditCustomer from "../features/customers/pages/EditCustomer.jsx";
-import CustomerDetail from "../features/customers/pages/CustomerDetail.jsx";
+import CustomerList from "../features/customers/management/pages/CustomerList.jsx";
+import CreateCustomer from "../features/customers/management/pages/CreateCustomer.jsx";
+import CustomerDetail from "../features/customers/management/pages/CustomerDetail.jsx";
+
+// test drive pages
+import TestDriveManagement from "../features/customers/testdrive/pages/TestDriveManagement.jsx";
 
 // EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
@@ -37,8 +39,13 @@ import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx"
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 
 // Dealer
-import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
-import B2BOrderForm from "../features/dealer/promotions/pages/B2BOrderForm.jsx";
+import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPage.jsx";
+import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
+import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
+import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
+
+//Manage Dealer
+import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -105,7 +112,6 @@ export default function AppRoutes() {
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route
-                path="admin/products/promotions/*"
                 element={<AdminPromotionManager />}
               />
               <Route path="admin/system/users" element={<UserManagement />} />
@@ -117,6 +123,10 @@ export default function AppRoutes() {
               <Route
                 path="admin/distribution/allocation"
                 element={<AllocationPage />}
+              />
+              <Route
+                path="admin/dealers/list"
+                element={<DealersPage />}
               />
             </Route>
             {/* Staff only */}
@@ -146,6 +156,15 @@ export default function AppRoutes() {
               <Route
                 path="staff/distribution/allocation"
                 element={<AllocationPage />}
+              />
+              {/* --------------------------------MANAGE DEALER-------------------------------------------------- */}
+              <Route
+                path="staff/dealers/list"
+                element = {<DealersPage />}
+              />
+              <Route
+                path="staff/dealers/dealer-accounts"
+                element={<UserManagement />}
               />
             </Route>
           </Route>
@@ -178,13 +197,28 @@ export default function AppRoutes() {
                 path="manager/customers/:id"
                 element={<CustomerDetail />}
               />
+              
+              {/* Test Drive Management */}
               <Route
-                path="manager/customers/:id/edit"
-                element={<EditCustomer />}
+                path="manager/testdrives"
+                element={<TestDriveManagement />}
               />
+
+              {/* Quotation Management */}
+              <Route
+                path="manager/quotations/*"
+                element={<QuotationManagement />}
+              />
+
               <Route
                   path="manager/quotations/*"
                   element={<QuotationManagement />}
+              />
+              {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
+
+              <Route
+                  path="manager/settings/staff*"
+                  element={<UserManagement />}
               />
 
               {/* Promotions */}
@@ -209,11 +243,21 @@ export default function AppRoutes() {
               />
               <Route path="staff/customers/list" element={<CustomerList />} />
               <Route path="staff/customers/:id" element={<CustomerDetail />} />
+
+              {/* Test Drive Management */}
               <Route
-                path="staff/customers/:id/edit"
-                element={<EditCustomer />}
+                path="staff/testdrives"
+                element={<TestDriveManagement />}
               />
 
+              {/* Quotation Management */}
+              <Route
+                path="staff/quotations/*"
+                element={<QuotationManagement />}
+              />
+
+              {/* Danh mục xe & báo cáo */}
+              {/* Xe có sẵn trong kho đại lí */}
               <Route
                   path="staff/quotations/*"
                   element={<QuotationManagement />}

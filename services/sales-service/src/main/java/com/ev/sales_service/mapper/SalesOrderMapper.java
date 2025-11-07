@@ -67,7 +67,7 @@ public class SalesOrderMapper {
         if (item == null) return null;
         SalesOrderDto.OrderItemDto dto = new SalesOrderDto.OrderItemDto();
         dto.setOrderItemId(item.getOrderItemId());
-        dto.setVariantId(item.getVariantId()); // <-- Lưu ý: Map modelId (Entity) sang variantId (DTO)
+        dto.setVariantId(item.getVariantId()); 
         dto.setQuantity(item.getQuantity());
         dto.setUnitPrice(item.getUnitPrice());
         dto.setDiscount(item.getDiscount());

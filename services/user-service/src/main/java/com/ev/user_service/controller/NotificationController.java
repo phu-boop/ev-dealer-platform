@@ -58,5 +58,4 @@ public class NotificationController {
         return ResponseEntity.ok(ApiRespond.success("All notifications deleted successfully", null));
     }
 
-
 }

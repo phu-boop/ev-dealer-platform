@@ -27,8 +27,7 @@ public class ProfileController {
         return ResponseEntity.ok(ApiRespond.success("Get all staffDealer by idDealer successfully",apiResponseStaffDealers));
     }
 
-
-        @PostMapping("/idDealer")
+    @PostMapping("/idDealer")
     public ResponseEntity<ApiRespond<UUID>> getIdDealerByIdMember(@RequestBody Map<String, String> body){
         UUID idMember = UUID.fromString(body.get("idDealer")); // lấy từ JSON
         return ResponseEntity.ok(ApiRespond.success(

@@ -34,7 +34,7 @@ public class DealerContractController {
 
     @PostMapping("/{dealerId}/contract")
     public ResponseEntity<ApiResponse<DealerContractResponse>> createContract(
-            @PathVariable Long dealerId,
+            @PathVariable UUID dealerId,
             @Valid @RequestBody DealerContractRequest request) {
         request.setDealerId(dealerId);
         DealerContractResponse contract = contractService.createContract(request);

@@ -19,9 +19,4 @@ public class UpdateProfileRequest {
     private String country;
     private Gender gender;
     private String url;
-
-    private DealerStaffProfile dealerStaffProfile;
-    private DealerManagerProfile dealerManagerProfile;
-    private EvmStaffProfile evmStaffProfile;
-    private AdminProfile adminProfile;
 }

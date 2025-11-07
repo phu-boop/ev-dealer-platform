@@ -101,7 +101,7 @@ export const adminMenuItems = [
       {
         icon: FiFileText,
         label: "Hợp Đồng & Chỉ Tiêu",
-        path: "/evm/admin/dealers/contracts",
+        path: "/evm/admin/dealers/contracts", 
       },
       {
         icon: FiCreditCardAlt,
@@ -240,7 +240,12 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiHomeAlt,
-        label: "Danh Sách Đại Lý",
+        label: "(DONE)Tai Khoản Đại Lý",
+        path: "/evm/staff/dealers/dealer-accounts",
+      },
+      {
+        icon: FiHomeAlt,
+        label: "(DOONE)Danh Sách Đại Lý",
         path: "/evm/staff/dealers/list",
       },
       {

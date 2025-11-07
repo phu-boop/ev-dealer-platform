@@ -1,5 +1,6 @@
 package com.ev.dealer_service.service.Implementation;
 
+import com.ev.dealer_service.enums.DealerStatus;
 import com.ev.dealer_service.service.Interface.DealerService;
 import com.ev.dealer_service.dto.response.DealerBasicDto;
 import com.ev.dealer_service.repository.DealerRepository;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +36,7 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
 
     @Override
     @Transactional(readOnly = true)
-    public DealerResponse getDealerById(Long id) {
+    public DealerResponse getDealerById(UUID id) {
         Dealer dealer = dealerRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + id));
         return modelMapper.map(dealer, DealerResponse.class);
@@ -72,13 +74,14 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
         }
 
         Dealer dealer = modelMapper.map(request, Dealer.class);
+        dealer.setStatus(DealerStatus.ACTIVE);
         Dealer savedDealer = dealerRepository.save(dealer);
         return modelMapper.map(savedDealer, DealerResponse.class);
     }
 
     @Override
     @Transactional
-    public DealerResponse updateDealer(Long id, DealerRequest request) {
+    public DealerResponse updateDealer(UUID id, DealerRequest request) {
         Dealer dealer = dealerRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + id));
 
@@ -95,7 +98,7 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
 
     @Override
     @Transactional
-    public void deleteDealer(Long id) {
+    public void deleteDealer(UUID id) {
         if (!dealerRepository.existsById(id)) {
             throw new ResourceNotFoundException("Dealer not found with id: " + id);
         }
@@ -105,5 +108,29 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
     @Override
     public List<DealerBasicDto> getAllDealersBasicInfo() {
         return dealerRepository.findAllBasicInfo();
+    }
+
+    @Override
+    @Transactional
+    public DealerResponse suspendDealer(UUID id) {
+        Dealer dealer = dealerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + id));
+
+        dealer.setStatus(DealerStatus.SUSPENDED);
+        Dealer updatedDealer = dealerRepository.save(dealer);
+
+        return modelMapper.map(updatedDealer, DealerResponse.class);
+    }
+
+    @Override
+    @Transactional
+    public DealerResponse activateDealer(UUID id) {
+        Dealer dealer = dealerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + id));
+
+        dealer.setStatus(DealerStatus.ACTIVE);
+        Dealer updatedDealer = dealerRepository.save(dealer);
+
+        return modelMapper.map(updatedDealer, DealerResponse.class);
     }
 }
