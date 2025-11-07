@@ -24,6 +24,7 @@ const QuotationModal = ({ quotation, isOpen, onClose }) => {
 
   const getStatusText = (status) => {
     const statusMap = {
+      COMPLETE : 'Hoàn thành',
       PENDING: 'Chờ duyệt',
       ACCEPTED: 'Đã chấp nhận',
       APPROVED: 'Đã duyệt',

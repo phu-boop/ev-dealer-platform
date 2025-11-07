@@ -237,6 +237,8 @@ public class QuotationServiceImpl implements QuotationService {
         // Use B2C service for customer orders
         SalesOrderB2CResponse salesOrderResponse = salesOrderServiceB2C.createSalesOrderFromQuotation(quotationId);
 
+        quotation.setStatus(QuotationStatus.COMPLETE);
+        quotationRepository.save(quotation);
         // Convert to common response format
         return convertToSalesOrderResponseB2C(salesOrderResponse);
     }

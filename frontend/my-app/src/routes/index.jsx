@@ -333,6 +333,9 @@ import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx"
 import QuotationCreatePage from "../features/dealer/sales/quotation/pages/QuotationCreatePage.jsx";
 import QuotationListPage from "../features/dealer/sales/quotations/pages/QuotationListPage.jsx";
 
+//feature sale
+import SalesRoutes from "../features/dealer/sales/SalesRoutes.jsx";
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -492,37 +495,24 @@ export default function AppRoutes() {
             {/* --- DEALER STAFF ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
               {/* Customer Management */}
-              <Route
-                path="staff/customers/create"
-                element={<CreateCustomer />}
-              />
+              <Route path="staff/customers/create" element={<CreateCustomer />} />
               <Route path="staff/customers/list" element={<CustomerList />} />
               <Route path="staff/customers/:id" element={<CustomerDetail />} />
-              <Route
-                path="staff/customers/:id/edit"
-                element={<EditCustomer />}
-              />
+              <Route path="staff/customers/:id/edit" element={<EditCustomer />} />
 
               {/* Quotation Management */}
               <Route path="staff/quotations" element={<QuotationCreatePage />} />
-
               <Route path="staff/list/quotations" element={<QuotationListPage />} />
 
               {/* Inventory Management */}
-              <Route
-                path="staff/inventory/stock"
-                element={<DealerInventoryStockPage />}
-              />
-              <Route
-                path="staff/vehicles/all"
-                element={<DealerProductCatalogPage />}
-              />
+              <Route path="staff/inventory/stock" element={<DealerInventoryStockPage />} />
+              <Route path="staff/vehicles/all" element={<DealerProductCatalogPage />} />
 
               {/* Promotions */}
-              <Route
-                path="staff/promotions"
-                element={<CustomerPromotionView />}
-              />
+              <Route path="staff/promotions" element={<CustomerPromotionView />} />
+
+              {/* Sales Module */}
+              <Route path="staff/*" element={<SalesRoutes />} />
             </Route>
           </Route>
         </Route>
