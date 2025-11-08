@@ -21,15 +21,15 @@ public interface SalesContractRepository extends JpaRepository<SalesContract, UU
 
     @Query("SELECT sc FROM SalesContract sc WHERE sc.contractDate BETWEEN :startDate AND :endDate")
     List<SalesContract> findByContractDateBetween(@Param("startDate") LocalDateTime startDate,
-                                                 @Param("endDate") LocalDateTime endDate);
+                                                  @Param("endDate") LocalDateTime endDate);
 
     @Query("SELECT sc FROM SalesContract sc WHERE sc.signingDate IS NOT NULL AND sc.signingDate BETWEEN :startDate AND :endDate")
     List<SalesContract> findSignedContractsBetween(@Param("startDate") LocalDateTime startDate,
-                                                  @Param("endDate") LocalDateTime endDate);
+                                                   @Param("endDate") LocalDateTime endDate);
 
     @Query("SELECT sc FROM SalesContract sc WHERE sc.contractStatus = :status AND sc.contractDate < :date")
     List<SalesContract> findByStatusAndContractDateBefore(@Param("status") ContractStatus status,
-                                                         @Param("date") LocalDateTime date);
+                                                          @Param("date") LocalDateTime date);
 
     Long countByContractStatus(ContractStatus status);
 
@@ -37,4 +37,14 @@ public interface SalesContractRepository extends JpaRepository<SalesContract, UU
     List<SalesContract> findDigitallySignedContracts();
 
     boolean existsBySalesOrder_OrderId(UUID orderId);
+
+    @Query("""
+            SELECT sc 
+            FROM SalesContract sc
+            WHERE (:customerId IS NULL OR sc.salesOrder.customerId = :customerId)
+              AND (:status IS NULL OR sc.contractStatus = :status)
+            """)
+    List<SalesContract> searchContracts(
+            @Param("customerId") Long customerId,
+            @Param("status") ContractStatus status);
 }

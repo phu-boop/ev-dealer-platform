@@ -341,6 +341,9 @@ import BackfillPage from "../features/admin/system/pages/BackfillPage.jsx";
 import QuotationCreatePage from "../features/dealer/sales/quotation/pages/QuotationCreatePage.jsx";
 import QuotationListPage from "../features/dealer/sales/quotations/pages/QuotationListPage.jsx";
 
+//feature sale
+import SalesRoutes from "../features/dealer/sales/SalesRoutes.jsx";
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -599,6 +602,9 @@ export default function AppRoutes() {
                 path="staff/promotions"
                 element={<CustomerPromotionView />}
               />
+
+              {/* Sales Module */}
+              <Route path="staff/*" element={<SalesRoutes />} />
             </Route>
           </Route>
         </Route>

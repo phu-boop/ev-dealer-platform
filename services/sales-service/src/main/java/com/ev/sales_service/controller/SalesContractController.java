@@ -2,6 +2,7 @@ package com.ev.sales_service.controller;
 
 import com.ev.sales_service.dto.request.SalesContractRequest;
 import com.ev.sales_service.dto.response.SalesContractResponse;
+import com.ev.sales_service.enums.ContractStatus;
 import com.ev.sales_service.service.Interface.SalesContractService;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import lombok.RequiredArgsConstructor;
@@ -95,4 +96,30 @@ public class SalesContractController {
         List<SalesContractResponse> responses = salesContractService.getExpiringContracts(days);
         return ResponseEntity.ok(ApiRespond.success("Expiring contracts fetched successfully", responses));
     }
+    // Lấy tất cả hợp đồng
+    @GetMapping
+    public ResponseEntity<ApiRespond<List<SalesContractResponse>>> getAllContracts() {
+        log.info("Fetching all sales contracts");
+        List<SalesContractResponse> responses = salesContractService.getAllContracts();
+        return ResponseEntity.ok(ApiRespond.success("All contracts fetched successfully", responses));
+    }
+
+    // Xóa hợp đồng
+    @DeleteMapping("/{contractId}")
+    public ResponseEntity<ApiRespond<Void>> deleteContract(@PathVariable UUID contractId) {
+        log.info("Deleting contract: {}", contractId);
+        salesContractService.deleteContract(contractId);
+        return ResponseEntity.ok(ApiRespond.success("Contract deleted successfully", null));
+    }
+
+    // Tìm kiếm hợp đồng (filter theo khách hàng, trạng thái hoặc số hợp đồng)
+    @GetMapping("/search")
+    public ResponseEntity<ApiRespond<List<SalesContractResponse>>> searchContracts(
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) ContractStatus status) {
+        log.info("Searching contracts with customerId: {}, status: {}", customerId, status);
+        List<SalesContractResponse> responses = salesContractService.searchContracts(customerId, status);
+        return ResponseEntity.ok(ApiRespond.success("Contracts search results", responses));
+    }
+
 }

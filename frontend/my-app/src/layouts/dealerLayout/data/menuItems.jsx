@@ -282,7 +282,7 @@ export const dealerStaffMenuItems = [
       {
         icon: FiClipboard,
         label: "Đơn Hàng Mới",
-        path: "/dealer/staff/orders/create",
+        path: "/dealer/staff/orders",
       },
       {
         icon: FiList,

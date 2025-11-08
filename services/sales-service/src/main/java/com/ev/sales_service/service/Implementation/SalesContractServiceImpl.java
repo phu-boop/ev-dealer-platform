@@ -209,4 +209,25 @@ public class SalesContractServiceImpl implements SalesContractService {
         // TODO: Add additional mapping logic
         return response;
     }
+    // SalesContractServiceImpl.java
+    @Override
+    public List<SalesContractResponse> getAllContracts() {
+        List<SalesContract> contracts = salesContractRepository.findAll();
+        return contracts.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteContract(UUID contractId) {
+        SalesContract contract = salesContractRepository.findById(contractId)
+                .orElseThrow(() -> new AppException(ErrorCode.SALES_CONTRACT_NOT_FOUND));
+        salesContractRepository.delete(contract);
+    }
+
+    @Override
+    public List<SalesContractResponse> searchContracts(Long customerId, ContractStatus status) {
+        // Example logic, tùy repository bạn có thể implement thêm JPQL/Criteria
+        List<SalesContract> contracts = salesContractRepository.searchContracts(customerId, status);
+        return contracts.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
 }
