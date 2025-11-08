@@ -15,7 +15,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Quotation {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "quotation_id", columnDefinition = "BINARY(16)")
@@ -25,13 +24,13 @@ public class Quotation {
     private UUID dealerId;
 
     @Column(name = "customer_id", nullable = false)
-    private Long customerId; // Phải là Long (bigint)
+    private Long customerId;
 
     @Column(name = "model_id", nullable = false)
-    private Long modelId; // Phải là Long (bigint)
+    private Long modelId;
 
     @Column(name = "variant_id", nullable = false)
-    private Long variantId; // Phải là Long (bigint)
+    private Long variantId;
 
     @Column(name = "staff_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID staffId;
@@ -63,9 +62,9 @@ public class Quotation {
 
     @ManyToMany
     @JoinTable(
-            name = "quotation_promotions",
-            joinColumns = @JoinColumn(name = "quotation_id"),
-            inverseJoinColumns = @JoinColumn(name = "promotion_id")
+        name = "quotation_promotions",
+        joinColumns = @JoinColumn(name = "quotation_id"),
+        inverseJoinColumns = @JoinColumn(name = "promotion_id")
     )
     private Set<Promotion> promotions;
 }

@@ -61,6 +61,18 @@ export const cancelOrderByDealer = (orderId) => {
 };
 
 /**
+ * Đại lý báo cáo sự cố
+ * @param {string} orderId
+ * @param {object} payload - { reason: "..." }
+ */
+export const reportOrderIssue = (orderId, payload) => {
+  return apiConstSaleService.put(
+    `/sales-orders/${orderId}/report-issue`,
+    payload
+  );
+};
+
+/**
  * Lấy tồn kho của chính đại lý đang đăng nhập.
  * @param {object} params - { search: '...' }
  */
@@ -76,6 +88,5 @@ export const getMyStock = (params) => {
  * @param {object} payload - { variantId: number, reorderLevel: number }
  */
 export const updateDealerReorderLevel = (payload) => {
-  // --- SỬA Ở ĐÂY: Bỏ "/inventory" ở đầu ---
   return apiConstInventoryService.put("/dealer-stock/reorder-level", payload);
 };

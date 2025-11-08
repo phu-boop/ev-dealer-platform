@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List;
+import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -17,4 +19,17 @@ public class OrderDeliveredEvent {
     private UUID orderId;
     private UUID dealerId;
     private LocalDateTime deliveryDate;
+    private BigDecimal totalAmount; // Tổng tiền cả đơn
+    
+    private List<OrderItemDetail> items; 
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class OrderItemDetail {
+        private Long variantId;
+        private int quantity;
+        private BigDecimal finalPrice; // Giá cuối của line item này
+    }
 }

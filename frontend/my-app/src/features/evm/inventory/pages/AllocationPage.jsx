@@ -1,14 +1,21 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { FiCheck, FiTruck, FiList, FiTrash2, FiXCircle } from "react-icons/fi";
+import {
+  FiCheck,
+  FiTruck,
+  FiList,
+  FiTrash2,
+  FiXCircle,
+  FiLoader,
+} from "react-icons/fi";
 import Swal from "sweetalert2";
 import {
   getB2BOrders,
   approveB2BOrder,
-  shipB2BOrder,
   cancelOrderByStaff,
   deleteOrder,
 } from "../services/evmSalesService"; // Service của EVM/Admin
 import { getAllDealersList } from "../../../dealer/ordervariants/services/dealerSalesService"; // Service để lấy tên dealer
+import { getVariantDetailsByIds } from "../../catalog/services/vehicleCatalogService";
 import ShipmentModal from "../components/ShipmentModal"; // Modal nhập VIN khi giao hàng
 
 // (Bạn có thể tách StatusBadge thành component riêng nếu muốn)
@@ -65,6 +72,8 @@ const AllocationPage = () => {
 
   const [dealerMap, setDealerMap] = useState(new Map());
   const [isLoadingDealers, setIsLoadingDealers] = useState(false);
+
+  const [enrichingOrderId, setEnrichingOrderId] = useState(null);
 
   // --- Hàm tải danh sách đại lý ---
   const fetchDealers = useCallback(async () => {
@@ -220,9 +229,53 @@ const AllocationPage = () => {
     }
   };
 
-  const handleOpenShipModal = (order) => {
-    setOrderToShip(order);
-    setIsShipModalOpen(true);
+  const handleOpenShipModal = async (orderToShip) => {
+    // 1. Đặt trạng thái loading cho nút này
+    setEnrichingOrderId(orderToShip.orderId);
+    setError(null);
+
+    try {
+      // 2. Lấy danh sách ID từ đơn hàng
+      const variantIds = orderToShip.orderItems.map((item) => item.variantId);
+
+      // 3. Gọi API đến vehicle-catalog-service để lấy chi tiết
+      const response = await getVariantDetailsByIds(variantIds);
+      const vehicleDetailsMap = new Map(
+        response.data.data.map((detail) => [detail.variantId, detail])
+      );
+
+      // 4. "LÀM GIÀU" (Enrich) các order items
+      const enrichedItems = orderToShip.orderItems.map((item) => {
+        const details = vehicleDetailsMap.get(item.variantId);
+        return {
+          ...item, // Giữ thông tin cũ (variantId, quantity, unitPrice...)
+          // Thêm thông tin mới
+          versionName: details?.versionName || "N/A",
+          color: details?.color || "N/A",
+          skuCode: details?.skuCode || "N/A",
+        };
+      });
+
+      // 5. Tạo đơn hàng đã làm giàu
+      const enrichedOrder = {
+        ...orderToShip,
+        orderItems: enrichedItems,
+      };
+
+      // 6. Mở modal với đơn hàng mới
+      setOrderToShip(enrichedOrder);
+      setIsShipModalOpen(true);
+    } catch (err) {
+      console.error("Lỗi khi lấy chi tiết xe:", err);
+      const errorMsg =
+        err.response?.data?.message ||
+        "Không thể lấy chi tiết xe để giao hàng.";
+      setError(errorMsg); // Hiển thị lỗi chung
+      Swal.fire("Lỗi!", errorMsg, "error"); // Báo lỗi cho user
+    } finally {
+      // 7. Tắt trạng thái loading
+      setEnrichingOrderId(null);
+    }
   };
 
   const handleCloseShipModal = (didShip) => {
@@ -355,9 +408,19 @@ const AllocationPage = () => {
                   {order.orderStatus === "CONFIRMED" && (
                     <button
                       onClick={() => handleOpenShipModal(order)}
-                      className="flex items-center justify-center w-full md:w-32 px-3 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition duration-150"
+                      // (MỚI) Thêm logic disabled
+                      disabled={enrichingOrderId === order.orderId}
+                      className="flex items-center justify-center w-full md:w-32 px-3 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition duration-150 disabled:bg-gray-400 disabled:cursor-wait"
                     >
-                      <FiTruck className="mr-1" /> Giao hàng
+                      {/* (MỚI) Thêm icon loading */}
+                      {enrichingOrderId === order.orderId ? (
+                        <FiLoader className="animate-spin mr-1" />
+                      ) : (
+                        <FiTruck className="mr-1" />
+                      )}
+                      {enrichingOrderId === order.orderId
+                        ? "Đang tải..."
+                        : "Giao hàng"}
                     </button>
                   )}
                   {order.orderStatus === "CANCELLED" && (
