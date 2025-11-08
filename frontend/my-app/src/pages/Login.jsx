@@ -58,12 +58,6 @@ export default function Login() {
         userData.url
       );
 
-      if(sessionStorage.getItem("roles").includes("DEALER_MANAGER")||sessionStorage.getItem("roles").includes("DEALER_STAFF")){
-        sessionStorage.setItem("dealerId", userData.memberId || "");
-      }else{
-        sessionStorage.setItem("prfileId", userData.memberId || "");
-      }
-
       Swal.fire({
     title: "Chúc mừng!",
     text: "Bạn đã đăng nhập thành công!",

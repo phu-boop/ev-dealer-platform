@@ -1,9 +1,10 @@
 package com.ev.inventory_service.dto.response;
 
-import com.ev.inventory_service.model.Enum.InventoryLevelStatus;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
+
+import com.ev.common_lib.model.enums.InventoryLevelStatus;
 
 @Data
 @Builder

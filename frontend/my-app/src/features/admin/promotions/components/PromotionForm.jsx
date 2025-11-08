@@ -562,10 +562,7 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
                               : 'bg-yellow-100 text-yellow-700'
                           }`}
                         >
-                          {
-                            console.log(model)
-                         // model.status.replace('_', ' ')
-                          }
+                          {model.status.replace('_', ' ')}
                         </span>
 
                         {/* Nút xóa */}

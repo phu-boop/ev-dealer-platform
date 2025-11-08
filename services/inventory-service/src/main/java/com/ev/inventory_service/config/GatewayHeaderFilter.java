@@ -46,8 +46,14 @@ public class GatewayHeaderFilter extends OncePerRequestFilter {
         String userId = request.getHeader("X-User-Id");
         String profileId = request.getHeader("X-User-ProfileId");
 
-        // Chỉ xử lý nếu có email và chưa có xác thực
-        if (email != null && !email.isEmpty() && SecurityContextHolder.getContext().getAuthentication() == null) {
+        // Chỉ xử lý nếu có email. Cho phép ghi đè AnonymousAuthenticationToken
+        if (email != null && !email.isEmpty()) {
+            var currentAuth = SecurityContextHolder.getContext().getAuthentication();
+            if (currentAuth != null && !(currentAuth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
+                log.debug("SecurityContext already contains non-anonymous Authentication");
+                filterChain.doFilter(request, response);
+                return;
+            }
             log.debug("Setting SecurityContext for user: {}", email);
 
             List<GrantedAuthority> authorities;

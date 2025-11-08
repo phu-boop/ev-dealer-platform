@@ -5,14 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class DealerResponse {
 
-    private UUID dealerId;
+    private Long dealerId;
     private String dealerCode;
     private String dealerName;
     private String address;

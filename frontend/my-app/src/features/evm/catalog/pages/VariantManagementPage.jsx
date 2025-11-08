@@ -15,7 +15,7 @@ import {
 import VariantForm from "../components/VariantForm";
 import ConfirmationModal from "../components/ConfirmationModal";
 import FeatureAssignmentModal from "../components/FeatureAssignmentModal";
-import VariantDetailsModal from "../components/VariantDetailsModal";
+import VariantDetailsModal from "../../../../components/common/detail/VariantDetailsModal";
 
 const STATUS_OPTIONS = {
   IN_PRODUCTION: "Đang sản xuất",

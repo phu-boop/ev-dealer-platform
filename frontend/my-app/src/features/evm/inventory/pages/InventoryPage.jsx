@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState } from "react";
 import StockAlerts from "../components/StockAlerts";
 import InventoryStatusTab from "../components/InventoryStatusTab";
 import TransactionHistoryTab from "../components/TransactionHistoryTab";
@@ -7,14 +6,6 @@ import InventoryReportsTab from "../components/InventoryReportsTab";
 
 const InventoryPage = () => {
   const [activeTab, setActiveTab] = useState("status");
-  const location = useLocation();
-
-  // Chuyển sang tab báo cáo nếu URL chứa /reports
-  useEffect(() => {
-    if (location?.pathname?.includes("/reports")) {
-      setActiveTab("reports");
-    }
-  }, [location?.pathname]);
 
   const renderTabContent = () => {
     switch (activeTab) {
