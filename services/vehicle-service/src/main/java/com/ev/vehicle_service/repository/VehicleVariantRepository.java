@@ -23,4 +23,7 @@ public interface VehicleVariantRepository extends JpaRepository<VehicleVariant, 
     
     List<VehicleVariant> findByVehicleModel_ModelId(Long modelId);
 
+    @Query("SELECT v.variantId FROM VehicleVariant v")
+    List<Long> findAllVariantIds();
+
 }

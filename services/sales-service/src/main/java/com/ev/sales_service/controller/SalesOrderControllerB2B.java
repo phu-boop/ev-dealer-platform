@@ -23,6 +23,8 @@ import com.ev.common_lib.exception.ErrorCode;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.sales_service.dto.request.CreateB2BOrderRequest;
+import com.ev.sales_service.dto.request.ReportIssueRequest;
+import com.ev.sales_service.dto.request.ResolveDisputeRequest;
 import com.ev.sales_service.dto.response.SalesOrderDtoB2B;
 import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.mapper.SalesOrderMapperB2B;
@@ -107,6 +109,17 @@ public class SalesOrderControllerB2B {
         return ResponseEntity.ok(ApiRespond.success("Lấy danh sách đơn hàng thành công", dtoPage));
     }
 
+    @GetMapping("/{orderId}")
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") // Chỉ Staff/Admin được xem
+    public ResponseEntity<ApiRespond<SalesOrderDtoB2B>> getB2BOrderDetails(
+            @PathVariable UUID orderId) {
+                
+        SalesOrder order = salesOrderServiceB2B.getB2BOrderDetailsById(orderId);
+        SalesOrderDtoB2B dto = salesOrderMapperB2B.toDto(order);
+        
+        return ResponseEntity.ok(ApiRespond.success("Lấy chi tiết đơn hàng thành công", dto));
+    }
+
     // API Xác Nhận Đơn Hàng (Do Hãng/EVM Staff Thực Hiện)
     // PUT /sales-orders/{orderId}/approve
     @PutMapping("/{orderId}/approve")
@@ -143,6 +156,19 @@ public class SalesOrderControllerB2B {
 
         salesOrderServiceB2B.confirmDelivery(orderId, email, dealerId);
         return ResponseEntity.ok(ApiRespond.success("Order delivery confirmed", null));
+    }
+
+    // API ĐẠI LÝ BÁO CÁO SỰ CỐ 
+    @PutMapping("/{orderId}/report-issue")
+    @PreAuthorize("hasRole('DEALER_MANAGER')")
+    public ResponseEntity<ApiRespond<Void>> reportIssue(
+            @PathVariable UUID orderId,
+            @Valid @RequestBody ReportIssueRequest request, 
+            @RequestHeader("X-User-Email") String email,
+            @RequestHeader("X-User-ProfileId") UUID dealerId) {
+
+        salesOrderServiceB2B.reportOrderIssue(orderId, dealerId, request, email);
+        return ResponseEntity.ok(ApiRespond.success("Issue reported successfully", null));
     }
 
     @GetMapping("/my-orders")
@@ -213,8 +239,22 @@ public class SalesOrderControllerB2B {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
                 
-        List<SalesOrder> orders = salesOrderService.getCompletedOrdersForReport(startDate, endDate);
+        List<SalesOrder> orders = salesOrderServiceB2B.getCompletedOrdersForReport(startDate, endDate);
         return ResponseEntity.ok(ApiRespond.success("Lấy dữ liệu báo cáo thành công", orders));
+    }
+
+    //API GIẢI QUYẾT KHIẾU NẠI
+    @PutMapping("/{orderId}/resolve-dispute")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+    public ResponseEntity<ApiRespond<SalesOrderDtoB2B>> resolveDispute(
+            @PathVariable UUID orderId,
+            @Valid @RequestBody ResolveDisputeRequest request,
+            @RequestHeader("X-User-Email") String staffEmail) {
+
+        SalesOrder updatedOrder = salesOrderServiceB2B.resolveOrderDispute(orderId, staffEmail, request);
+        SalesOrderDtoB2B responseDto = salesOrderMapperB2B.toDto(updatedOrder);
+
+        return ResponseEntity.ok(ApiRespond.success("Đã giải quyết khiếu nại thành công", responseDto));
     }
     
 }

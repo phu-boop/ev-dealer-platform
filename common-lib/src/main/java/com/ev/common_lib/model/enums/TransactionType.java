@@ -13,5 +13,6 @@ public enum TransactionType {
     SALE,               // Bán hàng (trừ kho)
     ADJUSTMENT_ADD,     // Điều chỉnh tăng (kiểm kho)
     ADJUSTMENT_SUBTRACT, // Điều chỉnh giảm (kiểm kho)
-    ALLOCATE            // Giữ chỗ (phân bổ) hàng trong kho TT cho một đơn hàng
+    ALLOCATE,            // Giữ chỗ (phân bổ) hàng trong kho TT cho một đơn hàng
+    RETURN_FROM_DEALER,
 }

@@ -53,4 +53,7 @@ public interface SalesOrderRepositoryB2B extends JpaRepository<SalesOrder, UUID>
         LocalDateTime startDate, 
         LocalDateTime endDate
     );
+
+    // Lấy danh sách đơn hàng B2B || B2C với trạng thái cụ thể
+    List<SalesOrder> findAllByTypeOderAndOrderStatus(SaleOderType typeOder, OrderStatusB2B orderStatus);
 }

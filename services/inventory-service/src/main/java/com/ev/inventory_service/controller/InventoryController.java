@@ -9,6 +9,7 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
+import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.InventoryTransaction;
 import com.ev.inventory_service.services.Interface.InventoryService;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
@@ -29,9 +30,10 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/inventory")
+@RequestMapping({"/inventory", ""})
 @RequiredArgsConstructor
 public class InventoryController {
 
@@ -64,6 +66,51 @@ public class InventoryController {
     public ResponseEntity<ApiRespond<InventoryStatusDto>> getInventoryStatusForVariant(@PathVariable Long variantId) {
         InventoryStatusDto status = inventoryService.getInventoryStatusForVariant(variantId);
         return ResponseEntity.ok(ApiRespond.success("Fetched inventory status for variant successfully", status));
+    }
+
+    /**
+     * API MỚI: Dành cho Đại lý (Dealer) xem tồn kho của chính họ.
+     * Tự động lọc dựa trên profileId (dealerId) của người dùng.
+     */
+    @GetMapping("/my-stock")
+    @PreAuthorize("hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')")
+    // @PreAuthorize("permitAll()") // Tạm thời cho phép tất cả để test
+    public ResponseEntity<ApiRespond<List<DealerInventoryDto>>> getMyInventory(
+            @RequestHeader("X-User-ProfileId") UUID dealerId,
+            @RequestHeader("X-User-Email") String email, // Cần để chuyển tiếp
+            @RequestHeader("X-User-Role") String role, // Cần để chuyển tiếp
+            @RequestHeader("X-User-Id") String userId, // Cần để chuyển tiếp
+            @RequestParam(required = false) String search) {
+        
+        // Tạo một đối tượng HttpHeaders để chuyển tiếp xác thực
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-User-Email", email);
+        headers.set("X-User-Role", role);
+        headers.set("X-User-Id", userId);
+        headers.set("X-User-ProfileId", dealerId.toString());
+
+        List<DealerInventoryDto> results = inventoryService.getDealerInventory(dealerId, search, headers);
+        return ResponseEntity.ok(ApiRespond.success("Fetched dealer inventory", results));
+    }
+
+    /**
+     * API MỚI: Lấy trạng thái tồn kho chi tiết cho việc so sánh (cả kho TT và kho đại lý).
+     * Được gọi bởi Vehicle-Service.
+     */
+    @PostMapping("/status-by-ids-detailed")
+    // Cho phép tất cả các dịch vụ nội bộ đã xác thực gọi
+    @PreAuthorize("isAuthenticated()") 
+    public ResponseEntity<ApiRespond<List<InventoryComparisonDto>>> getDetailedInventoryStatus(
+            @RequestBody DetailedInventoryRequest request){
+        
+        // Lấy thông số từ body
+        List<Long> variantIds = request.getVariantIds();
+        UUID dealerId = request.getDealerId();
+
+        // Gọi service để lấy dữ liệu
+        List<InventoryComparisonDto> results = inventoryService.getDetailedInventoryByIds(variantIds, dealerId);
+        
+        return ResponseEntity.ok(ApiRespond.success("Fetched detailed inventory status", results));
     }
 
     // ==========================================================
@@ -112,6 +159,19 @@ public class InventoryController {
         return ResponseEntity.ok(ApiRespond.success("Fetched inventory status for " + results.size() + " items", results));
     }
 
+    /**
+     * Lấy danh sách các variantId (ID sản phẩm) dựa trên trạng thái kho
+     * (IN_STOCK, LOW_STOCK, OUT_OF_STOCK)
+     */
+    @GetMapping("/variants/ids-by-status")
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") // Đảm bảo an toàn
+    public ResponseEntity<ApiRespond<List<Long>>> getVariantIdsByStatus(
+            @RequestParam("status") String status) {
+        
+        List<Long> variantIds = inventoryService.getVariantIdsByStatus(status);
+        return ResponseEntity.ok(ApiRespond.success("Fetched variant IDs by status", variantIds));
+    }
+
     // ==========================================================
     //      ENDPOINTS FOR B2B ORDER LIFECYCLE (ĐIỀU PHỐI ĐƠN HÀNG)
     // ==========================================================
@@ -145,7 +205,7 @@ public class InventoryController {
     }
 
     /**
-     * API 2: Dùng để tạo yêu cầu điều chuyển (chờ duyệt).
+     * Dùng để tạo yêu cầu điều chuyển (chờ duyệt).
      */
     @PostMapping("/transfer-requests")
     public ResponseEntity<ApiRespond<Void>> createTransferRequest(
@@ -257,5 +317,32 @@ public class InventoryController {
             response.setHeader("Content-Disposition", headerValue);
             inventoryService.generateInventoryReport(response.getOutputStream(), startDate, endDate);
         }
+    }
+
+    // ==========================================================
+    // ===== ENDPOINT MỚI CHO VIỆC TRẢ HÀNG (KHIẾU NẠI) =====
+    // ==========================================================
+    
+    /**
+     * Nhận yêu cầu trả hàng (hủy phân bổ/hủy giao) từ SalesService
+     * khi một đơn hàng DISPUTED được giải quyết.
+     */
+    @PostMapping("/return-by-order")
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") // Đảm bảo chỉ service (hoặc staff) mới được gọi
+    public ResponseEntity<ApiRespond<Void>> returnStockByOrder(
+            @RequestBody Map<String, UUID> payload,
+            @RequestHeader("X-User-Email") String staffEmail) {
+        
+        UUID orderId = payload.get("orderId");
+        if (orderId == null) {
+            // Ném lỗi 400 nếu payload không chứa orderId
+            throw new com.ev.common_lib.exception.AppException(
+                com.ev.common_lib.exception.ErrorCode.BAD_REQUEST
+            );
+        }
+        
+        inventoryService.returnStockForOrder(orderId, staffEmail);
+        
+        return ResponseEntity.ok(ApiRespond.success("Hàng đã được trả về kho (Sync)", null));
     }
 }

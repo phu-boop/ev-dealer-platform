@@ -6,20 +6,25 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
+import com.ev.common_lib.event.OrderIssueReportedEvent;
 import com.ev.common_lib.event.B2BOrderPlacedEvent; 
 import com.ev.common_lib.event.OrderCancelledEvent;
 import com.ev.common_lib.event.OrderDeliveredEvent;
 import com.ev.sales_service.dto.request.CreateB2BOrderRequest;
+import com.ev.sales_service.dto.request.ReportIssueRequest;
+import com.ev.sales_service.dto.request.ResolveDisputeRequest;
 import com.ev.sales_service.entity.OrderItem;
 import com.ev.sales_service.entity.OrderTracking;
 import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.entity.Outbox;
+import com.ev.sales_service.entity.Notification;
 import com.ev.sales_service.enums.OrderStatusB2B;
 
 // import com.ev.sales_service.repository.QuotationRepository; 
 import com.ev.sales_service.enums.SaleOderType;
 import com.ev.sales_service.repository.OutboxRepository;
 import com.ev.sales_service.repository.SalesOrderRepositoryB2B;
+import com.ev.sales_service.repository.NotificationRepository;
 import com.ev.sales_service.service.Interface.SalesOrderServiceB2B;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,6 +59,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.Collections;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -64,6 +72,7 @@ public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
     private final RestTemplate restTemplate;
 
     private final OutboxRepository outboxRepository;
+    private final NotificationRepository notificationRepository;
     private final ObjectMapper objectMapper;
 
     @Value("${app.services.catalog.url}")
@@ -361,11 +370,6 @@ public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
 
         // 1. Lưu trạng thái đơn hàng
         SalesOrder savedOrder = salesOrderRepositoryB2B.save(order);
-
-        // 4. --- BỎ OUTBOX ---
-        // Chúng ta không cần lưu sự kiện "OrderShipped" vào Outbox nữa
-        // vì luồng đã được xử lý đồng bộ.
-        // saveOutboxEvent(...) // <-- BỎ DÒNG NÀY
         
         return savedOrder;
     }
@@ -425,6 +429,75 @@ public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
         );
         
         return savedOrder;
+    }
+
+    @Override
+    @Transactional
+    public void reportOrderIssue(UUID orderId, UUID dealerId, ReportIssueRequest request, String email) {
+        
+        // 1. Tìm đơn hàng
+        SalesOrder order = findOrderByIdOrThrow(orderId);
+
+        // 2. Kiểm tra quyền sở hữu
+        if (!order.getDealerId().equals(dealerId)) {
+            log.warn("Lỗi bảo mật: Dealer {} cố gắng báo cáo sự cố cho đơn hàng {} của Dealer {}", 
+                     dealerId, orderId, order.getDealerId());
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+        
+        // 3. Kiểm tra logic nghiệp vụ
+        // Chỉ cho phép báo cáo sự cố khi đơn hàng đang "Đang vận chuyển"
+        if (order.getOrderStatus() != OrderStatusB2B.IN_TRANSIT) {
+            log.warn("Lỗi nghiệp vụ: Đơn hàng {} có trạng thái {} không thể báo cáo sự cố.", 
+                     orderId, order.getOrderStatus());
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        
+        // 4. Cập nhật trạng thái đơn hàng
+        order.setOrderStatus(OrderStatusB2B.DISPUTED); // <-- Chuyển trạng thái
+        
+        // 5. Thêm ghi chú theo dõi (Tracking)
+        LocalDateTime reportedAtTime = LocalDateTime.now(); // Dùng chung 1 mốc thời gian
+        String trackingNote = String.format(
+            "Đại lý báo cáo sự cố (Người báo cáo: %s): %s", 
+            email, 
+            request.getReason()
+        );
+
+        OrderTracking tracking = OrderTracking.builder()
+                .salesOrder(order)
+                .status("ĐÃ BÁO CÁO SỰ CỐ")
+                .updateDate(reportedAtTime) // Dùng mốc thời gian chung
+                .notes(trackingNote)
+                .build();
+        
+        if (order.getOrderTrackings() == null) {
+             order.setOrderTrackings(new ArrayList<>());
+        }
+        order.getOrderTrackings().add(tracking);
+        
+        // 6. Lưu lại
+        salesOrderRepositoryB2B.save(order);
+        
+        // Tạo payload cho sự kiện
+        OrderIssueReportedEvent eventPayload = OrderIssueReportedEvent.builder()
+                .orderId(orderId)
+                .dealerId(dealerId)
+                .reportedByEmail(email)
+                .reason(request.getReason())
+                .reportedAt(reportedAtTime)
+                .build();
+
+        // Gọi hàm helper để lưu vào outbox
+        saveOutboxEvent(
+            orderId, 
+            "SalesOrder", 
+            "OrderIssueReported", // <-- Tên sự kiện mới
+            eventPayload
+        );
+        
+        log.info("Đại lý (email: {}) đã báo cáo sự cố cho Đơn hàng ID {} với lý do: {}", 
+                 email, orderId, request.getReason());
     }
 
     @Override
@@ -513,6 +586,123 @@ public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
             startDateTime, 
             endDateTime
         );
+    }
+
+    @Override
+    @Transactional
+    public SalesOrder resolveOrderDispute(UUID orderId, String staffEmail, ResolveDisputeRequest request) {
+        
+        SalesOrder order = findOrderByIdOrThrow(orderId);
+
+        // 1. Chỉ giải quyết được đơn hàng đang ở trạng thái DISPUTED
+        if (order.getOrderStatus() != OrderStatusB2B.DISPUTED) {
+            log.warn("Lỗi nghiệp vụ: Đơn hàng {} không ở trạng thái DISPUTED.", orderId);
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+
+        // 2. Kiểm tra trạng thái mới hợp lệ
+        OrderStatusB2B newStatus = request.getNewStatus();
+        if (newStatus != OrderStatusB2B.IN_TRANSIT && 
+            newStatus != OrderStatusB2B.DELIVERED &&
+            newStatus != OrderStatusB2B.RETURNED_TO_CENTRAL) {
+
+            log.warn("Lỗi nghiệp vụ: Trạng thái giải quyết {} không hợp lệ.", newStatus);
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+
+        // 3. Cập nhật trạng thái
+        order.setOrderStatus(newStatus);
+        
+        order.setOrderStatus(newStatus);
+        
+        String statusNote;
+        String notes;
+
+        // 4. Xử lý logic nghiệp vụ cho từng trạng thái (SỬA LỖI 2)
+        if (newStatus == OrderStatusB2B.RETURNED_TO_CENTRAL) {
+            statusNote = "ĐÃ GIẢI QUYẾT (TRẢ VỀ KHO)";
+            notes = String.format(
+                "EVM Staff (%s) đã giải quyết: Trả hàng về kho trung tâm. Ghi chú: %s",
+                staffEmail,
+                request.getNotes() != null ? request.getNotes() : "Không"
+            );
+                try {
+                    // Endpoint mới này bạn sẽ cần tạo trong Inventory Service
+                    String inventoryUrl = inventoryServiceUrl + "/inventory/return-by-order"; 
+                    
+                    // Payload chỉ cần chứa orderId
+                    Map<String, UUID> payload = Collections.singletonMap("orderId", orderId);
+                    
+                    HttpEntity<Map<String, UUID>> requestEntity = new HttpEntity<>(
+                        payload, 
+                        buildHeadersFromCurrentRequest(staffEmail)
+                    );
+
+                    log.info("Đang gọi Inventory Service để trả hàng cho Order ID: {}", orderId);
+                    
+                    restTemplate.exchange(
+                        inventoryUrl,
+                        HttpMethod.POST,
+                        requestEntity,
+                        Void.class // Không cần nhận lại gì
+                    );
+                    
+                    log.info("Trả hàng về kho Inventory Service thành công.");
+
+                } catch (Exception e) {
+                    log.error("Lỗi nghiêm trọng: Không thể trả hàng về kho. Order ID: {}. Lỗi: {}", orderId, e.getMessage());
+                    // Ném lỗi để rollback transaction
+                    throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+                }
+            } else if (newStatus == OrderStatusB2B.DELIVERED) {
+                statusNote = "ĐÃ GIẢI QUYẾT (GIAO HÀNG)";
+                notes = String.format(
+                    "EVM Staff (%s) đã giải quyết: Xác nhận đã giao hàng. Ghi chú: %s",
+                    staffEmail,
+                    request.getNotes() != null ? request.getNotes() : "Không"
+                );
+            order.setDeliveryDate(LocalDateTime.now());
+            // (Bạn có thể cân nhắc phát ra sự kiện OrderDeliveredEvent ở đây)
+            } else { // IN_TRANSIT
+                statusNote = "ĐÃ GIẢI QUYẾT (VẬN CHUYỂN LẠI)";
+                notes = String.format(
+                    "EVM Staff (%s) đã giải quyết: Tiếp tục vận chuyển. Ghi chú: %s",
+                    staffEmail,
+                    request.getNotes() != null ? request.getNotes() : "Không"
+                );
+            }
+            // 5. Thêm tracking
+            OrderTracking tracking = OrderTracking.builder()
+                    .salesOrder(order)
+                    .status(statusNote)
+                    .updateDate(LocalDateTime.now())
+                    .notes(notes)
+                    .build();
+            
+            if (order.getOrderTrackings() == null) {
+                order.setOrderTrackings(new ArrayList<>());
+            }
+            order.getOrderTrackings().add(tracking);
+
+            SalesOrder savedOrder = salesOrderRepositoryB2B.save(order);
+
+            // 6. TỰ ĐỘNG XÓA THÔNG BÁO KHIẾU NẠI (SỬA LỖI 1)
+            // Link của thông báo khiếu nại (ví dụ: /evm/b2b-orders/ORDER_ID)
+            String notificationLink = "/evm/b2b-orders/" + orderId.toString();
+            Optional<Notification> notificationOpt = notificationRepository.findByLink(notificationLink);
+            
+            if (notificationOpt.isPresent()) {
+                notificationRepository.delete(notificationOpt.get());
+                log.info("Đã tự động xóa thông báo khiếu nại cho đơn hàng: {}", orderId);
+            }
+
+            return savedOrder;
+        }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SalesOrder getB2BOrderDetailsById(UUID orderId) {
+        return findOrderByIdOrThrow(orderId); 
     }
 
     // --- CÁC HÀM HELPER ĐỂ LẤY HEADER ---

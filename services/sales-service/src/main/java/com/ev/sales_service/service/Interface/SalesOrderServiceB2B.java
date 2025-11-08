@@ -2,6 +2,8 @@ package com.ev.sales_service.service.Interface;
 
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
 import com.ev.sales_service.dto.request.CreateB2BOrderRequest;
+import com.ev.sales_service.dto.request.ReportIssueRequest;
+import com.ev.sales_service.dto.request.ResolveDisputeRequest;
 import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.enums.OrderStatusB2B;
 import java.util.UUID;
@@ -60,6 +62,21 @@ public interface SalesOrderServiceB2B {
      */
     void deleteCancelledOrder(UUID orderId);
 
+    // Lấy đơn hàng giao thành công cho báo cáo
     List<SalesOrder> getCompletedOrdersForReport(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Đại lý báo cáo sự cố (giao thiếu, hỏng hóc) cho một đơn hàng.
+     */
+    void reportOrderIssue(UUID orderId, UUID dealerId, ReportIssueRequest request, String email);
     
+    /**
+     * Giải quyết một đơn hàng đang bị khiếu nại (DISPUTED)
+     */
+    SalesOrder resolveOrderDispute(UUID orderId, String staffEmail, ResolveDisputeRequest request);
+
+    /**
+     * Lấy chi tiết đơn hàng B2B bằng ID
+     */
+    SalesOrder getB2BOrderDetailsById(UUID orderId);
 }

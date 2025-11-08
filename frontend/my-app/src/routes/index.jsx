@@ -318,6 +318,10 @@ import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 
+// Thông báo (Socket)
+import StaffNotificationPage from "../features/evm/notification/pages/StaffNotificationPage.jsx";
+import B2BOrderDetailsPage from "../features/evm/notification/pages/B2BOrderDetailsPage.jsx";
+
 // Dealer
 import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPage.jsx";
 import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
@@ -364,6 +368,13 @@ export default function AppRoutes() {
             <Route path="settings" element={<SecuritySettings />} />
             <Route path="promotions/*" element={<MainPromotion />} />
 
+            <Route path="notifications" element={<StaffNotificationPage />} />
+            {/* (Route chi tiết đơn hàng) */}
+            <Route
+              path="b2b-orders/:orderId"
+              element={<B2BOrderDetailsPage />}
+            />
+
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route
@@ -371,7 +382,6 @@ export default function AppRoutes() {
                 element={<AdminPromotionManager />}
               />
               <Route path="admin/system/users" element={<UserManagement />} />
-              <Route path="admin/notifications" element={<UserManagement />} />
               <Route
                 path="admin/reports/notifications"
                 element={<NotificationManagement />}
@@ -514,19 +524,10 @@ export default function AppRoutes() {
                 element={<DealerProductCatalogPage />}
               />
 
-              <Route
-                path="manager/quotations/*"
-                element={<QuotationManagement />}
-              />
-
-              <Route
-                path="manager/vehicles/all"
-                element={<DealerProductCatalogPage />}
-              />
               {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
 
               <Route
-                path="manager/settings/staff*"
+                path="manager/settings/staff/*"
                 element={<UserManagement />}
               />
 
@@ -535,12 +536,6 @@ export default function AppRoutes() {
 
               {/* System */}
               <Route path="manager/system/users" element={<UserManagement />} />
-
-              {/* Xem tồn kho đại lí */}
-              <Route
-                path="manager/inventory/stock"
-                element={<DealerInventoryStockPage />}
-              />
 
               {/* Đặt xe từ hãng và xem trạng thái đơn hàng */}
               <Route
@@ -554,7 +549,7 @@ export default function AppRoutes() {
 
               {/* System Management */}
               <Route
-                path="manager/settings/staff*"
+                path="manager/settings/staff/*"
                 element={<UserManagement />}
               />
               <Route path="manager/system/users" element={<UserManagement />} />
@@ -585,12 +580,6 @@ export default function AppRoutes() {
               <Route
                 path="staff/list/quotations"
                 element={<QuotationListPage />}
-              />
-
-              {/* Inventory Management */}
-              <Route
-                path="staff/quotations/*"
-                element={<QuotationManagement />}
               />
 
               {/* Danh mục xe & báo cáo */}
