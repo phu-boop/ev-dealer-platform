@@ -1,6 +1,7 @@
 package com.ev.vehicle_service.services.Interface;
 
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.dto.vehicle.ComparisonDto;
 // import com.ev.vehicle_service.dto.request.CreateVariantRequest;
 import com.ev.vehicle_service.dto.request.CreateModelRequest;
 import com.ev.vehicle_service.dto.request.CreateVariantRequest;
@@ -15,8 +16,10 @@ import com.ev.vehicle_service.model.VehicleFeature;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface VehicleCatalogService {
 
@@ -53,4 +56,12 @@ public interface VehicleCatalogService {
      * Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
      */
     Page<VariantDetailDto> getAllVariantsPaginated(String search, Pageable pageable);
+
+    /**
+     * Lấy phiên bản xe để so sánh
+     */
+    List<ComparisonDto> getComparisonData(List<Long> variantIds, UUID dealerId, HttpHeaders headers);
+
+    // Lấy tất cả phiên bản xe cho report
+    List<VariantDetailDto> getAllVariantsForBackfill();
 }

@@ -45,11 +45,18 @@ public class SecurityConfig {
                         // payment-service
                         "/payments/**",
                         
-                        // sales-service
+                        // === SỬA LẠI ĐƯỜNG DẪN CHO SALES-SERVICE ===
+                        // Thêm tiền tố /sales/ vào trước
+                        "/sales/promotions/**",
+                        "/sales/quotations/**",
                         "/sales/**",
+                        // "/sales/**" // Dòng này của bạn đã đúng, nhưng 2 dòng trên rõ ràng hơn
                         
                         // vehicle-service
-                        "/vehicles/**"
+                        "/vehicles/**",
+
+                        // reporting-service
+                        "/reporting/**"
                     ).permitAll()
                     
                     // ===== Các route khác cần JWT =====

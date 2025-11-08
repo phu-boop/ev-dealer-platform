@@ -27,7 +27,8 @@ import {
   FiCalendar,
   FiMessageCircle,
   FiSliders,
-  FiGift
+  FiGift,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 export const adminMenuItems = [
@@ -73,11 +74,6 @@ export const adminMenuItems = [
         icon: FiArchive,
         label: "Kho Trung Tâm",
         path: "/evm/admin/distribution/warehouse",
-      },
-      {
-        icon: FiPieChart,
-        label: "Tồn Kho",
-        path: "/evm/admin/distribution/inventory",
       },
       {
         icon: FiNavigation,
@@ -127,25 +123,25 @@ export const adminMenuItems = [
     label: "Báo Cáo & Phân Tích",
     path: "/evm/admin/reports",
     submenu: [
-      { 
-        icon: FiTrendingUp, 
-        label: "(DONE)Thông báo", 
-        path: "/evm/admin/reports/notifications" 
+      {
+        icon: FiTrendingUp,
+        label: "(DONE)Thông báo",
+        path: "/evm/admin/reports/notifications",
       },
-      { 
-        icon: FiTrendingUp, 
-        label: "Doanh Số", 
-        path: "/evm/admin/reports/sales" 
+      {
+        icon: FiTrendingUp,
+        label: "Doanh Số",
+        path: "/evm/admin/reports/sales",
       },
       {
         icon: FiPieChart,
-        label: "Báo Cáo Tồn Kho",
-        path: "/evm/admin/reports/inventory-report",
+        label: "Tồn Kho",
+        path: "/evm/admin/reports/inventory",
       },
-      { 
-        icon: FiCpu, 
-        label: "Dự Báo AI", 
-        path: "/evm/admin/reports/forecast" 
+      {
+        icon: FiCpu,
+        label: "Dự Báo AI",
+        path: "/evm/admin/reports/forecast",
       },
       {
         icon: FiMap,
@@ -175,6 +171,11 @@ export const adminMenuItems = [
         icon: FiDatabase,
         label: "Cấu Hình Hệ Thống",
         path: "/evm/admin/system/config",
+      },
+      {
+        icon: FiRefreshCw,
+        label: "Đồng bộ Dữ liệu (Backfill)",
+        path: "/evm/admin/system/data-backfill",
       },
       {
         icon: FiActivity,

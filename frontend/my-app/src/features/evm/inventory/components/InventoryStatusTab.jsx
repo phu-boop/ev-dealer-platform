@@ -220,7 +220,7 @@ const InventoryStatusTab = () => {
                 <th className="p-3 w-12"></th>
                 <th className="p-3 text-left">Sản phẩm</th>
                 <th className="p-3 text-center">Kho TT khả dụng</th>
-                <th className="p-3 text-center">Đã phân bổ</th>
+                <th className="p-3 text-center">Đang chờ xuất</th>
                 <th className="p-3 text-center">Tổng số lượng</th>
                 <th className="p-3">Trạng thái</th>
                 <th className="p-3 text-right">Hành động</th>

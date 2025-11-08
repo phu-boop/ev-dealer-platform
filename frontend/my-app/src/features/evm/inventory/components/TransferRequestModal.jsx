@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
 import { useAuthContext } from "../../../../features/auth/AuthProvider";
-import { getAllDealersList } from "../../../dealer/promotions/services/dealerSalesService";
+import { getAllDealersList } from "../../../dealer/ordervariants/services/dealerSalesService";
 import {
   createB2BOrder,
   createB2BOrderByStaff,

@@ -33,4 +33,5 @@ public class UserRespond {
     LocalDateTime lastLogin;
     UserStatus status;
     String url;
+    private UUID dealerId;
 }

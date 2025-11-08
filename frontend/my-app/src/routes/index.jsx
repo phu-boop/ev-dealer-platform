@@ -1,4 +1,4 @@
- import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
 // layouts
@@ -21,6 +21,7 @@ import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.j
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
+import QuotationManagement from "../features/dealer/sales/pages/QuotationManagement.jsx";
 // customer pages
 import CustomerList from "../features/customers/pages/CustomerList.jsx";
 import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
@@ -33,11 +34,19 @@ import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.
 import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
-import InventoryReportPage from "../features/evm/reports/pages/InventoryReportPage.jsx";
 
 // Dealer
-import B2BOrderPage from "../features/dealer/promotions/pages/DealerOrdersPage.jsx";
-import B2BOrderForm from "../features/dealer/promotions/pages/B2BOrderForm.jsx";
+import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPage.jsx";
+import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
+import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
+import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
+
+// Reporting
+import SalesReportPage from "../features/admin/reporting/pages/SalesReportPage.jsx";
+import InventoryReportPage from "../features/admin/reporting/pages/InventoryReportPage.jsx";
+
+// SYSTEM (ADMIN)
+import BackfillPage from "../features/admin/system/pages/BackfillPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -99,16 +108,6 @@ export default function AppRoutes() {
               />
               <Route path="admin/system/users" element={<UserManagement />} />
               <Route path="admin/notifications" element={<UserManagement />} />
-              {/* Distribution - Inventory for ADMIN */}
-              <Route
-                path="admin/distribution/inventory"
-                element={<InventoryCentral />}
-              />
-              {/* Reports - Inventory report (UI only) */}
-              <Route
-                path="admin/reports/inventory-report"
-                element={<InventoryReportPage />}
-              />
             </Route>
 
             {/* Admin only */}
@@ -126,6 +125,16 @@ export default function AppRoutes() {
               <Route
                 path="admin/distribution/allocation"
                 element={<AllocationPage />}
+              />
+
+              <Route path="admin/reports/sales" element={<SalesReportPage />} />
+              <Route
+                path="admin/reports/inventory"
+                element={<InventoryReportPage />}
+              />
+              <Route
+                path="admin/system/data-backfill"
+                element={<BackfillPage />}
               />
             </Route>
             {/* Staff only */}
@@ -155,11 +164,6 @@ export default function AppRoutes() {
               <Route
                 path="staff/distribution/allocation"
                 element={<AllocationPage />}
-              />
-              {/* Reports - Inventory for EVM_STAFF */}
-              <Route
-                path="staff/reports/inventory"
-                element={<InventoryCentral />}
               />
             </Route>
           </Route>
@@ -196,6 +200,15 @@ export default function AppRoutes() {
                 path="manager/customers/:id/edit"
                 element={<EditCustomer />}
               />
+              <Route
+                path="manager/quotations/*"
+                element={<QuotationManagement />}
+              />
+
+              <Route
+                path="manager/vehicles/all"
+                element={<DealerProductCatalogPage />}
+              />
 
               {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
@@ -203,6 +216,13 @@ export default function AppRoutes() {
               {/* System */}
               <Route path="manager/system/users" element={<UserManagement />} />
 
+              {/* Xem tồn kho đại lí */}
+              <Route
+                path="manager/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+
+              {/* Đặt xe từ hãng và xem trạng thái đơn hàng */}
               <Route
                 path="manager/inventory/order"
                 element={<B2BOrderForm />}
@@ -210,7 +230,7 @@ export default function AppRoutes() {
               <Route path="manager/inventory/info" element={<B2BOrderPage />} />
             </Route>
 
-            {/* Dealer Staff Routes */}
+            {/* --- DEALER STAFF ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
               {/* Customer Management */}
               <Route
@@ -222,6 +242,23 @@ export default function AppRoutes() {
               <Route
                 path="staff/customers/:id/edit"
                 element={<EditCustomer />}
+              />
+
+              <Route
+                path="staff/quotations/*"
+                element={<QuotationManagement />}
+              />
+
+              {/* Danh mục xe & báo cáo */}
+              {/* Xe có sẵn trong kho đại lí */}
+              <Route
+                path="staff/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+              {/* Tất cả phiên bảng (hãng) */}
+              <Route
+                path="staff/vehicles/all"
+                element={<DealerProductCatalogPage />}
               />
 
               {/* Promotions */}

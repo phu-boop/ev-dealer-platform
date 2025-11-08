@@ -2,8 +2,15 @@ package com.ev.vehicle_service.services.Implementation;
 
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
 import com.ev.common_lib.dto.vehicle.FeatureDto;
+import com.ev.common_lib.dto.vehicle.ComparisonDto;
+import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
+import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.model.enums.VehicleStatus;
 import com.ev.common_lib.model.enums.EVMAction;
+import com.ev.common_lib.exception.AppException;
+import com.ev.common_lib.exception.ErrorCode;
+import com.ev.common_lib.event.ProductUpdateEvent;
+
 import com.ev.vehicle_service.dto.request.CreateModelRequest;
 // import com.ev.vehicle_service.dto.request.FeatureRequest;
 import com.ev.vehicle_service.dto.request.UpdateModelRequest;
@@ -12,6 +19,7 @@ import com.ev.vehicle_service.dto.request.CreateVariantRequest;
 import com.ev.vehicle_service.dto.request.FeatureRequest;
 import com.ev.vehicle_service.dto.response.ModelDetailDto;
 import com.ev.vehicle_service.dto.response.ModelSummaryDto;
+
 import com.ev.vehicle_service.model.VehicleFeature;
 import com.ev.vehicle_service.model.VehicleModel;
 import com.ev.vehicle_service.model.VehicleVariant;
@@ -19,63 +27,52 @@ import com.ev.vehicle_service.model.VariantFeature;
 import com.ev.vehicle_service.model.VariantFeatureId;
 import com.ev.vehicle_service.model.PriceHistory;
 import com.ev.vehicle_service.model.VehicleVariantHistory;
+
 import com.ev.vehicle_service.repository.VehicleFeatureRepository;
 import com.ev.vehicle_service.repository.VehicleModelRepository;
 import com.ev.vehicle_service.repository.VehicleVariantRepository;
 import com.ev.vehicle_service.repository.VariantFeatureRepository;
 import com.ev.vehicle_service.repository.PriceHistoryRepository;
 import com.ev.vehicle_service.repository.VehicleVariantHistoryRepository;
+
 import com.ev.vehicle_service.services.Interface.VehicleCatalogService;
 import com.ev.vehicle_service.specification.VehicleVariantSpecification;
-import jakarta.persistence.criteria.Predicate;
-import com.ev.common_lib.exception.AppException;
-import com.ev.common_lib.exception.ErrorCode;
-import lombok.RequiredArgsConstructor;
 // import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.domain.Specification;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.persistence.criteria.Predicate;
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.kafka.core.KafkaTemplate;
-import com.ev.common_lib.event.ProductUpdateEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @RequiredArgsConstructor
 public class VehicleCatalogServiceImpl implements VehicleCatalogService {
 
-    // @Autowired
-    // private VehicleModelRepository modelRepository;
+    private static final Logger log = LoggerFactory.getLogger(VehicleCatalogServiceImpl.class);
 
-    // @Autowired
-    // private VehicleVariantRepository variantRepository;
-    
-    // @Autowired 
-    // private VehicleFeatureRepository featureRepository;
-
-    // @Autowired 
-    // private VariantFeatureRepository variantFeatureRepository;
-
-    // @Autowired
-    // private PriceHistoryRepository priceHistoryRepository;
-
-    // @Autowired
-    // private VehicleVariantHistoryRepository variantHistoryRepository;
-
-    // @Autowired
-    // private KafkaTemplate<String, Object> kafkaTemplate;
-
-    // // Khởi tạo ObjectMapper để làm việc với JSON
-    // private final ObjectMapper objectMapper = new ObjectMapper();
     private final VehicleModelRepository modelRepository;
     private final VehicleVariantRepository variantRepository;
     private final VehicleFeatureRepository featureRepository;
@@ -84,6 +81,11 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     private final VehicleVariantHistoryRepository variantHistoryRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate; 
     private final ObjectMapper objectMapper; 
+
+    private final RestTemplate restTemplate; 
+
+    @Value("${app.services.inventory.url}") 
+    private String inventoryServiceUrl;
 
     @Override
     public List<ModelSummaryDto> getAllModels() {
@@ -411,6 +413,84 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         return variantPage.map(this::mapToVariantDetailDto);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ComparisonDto> getComparisonData(List<Long> variantIds, UUID dealerId, HttpHeaders headers) {
+        
+        // BƯỚC 1: Lấy thông tin chi tiết sản phẩm (Thông số, giá...)
+        // Lấy từ database của chính service này (vehicle-service).
+        List<VariantDetailDto> vehicleDetails = variantRepository.findAllWithDetailsByIds(variantIds).stream()
+                .map(this::mapToVariantDetailDto)
+                .collect(Collectors.toList());
+
+        // BƯỚC 2: Gọi API sang Inventory-Service để lấy thông tin tồn kho
+        String inventoryUrl = inventoryServiceUrl + "/inventory/status-by-ids-detailed";
+        
+        // Tạo request body chứa cả 2 thông tin
+        Map<String, Object> requestBody = Map.of(
+            "variantIds", variantIds,
+            "dealerId", dealerId.toString() // Gửi dealerId để service kho biết
+        );
+        
+        // Chuyển tiếp các header xác thực từ request gốc
+        HttpHeaders forwardHeaders = new HttpHeaders();
+        if (headers != null) {
+            forwardHeaders.addAll(headers);
+        }
+        // Đảm bảo có Content-Type header
+        forwardHeaders.set("Content-Type", "application/json");
+        
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, forwardHeaders);
+
+        ResponseEntity<ApiRespond<List<InventoryComparisonDto>>> inventoryResponse;
+        try {
+            log.debug("Calling inventory-service at: {}", inventoryUrl);
+            log.debug("Request headers: {}", forwardHeaders);
+            inventoryResponse = restTemplate.exchange(
+                inventoryUrl,
+                HttpMethod.POST,
+                requestEntity,
+                // Dùng ParameterizedTypeReference để xử lý kiểu Generic (List<...>)
+                new ParameterizedTypeReference<ApiRespond<List<InventoryComparisonDto>>>() {}
+            );
+        } catch (Exception e) {
+            // Xử lý lỗi nếu không gọi được service kho
+            log.error("Error calling inventory-service at {}: {}", inventoryUrl, e.getMessage(), e);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+        
+        if (inventoryResponse.getBody() == null || inventoryResponse.getBody().getData() == null) {
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+        
+        List<InventoryComparisonDto> inventoryStatusList = inventoryResponse.getBody().getData();
+        
+        // Tạo Map để tra cứu nhanh <VariantId, ThongTinKho>
+        Map<Long, InventoryComparisonDto> inventoryMap = inventoryStatusList.stream()
+                .collect(Collectors.toMap(InventoryComparisonDto::getVariantId, status -> status));
+
+        // BƯỚC 3: Gộp (Merge) hai luồng dữ liệu
+        return vehicleDetails.stream()
+            .map(detail -> {
+                // Lấy thông tin kho từ Map, nếu không có thì tạo đối tượng rỗng
+                InventoryComparisonDto inventoryInfo = inventoryMap.getOrDefault(detail.getVariantId(), new InventoryComparisonDto());
+                return new ComparisonDto(detail, inventoryInfo); // Gộp lại
+            })
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<VariantDetailDto> getAllVariantsForBackfill() {
+        // Gọi thẳng repository để lấy tất cả, không phân trang
+        List<VehicleVariant> variants = variantRepository.findAll(); 
+
+        // Map sang DTO
+        return variants.stream()
+            .map(this::mapToVariantDetailDto)
+            .collect(Collectors.toList());
+    }
+
     // --- Helper Methods ---
 
     private VehicleModel findModelById(Long modelId) {
@@ -471,10 +551,11 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         // 1. Lấy đối tượng Model cha để sử dụng cho việc kế thừa
         VehicleModel model = variant.getVehicleModel();
         VariantDetailDto dto = new VariantDetailDto();
-    
+
         // 2. Map các thông tin cơ bản, không cần logic kế thừa
         dto.setVariantId(variant.getVariantId());
         dto.setVersionName(variant.getVersionName());
+        dto.setModelId(model.getModelId());
         dto.setColor(variant.getColor());
         dto.setSkuCode(variant.getSkuCode());
         dto.setPrice(variant.getPrice());
@@ -482,6 +563,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setStatus(variant.getStatus());
         dto.setWholesalePrice(variant.getWholesalePrice()); // Giá sỉ là của riêng variant, không kế thừa
         
+        dto.setModelName(model.getModelName());
+        dto.setBrand(model.getBrand());
         // 3. ÁP DỤNG LOGIC KẾ THỪA VÀ GÁN MỘT LẦN DUY NHẤT
         // Xử lý Range: Ưu tiên variant, nếu không có thì lấy của model
         dto.setRangeKm(

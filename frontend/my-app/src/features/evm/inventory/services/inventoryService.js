@@ -71,3 +71,25 @@ export const exportInventoryReport = (params) => {
 export const getInventoryStatusByIds = (variantIds) => {
   return apiConstInventoryService.post("/inventory/status-by-ids", variantIds);
 };
+
+/**
+ * Kiểm tra một danh sách VINs (read-only)
+ * @param {string[]} vins
+ * @returns {Promise<ApiRespond<VinValidationResultDto>>}
+ */
+export const validateVins = (vins) => {
+  return apiConstInventoryService.post(
+    "/inventory/vehicles/validate-vins",
+    vins
+  );
+};
+
+/**
+ * Lấy danh sách VINs khả dụng cho một variant
+ * @param {number} variantId
+ */
+export const getAvailableVins = (variantId) => {
+  return apiConstInventoryService.get("/inventory/vehicles/available-vins", {
+    params: { variantId },
+  });
+};
