@@ -79,7 +79,7 @@ const SalesOrderDetailPage = () => {
         breadcrumb: {
           items: [
             { title: 'Bán hàng' },
-            { title: 'Đơn hàng', path: '/sales-orders' },
+            { title: 'Đơn hàng' },
             { title: `Đơn hàng #${orderId}` },
           ],
         },

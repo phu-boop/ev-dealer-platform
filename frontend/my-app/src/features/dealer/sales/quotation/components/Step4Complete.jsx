@@ -102,7 +102,7 @@ const Step4Complete = ({ quotationDetail }) => {
         </button>
         
         <button
-          onClick={() => window.location.href = '/quotations'}
+          onClick={() => window.location.href = '/dealer/staff/list/quotations'}
           className="px-8 py-4 bg-gradient-to-r from-sky-500 to-sky-600 text-white font-medium rounded-xl hover:from-sky-600 hover:to-sky-700 transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow"
         >
           <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

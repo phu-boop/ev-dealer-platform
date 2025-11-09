@@ -1,5 +1,6 @@
 import React from 'react';
 import {convertToSalesOrder} from '../services/quotationService.js';
+import Swal from 'sweetalert2';
 const QuotationModal = ({ quotation, isOpen, onClose }) => {
   if (!isOpen || !quotation) return null;
 
@@ -9,9 +10,46 @@ const QuotationModal = ({ quotation, isOpen, onClose }) => {
       currency: 'VND'
     }).format(amount || 0);
   };
-  const handleConvertOder = (quotationId) => {
-      convertToSalesOrder(quotationId);
-  }
+
+  const handleConvertOder = async (quotationId) => {
+    // Hiển thị confirm trước khi convert
+    const result = await Swal.fire({
+      title: 'Xác nhận chuyển đơn hàng',
+      text: 'Bạn có chắc muốn chuyển quotation này thành Sales Order?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Đồng ý',
+      cancelButtonText: 'Hủy',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        // Gọi API convert
+        const response = await convertToSalesOrder(quotationId);
+
+        // Hiển thị thông báo thành công
+        Swal.fire({
+          title: 'Thành công!',
+          text: 'Quotation đã được chuyển thành Sales Order.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        // Nếu muốn điều hướng sang trang Sales Order mới
+        window.location.href = `/dealer/staff/orders/${response.data.orderId}`;
+
+      } catch (error) {
+        // Hiển thị lỗi nếu API fail
+        Swal.fire({
+          title: 'Lỗi!',
+          text: 'Không thể chuyển đơn hàng. Vui lòng thử lại.',
+          icon: 'error',
+        });
+        console.error(error);
+      }
+    }
+  };
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
       year: 'numeric',

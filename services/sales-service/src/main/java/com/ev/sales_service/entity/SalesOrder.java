@@ -69,12 +69,17 @@ public class SalesOrder {
     @Column(name = "approval_date")
     private LocalDateTime approvalDate;
 
-    @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> orderItems;
 
+    // SalesOrder.java
     @OneToOne(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
     private SalesContract salesContract;
 
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
+    private List<OrderItem> orderItems;
+
+    @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
     private List<OrderTracking> orderTrackings;
 }

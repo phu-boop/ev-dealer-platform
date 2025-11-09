@@ -1,8 +1,11 @@
 package com.ev.sales_service.entity;
 
 import com.ev.sales_service.enums.PromotionStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Objects;
 import java.util.Set;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
@@ -47,6 +50,20 @@ public class Promotion {
     private PromotionStatus status;
 
     @ManyToMany(mappedBy = "promotions")
+    @JsonIgnore
     private Set<Quotation> quotations;
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Promotion)) return false;
+        Promotion that = (Promotion) o;
+        return promotionId != null && promotionId.equals(that.promotionId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(promotionId);
+    }
 }

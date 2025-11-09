@@ -23,16 +23,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -72,37 +71,30 @@ public class QuotationServiceImpl implements QuotationService {
 
     @Override
     public QuotationResponse calculateQuotationPrice(UUID quotationId, QuotationCalculateRequest request) {
-        log.info("Calculating price for quotation: {}", quotationId);
-
+        // 1. Lấy quotation từ DB
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
-        // Validate quotation status
         if (quotation.getStatus() != QuotationStatus.DRAFT && quotation.getStatus() != QuotationStatus.PENDING) {
             throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
         }
 
-        // Lấy danh sách promotion để áp dụng
-        Set<Promotion> appliedPromotions = new HashSet<>();
         BigDecimal totalDiscount = BigDecimal.ZERO;
+        Set<Promotion> appliedPromotions = new HashSet<>();
 
+        // 2. Áp dụng promotions từ request
         if (request.getPromotionIds() != null && !request.getPromotionIds().isEmpty()) {
-            appliedPromotions = new HashSet<>(promotionRepository.findAllById(request.getPromotionIds()));
-
-            // Tính tổng discount từ promotions
-            for (Promotion promotion : appliedPromotions) {
-                if (isPromotionApplicable(promotion, quotation)) {
-                    BigDecimal discountAmount = quotation.getBasePrice()
-                            .multiply(promotion.getDiscountRate())
-                            .divide(BigDecimal.valueOf(100));
-                    totalDiscount = totalDiscount.add(discountAmount);
-                } else {
-                    throw new AppException(ErrorCode.PROMOTION_NOT_APPLICABLE);
-                }
-            }
+        List<Promotion> promotionsFromDb = promotionRepository.findAllById(request.getPromotionIds());
+        for (Promotion promotion : promotionsFromDb) {
+            appliedPromotions.add(promotion);
+            BigDecimal discountAmount = quotation.getBasePrice()
+                    .multiply(promotion.getDiscountRate())
+                    .divide(BigDecimal.valueOf(1));
+            totalDiscount = totalDiscount.add(discountAmount);
         }
+    }
 
-        // Áp dụng additional discount nếu có
+        // 3. Áp dụng additionalDiscountRate từ request
         if (request.getAdditionalDiscountRate() != null) {
             BigDecimal additionalDiscount = quotation.getBasePrice()
                     .multiply(request.getAdditionalDiscountRate())
@@ -110,22 +102,29 @@ public class QuotationServiceImpl implements QuotationService {
             totalDiscount = totalDiscount.add(additionalDiscount);
         }
 
-        // Đảm bảo discount không vượt quá base price
+        // 4. Không vượt quá basePrice
         if (totalDiscount.compareTo(quotation.getBasePrice()) > 0) {
             totalDiscount = quotation.getBasePrice();
         }
 
         BigDecimal finalPrice = quotation.getBasePrice().subtract(totalDiscount);
 
-        // Cập nhật quotation
+        // 5. Cập nhật promotions cho quotation an toàn
+        Hibernate.initialize(quotation.getPromotions());
+        quotation.getPromotions().clear();
+        quotation.getPromotions().addAll(appliedPromotions);
+
+        // 6. Cập nhật quotation
         quotation.setDiscountAmount(totalDiscount);
         quotation.setFinalPrice(finalPrice);
-        quotation.setPromotions(appliedPromotions);
         quotation.setStatus(QuotationStatus.PENDING);
 
         Quotation updatedQuotation = quotationRepository.save(quotation);
+
         return mapToResponse(updatedQuotation);
     }
+
+
 
     // phương thức sendQuotationToCustomer
     @Override
@@ -349,16 +348,59 @@ public class QuotationServiceImpl implements QuotationService {
     private QuotationResponse mapToResponse(Quotation quotation) {
         QuotationResponse response = modelMapper.map(quotation, QuotationResponse.class);
 
-        // Map promotions
+        // Map promotions một cách an toàn
         if (quotation.getPromotions() != null) {
-            List<PromotionResponse> promotionResponses = quotation.getPromotions().stream()
-                    .map(p -> modelMapper.map(p, PromotionResponse.class))
+            // 1. Force load collection từ Hibernate
+            Hibernate.initialize(quotation.getPromotions());
+
+            // 2. Copy sang List để tránh ConcurrentModificationException
+            List<Promotion> promotions = new ArrayList<>(quotation.getPromotions());
+
+            // 3. Map từng Promotion sang PromotionResponse
+            List<PromotionResponse> promotionResponses = promotions.stream()
+                    .map(p -> mapPromotionToResponse(p))
                     .collect(Collectors.toList());
+
             response.setAppliedPromotions(promotionResponses);
         }
 
         return response;
     }
+
+    private PromotionResponse mapPromotionToResponse(Promotion promotion) {
+        PromotionResponse pr = new PromotionResponse();
+
+        // --- Các field cơ bản ---
+        pr.setPromotionId(promotion.getPromotionId());
+        pr.setPromotionName(promotion.getPromotionName());
+        pr.setDescription(promotion.getDescription());
+        pr.setDiscountRate(promotion.getDiscountRate());
+        pr.setStartDate(promotion.getStartDate());
+        pr.setEndDate(promotion.getEndDate());
+        pr.setStatus(promotion.getStatus());
+
+        // --- Tính trạng thái ---
+        LocalDateTime now = LocalDateTime.now();
+        pr.setIsActive(promotion.getStatus() == PromotionStatus.ACTIVE &&
+                (promotion.getStartDate() == null || !promotion.getStartDate().isAfter(now)) &&
+                (promotion.getEndDate() == null || !promotion.getEndDate().isBefore(now)));
+        pr.setIsExpired(promotion.getEndDate() != null && promotion.getEndDate().isBefore(now));
+        pr.setIsUpcoming(promotion.getStartDate() != null && promotion.getStartDate().isAfter(now));
+
+        // --- Parse JSON nếu cần ---
+        // pr.setApplicableDealers(parseDealerIds(promotion.getDealerIdJson()));
+        // pr.setApplicableModels(parseModels(promotion.getApplicableModelsJson()));
+
+        // --- Lấy count quotation áp dụng, tránh vòng lặp ---
+        if (promotion.getQuotations() != null) {
+            pr.setAppliedQuotationsCount((long) promotion.getQuotations().size());
+        } else {
+            pr.setAppliedQuotationsCount(0L);
+        }
+
+        return pr;
+    }
+
 
     @Override
     public QuotationResponse getQuotationById(UUID quotationId) {
@@ -382,18 +424,19 @@ public class QuotationServiceImpl implements QuotationService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+
     @Override
-public void deleteQuotation(UUID quotationId) {
-    Quotation quotation = quotationRepository.findById(quotationId)
-            .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
+    public void deleteQuotation(UUID quotationId) {
+        Quotation quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
-    // Chỉ cho phép xóa các quotation chưa được gửi hoặc đang ở trạng thái DRAFT/PENDING
-    if (quotation.getStatus() != QuotationStatus.DRAFT && quotation.getStatus() != QuotationStatus.PENDING) {
-        throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
+        // Chỉ cho phép xóa các quotation chưa được gửi hoặc đang ở trạng thái DRAFT/PENDING
+        if (quotation.getStatus() != QuotationStatus.DRAFT && quotation.getStatus() != QuotationStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
+        }
+
+        quotationRepository.delete(quotation);
+        log.info("Quotation {} deleted successfully", quotationId);
     }
-
-    quotationRepository.delete(quotation);
-    log.info("Quotation {} deleted successfully", quotationId);
-}
 
 }

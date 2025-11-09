@@ -5,6 +5,8 @@ import com.ev.sales_service.dto.response.CustomerResponseRequest;
 import com.ev.sales_service.dto.response.PromotionResponse;
 import com.ev.sales_service.dto.response.QuotationResponse;
 import com.ev.sales_service.dto.response.SalesOrderB2CResponse;
+import com.ev.sales_service.entity.Promotion;
+import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.enums.QuotationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable; // ✅ đúng
