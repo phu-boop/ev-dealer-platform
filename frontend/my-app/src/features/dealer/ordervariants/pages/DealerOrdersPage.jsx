@@ -1,55 +1,26 @@
 import React, { useState, useEffect, useCallback } from "react";
+
 import {
   FiCheckCircle,
   FiPackage,
   FiTruck,
   FiList,
   FiXCircle,
+  FiAlertTriangle,
+  FiEye,
+  FiX,
 } from "react-icons/fi"; // Thêm FiXCircle
 import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 import {
   getMyB2BOrders,
   confirmDelivery,
   cancelOrderByDealer, // Import hàm hủy
-} from "../services/dealerSalesService"; // Service của Dealer
+  reportOrderIssue, // Import hàm báo cáo
+} from "../services/dealerSalesService";
 
-// (Copy StatusBadge component hoặc import nếu đã tách riêng)
-const StatusBadge = ({ status }) => {
-  let colorClasses = "bg-gray-100 text-gray-800";
-  let text = status;
-
-  switch (status) {
-    case "PENDING":
-      colorClasses = "bg-yellow-100 text-yellow-800";
-      text = "Chờ duyệt";
-      break;
-    case "CONFIRMED":
-      colorClasses = "bg-blue-100 text-blue-800";
-      text = "Đã duyệt";
-      break;
-    case "IN_TRANSIT":
-      colorClasses = "bg-cyan-100 text-cyan-800";
-      text = "Đang giao";
-      break;
-    case "DELIVERED":
-      colorClasses = "bg-green-100 text-green-800";
-      text = "Đã nhận";
-      break;
-    case "CANCELLED":
-      colorClasses = "bg-red-100 text-red-800";
-      text = "Đã hủy";
-      break;
-    default:
-      break;
-  }
-  return (
-    <span
-      className={`px-2.5 py-1 text-xs font-semibold rounded-full inline-block ${colorClasses}`}
-    >
-      {text}
-    </span>
-  );
-};
+import OrderDetailModal from "../components/OrderDetailModal.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
 
 const DealerOrdersPage = () => {
   const [activeTab, setActiveTab] = useState("PENDING"); // Mặc định hiển thị tab "Chờ duyệt"
@@ -61,6 +32,9 @@ const DealerOrdersPage = () => {
     size: 10,
     totalPages: 0,
   });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // --- Hàm tải danh sách đơn hàng ---
   const fetchOrders = useCallback(
@@ -79,6 +53,7 @@ const DealerOrdersPage = () => {
       } catch (err) {
         console.error("Failed to fetch orders", err);
         setError("Không thể tải danh sách đơn hàng.");
+        toast.error("Không thể tải danh sách đơn hàng.");
       } finally {
         setIsLoading(false);
       }
@@ -112,12 +87,20 @@ const DealerOrdersPage = () => {
   // --- HÀM XỬ LÝ XÁC NHẬN NHẬN HÀNG ---
   const handleConfirmDelivery = async (orderId) => {
     const result = await Swal.fire({
-      /* ... SweetAlert config ... */
+      title: "Xác nhận nhận hàng?",
+      text: "Bạn chắc chắn đã kiểm tra và nhận đủ hàng?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#28a745",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Đúng, tôi đã nhận!",
+      cancelButtonText: "Chưa",
     });
+
     if (result.isConfirmed) {
       try {
         await confirmDelivery(orderId);
-        Swal.fire("Thành công!", "Đã xác nhận nhận hàng.", "success");
+        toast.success("Đã xác nhận nhận hàng thành công!");
         fetchOrders(activeTab, pagination.page); // Tải lại trang hiện tại
       } catch (err) {
         Swal.fire(
@@ -125,6 +108,63 @@ const DealerOrdersPage = () => {
           err.response?.data?.message || "Xác nhận thất bại.",
           "error"
         );
+      }
+    }
+  };
+
+  // --- BÁO CÁO SỰ CỐ (EXCEPTION PATH) ---
+  const handleReportIssue = async (orderId) => {
+    const { value: formValues } = await Swal.fire({
+      title: "Báo cáo sự cố",
+      html: `
+        <style>
+          .swal-label { 
+            display: block; 
+            text-align: left; 
+            margin-top: 1rem; 
+            margin-bottom: 0.25rem; 
+            font-weight: 500;
+          }
+          .swal-input, .swal-textarea {
+            width: 95%; /* Điều chỉnh để vừa vặn */
+            padding: 0.5rem;
+            margin: 0 auto;
+          }
+        </style>
+        <div>
+          <label for="swal-reason" class="swal-label">Lý do (bắt buộc)</label>
+          <input id="swal-reason" class="swal2-input swal-input" placeholder="Ví dụ: Giao thiếu hàng, Xe bị trầy xước...">
+          
+          <label for="swal-description" class="swal-label">Mô tả chi tiết</label>
+          <textarea id="swal-description" class="swal2-textarea swal-textarea" placeholder="Mô tả rõ hơn về sự cố (nếu có)..."></textarea>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonColor: "#f8981d",
+      confirmButtonText: "Gửi Báo Cáo",
+      cancelButtonText: "Hủy",
+      focusConfirm: false,
+      // Dùng preConfirm để lấy và xác thực dữ liệu
+      preConfirm: () => {
+        const reason = document.getElementById("swal-reason").value;
+        const description = document.getElementById("swal-description").value;
+        if (!reason) {
+          Swal.showValidationMessage(`Bạn cần nhập lý do để báo cáo!`);
+          return false;
+        }
+        return { reason, description }; // Trả về object
+      },
+    });
+
+    // Nếu người dùng submit và preConfirm thành công
+    if (formValues) {
+      try {
+        // Gửi object { reason, description } đến service
+        await reportOrderIssue(orderId, formValues);
+        toast.success("Đã gửi báo cáo sự cố thành công.");
+        fetchOrders(activeTab, pagination.page);
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Gửi báo cáo thất bại.");
       }
     }
   };
@@ -145,16 +185,22 @@ const DealerOrdersPage = () => {
     if (result.isConfirmed) {
       try {
         await cancelOrderByDealer(orderId); // Gọi API hủy của dealer
-        Swal.fire("Đã hủy!", "Đơn hàng của bạn đã được hủy.", "success");
+        toast.success("Đơn hàng của bạn đã được hủy.");
         fetchOrders(activeTab, pagination.page); // Tải lại
       } catch (err) {
-        Swal.fire(
-          "Lỗi!",
-          err.response?.data?.message || "Hủy đơn thất bại.",
-          "error"
-        );
+        toast.error(err.response?.data?.message || "Hủy đơn thất bại.");
       }
     }
+  };
+
+  const handleViewDetails = (order) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedOrder(null);
   };
 
   const tabs = [
@@ -163,6 +209,7 @@ const DealerOrdersPage = () => {
     { status: "IN_TRANSIT", label: "Đang giao" },
     { status: "DELIVERED", label: "Đã nhận" },
     { status: "CANCELLED", label: "Đã hủy" },
+    { status: "DISPUTED", label: "Đang khiếu nại" },
   ];
 
   return (
@@ -241,8 +288,16 @@ const DealerOrdersPage = () => {
                 </div>
 
                 {/* Trạng thái và Hành động */}
-                <div className="flex-shrink-0 flex flex-col items-end space-y-2 w-full md:w-auto">
+                <div className="shrink-0 flex flex-col items-end space-y-2 w-full md:w-auto">
                   <StatusBadge status={order.orderStatus} />
+
+                  {/* Nút Xem Chi Tiết (Luôn hiển thị) */}
+                  <button
+                    onClick={() => handleViewDetails(order)}
+                    className="flex items-center justify-center w-full md:w-auto px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50 transition duration-150"
+                  >
+                    <FiEye className="mr-1" /> Xem Chi Tiết
+                  </button>
 
                   {/* Nút Hủy cho PENDING */}
                   {order.orderStatus === "PENDING" && (
@@ -256,13 +311,25 @@ const DealerOrdersPage = () => {
                   )}
 
                   {/* Nút Xác Nhận cho IN_TRANSIT */}
+                  {/* Hai nút cho IN_TRANSIT */}
                   {order.orderStatus === "IN_TRANSIT" && (
-                    <button
-                      onClick={() => handleConfirmDelivery(order.orderId)}
-                      className="flex items-center justify-center w-full md:w-auto px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition duration-150 shadow"
-                    >
-                      <FiCheckCircle className="mr-1" /> Xác Nhận Đã Nhận
-                    </button>
+                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                      {/* Nút Báo Cáo (Exception) */}
+                      <button
+                        onClick={() => handleReportIssue(order.orderId)}
+                        className="flex items-center justify-center w-full md:w-auto px-3 py-1.5 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 transition duration-150"
+                      >
+                        <FiAlertTriangle className="mr-1" /> Báo Cáo Sự Cố
+                      </button>
+
+                      {/* Nút Xác Nhận (Happy Path) */}
+                      <button
+                        onClick={() => handleConfirmDelivery(order.orderId)}
+                        className="flex items-center justify-center w-full md:w-auto px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition duration-150 shadow"
+                      >
+                        <FiCheckCircle className="mr-1" /> Xác Nhận Đã Nhận
+                      </button>
+                    </div>
                   )}
                   {/* Không có nút Xóa ở đây */}
                   {/* Có thể thêm nút Xem chi tiết */}
@@ -295,6 +362,9 @@ const DealerOrdersPage = () => {
           </div>
         )}
       </div>
+      {isModalOpen && (
+        <OrderDetailModal order={selectedOrder} onClose={handleCloseModal} />
+      )}
     </div>
   );
 };

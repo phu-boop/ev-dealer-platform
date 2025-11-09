@@ -87,10 +87,10 @@ public class User {
             return evmStaffProfile.getEvmStaffId();
         }
         if (dealerManagerProfile != null) {
-            return dealerManagerProfile.getDealerId();
+            return dealerManagerProfile.getManagerId();
         }
         if (dealerStaffProfile != null) {
-            return dealerStaffProfile.getDealerId();
+            return dealerStaffProfile.getStaffId();
         }
         if (adminProfile != null) {
             return adminProfile.getAdmin_id();

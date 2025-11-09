@@ -1,6 +1,7 @@
 package com.ev.dealer_service.service.Interface;
 
-import com.ev.dealer_service.dto.response.DealerBasicDto;
+import com.ev.common_lib.dto.dealer.DealerBasicDto;
+import com.ev.dealer_service.entity.Dealer;
 import com.ev.dealer_service.dto.request.DealerRequest;
 import com.ev.dealer_service.dto.response.DealerResponse;
 import java.util.List;
@@ -87,5 +88,7 @@ public interface DealerService {
      */
     DealerResponse activateDealer(UUID id);
 
+    // Lấy dealer name và region
+    List<Dealer> getDealersByRegionAndName(String region, String dealerName);
 
 }
