@@ -9,6 +9,7 @@ import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
 import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.event.StockAlertEvent;
 
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
@@ -54,7 +55,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 
 // import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.messaging.simp.SimpMessagingTemplate; // Để gửi WebSocket
 import org.springframework.beans.factory.annotation.Value;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
@@ -83,6 +83,8 @@ import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -102,9 +104,10 @@ public class InventoryServiceImpl implements InventoryService {
     private final TransferRequestRepository transferRequestRepo;
 
     private final StockAlertRepository stockAlertRepo;
-    private final SimpMessagingTemplate messagingTemplate;
+    private static final Logger log = LoggerFactory.getLogger(InventoryServiceImpl.class);
 
     public static final String TOPIC_DEALER_STOCK_UPDATED = "stock_events_dealerEVM";
+    public static final String TOPIC_LOW_STOCK_ALERT = "inventory.alerts.low_stock";
 
     @Value("${app.services.catalog.url}")
     private String vehicleCatalogUrl;
@@ -983,62 +986,93 @@ public class InventoryServiceImpl implements InventoryService {
      * Kiểm tra ngưỡng tồn kho và gửi/giải quyết cảnh báo.
      * Đây là logic cốt lõi cho yêu cầu "cảnh báo 1 lần".
      */
-    @Transactional // (Đảm bảo chạy trong 1 giao dịch)
+    @Transactional
     private void checkStockThresholdAndNotify(Long variantId) {
         try {
-            // 1. Lấy tồn kho hiện tại
             CentralInventory inventory = centralRepo.findByVariantId(variantId).orElse(null);
+            if (inventory == null) return;
 
-            if (inventory == null) {
-                return; // Không có tồn kho, không thể cảnh báo
-            }
-
-            // Dùng số lượng "Có thể bán" (available) để so sánh
             int currentStock = inventory.getAvailableQuantity(); 
             int reorderLevel = (inventory.getReorderLevel() != null) ? inventory.getReorderLevel() : 0;
-
-            // 2. Kiểm tra xem đã có cảnh báo "NEW" (đang hoạt động) nào chưa
             Optional<StockAlert> existingAlert = stockAlertRepo.findFirstByVariantIdAndStatus(variantId, "NEW");
 
-            // 3. Logic xử lý
             if (currentStock <= reorderLevel && currentStock > 0) {
                 // ---- TRƯỜNG HỢP 1: DƯỚI NGƯỠNG (LOW_STOCK) ----
                 
                 if (existingAlert.isEmpty()) {
-                    // Nếu dưới ngưỡng VÀ chưa có cảnh báo -> Tạo cảnh báo mới
+                    // Tạo cảnh báo mới
                     StockAlert newAlert = new StockAlert();
                     newAlert.setVariantId(variantId);
                     newAlert.setAlertType("LOW_STOCK_CENTRAL");
                     newAlert.setCurrentStock(currentStock);
                     newAlert.setThreshold(reorderLevel);
                     newAlert.setStatus("NEW");
-                    // dealerId = null (vì là kho trung tâm)
 
                     StockAlert savedAlert = stockAlertRepo.save(newAlert);
+                    
+                    log.info("Đang làm giàu (enriching) sự kiện low-stock...");
+                    VariantDetailDto details = callCatalogService(variantId);
 
-                    // Gửi thông báo qua WebSocket đến topic mà frontend đang lắng nghe
-                    messagingTemplate.convertAndSend("/topic/staff-notifications", savedAlert);
+                    // 3. (THAY ĐỔI) Map Entity sang Event DTO với dữ liệu mới
+                    StockAlertEvent eventPayload = StockAlertEvent.builder()
+                            .alertId(savedAlert.getAlertId())
+                            .variantId(savedAlert.getVariantId())
+                            .alertType(savedAlert.getAlertType())
+                            .currentStock(savedAlert.getCurrentStock())
+                            .threshold(savedAlert.getThreshold())
+                            .alertDate(savedAlert.getAlertDate())
+                            .variantName(details.getVersionName()) // Giả sử bạn dùng VersionName
+                            .skuCode(details.getSkuCode())
+                            .build();
+                    // Gửi sự kiện Kafka
+                    try {
+                        kafkaTemplate.send(TOPIC_LOW_STOCK_ALERT, eventPayload);
+                    } catch (Exception e) {
+                        log.warn("WARN: Gửi sự kiện Kafka (LOW_STOCK_ALERT) thất bại. {}", e.getMessage());
+                    }
+                    
                 }
                 // Nếu existingAlert.isPresent() -> Đã cảnh báo rồi, không làm gì cả.
                 
             } else {
-                // ---- TRƯỜG HỢP 2: TRÊN NGƯỠNG (STOCK_OK) HOẶC HẾT HÀNG (OUT_OF_STOCK) ----
-                
+                // ---- TRƯỜNG HỢP 2: TRÊN NGƯỠNG (STOCK_OK) ----
                 if (existingAlert.isPresent()) {
-                    // Nếu trên ngưỡng VÀ có cảnh báo đang hoạt động -> "Giải quyết" cảnh báo đó
                     StockAlert alertToResolve = existingAlert.get();
-                    alertToResolve.setStatus("RESOLVED"); // Đánh dấu là đã giải quyết
+                    alertToResolve.setStatus("RESOLVED"); 
                     stockAlertRepo.save(alertToResolve);
                     
-                    // (Optional: Bạn cũng có thể gửi 1 tin nhắn "resolved" qua socket nếu muốn)
-                    // messagingTemplate.convertAndSend("/topic/staff-notifications-resolved", alertToResolve);
+                    // (Bạn cũng có thể gửi 1 tin nhắn "alert_resolved" qua Kafka ở đây nếu muốn)
                 }
-                // Nếu không có cảnh báo -> không làm gì cả.
             }
         } catch (Exception e) {
-            // Bắt mọi lỗi để đảm bảo logic cảnh báo không làm hỏng giao dịch chính
-            System.err.println("ERROR: Lỗi trong lúc checkStockThresholdAndNotify: " + e.getMessage());
-            e.printStackTrace();
+            log.error("CRITICAL ERROR: Lỗi trong lúc checkStockThresholdAndNotify: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Hàm helper gọi sang catalog-service để lấy chi tiết xe
+     */
+    private VariantDetailDto callCatalogService(Long variantId) {
+        String url = vehicleCatalogUrl + "/vehicle-catalog/variants/" + variantId;
+        try {
+            ResponseEntity<ApiRespond<VariantDetailDto>> response = restTemplate.exchange(
+                url, 
+                HttpMethod.GET, 
+                null, 
+                new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {}
+            );
+            
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || response.getBody().getData() == null) {
+                log.warn("Không thể lấy chi tiết variant {} từ catalog-service, response: {}", variantId, response.getStatusCode());
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
+            }
+            return response.getBody().getData();
+
+        } catch (Exception e) {
+            log.error("Lỗi khi gọi catalog-service cho variant {}: {}", variantId, e.getMessage());
+            // Trả về DTO rỗng (hoặc ném lỗi) tuỳ bạn quyết định
+            // Ném lỗi sẽ an toàn hơn để đảm bảo dữ liệu không bị sai
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
     }
 }

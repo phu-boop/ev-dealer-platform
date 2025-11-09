@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiAlertTriangle, FiLoader } from "react-icons/fi";
 import { getActiveAlerts } from "../services/inventoryService";
+import { getVariantDetails } from "../../catalog/services/vehicleCatalogService";
 
 const StockAlerts = () => {
   const [alerts, setAlerts] = useState([]);
@@ -21,7 +22,7 @@ const StockAlerts = () => {
   }, []);
 
   if (isLoading || alerts.length === 0) {
-    return null; // Ẩn đi nếu đang tải hoặc không có cảnh báo
+    return null;
   }
 
   return (
@@ -35,13 +36,11 @@ const StockAlerts = () => {
             Cảnh báo tồn kho ({alerts.length})
           </p>
           <ul className="text-sm text-yellow-700 list-disc list-inside mt-1">
-            {alerts.slice(0, 3).map(
-              (
-                alert // Chỉ hiển thị 3 cảnh báo đầu tiên
-              ) => (
-                <li key={alert.id}>{alert.message}</li>
-              )
-            )}
+            {alerts.slice(0, 3).map((alert) => {
+              const message = `Sản phẩm (ID: ${alert.variantId}) sắp hết hàng. (Tồn kho: ${alert.currentStock} / Ngưỡng: ${alert.threshold})`;
+
+              return <li key={alert.alertId}>{message}</li>;
+            })}
           </ul>
         </div>
       </div>

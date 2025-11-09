@@ -103,11 +103,6 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
-        <!-- WebSocket -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-websocket</artifactId>
-        </dependency>
         <!-- poi (Xuất báo cáo) -->
         <dependency>
             <groupId>org.apache.poi</groupId>

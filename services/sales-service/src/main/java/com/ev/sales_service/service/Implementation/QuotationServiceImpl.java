@@ -144,7 +144,7 @@ public class QuotationServiceImpl implements QuotationService {
         quotation.setValidUntil(request.getValidUntil());
         quotation.setTermsConditions(request.getTermsConditions());
         quotation.setQuotationDate(LocalDateTime.now());
-        quotation.setStatus(QuotationStatus.SENT);
+        quotation.setStatus(QuotationStatus.PENDING); // PENDING = đã gửi cho quản lý duyệt
 
         Quotation updatedQuotation = quotationRepository.save(quotation);
 
@@ -168,7 +168,7 @@ public class QuotationServiceImpl implements QuotationService {
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
-        if (quotation.getStatus() != QuotationStatus.SENT) {
+        if (quotation.getStatus() != QuotationStatus.PENDING) { // PENDING = đã gửi cho quản lý duyệt
             throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
         }
 
@@ -237,7 +237,7 @@ public class QuotationServiceImpl implements QuotationService {
         // Use B2C service for customer orders
         SalesOrderB2CResponse salesOrderResponse = salesOrderServiceB2C.createSalesOrderFromQuotation(quotationId);
 
-        quotation.setStatus(QuotationStatus.COMPLETE);
+        quotation.setStatus(QuotationStatus.ACCEPTED); // ACCEPTED = đã chấp nhận (hoàn thành)
         quotationRepository.save(quotation);
         // Convert to common response format
         return convertToSalesOrderResponseB2C(salesOrderResponse);

@@ -102,6 +102,25 @@ export const getAllVariantsPaginated = (params) => {
   });
 };
 
+/**
+ * Lấy chi tiết một phiên bản xe cụ thể.
+ * @param {number | string} variantId - ID của phiên bản.
+ */
+export const getVariantDetails = (variantId) => {
+  return apiConstVehicleService.get(`/vehicle-catalog/variants/${variantId}`);
+};
+
+/**
+ * Lấy chi tiết của nhiều phiên bản dựa trên danh sách ID.
+ * @param {Array<number|string>} ids - Mảng các variantId.
+ */
+export const getVariantDetailsByIds = (ids) => {
+  return apiConstVehicleService.post(
+    "/vehicle-catalog/variants/details-by-ids",
+    ids
+  );
+};
+
 // ==========================================================
 // ============ API CHO TÍNH NĂNG (FEATURES) ================
 // ==========================================================
@@ -133,16 +152,5 @@ export const assignFeatureToVariant = (variantId, featureData) => {
 export const unassignFeatureFromVariant = (variantId, featureId) => {
   return apiConstVehicleService.delete(
     `/vehicle-catalog/variants/${variantId}/features/${featureId}`
-  );
-};
-
-/**
- * Lấy chi tiết của nhiều phiên bản dựa trên danh sách ID.
- * @param {Array<number|string>} ids - Mảng các variantId.
- */
-export const getVariantDetailsByIds = (ids) => {
-  return apiConstVehicleService.post(
-    "/vehicle-catalog/variants/details-by-ids",
-    ids
   );
 };

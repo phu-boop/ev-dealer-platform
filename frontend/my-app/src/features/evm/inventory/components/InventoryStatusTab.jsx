@@ -72,6 +72,24 @@ const InventoryStatusTab = () => {
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    // Tạo một timer
+    const timer = setTimeout(() => {
+      setPage(0); // Reset về trang 0
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        search: searchTerm, // Cập nhật filter thật sau khi hết 500ms
+      }));
+    }, 500); // 500ms (nửa giây)
+
+    // Hàm dọn dẹp (cleanup function)
+    // Sẽ chạy mỗi khi searchTerm thay đổi (trước khi effect mới chạy)
+    return () => {
+      clearTimeout(timer); // Hủy timer cũ
+    };
+  }, [searchTerm, setFilters, setPage]); // Phụ thuộc
 
   const fetchInventory = useCallback(async () => {
     setIsLoading(true);
@@ -236,7 +254,8 @@ const InventoryStatusTab = () => {
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             name="search"
-            onChange={handleFilterChange}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Tìm theo tên xe, SKU..."
             className="p-2 pl-10 border rounded-lg w-full"
           />
@@ -359,12 +378,12 @@ const InventoryStatusTab = () => {
                               </div>
                             )}
 
-                            {/* 2. Trạng thái đã tải xong (hoặc chưa tải) */}
+                            {/* Trạng thái đã tải xong (hoặc chưa tải) */}
                             {loadingVins !== item.variantId &&
                               (() => {
                                 const vins = vinsMap.get(item.variantId);
 
-                                // 2a. Chưa có dữ liệu (chưa kịp tải)
+                                // Chưa có dữ liệu (chưa kịp tải)
                                 if (!vins) {
                                   return (
                                     <p className="text-sm text-gray-500">
@@ -373,7 +392,7 @@ const InventoryStatusTab = () => {
                                   );
                                 }
 
-                                // 2b. Không tìm thấy VIN
+                                // Không tìm thấy VIN
                                 if (vins.length === 0) {
                                   return (
                                     <p className="text-sm text-gray-500">
@@ -382,7 +401,7 @@ const InventoryStatusTab = () => {
                                   );
                                 }
 
-                                // 2c. Hiển thị danh sách VINs
+                                // Hiển thị danh sách VINs
                                 return (
                                   <div className="flex flex-wrap gap-2">
                                     {vins.map((vin) => (
