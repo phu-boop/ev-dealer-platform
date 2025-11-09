@@ -121,13 +121,21 @@ const FeedbackStatistics = () => {
         {statistics && (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="bg-white rounded-xl shadow-lg border border-gray-200/80 p-6">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-gray-600">Tổng phản hồi</p>
                   <FiBarChart2 className="w-5 h-5 text-blue-600" />
                 </div>
                 <p className="text-3xl font-bold text-gray-900">{statistics.totalComplaints || 0}</p>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200/80 p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-gray-600">Mới nhận</p>
+                  <FiBarChart2 className="w-5 h-5 text-blue-600" />
+                </div>
+                <p className="text-3xl font-bold text-blue-600">{statistics.byStatus?.NEW || 0}</p>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg border border-gray-200/80 p-6">

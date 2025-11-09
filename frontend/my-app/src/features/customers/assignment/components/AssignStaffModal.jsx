@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
-import { FiX, FiUser, FiUsers, FiFileText, FiAlertCircle, FiCheck } from "react-icons/fi";
+import { FiX, FiUser, FiUsers, FiAlertCircle, FiCheck } from "react-icons/fi";
 import PropTypes from "prop-types";
 import staffService from "../services/staffService";
 import customerService from "../../management/services/customerService";
@@ -10,12 +11,23 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [formData, setFormData] = useState({
-    staffId: "",
-    notes: ""
+    staffId: ""
   });
 
   // Lấy dealerId từ session hoặc user context
   const dealerId = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId');
+
+  // Ngăn body scroll khi modal mở
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && dealerId) {
@@ -24,8 +36,7 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
     // Reset form khi mở modal
     if (isOpen) {
       setFormData({
-        staffId: customer?.assignedStaffId || "",
-        notes: ""
+        staffId: customer?.assignedStaffId || ""
       });
     }
   }, [isOpen, dealerId, customer]);
@@ -59,8 +70,7 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
     setLoading(true);
     try {
       await customerService.assignStaffToCustomer(customer.customerId, {
-        staffId: formData.staffId,
-        notes: formData.notes || ""
+        staffId: formData.staffId
       });
 
       toast.success("Phân công nhân viên thành công!");
@@ -105,11 +115,11 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-white bg-opacity-95 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+  const modalContent = (
+    <div className="fixed inset-0 bg-white/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
               <FiUsers className="w-6 h-6 text-white" />
@@ -131,7 +141,7 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-6 flex-1">
           {/* Customer Info */}
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
             <div className="flex items-center text-sm text-blue-800">
@@ -189,23 +199,6 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
             )}
           </div>
 
-          {/* Notes */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Ghi Chú (Tùy chọn)
-            </label>
-            <div className="relative">
-              <FiFileText className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
-              <textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={3}
-                className="w-full pl-10 pr-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white resize-none"
-                placeholder="Thêm ghi chú về phân công này..."
-              />
-            </div>
-          </div>
-
           {/* Info Box */}
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start">
             <FiCheck className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
@@ -259,6 +252,8 @@ const AssignStaffModal = ({ isOpen, onClose, customer, onAssignSuccess }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 AssignStaffModal.propTypes = {

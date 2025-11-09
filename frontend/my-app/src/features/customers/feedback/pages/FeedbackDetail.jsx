@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   FiArrowLeft, FiUser, FiPhone, FiMail, FiCalendar, FiClock,
@@ -13,6 +14,7 @@ import {
   addProgressUpdate,
   resolveComplaint,
   closeComplaint,
+  sendNotificationToCustomer,
   COMPLAINT_TYPES,
   COMPLAINT_SEVERITIES,
   COMPLAINT_STATUSES,
@@ -60,6 +62,29 @@ const FeedbackDetail = () => {
     || sessionStorage.getItem('userId') 
     || sessionStorage.getItem('profileId');
   const basePath = isManager ? '/dealer/manager' : '/dealer/staff';
+
+  // Lock body scroll when any modal is open
+  const isAnyModalOpen = showAssignModal || showResolveModal || showStatusModal || showContactModal || showNoteModal;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isAnyModalOpen]);
+
+  // Helper function to create modal with Portal
+  const createModal = (content) => {
+    return createPortal(
+      <div className="fixed inset-0 bg-white/10 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        {content}
+      </div>,
+      document.body
+    );
+  };
 
   // Check if current user can perform actions on this complaint
   const canPerformAction = () => {
@@ -356,6 +381,46 @@ const FeedbackDetail = () => {
       } catch (error) {
         console.error('Error closing:', error);
         toast.error('Không thể đóng phản hồi');
+      }
+    }
+  };
+
+  const handleSendNotification = async () => {
+    // Kiểm tra xem có resolution chưa
+    if (!complaint?.resolution || complaint.resolution.trim() === '') {
+      toast.error('Chưa có kết quả xử lý. Vui lòng cập nhật kết quả trước khi gửi thông báo.');
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: 'Gửi thông báo cho khách hàng?',
+      html: `
+        <div class="text-left">
+          <p class="mb-2">Thông báo sẽ được gửi đến:</p>
+          <ul class="list-disc ml-5 mb-3">
+            <li><strong>Email:</strong> ${complaint.customerEmail || 'Không có'}</li>
+            <li><strong>Số điện thoại:</strong> ${complaint.customerPhone || 'Không có'}</li>
+          </ul>
+          <p class="text-sm text-gray-600">Nội dung: Kết quả xử lý phản hồi</p>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3B82F6',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: 'Gửi ngay',
+      cancelButtonText: 'Hủy'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await sendNotificationToCustomer(id);
+        toast.success('Đã gửi thông báo đến khách hàng!');
+        loadComplaint(); // Reload để cập nhật trạng thái notificationSent
+      } catch (error) {
+        console.error('Error sending notification:', error);
+        const message = error.response?.data?.message || 'Không thể gửi thông báo';
+        toast.error(message);
       }
     }
   };
@@ -683,12 +748,20 @@ const FeedbackDetail = () => {
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-green-900 mb-2">Giải pháp xử lý</h3>
                     <p className="text-green-800 mb-3">{complaint.resolution}</p>
-                    {complaint.resolvedAt && (
-                      <p className="text-sm text-green-600 flex items-center">
-                        <FiClock className="w-4 h-4 mr-2" />
-                        Giải quyết lúc: {formatDate(complaint.resolvedAt)}
-                      </p>
-                    )}
+                    <div className="space-y-2">
+                      {complaint.resolvedAt && (
+                        <p className="text-sm text-green-600 flex items-center">
+                          <FiClock className="w-4 h-4 mr-2" />
+                          Giải quyết lúc: {formatDate(complaint.resolvedAt)}
+                        </p>
+                      )}
+                      {complaint.notificationSent && complaint.notificationSentAt && (
+                        <p className="text-sm text-green-600 flex items-center">
+                          <FiSend className="w-4 h-4 mr-2" />
+                          Đã gửi thông báo lúc: {formatDate(complaint.notificationSentAt)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -836,6 +909,21 @@ const FeedbackDetail = () => {
                       Đánh dấu đã giải quyết
                     </button>
                   )}
+
+                  {/* Send Notification - Show when there is resolution */}
+                  {complaint.resolution && complaint.resolution.trim() !== '' && (
+                    <button
+                      onClick={handleSendNotification}
+                      className={`w-full px-4 py-2.5 rounded-lg font-medium flex items-center justify-center ${
+                        complaint.notificationSent
+                          ? 'bg-gray-100 text-gray-600 border border-gray-300'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      <FiSend className="w-5 h-5 mr-2" />
+                      {complaint.notificationSent ? 'Đã gửi thông báo' : 'Gửi thông báo cho KH'}
+                    </button>
+                  )}
                   
                   {/* Close - Manager only, when RESOLVED */}
                   {complaint.status === 'RESOLVED' && isManager && (
@@ -856,9 +944,8 @@ const FeedbackDetail = () => {
       </div>
 
       {/* Assign Modal */}
-      {showAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+      {showAssignModal && createModal(
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Gán nhân viên xử lý</h3>
             
             <div className="mb-6">
@@ -919,7 +1006,6 @@ const FeedbackDetail = () => {
               </button>
             </div>
           </div>
-        </div>
       )}
 
       {/* Progress Modal - ẨN ĐI VÌ KHÔNG CẦN THIẾT */}
@@ -930,9 +1016,8 @@ const FeedbackDetail = () => {
       */}
 
       {/* Resolve Modal */}
-      {showResolveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+      {showResolveModal && createModal(
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Giải pháp xử lý</h3>
             
             <div className="mb-6">
@@ -968,13 +1053,11 @@ const FeedbackDetail = () => {
               </button>
             </div>
           </div>
-        </div>
       )}
 
       {/* Contact Customer Modal */}
-      {showContactModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+      {showContactModal && createModal(
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
               <FiPhone className="w-6 h-6 mr-2 text-blue-600" />
               Liên hệ khách hàng
@@ -989,10 +1072,10 @@ const FeedbackDetail = () => {
                 onChange={(e) => setContactMethod(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="PHONE">📞 Điện thoại</option>
-                <option value="EMAIL">📧 Email</option>
-                <option value="SMS">💬 SMS</option>
-                <option value="IN_PERSON">👤 Gặp trực tiếp</option>
+                <option value="PHONE">Điện thoại</option>
+                <option value="EMAIL">Email</option>
+                <option value="SMS">SMS</option>
+                <option value="IN_PERSON">Gặp trực tiếp</option>
               </select>
             </div>
 
@@ -1033,13 +1116,11 @@ const FeedbackDetail = () => {
               </button>
             </div>
           </div>
-        </div>
       )}
 
       {/* Add Note Modal */}
-      {showNoteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+      {showNoteModal && createModal(
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
               <FiFileText className="w-6 h-6 mr-2 text-purple-600" />
               Thêm ghi chú nội bộ
@@ -1081,13 +1162,11 @@ const FeedbackDetail = () => {
               </button>
             </div>
           </div>
-        </div>
       )}
 
       {/* Status Change Modal */}
-      {showStatusModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+      {showStatusModal && createModal(
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Thay đổi trạng thái</h3>
             
             <div className="mb-6">
@@ -1141,7 +1220,6 @@ const FeedbackDetail = () => {
               </button>
             </div>
           </div>
-        </div>
       )}
     </div>
   );

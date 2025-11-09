@@ -22,6 +22,7 @@ import {
 const TestDriveManagement = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
+  const [allAppointments, setAllAppointments] = useState([]); // For stats calculation
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list', 'calendar', 'statistics'
@@ -30,29 +31,64 @@ const TestDriveManagement = () => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackAppointment, setFeedbackAppointment] = useState(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 10;
+
   // TODO: Sửa lại khi backend hỗ trợ dealer UUID
   // Tạm dùng dealerId = 1 vì backend expect Long, không phải UUID
   const dealerId = 1;
 
   useEffect(() => {
+    loadAllForStats();
     loadData();
   }, []);
 
-  const loadData = async () => {
+  // Load all appointments for stats calculation (without pagination)
+  const loadAllForStats = async () => {
+    try {
+      const response = await getTestDrivesByDealer(dealerId);
+      const data = response.data || [];
+      setAllAppointments(data);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  };
+
+  const loadData = async (page = 0) => {
     try {
       setLoading(true);
       
-      // Load appointments
-      const appointmentsRes = await getTestDrivesByDealer(dealerId);
-      const appointmentsData = appointmentsRes.data || [];
+      // Use filter API with pagination
+      const response = await filterTestDrives({
+        dealerId,
+        page: page,
+        size: pageSize,
+        sortBy: 'appointmentDate',
+        sortDirection: 'DESC'
+      });
+      
+      const appointmentsData = response.data?.content || response.data || [];
       setAppointments(appointmentsData);
       setFilteredAppointments(appointmentsData);
+      setTotalPages(response.data?.totalPages || 0);
+      setTotalElements(response.data?.totalElements || 0);
+      setCurrentPage(page);
 
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Không thể tải dữ liệu');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      loadData(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -219,13 +255,13 @@ const TestDriveManagement = () => {
     }
   };
 
-  // Statistics
+  // Statistics - calculated from ALL appointments, not just current page
   const stats = {
-    total: appointments.length,
-    scheduled: appointments.filter(a => a.status === 'SCHEDULED').length,
-    confirmed: appointments.filter(a => a.status === 'CONFIRMED').length,
-    completed: appointments.filter(a => a.status === 'COMPLETED').length,
-    cancelled: appointments.filter(a => a.status === 'CANCELLED').length,
+    total: allAppointments.length,
+    scheduled: allAppointments.filter(a => a.status === 'SCHEDULED').length,
+    confirmed: allAppointments.filter(a => a.status === 'CONFIRMED').length,
+    completed: allAppointments.filter(a => a.status === 'COMPLETED').length,
+    cancelled: allAppointments.filter(a => a.status === 'CANCELLED').length,
   };
 
   if (loading) {
@@ -347,17 +383,79 @@ const TestDriveManagement = () => {
                 </button>
               </div>
             ) : (
-              filteredAppointments.map((appointment) => (
-                <TestDriveCard
-                  key={appointment.appointmentId}
-                  appointment={appointment}
-                  onEdit={handleEdit}
-                  onCancel={handleCancel}
-                  onConfirm={handleConfirm}
-                  onComplete={handleComplete}
-                  onFeedback={handleFeedback}
-                />
-              ))
+              <>
+                {filteredAppointments.map((appointment) => (
+                  <TestDriveCard
+                    key={appointment.appointmentId}
+                    appointment={appointment}
+                    onEdit={handleEdit}
+                    onCancel={handleCancel}
+                    onConfirm={handleConfirm}
+                    onComplete={handleComplete}
+                    onFeedback={handleFeedback}
+                  />
+                ))}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Hiển thị <span className="font-semibold">{currentPage * pageSize + 1}</span> - <span className="font-semibold">{Math.min((currentPage + 1) * pageSize, totalElements)}</span> trong tổng số <span className="font-semibold">{totalElements}</span> lịch hẹn
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 0}
+                          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Trước
+                        </button>
+                        
+                        {/* Page Numbers */}
+                        <div className="flex space-x-1">
+                          {[...Array(totalPages)].map((_, index) => {
+                            // Show first page, last page, current page, and pages around current
+                            if (
+                              index === 0 || 
+                              index === totalPages - 1 || 
+                              (index >= currentPage - 1 && index <= currentPage + 1)
+                            ) {
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => handlePageChange(index)}
+                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    currentPage === index
+                                      ? 'bg-blue-600 text-white'
+                                      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  {index + 1}
+                                </button>
+                              );
+                            } else if (
+                              index === currentPage - 2 || 
+                              index === currentPage + 2
+                            ) {
+                              return <span key={index} className="px-2 text-gray-500">...</span>;
+                            }
+                            return null;
+                          })}
+                        </div>
+
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages - 1}
+                          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Sau
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

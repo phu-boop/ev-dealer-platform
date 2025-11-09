@@ -162,4 +162,17 @@ public class ComplaintController {
         ComplaintStatisticsResponse statistics = complaintService.getStatistics(dealerId, startDate, endDate);
         return ResponseEntity.ok(ApiResponse.success(statistics));
     }
+
+    /**
+     * Gửi thông báo kết quả xử lý đến khách hàng
+     * Dealer Staff có thể gửi thủ công
+     */
+    @PostMapping("/{id}/send-notification")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER')")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> sendNotificationToCustomer(
+            @PathVariable Long id) {
+        log.info("Sending notification to customer for complaint {}", id);
+        ComplaintResponse response = complaintService.sendNotificationToCustomer(id);
+        return ResponseEntity.ok(ApiResponse.success("Thông báo đã được gửi đến khách hàng", response));
+    }
 }

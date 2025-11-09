@@ -472,56 +472,66 @@ const CreateCustomer = () => {
             </div>
           </div>
 
-          {/* Staff Assignment Card - Only for Dealer Manager */}
-          {isDealerManager && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-8 hover:shadow-xl transition-shadow duration-300">
-              <div className="mb-6 pb-4 border-b border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                    <FiUsers className="w-5 h-5 text-white" />
-                  </div>
-                  Phân Công Nhân Viên
-                </h2>
-                <p className="text-sm text-gray-500 mt-2 ml-13">Chọn nhân viên phụ trách khách hàng (không bắt buộc)</p>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nhân viên được phân công
-                </label>
-                <div className="relative">
-                  <FiUsers className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <select
-                    name="assignedStaffId"
-                    value={formData.assignedStaffId}
-                    onChange={handleInputChange}
-                    disabled={loadingStaff}
-                    className="w-full pl-10 pr-10 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white appearance-none"
-                  >
-                    <option value="">-- Chọn nhân viên --</option>
-                    {staffList.map((staff) => (
-                      <option key={staff.staffId} value={staff.staffId}>
-                        {staff.fullName || staff.name || 'N/A'} ({staff.email})
-                        {staff.position ? ` - ${staff.position}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          {/* Staff Assignment Card - Visible for all roles */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-8 hover:shadow-xl transition-shadow duration-300">
+            <div className="mb-6 pb-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                  <FiUsers className="w-5 h-5 text-white" />
                 </div>
-                {loadingStaff && (
-                  <p className="mt-2 text-sm text-gray-500 flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                    Đang tải danh sách nhân viên...
-                  </p>
-                )}
-                {!loadingStaff && staffList.length === 0 && (
-                  <p className="mt-2 text-sm text-amber-600 flex items-center bg-amber-50 px-3 py-2 rounded-lg">
-                    <FiAlertCircle className="w-4 h-4 mr-1" />
-                    Không có nhân viên nào trong đại lý
-                  </p>
+                Phân Công Nhân Viên
+              </h2>
+              <p className="text-sm text-gray-500 mt-2 ml-13">Chọn nhân viên phụ trách khách hàng (không bắt buộc)</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nhân viên được phân công
+              </label>
+              <div className="relative group">
+                <FiUsers className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none z-10" />
+                <select
+                  name="assignedStaffId"
+                  value={formData.assignedStaffId}
+                  onChange={handleInputChange}
+                  disabled={loadingStaff || !isDealerManager}
+                  className={`w-full pl-10 pr-10 py-3.5 border rounded-xl transition-all duration-300 appearance-none ${
+                    isDealerManager 
+                      ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white cursor-pointer' 
+                      : 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  <option value="">-- Chọn nhân viên --</option>
+                  {staffList.map((staff) => (
+                    <option key={staff.staffId} value={staff.staffId}>
+                      {staff.fullName || staff.name || 'N/A'} ({staff.email})
+                      {staff.position ? ` - ${staff.position}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                
+                {/* Tooltip for Staff role */}
+                {!isDealerManager && (
+                  <div className="absolute left-0 -top-12 bg-gray-900 text-white text-sm rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20 shadow-lg">
+                    Chỉ Manager mới có quyền phân công nhân viên
+                    <div className="absolute left-6 -bottom-1 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                  </div>
                 )}
               </div>
+              {loadingStaff && (
+                <p className="mt-2 text-sm text-gray-500 flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  Đang tải danh sách nhân viên...
+                </p>
+              )}
+              {!loadingStaff && staffList.length === 0 && (
+                <p className="mt-2 text-sm text-amber-600 flex items-center bg-amber-50 px-3 py-2 rounded-lg">
+                  <FiAlertCircle className="w-4 h-4 mr-1" />
+                  Không có nhân viên nào trong đại lý
+                </p>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Submit Buttons Card */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-6">

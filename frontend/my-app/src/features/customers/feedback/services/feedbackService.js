@@ -73,12 +73,21 @@ export const closeComplaint = async (id) => {
 };
 
 /**
+ * Gửi thông báo kết quả xử lý đến khách hàng
+ */
+export const sendNotificationToCustomer = async (id) => {
+  const response = await apiConstTestDrive.post(`/api/complaints/${id}/send-notification`);
+  return response.data;
+};
+
+/**
  * Lấy thống kê phản hồi
  */
 export const getComplaintStatistics = async (dealerId, startDate, endDate) => {
   const params = { dealerId };
-  if (startDate) params.startDate = startDate;
-  if (endDate) params.endDate = endDate;
+  // Format dates to ISO DateTime format (backend expects LocalDateTime)
+  if (startDate) params.startDate = `${startDate}T00:00:00`;
+  if (endDate) params.endDate = `${endDate}T23:59:59`;
   
   const response = await apiConstTestDrive.get('/api/complaints/statistics', { params });
   return response.data;
