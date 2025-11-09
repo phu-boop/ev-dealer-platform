@@ -9,7 +9,7 @@ import com.ev.sales_service.enums.OrderStatusB2B;
 import java.util.UUID;
 import java.util.List;
 import java.time.LocalDate;
-import org.springframework.data.domain.Page; 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface SalesOrderServiceB2B {
@@ -69,7 +69,12 @@ public interface SalesOrderServiceB2B {
      * Đại lý báo cáo sự cố (giao thiếu, hỏng hóc) cho một đơn hàng.
      */
     void reportOrderIssue(UUID orderId, UUID dealerId, ReportIssueRequest request, String email);
-    
+
+    /**
+     * Lấy chi tiết đơn hàng theo orderId
+     */
+    SalesOrder getOrderById(UUID orderId);
+
     /**
      * Giải quyết một đơn hàng đang bị khiếu nại (DISPUTED)
      */

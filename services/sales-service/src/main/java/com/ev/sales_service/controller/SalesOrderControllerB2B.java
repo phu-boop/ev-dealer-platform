@@ -113,10 +113,10 @@ public class SalesOrderControllerB2B {
     @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") // Chỉ Staff/Admin được xem
     public ResponseEntity<ApiRespond<SalesOrderDtoB2B>> getB2BOrderDetails(
             @PathVariable UUID orderId) {
-                
+
         SalesOrder order = salesOrderServiceB2B.getB2BOrderDetailsById(orderId);
         SalesOrderDtoB2B dto = salesOrderMapperB2B.toDto(order);
-        
+
         return ResponseEntity.ok(ApiRespond.success("Lấy chi tiết đơn hàng thành công", dto));
     }
 
@@ -158,12 +158,12 @@ public class SalesOrderControllerB2B {
         return ResponseEntity.ok(ApiRespond.success("Order delivery confirmed", null));
     }
 
-    // API ĐẠI LÝ BÁO CÁO SỰ CỐ 
+    // API ĐẠI LÝ BÁO CÁO SỰ CỐ
     @PutMapping("/{orderId}/report-issue")
     @PreAuthorize("hasRole('DEALER_MANAGER')")
     public ResponseEntity<ApiRespond<Void>> reportIssue(
             @PathVariable UUID orderId,
-            @Valid @RequestBody ReportIssueRequest request, 
+            @Valid @RequestBody ReportIssueRequest request,
             @RequestHeader("X-User-Email") String email,
             @RequestHeader("X-User-ProfileId") UUID dealerId) {
 
@@ -233,12 +233,22 @@ public class SalesOrderControllerB2B {
         return ResponseEntity.noContent().build();
     }
 
+    // API Lấy Chi Tiết Đơn Hàng Theo OrderId
+    // GET /sales-orders/{orderId}
+    @GetMapping("/{orderId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF', 'DEALER_MANAGER', 'DEALER_STAFF', 'CUSTOMER')")
+    public ResponseEntity<ApiRespond<SalesOrderDto>> getOrderById(@PathVariable UUID orderId) {
+        SalesOrder order = salesOrderService.getOrderById(orderId);
+        SalesOrderDto responseDto = salesOrderMapper.toDto(order);
+        return ResponseEntity.ok(ApiRespond.success("Lấy chi tiết đơn hàng thành công", responseDto));
+    }
+
     // API lấy báo cáo doanh số theo khu vực đại lí
     @GetMapping("/b2b/report-completed")
     public ResponseEntity<ApiRespond<List<SalesOrder>>> getCompletedOrdersForReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-                
+
         List<SalesOrder> orders = salesOrderServiceB2B.getCompletedOrdersForReport(startDate, endDate);
         return ResponseEntity.ok(ApiRespond.success("Lấy dữ liệu báo cáo thành công", orders));
     }
@@ -256,5 +266,5 @@ public class SalesOrderControllerB2B {
 
         return ResponseEntity.ok(ApiRespond.success("Đã giải quyết khiếu nại thành công", responseDto));
     }
-    
+
 }
