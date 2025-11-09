@@ -109,12 +109,17 @@ public class SalesOrderControllerB2B {
         return ResponseEntity.ok(ApiRespond.success("Lấy danh sách đơn hàng thành công", dtoPage));
     }
 
+    // API Lấy Chi Tiết Đơn Hàng (Hỗ trợ cả B2B và B2C)
+    // GET /sales-orders/{orderId}
+    // Payment Service và các service khác cần endpoint này
+    // Sử dụng getOrderById() để lấy cả B2B và B2C orders (không filter theo type)
     @GetMapping("/{orderId}")
-    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") // Chỉ Staff/Admin được xem
-    public ResponseEntity<ApiRespond<SalesOrderDtoB2B>> getB2BOrderDetails(
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF', 'DEALER_MANAGER', 'DEALER_STAFF', 'CUSTOMER')")
+    public ResponseEntity<ApiRespond<SalesOrderDtoB2B>> getOrderDetails(
             @PathVariable UUID orderId) {
 
-        SalesOrder order = salesOrderServiceB2B.getB2BOrderDetailsById(orderId);
+        // getOrderById() lấy cả B2B và B2C orders (không filter theo type)
+        SalesOrder order = salesOrderServiceB2B.getOrderById(orderId);
         SalesOrderDtoB2B dto = salesOrderMapperB2B.toDto(order);
 
         return ResponseEntity.ok(ApiRespond.success("Lấy chi tiết đơn hàng thành công", dto));
@@ -231,16 +236,6 @@ public class SalesOrderControllerB2B {
         salesOrderServiceB2B.deleteCancelledOrder(orderId);
         // Trả về 204 No Content khi xóa thành công
         return ResponseEntity.noContent().build();
-    }
-
-    // API Lấy Chi Tiết Đơn Hàng Theo OrderId
-    // GET /sales-orders/{orderId}
-    @GetMapping("/{orderId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF', 'DEALER_MANAGER', 'DEALER_STAFF', 'CUSTOMER')")
-    public ResponseEntity<ApiRespond<SalesOrderDto>> getOrderById(@PathVariable UUID orderId) {
-        SalesOrder order = salesOrderService.getOrderById(orderId);
-        SalesOrderDto responseDto = salesOrderMapper.toDto(order);
-        return ResponseEntity.ok(ApiRespond.success("Lấy chi tiết đơn hàng thành công", responseDto));
     }
 
     // API lấy báo cáo doanh số theo khu vực đại lí

@@ -705,6 +705,15 @@ public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
         return findOrderByIdOrThrow(orderId); 
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public SalesOrder getOrderById(UUID orderId) {
+        // getOrderById() cần lấy cả B2B và B2C orders (cho Payment Service)
+        // Không filter theo type, chỉ lấy theo orderId
+        return salesOrderRepositoryB2B.findById(orderId)
+               .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+    }
+
     // --- CÁC HÀM HELPER ĐỂ LẤY HEADER ---
 
     /**

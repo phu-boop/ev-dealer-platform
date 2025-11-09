@@ -52,35 +52,9 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     @Transactional
     public InitiatePaymentResponse initiatePayment(UUID orderId, InitiatePaymentRequest request, String userEmail, UUID userProfileId) {
 
-        // 1. GỌI API ĐỘNG: Lấy thông tin đơn hàng từ sales-service
-        log.info("Calling sales-service for orderId: {}", orderId);
-
-        // Cấu hình URL "động"
-        String url = salesServiceUrl + "/sales-orders/" + orderId;
-        SalesOrderData orderData;
-
-        try {
-            // Sales-service trả về ApiRespond<SalesOrderDto>, parse response dạng Map
-            ParameterizedTypeReference<ApiRespond<Map<String, Object>>> responseType =
-                    new ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {};
-            
-            ResponseEntity<ApiRespond<Map<String, Object>>> response = 
-                    restTemplate.exchange(url, HttpMethod.GET, null, responseType);
-            
-            ApiRespond<Map<String, Object>> apiResponse = response.getBody();
-            if (apiResponse == null || apiResponse.getData() == null) {
-                log.error("Failed to fetch order details: Response or data is null");
-                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
-            }
-            
-            // Map Map<String, Object> sang SalesOrderData
-            Map<String, Object> salesOrderMap = apiResponse.getData();
-            orderData = mapToSalesOrderData(salesOrderMap);
-            
-        } catch (RestClientException e) {
-            log.error("Failed to fetch order details from sales-service at {}: {}", url, e.getMessage());
-            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
-        }
+        // 1. GỌI API ĐỘNG: Lấy thông tin đơn hàng từ sales-service (B2B hoặc B2C)
+        log.info("Fetching order details from sales-service for orderId: {}", orderId);
+        SalesOrderData orderData = fetchOrderFromSalesService(orderId);
 
         // (Từ Bước 2 -> 6: Logic giữ nguyên y hệt kế hoạch trước)
 
@@ -147,7 +121,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     request.getAmount(), remainingAmount);
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
-        
+
         // Kiểm tra PaymentRecord không được đã thanh toán đầy đủ
         if ("PAID".equals(record.getStatus())) {
             log.error("PaymentRecord is already PAID - RecordId: {}, OrderId: {}", record.getRecordId(), orderId);
@@ -196,9 +170,121 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     }
 
     /**
-     * Map Map<String, Object> từ sales-service response sang SalesOrderData
+     * Fetch order từ Sales Service - Thử cả B2B và B2C, ưu tiên endpoint nào trả về data hợp lệ
+     * Logic: Thử B2B trước, nếu không tìm thấy (404) hoặc không có customerId (có thể là B2B order nhưng payment service cần customerId),
+     * thì thử B2C. Nếu cả 2 đều fail, throw error.
      */
-    private SalesOrderData mapToSalesOrderData(Map<String, Object> salesOrderMap) {
+    private SalesOrderData fetchOrderFromSalesService(UUID orderId) {
+        // Thử B2B endpoint trước
+        SalesOrderData b2bOrderData = null;
+        try {
+            log.info("Attempting to fetch order from B2B endpoint - OrderId: {}", orderId);
+            b2bOrderData = fetchB2BOrder(orderId);
+            // Nếu B2B order có customerId (có thể là B2C order nhưng được trả về từ B2B endpoint), sử dụng nó
+            if (b2bOrderData != null && b2bOrderData.getCustomerId() != null) {
+                log.info("Found order from B2B endpoint with customerId - OrderId: {}, CustomerId: {}", 
+                        orderId, b2bOrderData.getCustomerId());
+                return b2bOrderData;
+            }
+            // Nếu B2B order không có customerId (là B2B order thực sự), vẫn sử dụng nó
+            log.info("Found B2B order (no customerId) - OrderId: {}", orderId);
+            return b2bOrderData;
+        } catch (RestClientException e) {
+            log.warn("Failed to fetch from B2B endpoint (might be B2C order), trying B2C endpoint - OrderId: {}, Error: {}", 
+                    orderId, e.getMessage());
+        }
+        
+        // Thử B2C endpoint nếu B2B không tìm thấy
+        try {
+            log.info("Attempting to fetch order from B2C endpoint - OrderId: {}", orderId);
+            SalesOrderData b2cOrderData = fetchB2COrder(orderId);
+            // B2C order phải có customerId (đã validate trong fetchB2COrder)
+            log.info("Found order from B2C endpoint - OrderId: {}, CustomerId: {}", 
+                    orderId, b2cOrderData.getCustomerId());
+            return b2cOrderData;
+        } catch (RestClientException e) {
+            log.error("Failed to fetch order from both B2B and B2C endpoints - OrderId: {}", orderId);
+            // Nếu B2B đã tìm thấy nhưng không có customerId, trả về B2B data
+            if (b2bOrderData != null) {
+                log.warn("Returning B2B order data (no customerId) - OrderId: {}", orderId);
+                return b2bOrderData;
+            }
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+    }
+
+    /**
+     * Fetch B2B order từ Sales Service
+     * Endpoint: GET /sales-orders/{orderId}
+     * Response: ApiRespond<SalesOrderDtoB2B>
+     * @throws RestClientException nếu order không tìm thấy hoặc có lỗi
+     */
+    private SalesOrderData fetchB2BOrder(UUID orderId) throws RestClientException {
+        String url = salesServiceUrl + "/sales-orders/" + orderId;
+        log.info("Calling B2B endpoint: {}", url);
+
+        ParameterizedTypeReference<ApiRespond<Map<String, Object>>> responseType =
+                new ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {};
+        
+        ResponseEntity<ApiRespond<Map<String, Object>>> response;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.GET, null, responseType);
+        } catch (RestClientException e) {
+            log.error("Failed to call B2B endpoint - OrderId: {}, Error: {}", orderId, e.getMessage());
+            throw e; // Re-throw để caller có thể xử lý
+        }
+        
+        ApiRespond<Map<String, Object>> apiResponse = response.getBody();
+        if (apiResponse == null || apiResponse.getData() == null) {
+            log.error("Failed to fetch B2B order: Response or data is null");
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+        
+        Map<String, Object> salesOrderMap = apiResponse.getData();
+        SalesOrderData orderData = mapB2BOrderToSalesOrderData(salesOrderMap);
+        log.info("Successfully fetched B2B order - OrderId: {}, CustomerId: {}, TotalAmount: {}", 
+                orderData.getOrderId(), orderData.getCustomerId(), orderData.getTotalAmount());
+        return orderData;
+    }
+
+    /**
+     * Fetch B2C order từ Sales Service
+     * Endpoint: GET /api/v1/sales-orders/b2c/{orderId}
+     * Response: ApiRespond<SalesOrderB2CResponse>
+     * @throws RestClientException nếu order không tìm thấy hoặc có lỗi
+     */
+    private SalesOrderData fetchB2COrder(UUID orderId) throws RestClientException {
+        String url = salesServiceUrl + "/api/v1/sales-orders/b2c/" + orderId;
+        log.info("Calling B2C endpoint: {}", url);
+
+        ParameterizedTypeReference<ApiRespond<Map<String, Object>>> responseType =
+                new ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {};
+        
+        ResponseEntity<ApiRespond<Map<String, Object>>> response;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.GET, null, responseType);
+        } catch (RestClientException e) {
+            log.error("Failed to call B2C endpoint - OrderId: {}, Error: {}", orderId, e.getMessage());
+            throw e; // Re-throw để caller có thể xử lý
+        }
+        
+        ApiRespond<Map<String, Object>> apiResponse = response.getBody();
+        if (apiResponse == null || apiResponse.getData() == null) {
+            log.error("Failed to fetch B2C order: Response or data is null");
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+        
+        Map<String, Object> salesOrderMap = apiResponse.getData();
+        SalesOrderData orderData = mapB2COrderToSalesOrderData(salesOrderMap);
+        log.info("Successfully fetched B2C order - OrderId: {}, CustomerId: {}, TotalAmount: {}", 
+                orderData.getOrderId(), orderData.getCustomerId(), orderData.getTotalAmount());
+        return orderData;
+    }
+
+    /**
+     * Map B2B order response (SalesOrderDtoB2B) sang SalesOrderData
+     */
+    private SalesOrderData mapB2BOrderToSalesOrderData(Map<String, Object> salesOrderMap) {
         SalesOrderData data = new SalesOrderData();
         
         // Parse orderId
@@ -231,7 +317,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     data.setTotalAmount(new BigDecimal((String) totalAmountObj));
                 } else {
                     log.warn("Cannot parse totalAmount - OrderId: {}, Type: {}", 
-                            data.getOrderId(), totalAmountObj.getClass().getName());
+                            data.getOrderId(), totalAmountObj != null ? totalAmountObj.getClass().getName() : "null");
                     data.setTotalAmount(BigDecimal.ZERO);
                 }
             } catch (Exception e) {
@@ -290,22 +376,181 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.warn("CustomerId is null for OrderId: {} (may be a B2B order)", data.getOrderId());
         }
         
-        // Parse orderStatus
-        if (salesOrderMap.get("orderStatus") != null) {
-            Object orderStatusObj = salesOrderMap.get("orderStatus");
-            if (orderStatusObj instanceof Map) {
-                // Nếu là enum object, lấy name
-                @SuppressWarnings("unchecked")
-                Map<String, Object> statusMap = (Map<String, Object>) orderStatusObj;
-                data.setOrderStatusB2C(statusMap.get("name") != null ? statusMap.get("name").toString() : "UNKNOWN");
-            } else {
-                data.setOrderStatusB2C(orderStatusObj.toString());
-            }
-        } else {
-            data.setOrderStatusB2C("UNKNOWN");
-        }
+        // Parse orderStatus từ B2B order
+        // SalesOrderDtoB2B có orderStatus (B2B) và có thể có orderStatusB2C (nếu là B2C order nhưng được trả về từ B2B endpoint)
+        String orderStatus = parseOrderStatus(salesOrderMap, "orderStatusB2C", "orderStatus");
+        data.setOrderStatusB2C(orderStatus);
+        
+        log.info("Parsed B2B order - OrderId: {}, CustomerId: {}, TotalAmount: {}, Status: {}", 
+                data.getOrderId(), data.getCustomerId(), data.getTotalAmount(), data.getOrderStatusB2C());
         
         return data;
+    }
+
+    /**
+     * Map B2C order response (SalesOrderB2CResponse) sang SalesOrderData
+     */
+    private SalesOrderData mapB2COrderToSalesOrderData(Map<String, Object> salesOrderMap) {
+        SalesOrderData data = new SalesOrderData();
+        
+        // Parse orderId
+        if (salesOrderMap.get("orderId") != null) {
+            try {
+                Object orderIdObj = salesOrderMap.get("orderId");
+                if (orderIdObj instanceof UUID) {
+                    data.setOrderId((UUID) orderIdObj);
+                } else {
+                    String orderIdStr = orderIdObj.toString();
+                    data.setOrderId(UUID.fromString(orderIdStr));
+                }
+            } catch (Exception e) {
+                log.error("Failed to parse orderId - Value: {}, Error: {}", 
+                        salesOrderMap.get("orderId"), e.getMessage());
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+        } else {
+            log.error("orderId is null in B2C order response");
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        
+        // Parse totalAmount
+        if (salesOrderMap.get("totalAmount") != null) {
+            Object totalAmountObj = salesOrderMap.get("totalAmount");
+            try {
+                if (totalAmountObj instanceof Number) {
+                    data.setTotalAmount(BigDecimal.valueOf(((Number) totalAmountObj).doubleValue()));
+                } else if (totalAmountObj instanceof String) {
+                    data.setTotalAmount(new BigDecimal((String) totalAmountObj));
+                } else {
+                    log.warn("Cannot parse totalAmount - OrderId: {}, Type: {}", 
+                            data.getOrderId(), totalAmountObj.getClass().getName());
+                    data.setTotalAmount(BigDecimal.ZERO);
+                }
+            } catch (Exception e) {
+                log.error("Failed to parse totalAmount - OrderId: {}, Error: {}", 
+                        data.getOrderId(), e.getMessage());
+                data.setTotalAmount(BigDecimal.ZERO);
+            }
+        } else {
+            log.warn("totalAmount is null in B2C order - OrderId: {}", data.getOrderId());
+            data.setTotalAmount(BigDecimal.ZERO);
+        }
+        
+        // Parse customerId (Long) từ B2C order
+        // SalesOrderB2CResponse.customerId là Long
+        if (salesOrderMap.get("customerId") != null) {
+            try {
+                Object customerIdObj = salesOrderMap.get("customerId");
+                if (customerIdObj instanceof Number) {
+                    data.setCustomerId(((Number) customerIdObj).longValue());
+                    log.info("Found customerId from B2C order - OrderId: {}, CustomerId: {}", 
+                            data.getOrderId(), data.getCustomerId());
+                } else {
+                    log.warn("CustomerId from B2C order is not a Number - OrderId: {}, Type: {}", 
+                            data.getOrderId(), customerIdObj != null ? customerIdObj.getClass().getName() : "null");
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse customerId from B2C order - OrderId: {}, Error: {}", 
+                        data.getOrderId(), e.getMessage());
+            }
+        }
+        
+        // Nếu không có customerId, thử lấy từ quotation (fallback)
+        if (data.getCustomerId() == null && salesOrderMap.get("quotation") != null) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> quotationMap = (Map<String, Object>) salesOrderMap.get("quotation");
+                if (quotationMap.get("customerId") != null) {
+                    Object customerIdObj = quotationMap.get("customerId");
+                    if (customerIdObj instanceof Number) {
+                        data.setCustomerId(((Number) customerIdObj).longValue());
+                        log.info("Found customerId from quotation (fallback) - OrderId: {}, CustomerId: {}", 
+                                data.getOrderId(), data.getCustomerId());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse customerId from quotation - OrderId: {}, Error: {}", 
+                        data.getOrderId(), e.getMessage());
+            }
+        }
+        
+        // B2C order phải có customerId
+        if (data.getCustomerId() == null) {
+            log.error("CustomerId is null for B2C order - OrderId: {}", data.getOrderId());
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        
+        // Parse orderStatusB2C từ B2C order
+        // SalesOrderB2CResponse có orderStatusB2C
+        String orderStatus = parseOrderStatus(salesOrderMap, "orderStatusB2C", null);
+        data.setOrderStatusB2C(orderStatus);
+        
+        log.info("Parsed B2C order - OrderId: {}, CustomerId: {}, TotalAmount: {}, Status: {}", 
+                data.getOrderId(), data.getCustomerId(), data.getTotalAmount(), data.getOrderStatusB2C());
+        
+        return data;
+    }
+
+    /**
+     * Helper method để parse order status từ response map
+     * @param salesOrderMap Map chứa order data
+     * @param primaryStatusField Field chính để lấy status (ưu tiên)
+     * @param fallbackStatusField Field fallback để lấy status (nếu primary không có)
+     * @return Status string
+     */
+    private String parseOrderStatus(Map<String, Object> salesOrderMap, String primaryStatusField, String fallbackStatusField) {
+        String status = null;
+        
+        // Ưu tiên lấy từ primary field
+        if (primaryStatusField != null && salesOrderMap.get(primaryStatusField) != null) {
+            Object statusObj = salesOrderMap.get(primaryStatusField);
+            if (statusObj instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> statusMap = (Map<String, Object>) statusObj;
+                status = statusMap.get("name") != null ? statusMap.get("name").toString() : null;
+            } else {
+                status = statusObj.toString();
+            }
+        }
+        
+        // Nếu không có, thử fallback field
+        if (status == null && fallbackStatusField != null && salesOrderMap.get(fallbackStatusField) != null) {
+            Object statusObj = salesOrderMap.get(fallbackStatusField);
+            if (statusObj instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> statusMap = (Map<String, Object>) statusObj;
+                status = statusMap.get("name") != null ? statusMap.get("name").toString() : "UNKNOWN";
+            } else {
+                status = statusObj.toString();
+            }
+        }
+        
+        return status != null ? status : "UNKNOWN";
+    }
+
+    /**
+     * Update order status trong Sales Service - Thử B2C trước, nếu không tìm thấy thì thử B2B
+     * B2C endpoint: PUT /api/v1/sales-orders/b2c/{orderId}/status?status={status}
+     * B2B endpoint: (Hiện tại chưa có endpoint update status riêng, có thể cần tạo hoặc skip)
+     */
+    private void updateOrderStatusInSalesService(UUID orderId, String status) {
+        log.info("Updating order status in sales-service - OrderId: {}, Status: {}", orderId, status);
+        
+        // Thử B2C endpoint trước (vì B2C orders phổ biến hơn trong payment flow)
+        try {
+            String b2cUrl = salesServiceUrl + "/api/v1/sales-orders/b2c/" + orderId + "/status?status=" + status;
+            log.info("Attempting to update B2C order status: {}", b2cUrl);
+            restTemplate.put(b2cUrl, null);
+            log.info("Successfully updated B2C order status in sales-service for orderId: {}", orderId);
+            return;
+        } catch (RestClientException e) {
+            log.warn("Failed to update B2C order status, order might be B2B - OrderId: {}, Error: {}", 
+                    orderId, e.getMessage());
+            // B2B orders thường không có endpoint update status riêng trong payment flow
+            // Chỉ log warning, không throw error vì payment đã thành công
+            log.info("B2B orders typically don't require status update from payment service - OrderId: {}", orderId);
+            // TODO: Nếu B2B cần update status, implement B2B endpoint update logic here
+        }
     }
 
     private PaymentRecord createNewPaymentRecord(SalesOrderData orderData) {
@@ -372,10 +617,10 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         // 6. Cập nhật PaymentRecord
         BigDecimal newAmountPaid = record.getAmountPaid().add(transaction.getAmount());
         record.setAmountPaid(newAmountPaid);
-        
+
         // Tính remainingAmount để kiểm tra status (remainingAmount sẽ được tính tự động bởi @PreUpdate khi save)
         BigDecimal calculatedRemainingAmount = record.getTotalAmount().subtract(newAmountPaid);
-        
+
         if (calculatedRemainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
             record.setStatus("PAID");
             log.info("PaymentRecord updated to PAID - RecordId: {}, OrderId: {}", 
@@ -394,20 +639,9 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         // 7. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật sales-service
         // Chỉ cập nhật khi thanh toán đầy đủ (sử dụng savedRecord để lấy status chính xác)
         if ("PAID".equals(savedRecord.getStatus())) {
-            String url = salesServiceUrl + "/sales-orders/" + savedRecord.getOrderId() + "/status";
-            Map<String, String> requestBody = Map.of("status", "CONFIRMED"); // (Giả sử sales-service chấp nhận body này)
-
-            try {
-                // Dùng PUT để cập nhật
-                restTemplate.put(url, requestBody);
-                log.info("Successfully updated order status in sales-service for orderId: {}", savedRecord.getOrderId());
-            } catch (RestClientException e) {
-                log.error("Failed to update order status in sales-service at {}: {}", url, e.getMessage(), e);
-                // (Không ném lỗi ở đây, vì tiền đã được ghi nhận. Cần cơ chế retry/bù trừ)
-                // TODO: Implement retry mechanism or event-driven update
-            }
+            updateOrderStatusInSalesService(savedRecord.getOrderId(), "CONFIRMED");
         } else {
-            log.info("Payment not fully paid yet, skipping sales-service status update - OrderId: {}, RemainingAmount: {}", 
+            log.info("Payment not fully paid yet, skipping sales-service status update - OrderId: {}, RemainingAmount: {}",
                     savedRecord.getOrderId(), savedRecord.getRemainingAmount());
         }
 

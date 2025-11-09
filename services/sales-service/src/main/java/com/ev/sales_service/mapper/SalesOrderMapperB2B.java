@@ -27,7 +27,8 @@ public class SalesOrderMapperB2B {
         dto.setStaffId(order.getStaffId());
         dto.setOrderDate(order.getOrderDate());
         dto.setDeliveryDate(order.getDeliveryDate());
-        dto.setOrderStatus(order.getOrderStatus());
+        dto.setOrderStatus(order.getOrderStatus()); // B2B status
+        dto.setOrderStatusB2C(order.getOrderStatusB2C()); // B2C status (có thể null)
         dto.setTotalAmount(order.getTotalAmount());
         dto.setManagerApproval(order.getManagerApproval());
         dto.setApprovedBy(order.getApprovedBy());
