@@ -233,15 +233,15 @@ public class SalesOrderControllerB2B {
         return ResponseEntity.noContent().build();
     }
 
-    // API Lấy Chi Tiết Đơn Hàng Theo OrderId
-    // GET /sales-orders/{orderId}
-    @GetMapping("/{orderId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF', 'DEALER_MANAGER', 'DEALER_STAFF', 'CUSTOMER')")
-    public ResponseEntity<ApiRespond<SalesOrderDto>> getOrderById(@PathVariable UUID orderId) {
-        SalesOrder order = salesOrderService.getOrderById(orderId);
-        SalesOrderDto responseDto = salesOrderMapper.toDto(order);
-        return ResponseEntity.ok(ApiRespond.success("Lấy chi tiết đơn hàng thành công", responseDto));
-    }
+    // // API Lấy Chi Tiết Đơn Hàng Theo OrderId
+    // // GET /sales-orders/{orderId}
+    // @GetMapping("/{orderId}")
+    // @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF', 'DEALER_MANAGER', 'DEALER_STAFF', 'CUSTOMER')")
+    // public ResponseEntity<ApiRespond<SalesOrderDtoB2B>> getOrderById(@PathVariable UUID orderId) {
+    //     SalesOrder order = salesOrderServiceB2B.getOrderById(orderId);
+    //     SalesOrderDtoB2B responseDto = salesOrderMapperB2B.toDto(order);
+    //     return ResponseEntity.ok(ApiRespond.success("Lấy chi tiết đơn hàng thành công", responseDto));
+    // }
 
     // API lấy báo cáo doanh số theo khu vực đại lí
     @GetMapping("/b2b/report-completed")

@@ -705,6 +705,11 @@ public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
         return findOrderByIdOrThrow(orderId); 
     }
 
+    @Override
+    public SalesOrder getOrderById(UUID orderId) {
+        return findOrderByIdOrThrow(orderId);
+    }
+
     // --- CÁC HÀM HELPER ĐỂ LẤY HEADER ---
 
     /**

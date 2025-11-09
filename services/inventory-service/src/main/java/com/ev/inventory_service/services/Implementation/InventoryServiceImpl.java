@@ -27,11 +27,13 @@ import com.ev.inventory_service.model.CentralInventory;
 import com.ev.inventory_service.model.DealerAllocation;
 import com.ev.inventory_service.model.InventoryTransaction;
 import com.ev.inventory_service.model.TransferRequest;
+import com.ev.inventory_service.model.StockAlert;
 import com.ev.inventory_service.model.Enum.TransferRequestStatus;
 import com.ev.inventory_service.repository.CentralInventoryRepository;
 import com.ev.inventory_service.repository.DealerAllocationRepository;
 import com.ev.inventory_service.repository.InventoryTransactionRepository;
 import com.ev.inventory_service.repository.PhysicalVehicleRepository;
+import com.ev.inventory_service.repository.StockAlertRepository;
 import com.ev.inventory_service.repository.TransferRequestRepository;
 import com.ev.inventory_service.services.Interface.InventoryService;
 import com.ev.inventory_service.specification.InventorySpecification;
@@ -52,10 +54,12 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 
 // import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.messaging.simp.SimpMessagingTemplate; // Để gửi WebSocket
 import org.springframework.beans.factory.annotation.Value;
-import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
 
+import java.util.Optional;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -96,6 +100,9 @@ public class InventoryServiceImpl implements InventoryService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PhysicalVehicleRepository physicalVehicleRepo;
     private final TransferRequestRepository transferRequestRepo;
+
+    private final StockAlertRepository stockAlertRepo;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public static final String TOPIC_DEALER_STOCK_UPDATED = "stock_events_dealerEVM";
 
@@ -396,6 +403,8 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setReorderLevel(request.getReorderLevel());
 
         centralRepo.save(inventory);
+
+        checkStockThresholdAndNotify(request.getVariantId());
     }
 
     @Override
@@ -467,6 +476,8 @@ public class InventoryServiceImpl implements InventoryService {
             central.setTotalQuantity(central.getTotalQuantity() - quantity);
             centralRepo.save(central);
 
+            checkStockThresholdAndNotify(variantId);
+
             // 2. Cập nhật bảng SKU (kho đại lý)
             DealerAllocation allocation = dealerRepo.findByVariantIdAndDealerId(variantId, dealerId)
                 .orElseGet(() -> {
@@ -533,7 +544,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     /**
-     * SỬA LẠI: Lấy trạng thái tồn kho cho NHIỀU variant (Tối ưu)
+     * Lấy trạng thái tồn kho cho NHIỀU variant 
      */
     @Override
     @Transactional(readOnly = true)
@@ -747,6 +758,8 @@ public class InventoryServiceImpl implements InventoryService {
             stock.setAvailableQuantity(stock.getAvailableQuantity() + quantityToReturn); 
 
             centralRepo.save(stock);
+
+            checkStockThresholdAndNotify(variantId);
             
             // 6. Ghi lại giao dịch (Transaction)
             InventoryTransaction transaction = new InventoryTransaction();
@@ -807,6 +820,8 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setTotalQuantity(inventory.getTotalQuantity() + quantity);
         inventory.setAvailableQuantity(inventory.getAvailableQuantity() + quantity);
         centralRepo.save(inventory);
+
+        checkStockThresholdAndNotify(request.getVariantId());
     }
 
     /**
@@ -942,13 +957,12 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     /**
-     * HÀM HELPER MỚI: Gọi sang vehicle-service
+     * Gọi sang vehicle-service
      */
     private List<Long> getAllVariantIdsFromCatalog() {
         String catalogUrl = vehicleCatalogUrl + "/vehicle-catalog/variants/all-ids";
         
         try {
-            // (Lưu ý: Cần xử lý việc chuyển tiếp header xác thực nếu API này được bảo vệ)
             ResponseEntity<ApiRespond<List<Long>>> response = restTemplate.exchange(
                 catalogUrl,
                 HttpMethod.GET,
@@ -963,5 +977,68 @@ public class InventoryServiceImpl implements InventoryService {
             System.err.println("Không thể lấy all-ids từ vehicle-service: " + e.getMessage());
         }
         return Collections.emptyList();
+    }
+
+    /**
+     * Kiểm tra ngưỡng tồn kho và gửi/giải quyết cảnh báo.
+     * Đây là logic cốt lõi cho yêu cầu "cảnh báo 1 lần".
+     */
+    @Transactional // (Đảm bảo chạy trong 1 giao dịch)
+    private void checkStockThresholdAndNotify(Long variantId) {
+        try {
+            // 1. Lấy tồn kho hiện tại
+            CentralInventory inventory = centralRepo.findByVariantId(variantId).orElse(null);
+
+            if (inventory == null) {
+                return; // Không có tồn kho, không thể cảnh báo
+            }
+
+            // Dùng số lượng "Có thể bán" (available) để so sánh
+            int currentStock = inventory.getAvailableQuantity(); 
+            int reorderLevel = (inventory.getReorderLevel() != null) ? inventory.getReorderLevel() : 0;
+
+            // 2. Kiểm tra xem đã có cảnh báo "NEW" (đang hoạt động) nào chưa
+            Optional<StockAlert> existingAlert = stockAlertRepo.findFirstByVariantIdAndStatus(variantId, "NEW");
+
+            // 3. Logic xử lý
+            if (currentStock <= reorderLevel && currentStock > 0) {
+                // ---- TRƯỜNG HỢP 1: DƯỚI NGƯỠNG (LOW_STOCK) ----
+                
+                if (existingAlert.isEmpty()) {
+                    // Nếu dưới ngưỡng VÀ chưa có cảnh báo -> Tạo cảnh báo mới
+                    StockAlert newAlert = new StockAlert();
+                    newAlert.setVariantId(variantId);
+                    newAlert.setAlertType("LOW_STOCK_CENTRAL");
+                    newAlert.setCurrentStock(currentStock);
+                    newAlert.setThreshold(reorderLevel);
+                    newAlert.setStatus("NEW");
+                    // dealerId = null (vì là kho trung tâm)
+
+                    StockAlert savedAlert = stockAlertRepo.save(newAlert);
+
+                    // Gửi thông báo qua WebSocket đến topic mà frontend đang lắng nghe
+                    messagingTemplate.convertAndSend("/topic/staff-notifications", savedAlert);
+                }
+                // Nếu existingAlert.isPresent() -> Đã cảnh báo rồi, không làm gì cả.
+                
+            } else {
+                // ---- TRƯỜG HỢP 2: TRÊN NGƯỠNG (STOCK_OK) HOẶC HẾT HÀNG (OUT_OF_STOCK) ----
+                
+                if (existingAlert.isPresent()) {
+                    // Nếu trên ngưỡng VÀ có cảnh báo đang hoạt động -> "Giải quyết" cảnh báo đó
+                    StockAlert alertToResolve = existingAlert.get();
+                    alertToResolve.setStatus("RESOLVED"); // Đánh dấu là đã giải quyết
+                    stockAlertRepo.save(alertToResolve);
+                    
+                    // (Optional: Bạn cũng có thể gửi 1 tin nhắn "resolved" qua socket nếu muốn)
+                    // messagingTemplate.convertAndSend("/topic/staff-notifications-resolved", alertToResolve);
+                }
+                // Nếu không có cảnh báo -> không làm gì cả.
+            }
+        } catch (Exception e) {
+            // Bắt mọi lỗi để đảm bảo logic cảnh báo không làm hỏng giao dịch chính
+            System.err.println("ERROR: Lỗi trong lúc checkStockThresholdAndNotify: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
