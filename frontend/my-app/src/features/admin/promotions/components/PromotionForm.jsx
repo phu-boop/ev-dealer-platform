@@ -162,14 +162,14 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       }
     }
 
-    // Validate selected models
-    if (selectedModels.length === 0) {
-      newErrors.applicableModels = "Vui lòng chọn ít nhất một model xe";
-    }
-
     // Validate selected dealers
     if (selectedDealers.length === 0) {
       newErrors.dealers = "Vui lòng chọn ít nhất một đại lý";
+    }
+
+    // Validate selected models
+    if (selectedModels.length === 0) {
+      newErrors.applicableModels = "Vui lòng chọn ít nhất một model xe";
     }
     
     setErrors(newErrors);

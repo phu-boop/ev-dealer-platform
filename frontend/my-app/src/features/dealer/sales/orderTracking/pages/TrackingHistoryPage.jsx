@@ -130,7 +130,7 @@ const TrackingHistoryPage = () => {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => navigate(`/sales-orders/${orderId}`)}
+                onClick={() => navigate(`/dealer/staff/orders/${orderId}`)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
               >
                 ← Quay lại đơn hàng

@@ -85,10 +85,10 @@ const SalesOrderDetailPage = () => {
         },
       }}
       extra={[
-        <Button key="tracking" onClick={() => navigate(`/dealer/staff/orders/${orderId}/tracking`)}>
+        <Button key="tracking" onClick={() => navigate(`tracking`)}>
           Theo dõi đơn hàng
         </Button>,
-        <Button key="contract" type="primary" onClick={() => navigate(`/dealer/staff/orders/${orderId}/contract/create`)}>
+        <Button key="contract" type="primary" onClick={() => navigate(`contract/create`)}>
           Tạo hợp đồng
         </Button>,
       ]}

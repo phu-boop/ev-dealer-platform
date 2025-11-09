@@ -113,10 +113,10 @@ const ContractDetailPage = () => {
 
   // Fetch contract data when component mounts or contractId changes
   useEffect(() => {
-    if (contractId) {
-      fetchContractById(contractId);
-    }
-  }, [contractId, fetchContractById]);
+  if (contractId) {
+    fetchContractById(contractId);
+  }
+}, [contractId, fetchContractById]);
 
   const handleSign = async (contractId, digitalSignature) => {
     try {
@@ -130,7 +130,7 @@ const ContractDetailPage = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/sales/contracts/${contractId}/edit`);
+    navigate(`/dealer/staff/contracts/${contractId}/edit`);
   };
 
   const handleDownload = () => {
@@ -184,7 +184,7 @@ const ContractDetailPage = () => {
           type="warning"
           showIcon
           action={
-            <Button size="small" onClick={() => navigate('/sales/contracts')}>
+            <Button size="small" onClick={() => navigate('/dealer/staff/contracts')}>
               Quay lại danh sách
             </Button>
           }
@@ -200,7 +200,7 @@ const ContractDetailPage = () => {
         breadcrumb: {
           items: [
             { title: 'Bán hàng' },
-            { title: 'Hợp đồng', path: '/sales/contracts' },
+            { title: 'Hợp đồng', path: '/dealer/staff/contracts' },
             { title: `Hợp đồng #${contract.contractNumber || contract.contractId}` },
           ],
         },
@@ -209,7 +209,7 @@ const ContractDetailPage = () => {
         <Button 
           key="back" 
           icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate('/sales/contracts')}
+          onClick={() => navigate('/dealer/staff/contracts')}
         >
           Quay lại
         </Button>,
