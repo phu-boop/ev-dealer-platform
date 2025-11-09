@@ -62,7 +62,7 @@ const FeedbackModal = ({ isOpen, onClose, appointment, onSubmit }) => {
         </div>
 
         {/* Form - Scrollable */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+        <form id="feedback-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-5">
           {/* Star Rating */}
           <div>

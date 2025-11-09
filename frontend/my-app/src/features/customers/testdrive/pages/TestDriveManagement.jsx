@@ -196,7 +196,7 @@ const TestDriveManagement = () => {
 
   const handleResetFilter = () => {
     setFilteredAppointments(appointments);
-    toast.info('ℹ️ Đã đặt lại bộ lọc');
+    toast.info('Đã đặt lại bộ lọc');
   };
 
   const handleFeedback = (appointment) => {
@@ -207,7 +207,7 @@ const TestDriveManagement = () => {
   const handleSubmitFeedback = async (appointmentId, feedbackData) => {
     try {
       await submitFeedback(appointmentId, feedbackData);
-      toast.success('✅ Đã ghi kết quả lái thử thành công!');
+      toast.success('Đã ghi kết quả lái thử thành công!');
       setShowFeedbackModal(false);
       setFeedbackAppointment(null);
       loadData(); // Reload để hiển thị feedback mới

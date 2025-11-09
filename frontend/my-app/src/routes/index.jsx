@@ -33,6 +33,12 @@ import TestDriveManagement from "../features/customers/testdrive/pages/TestDrive
 import CreateTestDrive from "../features/customers/testdrive/pages/CreateTestDrive.jsx";
 import EditTestDrive from "../features/customers/testdrive/pages/EditTestDrive.jsx";
 
+// feedback pages
+import FeedbackManagement from "../features/customers/feedback/pages/FeedbackManagement.jsx";
+import CreateFeedback from "../features/customers/feedback/pages/CreateFeedback.jsx";
+import FeedbackDetail from "../features/customers/feedback/pages/FeedbackDetail.jsx";
+import FeedbackStatistics from "../features/customers/feedback/pages/FeedbackStatistics.jsx";
+
 // EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
 import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.jsx";
@@ -218,6 +224,24 @@ export default function AppRoutes() {
                 element={<EditTestDrive />}
               />
 
+              {/* Feedback Management */}
+              <Route
+                path="manager/feedback"
+                element={<FeedbackManagement />}
+              />
+              <Route
+                path="manager/feedback/new"
+                element={<CreateFeedback />}
+              />
+              <Route
+                path="manager/feedback/statistics"
+                element={<FeedbackStatistics />}
+              />
+              <Route
+                path="manager/feedback/:id"
+                element={<FeedbackDetail />}
+              />
+
               {/* Quotation Management */}
               <Route
                 path="manager/quotations/*"
@@ -231,7 +255,7 @@ export default function AppRoutes() {
               {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
 
               <Route
-                  path="manager/settings/staff*"
+                  path="manager/settings/staff/*"
                   element={<UserManagement />}
               />
 
@@ -274,6 +298,24 @@ export default function AppRoutes() {
               <Route
                 path="staff/testdrives/edit/:id"
                 element={<EditTestDrive />}
+              />
+
+              {/* Feedback Management */}
+              <Route
+                path="staff/feedback"
+                element={<FeedbackManagement />}
+              />
+              <Route
+                path="staff/feedback/new"
+                element={<CreateFeedback />}
+              />
+              <Route
+                path="staff/feedback/statistics"
+                element={<FeedbackStatistics />}
+              />
+              <Route
+                path="staff/feedback/:id"
+                element={<FeedbackDetail />}
               />
 
               {/* Quotation Management */}

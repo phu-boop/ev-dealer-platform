@@ -183,7 +183,7 @@ public class TestDriveController {
                             Chúng tôi sẽ liên hệ với bạn trước ngày hẹn.<br><br>
                             Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi!
                         </p>
-                        <a href="http://localhost:5173/test-drives" class="btn">Xem lịch hẹn</a>
+                        <a href="http://localhost:5173" class="btn">Về trang chủ</a>
                     </div>
                 </body>
                 </html>

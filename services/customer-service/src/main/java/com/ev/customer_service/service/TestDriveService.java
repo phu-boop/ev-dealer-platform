@@ -422,7 +422,7 @@ public class TestDriveService {
                 TestDriveAppointment conflict = staffConflicts.get(0);
                 String conflictTime = conflict.getAppointmentDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
                 throw new IllegalStateException(
-                    String.format("⚠️ Nhân viên đã có lịch hẹn vào lúc %s. Vui lòng chọn thời gian khác!", conflictTime)
+                    String.format("Nhân viên đã có lịch hẹn vào lúc %s. Vui lòng chọn thời gian khác!", conflictTime)
                 );
             }
         }
@@ -462,7 +462,10 @@ public class TestDriveService {
             .dealerId(appointment.getDealerId())
             .modelId(appointment.getModelId())
             .variantId(appointment.getVariantId())
+            .vehicleModelName(appointment.getVehicleModelName())
+            .vehicleVariantName(appointment.getVehicleVariantName())
             .staffId(appointment.getStaffId())
+            .staffName(appointment.getStaffName())
             .appointmentDate(appointment.getAppointmentDate())
             .durationMinutes(appointment.getDurationMinutes())
             .endTime(appointment.getEndTime())
