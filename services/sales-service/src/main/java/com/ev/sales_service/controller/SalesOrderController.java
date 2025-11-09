@@ -206,5 +206,15 @@ public class SalesOrderController {
         // Trả về 204 No Content khi xóa thành công
         return ResponseEntity.noContent().build();
     }
+
+    // API Lấy Chi Tiết Đơn Hàng Theo OrderId
+    // GET /sales-orders/{orderId}
+    @GetMapping("/{orderId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF', 'DEALER_MANAGER', 'DEALER_STAFF', 'CUSTOMER')")
+    public ResponseEntity<ApiRespond<SalesOrderDto>> getOrderById(@PathVariable UUID orderId) {
+        SalesOrder order = salesOrderService.getOrderById(orderId);
+        SalesOrderDto responseDto = salesOrderMapper.toDto(order);
+        return ResponseEntity.ok(ApiRespond.success("Lấy chi tiết đơn hàng thành công", responseDto));
+    }
     
 }

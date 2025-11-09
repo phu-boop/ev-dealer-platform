@@ -14,7 +14,7 @@ public class SalesOrderDto {
     // Từ SalesOrder
     private UUID orderId;
     private UUID dealerId;
-    private UUID customerId; // Sẽ là null trong luồng B2B
+    private Long customerId; // Sẽ là null trong luồng B2B (bigint trong database)
     private UUID staffId;
     private LocalDateTime orderDate;
     private LocalDateTime deliveryDate;

@@ -59,4 +59,9 @@ public interface SalesOrderService {
      */
     void deleteCancelledOrder(UUID orderId);
     
+    /**
+     * Lấy chi tiết đơn hàng theo orderId
+     */
+    SalesOrder getOrderById(UUID orderId);
+    
 }

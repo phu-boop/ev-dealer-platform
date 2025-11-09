@@ -445,6 +445,11 @@ public class SalesOrderServiceImpl implements SalesOrderService {
          if (userProfileId != null) targetHeaders.set("X-User-ProfileId", userProfileId);
      }
 
+    @Override
+    public SalesOrder getOrderById(UUID orderId) {
+        return findOrderByIdOrThrow(orderId);
+    }
+    
     private SalesOrder findOrderByIdOrThrow(UUID orderId) {
         return salesOrderRepository.findById(orderId)
                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
