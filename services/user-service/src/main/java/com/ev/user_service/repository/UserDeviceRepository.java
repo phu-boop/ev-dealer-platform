@@ -11,6 +11,8 @@ import java.util.UUID;
 public interface UserDeviceRepository extends JpaRepository<UserDevice, UUID> {
     Optional<UserDevice> findByUserIdAndFcmToken(UUID userId, String fcmToken);
 
+    List<UserDevice> findByUserId(UUID userId);
+
     // ✅ Lấy tất cả thiết bị của user có role ADMIN
     @Query(value = """
                 SELECT ud.*

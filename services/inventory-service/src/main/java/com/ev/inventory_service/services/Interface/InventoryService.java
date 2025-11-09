@@ -13,6 +13,7 @@ import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.InventoryTransaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -87,4 +88,19 @@ public interface InventoryService {
 
     // Lấy số VIN khả dụng trong kho
     List<String> getAvailableVinsForVariant(Long variantId);
+
+    /**
+     * Xử lý việc trả hàng về kho trung tâm khi một đơn hàng B2B bị
+     * giải quyết khiếu nại (RETURNED_TO_CENTRAL).
+     *
+     * @param orderId ID của đơn hàng từ SalesService
+     * @param staffEmail Email của nhân viên xử lý
+     */
+    void returnStockForOrder(UUID orderId, String staffEmail);
+
+    /**
+     * Lấy danh sách ID sản phẩm (variantId) dựa trên trạng thái kho.
+     * @param status Chuỗi "IN_STOCK", "LOW_STOCK", hoặc "OUT_OF_STOCK"
+     */
+    List<Long> getVariantIdsByStatus(String status);
 }

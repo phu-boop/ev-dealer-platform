@@ -1,5 +1,6 @@
 package com.ev.inventory_service.dto.response;
 
+import com.ev.common_lib.model.enums.*;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;

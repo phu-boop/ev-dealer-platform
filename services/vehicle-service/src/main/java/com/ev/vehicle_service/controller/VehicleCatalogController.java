@@ -117,6 +117,14 @@ public class VehicleCatalogController {
         
         return new ResponseEntity<>(ApiRespond.success("Variant created successfully", responseDto), HttpStatus.CREATED);
     }
+    /**
+     * Lấy tất cả các phiên bản (variants) thuộc về một mẫu xe cụ thể.
+     */
+    @GetMapping("/models/{modelId}/variants")
+    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getVariantsByModelId(@PathVariable Long modelId) {
+        List<VariantDetailDto> variants = vehicleCatalogService.getVariantsByModelId(modelId);
+        return ResponseEntity.ok(ApiRespond.success("Fetched all variants for model successfully", variants));
+    }
 
     /**
      * Tìm kiếm các variant theo từ khóa và trả về danh sách ID.
@@ -130,6 +138,7 @@ public class VehicleCatalogController {
         List<Long> variantIds = vehicleCatalogService.searchVariantIdsByCriteria(keyword, color, versionName);
         return ResponseEntity.ok(ApiRespond.success("Found variant IDs matching keyword", variantIds));
     }
+
 
     /**
      * Lấy chi tiết một phiên bản xe cụ thể.
@@ -174,19 +183,6 @@ public class VehicleCatalogController {
     }
 
     /**
-     * API MỚI: Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
-     * Dùng cho trang "Tất cả sản phẩm" ở frontend.
-     */
-    @GetMapping("/variants/paginated")
-    public ResponseEntity<ApiRespond<Page<VariantDetailDto>>> getAllVariantsPaginated(
-            @RequestParam(required = false) String search,
-            @PageableDefault(size = 10, sort = "variantId") Pageable pageable) {
-        
-        Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, pageable);
-        return ResponseEntity.ok(ApiRespond.success("Fetched paginated variants successfully", results));
-    }
-
-    /**
      * Lấy dữ liệu gộp để so sánh các phiên bản.
      * Nhận vào danh sách các ID của phiên bản cần so sánh.
      */
@@ -214,6 +210,20 @@ public class VehicleCatalogController {
     }
 
     /**
+     * Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
+     */
+    @GetMapping("/variants/paginated")
+    public ResponseEntity<ApiRespond<Page<VariantDetailDto>>> getAllVariantsPaginated(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status, 
+            @PageableDefault(size = 10, sort = "variantId") Pageable pageable) {
+        
+        // Truyền 'status' xuống service
+        Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, status, pageable);
+        return ResponseEntity.ok(ApiRespond.success("Fetched paginated variants successfully", results));
+    }
+
+    /**
      * API MỚI: Lấy TẤT CẢ các phiên bản (không phân trang).
      * Phục vụ riêng cho việc backfill cache của reporting-service.
      */
@@ -221,6 +231,16 @@ public class VehicleCatalogController {
     public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getAllVariantsForBackfill() {
         List<VariantDetailDto> results = vehicleCatalogService.getAllVariantsForBackfill();
         return ResponseEntity.ok(ApiRespond.success("Fetched all variants for backfill", results));
+    }
+
+    /**
+     * Lấy TẤT CẢ các ID của phiên bản (dùng cho giao tiếp nội bộ)
+     */
+    @GetMapping("/variants/all-ids")
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") // Chỉ nội bộ
+    public ResponseEntity<ApiRespond<List<Long>>> getAllVariantIds() {
+        List<Long> ids = vehicleCatalogService.getAllVariantIds();
+        return ResponseEntity.ok(ApiRespond.success("Fetched all variant IDs", ids));
     }
 
     // ==========================================================

@@ -1,40 +1,39 @@
 package com.ev.vehicle_service.dto.response;
 
-import com.ev.common_lib.model.enums.VehicleStatus; 
+import com.ev.common_lib.model.enums.VehicleStatus; // Giả sử bạn có import này
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class VariantCatalogDto {
-    
-    // Thông tin từ VehicleVariant
+
+    // ===== CÁC TRƯỜNG MÀ LOG CỦA BẠN ĐÃ CÓ =====
     private Long variantId;
     private String versionName;
     private String color;
     private String skuCode;
     private BigDecimal price;
+    private VehicleStatus status; // (Cần import enum VehicleStatus)
     private String imageUrl;
-    private VehicleStatus status;
-    
-    // Thông tin từ VehicleModel (parent)
-    private String modelName;
-    private String brand;
+    private BigDecimal wholesalePrice;
+    private Integer batteryCapacity;
+    private Float chargingTime;
+    private Integer rangeKm;
+    private Integer motorPower;
 
-    // Constructor để mapping dễ dàng (tùy chọn, nhưng hữu ích)
-    public VariantCatalogDto(Long variantId, String versionName, String color, String skuCode, 
-                             BigDecimal price, String imageUrl, VehicleStatus status, 
-                             String modelName, String brand) {
-        this.variantId = variantId;
-        this.versionName = versionName;
-        this.color = color;
-        this.skuCode = skuCode;
-        this.price = price;
-        this.imageUrl = imageUrl;
-        this.status = status;
-        this.modelName = modelName;
-        this.brand = brand;
-    }
+    // (Trường "features": [] có thể bạn không cần trả ra ở đây,
+    //  nhưng nếu cần thì thêm: private List<FeatureDto> features;)
+
+    // ===== TRƯỜNG QUAN TRỌNG ĐỂ SỬA LỖI =====
+    private Long modelId;
 }

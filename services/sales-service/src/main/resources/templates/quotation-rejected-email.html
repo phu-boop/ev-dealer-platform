@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Thông Báo Từ Chối Báo Giá</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #f8f9fa; padding: 10px; text-align: center; }
+        .content { margin: 20px 0; }
+        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Thông Báo Từ Chối Báo Giá</h1>
+        </div>
+        <div class="content">
+            <p>Kính gửi Quý khách <strong th:text="${customer.fullName}"></strong>,</p>
+
+            <p>Chúng tôi xin xác nhận rằng Quý khách đã từ chối báo giá <strong th:text="${quotation.quotationId}"></strong>.</p>
+
+            <p>Nếu Quý khách có bất kỳ thắc mắc nào, xin vui lòng liên hệ với chúng tôi.</p>
+
+            <p>Chúng tôi hy vọng sẽ có cơ hội phục vụ Quý khách trong tương lai.</p>
+        </div>
+        <div class="footer">
+            <p>Trân trọng,<br>Đội ngũ bán hàng</p>
+        </div>
+    </div>
+</html>

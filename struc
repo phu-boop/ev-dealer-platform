@@ -1,0 +1,189 @@
+# Cấu Trúc Dự Án EV Dealer Platform
+
+```
+ev-dealer-platform/
+├── docker-compose.yml              # Cấu hình Docker compose cho tất cả các service
+├── init.sql                       # Script khởi tạo cơ sở dữ liệu
+├── wait-for-it.sh                # Script hỗ trợ khởi động container Docker
+├── package.json                   # Cấu hình package gốc
+├── .gitignore                    # Cấu hình Git ignore
+│
+├── common-lib/                   # Thư viện dùng chung cho tất cả các service
+│   ├── Dockerfile               # Cấu hình build Docker
+│   ├── pom.xml                 # Cấu hình Maven
+│   └── src/
+│       └── main/
+│           ├── java/
+│           │   └── com/
+│           │       └── ev/
+│           │           └── common_lib/
+│           │               ├── dto/             # Các đối tượng truyền dữ liệu
+│           │               │   ├── inventory/
+│           │               │   ├── respond/
+│           │               │   └── vehicle/
+│           │               ├── event/           # Các lớp xử lý sự kiện
+│           │               ├── exception/       # Xử lý ngoại lệ
+│           │               └── model/           # Các model dùng chung
+│           └── resources/
+│               └── application.properties
+│
+├── frontend/                     # Ứng dụng React phía client
+│   └── my-app/
+│       ├── public/              # Các file tĩnh
+│       ├── src/
+│       │   ├── components/      # Các component dùng chung
+│       │   │   ├── Footer.jsx
+│       │   │   ├── Header.jsx
+│       │   │   └── common/     # Các component có thể tái sử dụng
+│       │   ├── features/       # Các module chức năng
+│       │   │   ├── admin/      # Chức năng quản trị
+│       │   │   ├── auth/       # Xác thực
+│       │   │   ├── customers/  # Quản lý khách hàng
+│       │   │   ├── dashboard/  # Bảng điều khiển
+│       │   │   ├── dealer/     # Chức năng đại lý
+│       │   │   ├── evm/        # Quản lý xe điện
+│       │   │   └── profile/    # Hồ sơ người dùng
+│       │   ├── layouts/        # Bố cục trang
+│       │   ├── pages/          # Các component trang
+│       │   ├── routes/         # Cấu hình định tuyến
+│       │   ├── services/       # Các service gọi API
+│       │   └── utils/          # Các hàm tiện ích
+│       ├── package.json
+│       └── vite.config.js      # Cấu hình Vite
+│
+├── gateway/                     # Service Gateway API
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── src/
+│       └── main/
+│           ├── java/
+│           │   └── com/
+│           │       └── ev/
+│           │           └── gateway/
+│           │               ├── config/     # Cấu hình Gateway
+│           │               ├── controller/ # Bộ điều khiển
+│           │               └── service/    # Các service
+│           └── resources/
+│               └── application.properties
+│
+├── services/                    # Các Microservice
+│   ├── ai-service/             # Service AI
+│   ├── customer-service/       # Service quản lý khách hàng
+│   ├── dealer-service/         # Service quản lý đại lý
+│   ├── inventory-service/      # Service quản lý kho
+│   ├── payment-service/        # Service xử lý thanh toán
+│   ├── reporting-service/      # Service báo cáo
+│   ├── sales-service/         # Service quản lý bán hàng
+│   ├── user-service/          # Service quản lý người dùng
+│   └── vehicle-service/       # Service quản lý xe
+    └── [Mỗi service có cấu trúc tương tự]
+        ├── Dockerfile
+        ├── pom.xml
+        └── src/
+            └── main/
+                ├── java/
+                │   └── com/
+                │       └── ev/
+                │           └── [service_name]/
+                │               ├── config/      # Cấu hình
+                │               ├── controller/  # Điều khiển
+                │               ├── dto/         # Đối tượng truyền dữ liệu
+                │               ├── entity/      # Thực thể
+                │               ├── repository/  # Truy cập dữ liệu
+                │               └── service/     # Xử lý nghiệp vụ
+                └── resources/
+                    └── application.properties
+```
+
+## Kiến Trúc Service
+
+- **Gateway Service (Cổng 8080)**
+  - Điều hướng và Gateway API
+  - Xác thực và phân quyền
+  - Xử lý yêu cầu/phản hồi
+
+- **User Service (Cổng 8081)**
+  - Xác thực người dùng
+  - Quản lý người dùng
+  - Quản lý vai trò
+
+- **Customer Service (Cổng 8082)**
+  - Quản lý hồ sơ khách hàng
+  - Xử lý dữ liệu khách hàng
+  - Tính năng quan hệ khách hàng
+
+- **Dealer Service (Cổng 8083)**
+  - Quản lý đại lý
+  - Tính năng cổng thông tin đại lý
+  - Quản lý quan hệ đại lý
+
+- **Inventory Service (Cổng 8084)**
+  - Theo dõi kho
+  - Quản lý tồn kho
+  - Xử lý phân bổ
+
+- **Payment Service (Cổng 8085)**
+  - Xử lý thanh toán
+  - Quản lý giao dịch
+  - Tích hợp thanh toán
+
+- **Sales Service (Cổng 8086)**
+  - Quản lý đơn hàng
+  - Xử lý báo giá
+  - Theo dõi bán hàng
+
+- **Vehicle Service (Cổng 8087)**
+  - Danh mục xe
+  - Thông số kỹ thuật xe
+  - Cấu hình xe
+
+## Công Nghệ Chính
+
+1. **Backend**
+   - Java Spring Boot
+   - Spring Cloud Gateway
+   - Spring Security
+   - Spring Data JPA
+   - Cơ sở dữ liệu MySQL
+   - Bộ nhớ đệm Redis
+   - Message Broker Kafka
+
+2. **Frontend**
+   - React
+   - Vite
+   - Redux (Quản lý state)
+   - React Router
+   - Tailwind CSS
+   - Firebase (Thông báo)
+
+3. **Hạ Tầng**
+   - Docker & Docker Compose
+   - Maven (Công cụ build)
+   - Xác thực JWT
+   - Kiến trúc Microservices
+
+## Môi Trường Phát Triển
+
+1. **Công Cụ Cần Thiết**
+   - JDK 21
+   - Maven 3.9.x
+   - Node.js & npm
+   - Docker & Docker Compose
+   - MySQL 8.0
+   - Redis
+
+2. **Cài Đặt Môi Trường Local**
+   - Clone repository
+   - Sao chép `.env.example` thành `.env` trong mỗi service
+   - Chạy `docker-compose up` cho hạ tầng
+   - Build và chạy từng service
+   - Khởi động server phát triển frontend
+
+## Ghi Chú
+
+- Mỗi service có thể triển khai độc lập
+- Giao tiếp giữa các service thông qua REST API và Events
+- Thư viện common-lib dùng chung cho DTO và tiện ích
+- Xác thực tập trung qua Gateway
+- Tổ chức frontend theo tính năng
+- Hỗ trợ Docker cho tất cả các thành phần

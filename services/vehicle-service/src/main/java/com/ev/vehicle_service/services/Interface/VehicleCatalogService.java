@@ -25,6 +25,11 @@ public interface VehicleCatalogService {
 
     List<ModelSummaryDto> getAllModels();
 
+    /**
+     * Lấy TẤT CẢ ID của các phiên bản (không phân trang)
+     */
+    List<Long> getAllVariantIds();
+
     ModelDetailDto getModelDetails(Long modelId);
 
     VariantDetailDto getVariantDetails(Long variantId);
@@ -53,15 +58,19 @@ public interface VehicleCatalogService {
     List<VariantDetailDto> getVariantDetailsByIds(List<Long> variantIds);
 
     /**
-     * Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
-     */
-    Page<VariantDetailDto> getAllVariantsPaginated(String search, Pageable pageable);
-
-    /**
      * Lấy phiên bản xe để so sánh
      */
     List<ComparisonDto> getComparisonData(List<Long> variantIds, UUID dealerId, HttpHeaders headers);
 
     // Lấy tất cả phiên bản xe cho report
     List<VariantDetailDto> getAllVariantsForBackfill();
+
+    // Lấy phiên bản từ modelID
+    List<VariantDetailDto> getVariantsByModelId(Long modelId);
+
+    /**
+     * Triển khai logic cho API phân trang/tìm kiếm
+     * @param status (MỚI) Lọc theo trạng thái tồn kho
+     */
+    Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Pageable pageable);
 }

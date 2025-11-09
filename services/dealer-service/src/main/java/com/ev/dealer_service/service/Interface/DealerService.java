@@ -72,6 +72,22 @@ public interface DealerService {
      */
     List<DealerBasicDto> getAllDealersBasicInfo();
 
+     /**
+     * Xóa mềm đại lý (chuyển trạng thái sang SUSPENDED).
+     *
+     * @param id ID của đại lý cần tạm ngừng hoạt động
+     * @return Thông tin đại lý sau khi cập nhật
+     */
+    DealerResponse suspendDealer(UUID id);
+
+    /**
+     * Kích hoạt lại đại lý (chuyển trạng thái sang ACTIVE).
+     *
+     * @param id ID của đại lý cần kích hoạt lại
+     * @return Thông tin đại lý sau khi cập nhật
+     */
+    DealerResponse activateDealer(UUID id);
+
     // Lấy dealer name và region
     List<Dealer> getDealersByRegionAndName(String region, String dealerName);
 

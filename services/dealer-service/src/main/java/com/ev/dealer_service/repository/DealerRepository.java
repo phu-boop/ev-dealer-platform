@@ -2,6 +2,7 @@ package com.ev.dealer_service.repository;
 
 import com.ev.common_lib.dto.dealer.DealerBasicDto;
 import com.ev.dealer_service.entity.Dealer;
+import com.ev.dealer_service.enums.DealerStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,13 +11,14 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface DealerRepository extends JpaRepository<Dealer, UUID> {
 
     Optional<Dealer> findByDealerCode(String dealerCode);
 
-    List<Dealer> findByStatus(String status);
+    List<Dealer> findByStatus(DealerStatus status);
 
     List<Dealer> findByCity(String city);
 

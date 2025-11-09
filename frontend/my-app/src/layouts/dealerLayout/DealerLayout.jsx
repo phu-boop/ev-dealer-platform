@@ -38,22 +38,36 @@ const DealerLayout = () => {
     }
   }, [roles]);
 
-  // Update active path when location changes
-  useEffect(() => {
-    sidebar.setActivePath(location.pathname);
+useEffect(() => {
+  let currentPath = location.pathname;
 
-    // Auto open submenus for active path
-    const newOpenSubmenus = new Set();
-    menuItems.forEach((item) => {
-      if (item.submenu) {
-        const isActiveSubmenu = item.submenu.some((sub) => sub.path === location.pathname);
-        if (isActiveSubmenu) {
-          newOpenSubmenus.add(item.path);
-        }
+  // Nếu path bắt đầu bằng /dealer/staff/orders và dài hơn 3 cấp, cắt bỏ phần sau
+  if (currentPath.startsWith('/dealer/staff/orders')) {
+    const parts = currentPath.split('/');
+    if (parts.length > 4) { // vd: /dealer/staff/orders/uuid
+      currentPath = parts.slice(0, 4).join('/');
+    }
+  }
+
+  sidebar.setActivePath(currentPath);
+
+  // Auto open submenus for active path
+  const newOpenSubmenus = new Set();
+  menuItems.forEach((item) => {
+    if (item.submenu) {
+      const isActiveSubmenu = item.submenu.some(
+        (sub) => currentPath.startsWith(sub.path)
+      );
+      if (isActiveSubmenu) {
+        newOpenSubmenus.add(item.path);
       }
-    });
-    setOpenSubmenus(newOpenSubmenus);
-  }, [location, menuItems]);
+    }
+  });
+
+  setOpenSubmenus(newOpenSubmenus);
+}, [location, menuItems]);
+
+
 
   // Handle navigation
   const handleNavigation = (path) => {

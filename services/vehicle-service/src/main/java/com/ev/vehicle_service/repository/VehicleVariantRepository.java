@@ -20,4 +20,10 @@ public interface VehicleVariantRepository extends JpaRepository<VehicleVariant, 
            "LEFT JOIN FETCH v.features " + 
            "WHERE v.variantId IN :variantIds")
     List<VehicleVariant> findAllWithDetailsByIds(List<Long> variantIds);
+    
+    List<VehicleVariant> findByVehicleModel_ModelId(Long modelId);
+
+    @Query("SELECT v.variantId FROM VehicleVariant v")
+    List<Long> findAllVariantIds();
+
 }

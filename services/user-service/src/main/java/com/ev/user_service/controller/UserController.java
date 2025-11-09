@@ -1,10 +1,8 @@
 package com.ev.user_service.controller;
 
-import com.ev.user_service.dto.request.ProfileRequest;
-import com.ev.user_service.dto.request.UpdateProfileRequest;
+import com.ev.user_service.dto.request.*;
+import com.ev.user_service.dto.respond.ApiResponseManageDealer;
 import com.ev.user_service.dto.respond.ProfileRespond;
-import com.ev.user_service.entity.User;
-import com.ev.user_service.entity.UserDevice;
 import com.ev.user_service.service.UserDeviceService;
 import com.ev.user_service.validation.group.*;
 import jakarta.validation.Valid;
@@ -18,12 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.ev.user_service.dto.request.UserRequest;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.user_service.dto.respond.UserRespond;
 import com.ev.user_service.service.UserService;
-
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/users")
@@ -49,45 +44,103 @@ public class UserController {
         );
     }
 
+    //  Cho EVM Staff xem tất cả Dealer Manager
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+    @GetMapping("/dealer-managers")
+    public ResponseEntity<ApiRespond<List<UserRespond>>> getAllUserDealerManage() {
+        return ResponseEntity.ok(
+                ApiRespond.success("Get all Dealer Managers successfully", userService.getAllUserDealerManage())
+        );
+    }
+
+    // Cho Dealer Manager xem tất cả Dealer Staff cùng Dealer của họ
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_MANAGER')")
+    @GetMapping("/dealer-staffs")
+    public ResponseEntity<ApiRespond<List<UserRespond>>> getAllUserStaffDealer() {
+        return ResponseEntity.ok(
+                ApiRespond.success("Get all Dealer Staff successfully", userService.getAllUserStaffDealer())
+        );
+    }
+
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiRespond<UserRespond>> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiRespond.success("Get User Successfully", userService.getUserById(id)));
     }
 
+    /**
+     * Public endpoint để các microservice khác lấy thông tin user
+     * KHÔNG cần authentication (dùng cho inter-service communication)
+     */
+    @GetMapping("/internal/{id}")
+    public ResponseEntity<ApiRespond<UserRespond>> getUserByIdInternal(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiRespond.success("Get User Successfully", userService.getUserById(id)));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/register")
     public ResponseEntity<ApiRespond<UserRespond>> createUser(@Validated(OnCreate.class) @RequestBody UserRequest userRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiRespond.success("Create User Successfully", userService.createUser(userRequest)));
     }
 
+    @PreAuthorize("hasAnyRole('DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/register/dealerStaff")
     public ResponseEntity<ApiRespond<UserRespond>> createUserDealerStaff(@Validated(OnCreateDealerStaff.class) @RequestBody UserRequest userRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiRespond.success("Create User Successfully", userService.createUserDealerStaff(userRequest)));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/register/evmStaff")
     public ResponseEntity<ApiRespond<UserRespond>> createUserEvmStaff(@Validated(OnCreateEvmStaff.class) @RequestBody UserRequest userRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiRespond.success("Create User Successfully", userService.createUserEvmStaff(userRequest)));
     }
 
-
-     @PostMapping("/register/dealerManager")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+    @PostMapping("/register/dealerManager")
     public ResponseEntity<ApiRespond<UserRespond>> createUserDealerManager(@Validated(OnCreateDealerManager.class) @RequestBody UserRequest userRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiRespond.success("Create User Successfully", userService.createUserDealerStaff(userRequest)));
+                .body(ApiRespond.success("Create User Successfully", userService.createUserDealerManager(userRequest)));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/register/admin")
     public ResponseEntity<ApiRespond<UserRespond>> createUserAdmin(@Validated(OnCreate.class) @RequestBody UserRequest userRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiRespond.success("Create User Successfully", userService.createUserEvmStaff(userRequest)));
+                .body(ApiRespond.success("Create User Successfully", userService.createUserEvmAdmin(userRequest)));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/update/evmStaff")
+    public ResponseEntity<ApiRespond<UserRespond>> updateUserEvmStaff(@Valid @RequestBody UserUpdateRequest userRequest) {
+        return ResponseEntity.ok(ApiRespond.success("Update Successfully", userService.updateUserEvmStaff(userRequest)));
+    }
 
     @PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/update/admin")
+    public ResponseEntity<ApiRespond<UserRespond>> updateAdmin(
+            @Valid @RequestBody AdminUpdateRequest request) {
+        return ResponseEntity.ok(ApiRespond.success("Update successfully", userService.updateUserEvmAdmin(request)));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','DEALER_STAFF')")
+    @PutMapping("/update/dealerManager")
+    public ResponseEntity<ApiRespond<UserRespond>> updateDealerManager(
+            @Valid @RequestBody DealerManagerUpdateRequest request) {
+        return ResponseEntity.ok(ApiRespond.success("Update successfully", userService.updateUserDealerManager(request)));
+    }
+
+    @PreAuthorize("hasAnyRole('DEALER_STAFF')")
+    @PutMapping("/update/dealerStaff")
+    public ResponseEntity<ApiRespond<UserRespond>> updateDealerStaff(
+            @Valid @RequestBody DealerStaffUpdateRequest request) {
+        return ResponseEntity.ok(ApiRespond.success("Update successfully", userService.updateUserDealerStaff(request)));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiRespond<UserRespond>> updateUser(
             @PathVariable UUID id,
@@ -97,7 +150,7 @@ public class UserController {
         );
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiRespond<Void>> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
@@ -110,7 +163,16 @@ public class UserController {
             @RequestBody Map<String, String> body
     ) {
         String message = userDeviceService.saveFCMToken(userId, body);
-        return ResponseEntity.ok(ApiRespond.success(message,null));
+        return ResponseEntity.ok(ApiRespond.success(message, null));
+    }
+
+    /**
+     * Lấy danh sách FCM tokens của user (dành cho microservices khác gọi để gửi notification)
+     */
+    @GetMapping("/{userId}/fcm-tokens")
+    public ResponseEntity<ApiRespond<List<String>>> getFcmTokens(@PathVariable UUID userId) {
+        List<String> tokens = userDeviceService.getFcmTokensByUserId(userId);
+        return ResponseEntity.ok(ApiRespond.success("Get FCM tokens successfully", tokens));
     }
 
     //xem chi tiết profile
@@ -125,7 +187,7 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<ApiRespond<?>> updateProfile(
             @RequestBody UpdateProfileRequest request) {
-        return ResponseEntity.ok(ApiRespond.success("Update successfully!",userService.updateProfile(request)));
+        return ResponseEntity.ok(ApiRespond.success("Update successfully!", userService.updateProfile(request)));
     }
 
     //mockData

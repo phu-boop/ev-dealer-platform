@@ -56,6 +56,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.web.context.request.RequestContextHolder; 
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest; 
 
 import java.util.List;
 import java.util.UUID;
@@ -63,6 +66,10 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
+import java.util.Collections;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +89,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     private final KafkaTemplate<String, Object> kafkaTemplate; 
     private final ObjectMapper objectMapper; 
 
-    private final RestTemplate restTemplate; 
+    private final RestTemplate restTemplate;
 
     @Value("${app.services.inventory.url}") 
     private String inventoryServiceUrl;
@@ -394,22 +401,23 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     /**
-     * Triển khai logic cho API phân trang/tìm kiếm
+     * Triển khai logic cho API phân trang/tìm kiếm (Có cả status)
      */
     @Override
-    public Page<VariantDetailDto> getAllVariantsPaginated(String search, Pageable pageable) {
+    public Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Pageable pageable) {
         
-        // 1. Tạo Specification
-        // Gọi trực tiếp hàm static. Nếu 'search' là null/rỗng, hàm 'hasKeyword' của bạn
-        // nên trả về null (như trong code tôi gợi ý ở lần trước)
-        Specification<VehicleVariant> spec = VehicleVariantSpecification.hasKeyword(search);
+        Specification<VehicleVariant> searchSpec = VehicleVariantSpecification.hasKeyword(search);
+        Specification<VehicleVariant> statusSpec = null;
+        
+        if (status != null && !status.isBlank()) {
+            List<Long> inventoryIds = getVariantIdsFromInventory(status);
+            statusSpec = VehicleVariantSpecification.hasVariantIdIn(inventoryIds);
+        }
 
-        // (Nếu hasKeyword trả về null khi search rỗng)
-        // 2. Thực thi truy vấn
-        // JpaRepository.findAll() đủ thông minh để xử lý 'spec' là null (tức là không lọc)
-        Page<VehicleVariant> variantPage = variantRepository.findAll(spec, pageable);
+        Specification<VehicleVariant> finalSpec = Specification.allOf(searchSpec, statusSpec);
+
+        Page<VehicleVariant> variantPage = variantRepository.findAll(finalSpec, pageable);
         
-        // 3. Ánh xạ
         return variantPage.map(this::mapToVariantDetailDto);
     }
 
@@ -622,4 +630,70 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         
         variantHistoryRepository.save(history);
     }
+
+    @Override
+    public List<VariantDetailDto> getVariantsByModelId(Long modelId) {
+        VehicleModel model = findModelById(modelId); // Tự động ném AppException nếu không tìm thấy
+
+        List<VehicleVariant> variants = variantRepository.findByVehicleModel_ModelId(modelId);
+
+        return variants.stream()
+                .map(this::mapToVariantDetailDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> getAllVariantIds() {
+        // Gọi hàm repository mới (sẽ thêm ở bước 4)
+        return variantRepository.findAllVariantIds();
+    }
+
+    /**
+     * HÀM HELPER MỚI: Gọi sang inventory-service
+     */
+    private List<Long> getVariantIdsFromInventory(String status) {
+        String inventoryUrl = inventoryServiceUrl + "/inventory/variants/ids-by-status?status=" + status;
+        
+        // Tạo HttpHeaders
+        HttpHeaders headers = new HttpHeaders();
+        
+        // Lấy request hiện tại
+        try {
+            HttpServletRequest currentRequest = 
+                ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+            
+            // Sao chép các header cần thiết (Email, Role, v.v.)
+            String email = currentRequest.getHeader("X-User-Email");
+            String role = currentRequest.getHeader("X-User-Role");
+            
+            if (email != null) headers.set("X-User-Email", email);
+            if (role != null) headers.set("X-User-Role", role);
+
+        } catch (Exception e) {
+            log.warn("Không thể lấy HttpServletRequest để chuyển tiếp header: {}", e.getMessage());
+            
+        }
+
+        // 4. Gói headers vào HttpEntity
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);
+        
+        try {
+            ResponseEntity<ApiRespond<List<Long>>> response = restTemplate.exchange(
+                inventoryUrl,
+                HttpMethod.GET,
+                requestEntity, 
+                new ParameterizedTypeReference<ApiRespond<List<Long>>>() {}
+            );
+            
+            if (response.getBody() != null && response.getBody().getData() != null) {
+                return response.getBody().getData();
+            }
+        } catch (Exception e) {
+            log.error("Không thể lấy ID từ inventory-service: {}", e.getMessage());
+        }
+        
+        return Collections.emptyList();
+    }
+
 }

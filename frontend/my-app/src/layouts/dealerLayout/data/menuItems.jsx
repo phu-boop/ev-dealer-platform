@@ -52,6 +52,11 @@ export const dealerManagerMenuItems = [
         label: "Tất cả Phiên bản",
         path: "/dealer/manager/vehicles/all",
       },
+      // {
+      //   icon: FiSliders,
+      //   label: "So Sánh Mẫu Xe",
+      //   path: "/dealer/manager/vehicles/compare",
+      // },
       {
         icon: FiFileText,
         label: "Tạo Báo Giá",
@@ -270,9 +275,14 @@ export const dealerStaffMenuItems = [
         path: "/dealer/staff/quotations",
       },
       {
+        icon: FiFileText,
+        label: "Đanh sách báo giá",
+        path: "/dealer/staff/list/quotations",
+      },
+      {
         icon: FiClipboard,
         label: "Đơn Hàng Mới",
-        path: "/dealer/staff/orders/create",
+        path: "/dealer/staff/orders",
       },
       {
         icon: FiList,

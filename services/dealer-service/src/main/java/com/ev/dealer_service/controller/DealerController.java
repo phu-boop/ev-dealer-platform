@@ -74,10 +74,25 @@ public class DealerController {
         return ResponseEntity.ok(ApiResponse.success("Dealer deleted successfully", null));
     }
 
-    /**
-     * Lấy danh sách rút gọn (ID và Tên) của tất cả đại lý.
-     * Dùng cho các dropdown ở các service khác.
-     */
+
+    // Xoá mềm dealer (chuyển Status sang SUSPENDED)
+    @PutMapping("/{id}/suspend")
+    public ResponseEntity<ApiResponse<DealerResponse>> suspendDealer(@PathVariable UUID id) {
+        DealerResponse dealer = dealerService.suspendDealer(id);
+        return ResponseEntity.ok(ApiResponse.success("Dealer suspended successfully", dealer));
+    }
+
+
+    // Kích hoạt lại dealer (chuyển Status sang ACTIVE)
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<ApiResponse<DealerResponse>> activateDealer(@PathVariable UUID id) {
+        DealerResponse dealer = dealerService.activateDealer(id);
+        return ResponseEntity.ok(ApiResponse.success("Dealer suspended successfully", dealer));
+    }
+
+     // Lấy danh sách rút gọn (ID và Tên) của tất cả đại lý.
+     // Dùng cho các dropdown ở các service khác.
+
     @GetMapping("/list-all")
     public ResponseEntity<ApiRespond<List<DealerBasicDto>>> getAllDealersList() {
         List<DealerBasicDto> dealers = dealerService.getAllDealersBasicInfo();

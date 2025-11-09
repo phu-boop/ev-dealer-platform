@@ -28,6 +28,7 @@ public class OutboxProcessor {
     private static final String TOPIC_ORDER_CANCELLED = "sales.orders.cancelled";
     private static final String TOPIC_ORDER_DELIVERED = "sales.orders.delivered";
     private static final String TOPIC_UNKNOWN = "sales.unknown_events";
+    private static final String TOPIC_ORDER_ISSUE_REPORTED = "sales.orders.issue_reported";
 
     @Scheduled(fixedDelay = 10000)
     public void pollOutbox() {
@@ -84,6 +85,8 @@ public class OutboxProcessor {
                 return TOPIC_ORDER_CANCELLED;
             case "OrderDelivered":
                 return TOPIC_ORDER_DELIVERED;
+            case "OrderIssueReported": 
+                return TOPIC_ORDER_ISSUE_REPORTED;
             
             // --- NGHIỆP VỤ PROMOTION (ĐÃ THÊM) ---
             // !!! QUAN TRỌNG: Hãy thay "PromotionEventType" bằng tên eventType chính xác của bạn !!!

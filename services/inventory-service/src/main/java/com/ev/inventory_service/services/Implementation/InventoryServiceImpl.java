@@ -4,7 +4,6 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.common_lib.model.enums.*;
-
 import com.ev.common_lib.dto.inventory.VinValidationResultDto;
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
@@ -16,12 +15,14 @@ import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
 import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.PhysicalVehicle;
 import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
+// import com.ev.inventory_service.dto.response.DealerInventoryDto;
 // import com.ev.inventory_service.dto.response.DealerInventoryDto
 // Sự kiện Kafka
 import com.ev.common_lib.event.DealerStockUpdatedEvent;
 
 
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
+import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.CentralInventory;
 import com.ev.inventory_service.model.DealerAllocation;
 import com.ev.inventory_service.model.InventoryTransaction;
@@ -47,6 +48,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+
 // import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Value;
 import org.apache.poi.ss.usermodel.*;
@@ -446,6 +450,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public void shipAllocatedStock(ShipmentRequestDto request, String staffEmail) {
         UUID dealerId = request.getDealerId();
+        UUID orderId = request.getOrderId();
 
         for (ShipmentRequestDto.ShipmentItem item : request.getItems()) {
             Long variantId = item.getVariantId();
@@ -512,6 +517,7 @@ public class InventoryServiceImpl implements InventoryService {
                 }
                 vehicle.setStatus(VehiclePhysicalStatus.AT_DEALER); // Cập nhật trạng thái
                 vehicle.setLocationId(dealerId); // Cập nhật vị trí
+                vehicle.setOrderId(orderId);
             }
             physicalVehicleRepo.saveAll(vehicles);
 
@@ -643,6 +649,50 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Long> getVariantIdsByStatus(String status) {
+        // 1. Chuyển đổi chuỗi sang Enum
+        InventoryLevelStatus statusEnum;
+        try {
+            statusEnum = InventoryLevelStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Collections.emptyList(); // Trả về rỗng nếu status không hợp lệ
+        }
+
+        // 2. Lấy TẤT CẢ ID xe từ Vehicle-Service (Danh sách "Chủ")
+        List<Long> allVariantIds = getAllVariantIdsFromCatalog();
+
+        // 3. Lấy TẤT CẢ bản ghi kho (Dữ liệu "Phụ")
+        Map<Long, CentralInventory> stockMap = centralRepo.findAll().stream()
+            .collect(Collectors.toMap(CentralInventory::getVariantId, stock -> stock));
+
+        // 4. Lọc danh sách "Chủ" dựa trên dữ liệu "Phụ"
+        return allVariantIds.stream()
+            .filter(variantId -> {
+                CentralInventory stock = stockMap.get(variantId);
+                
+                InventoryLevelStatus currentStatus;
+
+                if (stock == null) {
+                    // Nếu xe không có trong kho, nó là OUT_OF_STOCK
+                    currentStatus = InventoryLevelStatus.OUT_OF_STOCK;
+                } else {
+                    // Nếu có trong kho, tính toán trạng thái
+                    int available = stock.getAvailableQuantity();
+                    int reorder = (stock.getReorderLevel() != null) ? stock.getReorderLevel() : 0;
+                    
+                    if (available <= 0) currentStatus = InventoryLevelStatus.OUT_OF_STOCK;
+                    else if (available <= reorder) currentStatus = InventoryLevelStatus.LOW_STOCK;
+                    else currentStatus = InventoryLevelStatus.IN_STOCK;
+                }
+                
+                // Trả về true nếu trạng thái tính toán khớp với trạng thái đang lọc
+                return currentStatus == statusEnum;
+            })
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<String> getAvailableVinsForVariant(Long variantId) {
         // Tìm tất cả xe có variantId này
         // VÀ đang ở trạng thái sẵn sàng tại kho trung tâm
@@ -655,6 +705,69 @@ public class InventoryServiceImpl implements InventoryService {
         return vehicles.stream()
             .map(PhysicalVehicle::getVin)
             .collect(Collectors.toList());
+    }
+
+    // ==========================================================
+    // ===== LOGIC NGHIỆP VỤ MỚI CHO VIỆC TRẢ HÀNG =====
+    // ==========================================================
+    
+    @Override
+    @Transactional
+    public void returnStockForOrder(UUID orderId, String staffEmail) {
+        
+        // Tìm tất cả các xe (vehicle) đã bị gán cho đơn hàng này
+        // (Đây là các xe đã bị giao hoặc đang vận chuyển)
+        List<PhysicalVehicle> vehiclesToReturn = physicalVehicleRepo.findAllByOrderId(orderId);
+
+        if (vehiclesToReturn.isEmpty()) {
+            // (Idempotent) Có thể đơn hàng đã được trả, hoặc chưa bao giờ được giao
+            System.err.println("Không tìm thấy xe nào để trả về kho cho Order ID: " + orderId);
+            return;
+        }
+
+        System.out.println("Bắt đầu trả " + vehiclesToReturn.size() + " xe về kho trung tâm cho Order ID: " + orderId);
+
+        // Phân nhóm các xe theo VariantId (ví dụ: 2 xe Variant 1, 1 xe Variant 2)
+        Map<Long, Long> variantCounts = vehiclesToReturn.stream()
+            .collect(Collectors.groupingBy(PhysicalVehicle::getVariantId, Collectors.counting()));
+
+        // Lặp qua từng nhóm xe để trả về kho
+        for (Map.Entry<Long, Long> entry : variantCounts.entrySet()) {
+            Long variantId = entry.getKey();
+            int quantityToReturn = entry.getValue().intValue();
+
+            // Tìm kho trung tâm của variant này
+            CentralInventory stock = centralRepo.findByVariantId(variantId)
+                .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+
+            // Cập nhật số lượng kho (Logic ngược của allocate + ship)
+            // (shipAllocatedStock đã trừ total-- và allocated--)
+            // (allocateStockForOrder đã trừ available-- và cộng allocated++)
+            // -> Trả hàng (ngược lại của cả 2) sẽ là: total++ và available++
+            
+            stock.setTotalQuantity(stock.getTotalQuantity() + quantityToReturn);
+            stock.setAvailableQuantity(stock.getAvailableQuantity() + quantityToReturn); 
+
+            centralRepo.save(stock);
+            
+            // 6. Ghi lại giao dịch (Transaction)
+            InventoryTransaction transaction = new InventoryTransaction();
+            transaction.setVariantId(variantId);
+            transaction.setQuantity(quantityToReturn);
+            transaction.setTransactionType(TransactionType.RETURN_FROM_DEALER); 
+            transaction.setNotes("Trả hàng khiếu nại từ Order ID: " + orderId);
+            transaction.setStaffId(staffEmail);
+            transaction.setReferenceId(orderId.toString());
+            transactionRepo.save(transaction);
+        }
+
+        // 7. Cập nhật lại trạng thái của từng xe
+        for (PhysicalVehicle vehicle : vehiclesToReturn) { 
+            vehicle.setStatus(VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE);
+            vehicle.setLocationId(null);
+            vehicle.setOrderId(null);
+        }
+        physicalVehicleRepo.saveAll(vehiclesToReturn);
     }
 
     //--Helper methods--
@@ -828,5 +941,29 @@ public class InventoryServiceImpl implements InventoryService {
             case IN_CENTRAL_WAREHOUSE: return "Sẵn sàng (Kho trung tâm)";
             default: return status.name(); // Trả về tên Enum nếu không rõ
         }
+    }
+
+    /**
+     * HÀM HELPER MỚI: Gọi sang vehicle-service
+     */
+    private List<Long> getAllVariantIdsFromCatalog() {
+        String catalogUrl = vehicleCatalogUrl + "/vehicle-catalog/variants/all-ids";
+        
+        try {
+            // (Lưu ý: Cần xử lý việc chuyển tiếp header xác thực nếu API này được bảo vệ)
+            ResponseEntity<ApiRespond<List<Long>>> response = restTemplate.exchange(
+                catalogUrl,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<ApiRespond<List<Long>>>() {}
+            );
+            
+            if (response.getBody() != null && response.getBody().getData() != null) {
+                return response.getBody().getData();
+            }
+        } catch (Exception e) {
+            System.err.println("Không thể lấy all-ids từ vehicle-service: " + e.getMessage());
+        }
+        return Collections.emptyList();
     }
 }

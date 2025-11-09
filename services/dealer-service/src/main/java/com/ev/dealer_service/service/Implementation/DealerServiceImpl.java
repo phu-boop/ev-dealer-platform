@@ -1,6 +1,7 @@
 package com.ev.dealer_service.service.Implementation;
 
 import com.ev.common_lib.dto.dealer.DealerBasicDto;
+import com.ev.dealer_service.enums.DealerStatus;
 import com.ev.dealer_service.service.Interface.DealerService;
 import com.ev.dealer_service.repository.DealerRepository;
 import com.ev.dealer_service.dto.request.DealerRequest;
@@ -73,6 +74,7 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
         }
 
         Dealer dealer = modelMapper.map(request, Dealer.class);
+        dealer.setStatus(DealerStatus.ACTIVE);
         Dealer savedDealer = dealerRepository.save(dealer);
         return modelMapper.map(savedDealer, DealerResponse.class);
     }
@@ -109,6 +111,29 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
     }
 
     @Override
+    @Transactional
+    public DealerResponse suspendDealer(UUID id) {
+        Dealer dealer = dealerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + id));
+
+        dealer.setStatus(DealerStatus.SUSPENDED);
+        Dealer updatedDealer = dealerRepository.save(dealer);
+
+        return modelMapper.map(updatedDealer, DealerResponse.class);
+    }
+
+    @Override
+    @Transactional
+    public DealerResponse activateDealer(UUID id) {
+        Dealer dealer = dealerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + id));
+
+        dealer.setStatus(DealerStatus.ACTIVE);
+        Dealer updatedDealer = dealerRepository.save(dealer);
+
+        return modelMapper.map(updatedDealer, DealerResponse.class);
+    }
+    
     public List<Dealer> getDealersByRegionAndName(String region, String dealerName) {
         return dealerRepository.findByRegionAndDealerName(region, dealerName);
     }
