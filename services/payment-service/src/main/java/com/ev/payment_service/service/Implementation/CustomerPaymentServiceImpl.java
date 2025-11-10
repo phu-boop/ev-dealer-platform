@@ -295,7 +295,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     data.setOrderId((UUID) orderIdObj);
                 } else {
                     String orderIdStr = orderIdObj.toString();
-                    data.setOrderId(UUID.fromString(orderIdStr));
+            data.setOrderId(UUID.fromString(orderIdStr));
                 }
             } catch (Exception e) {
                 log.error("Failed to parse orderId - Value: {}, Error: {}", 
@@ -311,10 +311,10 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         if (salesOrderMap.get("totalAmount") != null) {
             Object totalAmountObj = salesOrderMap.get("totalAmount");
             try {
-                if (totalAmountObj instanceof Number) {
-                    data.setTotalAmount(BigDecimal.valueOf(((Number) totalAmountObj).doubleValue()));
-                } else if (totalAmountObj instanceof String) {
-                    data.setTotalAmount(new BigDecimal((String) totalAmountObj));
+            if (totalAmountObj instanceof Number) {
+                data.setTotalAmount(BigDecimal.valueOf(((Number) totalAmountObj).doubleValue()));
+            } else if (totalAmountObj instanceof String) {
+                data.setTotalAmount(new BigDecimal((String) totalAmountObj));
                 } else {
                     log.warn("Cannot parse totalAmount - OrderId: {}, Type: {}", 
                             data.getOrderId(), totalAmountObj != null ? totalAmountObj.getClass().getName() : "null");
@@ -421,7 +421,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     data.setTotalAmount(BigDecimal.valueOf(((Number) totalAmountObj).doubleValue()));
                 } else if (totalAmountObj instanceof String) {
                     data.setTotalAmount(new BigDecimal((String) totalAmountObj));
-                } else {
+            } else {
                     log.warn("Cannot parse totalAmount - OrderId: {}, Type: {}", 
                             data.getOrderId(), totalAmountObj.getClass().getName());
                     data.setTotalAmount(BigDecimal.ZERO);
@@ -466,7 +466,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                         data.setCustomerId(((Number) customerIdObj).longValue());
                         log.info("Found customerId from quotation (fallback) - OrderId: {}, CustomerId: {}", 
                                 data.getOrderId(), data.getCustomerId());
-                    }
+        }
                 }
             } catch (Exception e) {
                 log.warn("Failed to parse customerId from quotation - OrderId: {}, Error: {}", 
