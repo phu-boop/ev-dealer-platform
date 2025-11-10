@@ -164,15 +164,29 @@ const CustomerDetail = () => {
             <p className="text-sm text-gray-500">{customer.customerCode}</p>
           </div>
           <div className="flex gap-3">
-            {isDealerManager && (
+            <div className="relative group">
               <button 
-                onClick={() => setAssignModalOpen(true)} 
-                className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center"
+                onClick={() => isDealerManager && setAssignModalOpen(true)} 
+                disabled={!isDealerManager}
+                className={`px-4 py-2 rounded-xl transition-colors flex items-center ${
+                  isDealerManager
+                    ? 'bg-purple-600 text-white hover:bg-purple-700 cursor-pointer'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
                 <FiUsers className="w-4 h-4 mr-2" />
                 Phân công nhân viên
               </button>
-            )}
+              
+              {/* Tooltip for Staff role */}
+              {!isDealerManager && (
+                <div className="absolute left-0 -top-12 bg-gray-900 text-white text-sm rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20 shadow-lg">
+                  Chỉ Manager mới có quyền phân công nhân viên
+                  <div className="absolute left-6 -bottom-1 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                </div>
+              )}
+            </div>
+            
             <button 
               onClick={() => navigate(`${base}/customers/${id}/edit`)} 
               className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center"
