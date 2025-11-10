@@ -67,6 +67,21 @@ export const useSalesOrders = () => {
     }
   };
 
+  // 🟢 Recalculate / Add order items tự động
+  const recalcOrderItems = async (orderId) => {
+    try {
+      const response = await salesOrderService.recalcOrderItems(orderId);
+      const data = response.data?.data || null;
+      showSuccess('Tính toán lại order items thành công');
+      await fetchOrders(); // Refresh list
+      return data;
+    } catch (err) {
+      console.error("Recalculate order items error:", err);
+      showError('Lỗi khi tính toán lại order items');
+      throw err;
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -78,6 +93,7 @@ export const useSalesOrders = () => {
     fetchOrders,
     createOrder,
     updateStatus,
-    approveOrder
+    approveOrder,
+    recalcOrderItems
   };
 };

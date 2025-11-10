@@ -106,6 +106,7 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
         </div>
 
         {!readOnly && (
+          <div className='flex gap-5'>
           <button
             onClick={() => setShowForm(true)}
             disabled={formLoading}
@@ -114,6 +115,7 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
             <span>+</span>
             Thêm sản phẩm
           </button>
+            </div>
         )}
       </div>
 
@@ -131,6 +133,7 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
               setEditingItem(null);
             }}
             loading={formLoading}
+            orderId={orderId}
           />
         </div>
       )}

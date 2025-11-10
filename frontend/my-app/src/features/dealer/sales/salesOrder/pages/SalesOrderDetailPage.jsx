@@ -1,3 +1,4 @@
+// Trong SalesOrderDetailPage.jsx
 import React, { useState } from 'react';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { Tabs, Button, Space, Alert } from 'antd';
@@ -19,14 +20,17 @@ const SalesOrderDetailPage = () => {
   const navigate = useNavigate();
 
   // Hooks
-  const { orders, loading: ordersLoading } = useSalesOrders();
+  const { orders, loading: ordersLoading, recalcOrderItems } = useSalesOrders();
   const { items, loading: itemsLoading } = useOrderItems(orderId);
   const { trackings, currentStatus, loading: trackingLoading } = useOrderTracking(orderId);
   const { contract, loading: contractLoading, signContract, generateFromTemplate } = useSalesContracts(orderId);
 
   const [signModalVisible, setSignModalVisible] = useState(false);
+  const [recalcLoading, setRecalcLoading] = useState(false);
+
   // Tìm đơn hàng theo ID
   const order = orders.find(o => o.orderId == orderId);
+
   // Loading & Not Found
   if (ordersLoading) {
     return (
@@ -72,6 +76,18 @@ const SalesOrderDetailPage = () => {
     }
   };
 
+  // 🟢 Xử lý tính toán lại order items
+  const handleRecalcOrderItems = async () => {
+    try {
+      setRecalcLoading(true);
+      await recalcOrderItems(orderId);
+    } catch (error) {
+      console.error("Recalculate order items error:", error);
+    } finally {
+      setRecalcLoading(false);
+    }
+  };
+
   return (
     <PageContainer
       header={{
@@ -100,9 +116,18 @@ const SalesOrderDetailPage = () => {
         <Tabs defaultActiveKey="items">
           {/* Tab sản phẩm */}
           <TabPane tab="Sản phẩm" key="items">
+            <Space style={{ marginBottom: 16 }}>
+              <Button
+                type="primary"
+                onClick={handleRecalcOrderItems}
+                loading={recalcLoading}
+              >
+                Tính toán lại
+              </Button>
+            </Space>
             <OrderItemList
               items={items}
-              loading={itemsLoading}
+              loading={itemsLoading || recalcLoading}
               orderId={orderId}
               readOnly={order.orderStatusB2C === 'CANCELLED' || order.orderStatusB2C === 'DELIVERED'}
             />
@@ -188,6 +213,7 @@ const SalesOrderDetailPage = () => {
           loading={contractLoading}
         />
       )}
+      
     </PageContainer>
   );
 };
