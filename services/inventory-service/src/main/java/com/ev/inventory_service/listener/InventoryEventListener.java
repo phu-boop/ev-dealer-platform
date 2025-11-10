@@ -1,6 +1,5 @@
 package com.ev.inventory_service.listener;
 
-import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
 import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.inventory_service.services.Interface.InventoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
