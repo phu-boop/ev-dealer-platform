@@ -1,8 +1,8 @@
 package com.ev.dealer_service.service.Implementation;
 
+import com.ev.common_lib.dto.dealer.DealerBasicDto;
 import com.ev.dealer_service.enums.DealerStatus;
 import com.ev.dealer_service.service.Interface.DealerService;
-import com.ev.dealer_service.dto.response.DealerBasicDto;
 import com.ev.dealer_service.repository.DealerRepository;
 import com.ev.dealer_service.dto.request.DealerRequest;
 import com.ev.dealer_service.dto.response.DealerResponse;
@@ -132,5 +132,9 @@ public class DealerServiceImpl implements DealerService { // Triển khai (imple
         Dealer updatedDealer = dealerRepository.save(dealer);
 
         return modelMapper.map(updatedDealer, DealerResponse.class);
+    }
+    
+    public List<Dealer> getDealersByRegionAndName(String region, String dealerName) {
+        return dealerRepository.findByRegionAndDealerName(region, dealerName);
     }
 }

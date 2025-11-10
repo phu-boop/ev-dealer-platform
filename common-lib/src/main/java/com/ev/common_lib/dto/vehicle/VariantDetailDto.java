@@ -9,6 +9,8 @@ import java.util.List;
 public class VariantDetailDto {
     private Long variantId;
     private String versionName;
+    private String modelName;
+    private String brand;
     private String color;
     private String skuCode;
     private BigDecimal price;

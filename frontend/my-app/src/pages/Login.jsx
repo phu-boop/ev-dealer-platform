@@ -59,10 +59,10 @@ export default function Login() {
       );
 
       if(sessionStorage.getItem("roles").includes("DEALER_MANAGER")||sessionStorage.getItem("roles").includes("DEALER_STAFF")){
-        sessionStorage.setItem("dealerId", userData.memberId || "");
-      }else{
-        sessionStorage.setItem("prfileId", userData.memberId || "");
+        sessionStorage.setItem("dealerId", userData.dealerId || "");
+        sessionStorage.setItem("memberId", userData.memberId || "");
       }
+        sessionStorage.setItem("profileId", userData.memberId || "");
 
       Swal.fire({
     title: "Chúc mừng!",

@@ -18,8 +18,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "vehicle_models")
-@Getter // Thêm và getter để tránh vòng lặp
-@Setter // Thêm và setter để tránh vòng lặp
+@Getter 
+@Setter 
 // @EqualsAndHashCode(exclude = {"features", "priceHistories"}) // Thêm và loại trừ để tránh vòng lặp
 // @ToString(exclude = {"features", "priceHistories"}) // Thêm và loại trừ để tránh vòng lặp
 public class VehicleModel {

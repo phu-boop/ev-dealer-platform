@@ -1,9 +1,12 @@
-import React from 'react';
-import { FiChevronRight, FiHome } from 'react-icons/fi';
+import React from "react";
+import { FiChevronRight, FiHome } from "react-icons/fi";
 
-export const Breadcrumb = ({ menuItems, activePath }) => {
-  const activeItem = menuItems.find((item) => item.path === activePath) || 
-    menuItems.flatMap(item => item.submenu || []).find(sub => sub.path === activePath);
+export const Breadcrumb = ({ menuItems = [], activePath }) => {
+  const activeItem =
+    menuItems.find((item) => item.path === activePath) ||
+    menuItems
+      .flatMap((item) => item.submenu || [])
+      .find((sub) => sub.path === activePath);
 
   return (
     <div className="ml-4 flex items-center space-x-3 text-sm">

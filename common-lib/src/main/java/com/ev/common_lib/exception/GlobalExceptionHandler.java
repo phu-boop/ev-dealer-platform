@@ -8,6 +8,11 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import java.util.Optional;
 
@@ -58,5 +63,33 @@ public class GlobalExceptionHandler {
                 .status(ErrorCode.UNAUTHORIZED.getHttpStatus())
                 .body(apiRespond);
     }
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiRespond<?>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        ApiRespond<?> apiRespond = new ApiRespond<>();
+
+        if (ex.getRequiredType() != null && ex.getRequiredType().equals(UUID.class)) {
+            apiRespond.setCode(ErrorCode.INVALID_UUID_FORMAT.getCode());
+            apiRespond.setMessage(ErrorCode.INVALID_UUID_FORMAT.getMessage());
+        } else {
+            apiRespond.setCode(ErrorCode.BAD_REQUEST.getCode());
+            apiRespond.setMessage(ErrorCode.BAD_REQUEST.getMessage());
+        }
+
+        return ResponseEntity
+                .status(ErrorCode.BAD_REQUEST.getHttpStatus())
+                .body(apiRespond);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiRespond<?>> handleMissingParams(MissingServletRequestParameterException ex) {
+        ApiRespond<?> apiRespond = new ApiRespond<>();
+        apiRespond.setCode(ErrorCode.MISSING_REQUIRED_FIELD.getCode());
+        apiRespond.setMessage(ex.getParameterName() + " parameter is missing");
+        return ResponseEntity
+                .status(ErrorCode.MISSING_REQUIRED_FIELD.getHttpStatus())
+                .body(apiRespond);
+    }
+
+
 
 }

@@ -6,9 +6,14 @@ import {
   FiEdit, // Dùng cho Sửa ngưỡng
   FiChevronDown,
   FiNavigation, // Dùng cho Điều chuyển
+  FiFilter,
+  FiLoader,
 } from "react-icons/fi";
 
-import { getInventoryStatusByIds } from "../services/inventoryService";
+import {
+  getInventoryStatusByIds,
+  getAvailableVins,
+} from "../services/inventoryService";
 import { getAllVariantsPaginated } from "../../catalog/services/vehicleCatalogService";
 
 import TransactionModal from "./TransactionModal"; // Modal Nhập kho (RESTOCK)
@@ -43,8 +48,6 @@ const StatusBadge = ({ status }) => {
 };
 
 const InventoryStatusTab = () => {
-  // --- THAY ĐỔI 2: Đổi tên state cho rõ nghĩa ---
-  // Tên cũ: inventoryWithDetails
   const [mergedData, setMergedData] = useState({
     content: [],
     totalPages: 0,
@@ -59,22 +62,26 @@ const InventoryStatusTab = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState(new Set());
 
+  // Map<variantId, string[]>
+  const [vinsMap, setVinsMap] = useState(new Map());
+  // variantId đang được tải
+  const [loadingVins, setLoadingVins] = useState(null);
+
   // State cho Modals (giữ nguyên)
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
 
-  // --- THAY ĐỔI 3: VIẾT LẠI HOÀN TOÀN HÀM FETCH DỮ LIỆU ---
   const fetchInventory = useCallback(async () => {
     setIsLoading(true);
     setMergedData({ content: [], totalPages: 0 }); // Xóa dữ liệu cũ
 
     try {
-      // BƯỚC 1: Lấy "Danh Sách Chủ" (Master List) từ Vehicle Service
+      // Lấy "Danh Sách Chủ" (Master List) từ Vehicle Service
       const params = {
         search: filters.search,
-        // status: filters.status, // Cần backend vehicle-service hỗ trợ filter status
+        status: filters.status,
         page: page,
         size: 10,
       };
@@ -88,12 +95,12 @@ const InventoryStatusTab = () => {
         return;
       }
 
-      // BƯỚC 2: Lấy danh sách ID từ Bước 1
+      // Lấy danh sách ID từ Bước 1
       const variantIds = vehicleData.content.map(
         (variant) => variant.variantId
       );
 
-      // BƯỚC 3: Lấy "Dữ Liệu Phụ" (Inventory) từ Inventory Service
+      // Lấy "Dữ Liệu Phụ" (Inventory) từ Inventory Service
       const inventoryResponse = await getInventoryStatusByIds(variantIds);
       const inventoryList = inventoryResponse.data.data || [];
 
@@ -102,32 +109,51 @@ const InventoryStatusTab = () => {
         inventoryList.map((inv) => [inv.variantId, inv])
       );
 
-      // BƯỚC 4: Gộp (Merge) hai danh sách
+      // Gộp (Merge) hai danh sách
       const finalMergedContent = vehicleData.content.map((variant) => {
         const inventoryInfo = inventoryMap.get(variant.variantId);
 
         if (inventoryInfo) {
-          // TÌM THẤY: Gộp thông tin xe (master) và thông tin kho (supplementary)
+          // Lấy thông tin xe (có skuCode, name, specs...)
+          const vehicleDetails = { ...variant };
+
+          // Lấy thông tin kho (chỉ lấy các trường cần thiết)
+          const {
+            availableQuantity,
+            allocatedQuantity,
+            totalQuantity,
+            reorderLevel,
+            status, // Đây là status: "IN_STOCK"
+          } = inventoryInfo;
+
+          // Gộp lại
           return {
-            ...variant, // (id, versionName, skuCode, color, brand, modelName...)
-            ...inventoryInfo, // (availableQuantity, allocatedQuantity, status, reorderLevel...)
+            ...vehicleDetails, // Lấy mọi thứ từ 'variant' (bao gồm skuCode)
+
+            // Ghi đè CÁC TRƯỜNG KHO CỤ THỂ từ 'inventoryInfo'
+            availableQuantity,
+            allocatedQuantity,
+            totalQuantity,
+            reorderLevel,
+            status, // status: "IN_STOCK" sẽ ghi đè status: "IN_PRODUCTION"
+
+            dealerStock: [],
           };
         } else {
-          // KHÔNG TÌM THẤY (Xe mới, chưa nhập kho):
-          // Trả về thông tin xe + tồn kho mặc định là 0
+          // KHÔNG TÌM THẤY (Xe mới)
           return {
             ...variant,
             availableQuantity: 0,
             allocatedQuantity: 0,
             totalQuantity: 0,
             reorderLevel: 0,
-            status: "OUT_OF_STOCK", // Mặc định là hết hàng
-            dealerStock: [], // (Nếu DTO của bạn có trường này)
+            status: "OUT_OF_STOCK",
+            dealerStock: [],
           };
         }
       });
 
-      // BƯỚC 5: Cập nhật State
+      // Cập nhật State
       setMergedData({
         content: finalMergedContent,
         totalPages: vehicleData.totalPages,
@@ -150,9 +176,32 @@ const InventoryStatusTab = () => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
+  const fetchVinsForVariant = async (variantId) => {
+    setLoadingVins(variantId);
+    try {
+      const response = await getAvailableVins(variantId);
+      const vins = response.data.data || [];
+      setVinsMap((prevMap) => new Map(prevMap).set(variantId, vins));
+    } catch (error) {
+      console.error("Failed to fetch VINs", error);
+      setVinsMap((prevMap) => new Map(prevMap).set(variantId, [])); // Lưu mảng rỗng nếu lỗi
+    } finally {
+      setLoadingVins(null);
+    }
+  };
+
   const toggleRow = (variantId) => {
     const newSet = new Set(expandedRows);
-    newSet.has(variantId) ? newSet.delete(variantId) : newSet.add(variantId);
+
+    if (newSet.has(variantId)) {
+      newSet.delete(variantId); // Chỉ đóng lại
+    } else {
+      newSet.add(variantId); // Mở ra
+      // Nếu chưa có data VINs VÀ không đang tải, thì gọi API
+      if (!vinsMap.has(variantId) && loadingVins !== variantId) {
+        fetchVinsForVariant(variantId);
+      }
+    }
     setExpandedRows(newSet);
   };
 
@@ -182,31 +231,30 @@ const InventoryStatusTab = () => {
   return (
     <div>
       {/* Thanh tìm kiếm và bộ lọc */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <input
-          name="search"
-          onChange={handleFilterChange}
-          placeholder="Tìm theo tên xe, SKU..."
-          className="p-2 border rounded-lg md:col-span-2"
-        />
-        <select
-          name="dealerId"
-          onChange={handleFilterChange}
-          className="p-2 border rounded-lg"
-        >
-          <option value="">Tất cả đại lý</option>
-          {/* TODO: Cần API để lấy danh sách đại lý */}
-        </select>
-        <select
-          name="status"
-          onChange={handleFilterChange}
-          className="p-2 border rounded-lg"
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="IN_STOCK">Còn hàng</option>
-          <option value="LOW_STOCK">Tồn kho thấp</option>
-          <option value="OUT_OF_STOCK">Hết hàng</option>
-        </select>
+      <div className="flex justify-between items-center mb-6">
+        <div className="relative w-full max-w-md">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            name="search"
+            onChange={handleFilterChange}
+            placeholder="Tìm theo tên xe, SKU..."
+            className="p-2 pl-10 border rounded-lg w-full"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <FiFilter className="text-gray-500" />
+          <select
+            name="status"
+            value={filters.status}
+            onChange={handleFilterChange}
+            className="p-2 border rounded-lg bg-white"
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="IN_STOCK">Còn hàng</option>
+            <option value="LOW_STOCK">Tồn kho thấp</option>
+            <option value="OUT_OF_STOCK">Hết hàng</option>
+          </select>
+        </div>
       </div>
 
       {/* Bảng dữ liệu */}
@@ -220,8 +268,9 @@ const InventoryStatusTab = () => {
                 <th className="p-3 w-12"></th>
                 <th className="p-3 text-left">Sản phẩm</th>
                 <th className="p-3 text-center">Kho TT khả dụng</th>
-                <th className="p-3 text-center">Đã phân bổ</th>
+                <th className="p-3 text-center">Đang chờ xuất</th>
                 <th className="p-3 text-center">Tổng số lượng</th>
+                <th className="p-3 text-center">Ngưỡng (TT)</th>
                 <th className="p-3">Trạng thái</th>
                 <th className="p-3 text-right">Hành động</th>
               </tr>
@@ -264,6 +313,9 @@ const InventoryStatusTab = () => {
                       <td className="p-3 text-center font-semibold text-blue-600">
                         {item.totalQuantity}
                       </td>
+                      <td className="p-3 text-center text-yellow-700 font-medium">
+                        {item.reorderLevel}
+                      </td>
                       <td className="p-3">
                         <StatusBadge status={item.status} />
                       </td>
@@ -292,32 +344,59 @@ const InventoryStatusTab = () => {
                       </td>
                     </tr>
                     {expandedRows.has(item.variantId) && (
-                      <tr className="bg-gray-100">
-                        <td colSpan="7" className="p-4">
-                          <h4 className="font-semibold mb-2">
-                            Chi tiết tồn kho đại lý:
-                          </h4>
-                          {item.dealerStock && item.dealerStock.length > 0 ? (
-                            <ul className="list-disc list-inside text-sm">
-                              {item.dealerStock.map((dealer) => (
-                                <li key={dealer.dealerId}>
-                                  Đại lý #{dealer.dealerId}:{" "}
-                                  <span className="font-semibold">
-                                    {dealer.availableQuantity}
-                                  </span>{" "}
-                                  khả dụng /{" "}
-                                  <span className="text-gray-600">
-                                    {dealer.allocatedQuantity}
-                                  </span>{" "}
-                                  đã phân bổ
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-sm text-gray-500">
-                              Chưa có dữ liệu tồn kho ở đại lý.
-                            </p>
-                          )}
+                      <tr className="bg-gray-50 border-b">
+                        <td colSpan="8" className="p-4">
+                          <div className="p-4 bg-white rounded shadow-inner border">
+                            <h4 className="font-semibold mb-2 text-gray-800">
+                              Các số VIN khả dụng (Kho Trung tâm):
+                            </h4>
+
+                            {/* 1. Trạng thái đang tải VINs */}
+                            {loadingVins === item.variantId && (
+                              <div className="flex items-center text-gray-500">
+                                <FiLoader className="animate-spin mr-2" />
+                                Đang tải VINs...
+                              </div>
+                            )}
+
+                            {/* 2. Trạng thái đã tải xong (hoặc chưa tải) */}
+                            {loadingVins !== item.variantId &&
+                              (() => {
+                                const vins = vinsMap.get(item.variantId);
+
+                                // 2a. Chưa có dữ liệu (chưa kịp tải)
+                                if (!vins) {
+                                  return (
+                                    <p className="text-sm text-gray-500">
+                                      Đang chờ tải...
+                                    </p>
+                                  );
+                                }
+
+                                // 2b. Không tìm thấy VIN
+                                if (vins.length === 0) {
+                                  return (
+                                    <p className="text-sm text-gray-500">
+                                      Không tìm thấy VIN nào khả dụng.
+                                    </p>
+                                  );
+                                }
+
+                                // 2c. Hiển thị danh sách VINs
+                                return (
+                                  <div className="flex flex-wrap gap-2">
+                                    {vins.map((vin) => (
+                                      <span
+                                        key={vin}
+                                        className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-mono rounded-full border border-blue-200"
+                                      >
+                                        {vin}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
+                          </div>
                         </td>
                       </tr>
                     )}

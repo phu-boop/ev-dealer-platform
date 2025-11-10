@@ -1,9 +1,35 @@
 import {
-  FiHome, FiPackage, FiTag, FiList, FiFileText, FiShoppingCart, FiClipboard,
-  FiTruck, FiUsers, FiCalendar, FiMessageCircle, FiArchive, FiNavigation,
-  FiCreditCard, FiPieChart, FiTrendingUp, FiBarChart2, FiSettings, FiUserPlus,
-  FiSliders, FiGift, FiChevronDown, FiLogOut, FiX, FiMenu, FiBell,
-  FiMessageSquare, FiHelpCircle, FiChevronRight, FiUser, FiShield
+  FiHome,
+  FiPackage,
+  FiTag,
+  FiList,
+  FiFileText,
+  FiShoppingCart,
+  FiClipboard,
+  FiTruck,
+  FiUsers,
+  FiCalendar,
+  FiMessageCircle,
+  FiArchive,
+  FiNavigation,
+  FiCreditCard,
+  FiPieChart,
+  FiTrendingUp,
+  FiBarChart2,
+  FiSettings,
+  FiUserPlus,
+  FiSliders,
+  FiGift,
+  FiChevronDown,
+  FiLogOut,
+  FiX,
+  FiMenu,
+  FiBell,
+  FiMessageSquare,
+  FiHelpCircle,
+  FiChevronRight,
+  FiUser,
+  FiShield,
 } from "react-icons/fi";
 
 export const dealerManagerMenuItems = [
@@ -19,18 +45,18 @@ export const dealerManagerMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/manager/vehicles/available",
+        path: "/dealer/manager/inventory/stock",
       },
       {
         icon: FiTag,
         label: "Toàn Bộ Mẫu Xe",
         path: "/dealer/manager/vehicles/all",
       },
-      {
-        icon: FiSliders,
-        label: "So Sánh Mẫu Xe",
-        path: "/dealer/manager/vehicles/compare",
-      },
+      // {
+      //   icon: FiSliders,
+      //   label: "So Sánh Mẫu Xe",
+      //   path: "/dealer/manager/vehicles/compare",
+      // },
       {
         icon: FiFileText,
         label: "Tạo Báo Giá",
@@ -249,9 +275,14 @@ export const dealerStaffMenuItems = [
         path: "/dealer/staff/quotations",
       },
       {
+        icon: FiFileText,
+        label: "Đanh sách báo giá",
+        path: "/dealer/staff/list/quotations",
+      },
+      {
         icon: FiClipboard,
         label: "Đơn Hàng Mới",
-        path: "/dealer/staff/orders/create",
+        path: "/dealer/staff/orders",
       },
       {
         icon: FiList,
