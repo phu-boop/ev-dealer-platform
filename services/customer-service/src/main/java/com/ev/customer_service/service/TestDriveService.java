@@ -3,6 +3,7 @@ package com.ev.customer_service.service;
 import com.ev.customer_service.dto.request.CancelTestDriveRequest;
 import com.ev.customer_service.dto.request.TestDriveFilterRequest;
 import com.ev.customer_service.dto.request.TestDriveRequest;
+import com.ev.customer_service.dto.request.TestDriveFeedbackRequest;
 import com.ev.customer_service.dto.request.UpdateTestDriveRequest;
 import com.ev.customer_service.dto.response.TestDriveCalendarResponse;
 import com.ev.customer_service.dto.response.TestDriveResponse;
@@ -421,7 +422,7 @@ public class TestDriveService {
                 TestDriveAppointment conflict = staffConflicts.get(0);
                 String conflictTime = conflict.getAppointmentDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
                 throw new IllegalStateException(
-                    String.format("⚠️ Nhân viên đã có lịch hẹn vào lúc %s. Vui lòng chọn thời gian khác!", conflictTime)
+                    String.format("Nhân viên đã có lịch hẹn vào lúc %s. Vui lòng chọn thời gian khác!", conflictTime)
                 );
             }
         }
@@ -461,7 +462,10 @@ public class TestDriveService {
             .dealerId(appointment.getDealerId())
             .modelId(appointment.getModelId())
             .variantId(appointment.getVariantId())
+            .vehicleModelName(appointment.getVehicleModelName())
+            .vehicleVariantName(appointment.getVehicleVariantName())
             .staffId(appointment.getStaffId())
+            .staffName(appointment.getStaffName())
             .appointmentDate(appointment.getAppointmentDate())
             .durationMinutes(appointment.getDurationMinutes())
             .endTime(appointment.getEndTime())
@@ -514,5 +518,55 @@ public class TestDriveService {
 
         response.setStatusWithColor(appointment.getStatus());
         return response;
+    }
+
+    /**
+     * Ghi lại kết quả lái thử và phản hồi của khách hàng
+     * Chỉ cho phép ghi feedback khi appointment đã COMPLETED
+     */
+    @Transactional
+    public TestDriveResponse submitFeedback(Long id, TestDriveFeedbackRequest request) {
+        TestDriveAppointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+
+        // Validate: Chỉ cho phép ghi feedback khi đã hoàn thành
+        if (!"COMPLETED".equals(appointment.getStatus())) {
+            throw new IllegalStateException("Can only submit feedback for completed appointments. Current status: " + appointment.getStatus());
+        }
+
+        // Cập nhật feedback
+        appointment.setFeedbackRating(request.getFeedbackRating());
+        appointment.setFeedbackComment(request.getFeedbackComment());
+        
+        // Cập nhật staff notes nếu có
+        if (request.getStaffNotes() != null && !request.getStaffNotes().isEmpty()) {
+            String existingNotes = appointment.getStaffNotes() != null ? appointment.getStaffNotes() : "";
+            String newNotes = existingNotes.isEmpty() 
+                ? "[Feedback] " + request.getStaffNotes()
+                : existingNotes + "\n[Feedback] " + request.getStaffNotes();
+            appointment.setStaffNotes(newNotes);
+        }
+        
+        if (request.getUpdatedBy() != null) {
+            appointment.setUpdatedBy(request.getUpdatedBy());
+        }
+
+        TestDriveAppointment updatedAppointment = appointmentRepository.save(appointment);
+        
+        log.info("✅ Feedback submitted for appointment ID: {} - Rating: {}/5", 
+                id, request.getFeedbackRating());
+
+        return mapToResponse(updatedAppointment);
+    }
+
+    /**
+     * Lấy danh sách appointments đã có feedback (để thống kê)
+     */
+    @Transactional(readOnly = true)
+    public List<TestDriveResponse> getAppointmentsWithFeedback(Long dealerId) {
+        return appointmentRepository.findByDealerId(dealerId).stream()
+                .filter(apt -> apt.getFeedbackRating() != null)
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 }

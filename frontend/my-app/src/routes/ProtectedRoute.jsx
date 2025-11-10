@@ -5,47 +5,54 @@ import Swal from "sweetalert2";
 
 export default function ProtectedRoute({allowedRoles}) {
     const navigate = useNavigate();
-        const {roles} = useAuthContext();
-    const [alertShown, setAlertShown] = useState(false);
+    const {roles} = useAuthContext();
+    const [hasChecked, setHasChecked] = useState(false);
     const [redirect, setRedirect] = useState(null);
 
     useEffect(() => {
+        console.log('🔍 ProtectedRoute Debug:', { roles, allowedRoles });
+        console.log('🔍 Role Check:', roles?.some(role => allowedRoles?.includes(role)));
+        
+        // Reset hasChecked khi roles hoặc allowedRoles thay đổi
+        setHasChecked(false);
+    }, [roles, allowedRoles]);
+
+    useEffect(() => {
+        if (hasChecked) return;
+        
         if (!Array.isArray(roles) || roles.length === 0) {
-            if (!alertShown) {
-                Swal.fire({
-                    title: "Chưa đăng nhập",
-                    text: "Vui lòng đăng nhập",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: "Đăng nhập",
-                    cancelButtonText: "Quay lại",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        navigate("/login");
-                    }else if (result.isDenied === false) {
-                        window.history.back();
-                    }
-                });
-                setAlertShown(true);
-            }
-        } else if (!roles.some(role => allowedRoles.includes(role))) {
-            if (!alertShown) {
-                Swal.fire({
-                    title: "Không có quyền",
-                    text: "Bạn không có quyền truy cập trang này!",
-                    icon: "error",
-                    confirmButtonText: "OK",
-                }).then(() => {
-                    setRedirect("/");
-                });
-                setAlertShown(true);
-            }
+            Swal.fire({
+                title: "Chưa đăng nhập",
+                text: "Vui lòng đăng nhập",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Đăng nhập",
+                cancelButtonText: "Quay lại",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate("/login");
+                } else if (result.isDismissed) {
+                    window.history.back();
+                }
+            });
+            setHasChecked(true);
+        } else if (!roles.some(role => allowedRoles?.includes(role))) {
+            console.error('❌ Access Denied:', { roles, allowedRoles });
+            Swal.fire({
+                title: "Không có quyền",
+                text: `Bạn không có quyền truy cập trang này!\n\nRoles của bạn: ${roles.join(', ')}\nYêu cầu: ${allowedRoles.join(', ')}`,
+                icon: "error",
+                confirmButtonText: "OK",
+            }).then(() => {
+                setRedirect("/dealer");
+            });
+            setHasChecked(true);
         }
-    }, [roles, allowedRoles, alertShown]);
+    }, [roles, allowedRoles, hasChecked, navigate]);
 
     if (redirect) return <Navigate to={redirect} replace/>;
 
-    if (!Array.isArray(roles) || roles.length === 0 || !roles.some(role => allowedRoles.includes(role))) {
+    if (!Array.isArray(roles) || roles.length === 0 || !roles.some(role => allowedRoles?.includes(role))) {
         return null;
     }
 

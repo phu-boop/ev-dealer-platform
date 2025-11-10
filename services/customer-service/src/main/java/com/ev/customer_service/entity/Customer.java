@@ -82,9 +82,6 @@ public class Customer {
     private List<Complaint> complaints;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<CustomerFeedback> feedbacks;
-
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<CommunicationHistory> communicationHistories;
 
 

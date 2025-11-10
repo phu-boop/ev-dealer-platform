@@ -218,15 +218,28 @@ const CustomerList = () => {
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
-                          {isDealerManager && (
+                          <div className="relative group">
                             <button
-                              onClick={() => handleAssignStaff(customer)}
-                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
-                              title="Phân công nhân viên"
+                              onClick={() => isDealerManager && handleAssignStaff(customer)}
+                              disabled={!isDealerManager}
+                              className={`p-2 rounded-lg transition-colors duration-200 ${
+                                isDealerManager
+                                  ? 'text-purple-600 hover:bg-purple-50 cursor-pointer'
+                                  : 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                              }`}
+                              title={isDealerManager ? "Phân công nhân viên" : ""}
                             >
                               <FiUsers className="w-4 h-4" />
                             </button>
-                          )}
+                            
+                            {/* Tooltip for Staff role */}
+                            {!isDealerManager && (
+                              <div className="absolute left-1/2 -translate-x-1/2 -top-12 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20 shadow-lg">
+                                Chỉ Manager mới có quyền phân công
+                                <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                              </div>
+                            )}
+                          </div>
                           <button
                             onClick={() => handleEdit(customer.customerId || customer.id)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"

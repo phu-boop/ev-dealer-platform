@@ -40,7 +40,7 @@ public class StaffAssignmentService {
 
         // 2. Validate UUID format của staffId
         try {
-            com.ev.customer_service.util.UUIDValidator.validateUUID(request.getStaffId(), "staffId");
+            java.util.UUID.fromString(request.getStaffId());
         } catch (IllegalArgumentException e) {
             log.error("Invalid staff ID format: {}", request.getStaffId());
             throw new IllegalArgumentException(
