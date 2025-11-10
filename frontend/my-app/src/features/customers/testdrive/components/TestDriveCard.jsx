@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { Calendar, Clock, MapPin, User, Edit, XCircle, CheckCircle, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Edit, XCircle, CheckCircle, X, Star, MessageSquare } from 'lucide-react';
 
 const statusConfig = {
   SCHEDULED: { label: 'Đã đặt lịch', color: 'bg-orange-100 text-orange-800', icon: '🟠' },
@@ -9,7 +9,7 @@ const statusConfig = {
   CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: '🔴' },
 };
 
-const TestDriveCard = ({ appointment, onEdit, onCancel, onConfirm, onComplete, vehicles = [], staffList = [] }) => {
+const TestDriveCard = ({ appointment, onEdit, onCancel, onConfirm, onComplete, onFeedback }) => {
   const status = statusConfig[appointment.status] || statusConfig.SCHEDULED;
 
   const formatDate = (dateString) => {
@@ -20,26 +20,10 @@ const TestDriveCard = ({ appointment, onEdit, onCancel, onConfirm, onComplete, v
     }
   };
 
-  // Find vehicle info
-  const vehicle = vehicles.find(v => v.modelId === appointment.modelId);
-  const vehicleName = vehicle ? `${vehicle.modelName}` : `Model ${appointment.modelId}`;
-  
-  // Find variant info
-  let variantName = '';
-  if (appointment.variantId && vehicle) {
-    const variant = vehicle.variants?.find(v => v.variantId === appointment.variantId);
-    variantName = variant ? ` - ${variant.versionName} (${variant.color})` : ` - Variant ${appointment.variantId}`;
-  }
-
-  // Find staff info by staffId
-  const staff = staffList.find(s => s.staffId === appointment.staffId);
-  
-  // Staff name: dùng fullName hoặc name, fallback về email
-  const staffName = staff 
-    ? `${staff.fullName || staff.name || 'Unknown'} (${staff.email})` 
-    : appointment.staffId 
-      ? `Staff ${appointment.staffId}` 
-      : 'Chưa phân công';
+  // Sử dụng dữ liệu từ backend (vehicleModelName, vehicleVariantName, staffName)
+  const vehicleName = appointment.vehicleModelName || `Model ${appointment.modelId}`;
+  const variantName = appointment.vehicleVariantName ? ` - ${appointment.vehicleVariantName}` : '';
+  const staffName = appointment.staffName || 'Chưa phân công';
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
@@ -167,11 +151,63 @@ const TestDriveCard = ({ appointment, onEdit, onCancel, onConfirm, onComplete, v
         )}
 
         {appointment.status === 'COMPLETED' && (
-          <div className="w-full p-2 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-700">
-              ✅ Hoàn thành lúc {formatDate(appointment.completedAt)}
-            </p>
-          </div>
+          <>
+            <div className="w-full p-2 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-700">
+                ✅ Hoàn thành lúc {formatDate(appointment.completedAt)}
+              </p>
+            </div>
+            
+            {/* Feedback Section */}
+            {appointment.feedbackRating ? (
+              <div className="w-full p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-semibold text-gray-700">📊 Đánh giá:</span>
+                  <div className="flex items-center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-4 h-4 ${
+                          star <= appointment.feedbackRating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                    <span className="ml-2 text-sm font-medium text-gray-700">
+                      {appointment.feedbackRating}/5
+                    </span>
+                  </div>
+                </div>
+                
+                {appointment.feedbackComment && (
+                  <div className="flex items-start space-x-2">
+                    <MessageSquare className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-gray-700">
+                      <strong>Phản hồi KH:</strong> {appointment.feedbackComment}
+                    </p>
+                  </div>
+                )}
+                
+                {appointment.staffNotes && (
+                  <div className="flex items-start space-x-2 pt-2 border-t border-yellow-200">
+                    <User className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-gray-700">
+                      <strong>Ghi chú NV:</strong> {appointment.staffNotes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => onFeedback && onFeedback(appointment)}
+                className="flex items-center px-3 py-1.5 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+              >
+                <Star className="w-4 h-4 mr-1" />
+                Ghi kết quả
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -310,6 +310,14 @@ import CustomerDetail from "../features/customers/management/pages/CustomerDetai
 
 // test drive pages
 import TestDriveManagement from "../features/customers/testdrive/pages/TestDriveManagement.jsx";
+import CreateTestDrive from "../features/customers/testdrive/pages/CreateTestDrive.jsx";
+import EditTestDrive from "../features/customers/testdrive/pages/EditTestDrive.jsx";
+
+// feedback pages
+import FeedbackManagement from "../features/customers/feedback/pages/FeedbackManagement.jsx";
+import CreateFeedback from "../features/customers/feedback/pages/CreateFeedback.jsx";
+import FeedbackDetail from "../features/customers/feedback/pages/FeedbackDetail.jsx";
+import FeedbackStatistics from "../features/customers/feedback/pages/FeedbackStatistics.jsx";
 
 // EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
@@ -493,6 +501,10 @@ export default function AppRoutes() {
                 path="manager/customers/create"
                 element={<CreateCustomer />}
               />
+              <Route
+                path="manager/customers/:id/edit"
+                element={<CreateCustomer />}
+              />
               <Route path="manager/customers/list" element={<CustomerList />} />
               <Route
                 path="manager/customers/:id"
@@ -503,6 +515,32 @@ export default function AppRoutes() {
               <Route
                 path="manager/testdrives"
                 element={<TestDriveManagement />}
+              />
+              <Route
+                path="manager/testdrives/create"
+                element={<CreateTestDrive />}
+              />
+              <Route
+                path="manager/testdrives/edit/:id"
+                element={<EditTestDrive />}
+              />
+
+              {/* Feedback Management */}
+              <Route
+                path="manager/feedback"
+                element={<FeedbackManagement />}
+              />
+              <Route
+                path="manager/feedback/new"
+                element={<CreateFeedback />}
+              />
+              <Route
+                path="manager/feedback/statistics"
+                element={<FeedbackStatistics />}
+              />
+              <Route
+                path="manager/feedback/:id"
+                element={<FeedbackDetail />}
               />
 
               {/* Quotation Management */}
@@ -565,6 +603,10 @@ export default function AppRoutes() {
                 path="staff/customers/create"
                 element={<CreateCustomer />}
               />
+              <Route
+                path="staff/customers/:id/edit"
+                element={<CreateCustomer />}
+              />
               <Route path="staff/customers/list" element={<CustomerList />} />
               <Route path="staff/customers/:id" element={<CustomerDetail />} />
 
@@ -572,6 +614,32 @@ export default function AppRoutes() {
               <Route
                 path="staff/testdrives"
                 element={<TestDriveManagement />}
+              />
+              <Route
+                path="staff/testdrives/create"
+                element={<CreateTestDrive />}
+              />
+              <Route
+                path="staff/testdrives/edit/:id"
+                element={<EditTestDrive />}
+              />
+
+              {/* Feedback Management */}
+              <Route
+                path="staff/feedback"
+                element={<FeedbackManagement />}
+              />
+              <Route
+                path="staff/feedback/new"
+                element={<CreateFeedback />}
+              />
+              <Route
+                path="staff/feedback/statistics"
+                element={<FeedbackStatistics />}
+              />
+              <Route
+                path="staff/feedback/:id"
+                element={<FeedbackDetail />}
               />
 
               {/* Quotation Management */}

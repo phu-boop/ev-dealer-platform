@@ -294,8 +294,8 @@ public class EmailConfirmationService {
                     </div>
                     
                     <div class="button-container">
-                        <a href="%s" class="btn btn-confirm">✅ XÁC NHẬN LỊCH HẸN</a>
-                        <a href="%s" class="btn btn-cancel">❌ HỦY LỊCH HẸN</a>
+                        <a href="%s" class="btn btn-confirm">XÁC NHẬN LỊCH HẸN</a>
+                        <a href="%s" class="btn btn-cancel">HỦY LỊCH HẸN</a>
                     </div>
                     
                     <p style="margin-top: 30px; font-size: 14px; color: #666;">
