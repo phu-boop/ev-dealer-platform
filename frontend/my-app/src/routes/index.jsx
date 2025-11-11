@@ -352,6 +352,14 @@ import QuotationListPage from "../features/dealer/sales/quotations/pages/Quotati
 //feature sale
 import SalesRoutes from "../features/dealer/sales/SalesRoutes.jsx";
 
+// Payment features
+import PaymentMethodsManagement from "../features/payments/pages/PaymentMethodsManagement.jsx";
+import CustomerPaymentPage from "../features/payments/pages/CustomerPaymentPage.jsx";
+import DealerInvoiceManagement from "../features/payments/pages/DealerInvoiceManagement.jsx";
+import DealerInvoicesPage from "../features/payments/pages/DealerInvoicesPage.jsx";
+import DealerPaymentPage from "../features/payments/pages/DealerPaymentPage.jsx";
+import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -365,6 +373,8 @@ export default function AppRoutes() {
           <Route path="login" element={<Login />} />
           <Route path="oauth-success" element={<OAuthSuccess />} />
           <Route path="reset-password" element={<ResetPassword />} />
+          {/* Public Payment Routes */}
+          <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
         </Route>
 
         {/* ================================================================== */}
@@ -439,6 +449,12 @@ export default function AppRoutes() {
                 path="admin/system/data-backfill"
                 element={<BackfillPage />}
               />
+
+              {/* Payment Methods Management (Admin) */}
+              <Route
+                path="admin/payments/methods"
+                element={<PaymentMethodsManagement />}
+              />
             </Route>
 
             {/* Staff only */}
@@ -474,6 +490,12 @@ export default function AppRoutes() {
               <Route
                 path="staff/dealers/dealer-accounts"
                 element={<UserManagement />}
+              />
+
+              {/* Payment Management (EVM Staff) */}
+              <Route
+                path="staff/payments/dealer-invoices"
+                element={<DealerInvoiceManagement />}
               />
             </Route>
           </Route>
@@ -594,6 +616,20 @@ export default function AppRoutes() {
                 element={<UserManagement />}
               />
               <Route path="manager/system/users" element={<UserManagement />} />
+
+              {/* Payment Management (Dealer Manager) */}
+              <Route
+                path="manager/payments/invoices"
+                element={<DealerInvoicesPage />}
+              />
+              <Route
+                path="manager/payments/invoices/:invoiceId"
+                element={<DealerPaymentPage />}
+              />
+              <Route
+                path="manager/payments/orders/:orderId"
+                element={<CustomerPaymentPage />}
+              />
             </Route>
 
             {/* --- DEALER STAFF ONLY ROUTES --- */}
@@ -673,6 +709,12 @@ export default function AppRoutes() {
 
               {/* Sales Module */}
               <Route path="staff/*" element={<SalesRoutes />} />
+
+              {/* Payment Management (Dealer Staff) */}
+              <Route
+                path="staff/payments/orders/:orderId"
+                element={<CustomerPaymentPage />}
+              />
             </Route>
           </Route>
         </Route>

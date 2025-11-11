@@ -361,7 +361,7 @@ Content-Type: application/json
 
 ### 2. POST - Xác nhận Thanh toán (MANUAL)
 
-**Endpoint**: `POST {{baseUrl}}/payments/api/v1/payments/customer/transactions/{transactionId}/confirm`
+**Endpoint**: `POST {{baseUrl}}/payments/api/v1/payments/customer/transactions/{{transactionId}}/confirm`
 
 **Ví dụ**: `POST http://localhost:8080/payments/api/v1/payments/customer/transactions/d2680f26-f69a-4c35-b3af-244fadfd6947/confirm`
 
