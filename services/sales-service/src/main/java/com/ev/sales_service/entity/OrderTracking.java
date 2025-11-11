@@ -24,9 +24,13 @@ public class OrderTracking {
     @JoinColumn(name = "order_id", nullable = false)
     private SalesOrder salesOrder;
 
+
+    @Column(name = "status", length = 50, nullable = true)
+    private String status; // ví dụ: "Pending", "Approved", "Delivered", v.v.
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 50, nullable = false)
-    private OrderTrackingStatus status;
+    @Column(name = "statusB2C", length = 50, nullable = true)
+    private OrderTrackingStatus statusB2C;
 
     @Column(name = "update_date", nullable = false)
     private LocalDateTime updateDate;

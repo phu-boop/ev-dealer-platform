@@ -82,14 +82,14 @@ public class SalesOrderB2CController {
         return ResponseEntity.ok(ApiRespond.success("Order items recalculated successfully", response));
     }
 
-    /**
-     * ✅ Manager duyệt đơn hàng (EDITED → APPROVED)
-     */
-    @PutMapping("/{orderId}/approve")
-    public ResponseEntity<ApiRespond> approveOrder(@PathVariable String orderId) {
-        ApiRespond respond = salesOrderServiceB2C.approveOrder(orderId);
-        return ResponseEntity.ok(respond);
-    }
+//    /**
+//     * ✅ Manager duyệt đơn hàng (EDITED → APPROVED)
+//     */
+//    @PutMapping("/{orderId}/approve")
+//    public ResponseEntity<ApiRespond> approveOrder(@PathVariable String orderId) {
+//        ApiRespond respond = salesOrderServiceB2C.approveOrder(orderId);
+//        return ResponseEntity.ok(respond);
+//    }
 
     /**
      * ✅ Khách hàng xác nhận đơn hàng (APPROVED → CONFIRMED)
@@ -126,5 +126,19 @@ public class SalesOrderB2CController {
         );
     }
 
+
+
+    @PostMapping("/{orderId}/complete")
+    public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> convertToComplete(
+            @PathVariable UUID orderId) {
+
+        // Service đã xử lý tất cả kiểm tra lỗi theo ErrorCode
+        SalesOrderB2CResponse response = salesOrderServiceB2C.convertToComplete(orderId);
+
+        // Trả về ApiRespond với message và data
+        return ResponseEntity.ok(
+                ApiRespond.success("Tạo hợp đồng thành công từ đơn hàng đã xác nhận", response)
+        );
+    }
 
 }

@@ -47,11 +47,6 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
 
         OrderTracking savedTracking = orderTrackingRepository.save(orderTracking);
 
-        // Update order status if different from current
-        if (!salesOrder.getOrderStatus().toString().equals(request.getStatus())) {
-            // TODO: Update order status through SalesOrderService
-        }
-
         log.info("Tracking record created successfully: {}", savedTracking.getTrackId());
         return mapToResponse(savedTracking);
     }

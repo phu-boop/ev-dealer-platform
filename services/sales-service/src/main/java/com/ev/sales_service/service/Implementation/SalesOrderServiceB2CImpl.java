@@ -78,7 +78,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         // Create initial order tracking
         OrderTracking orderTracking = OrderTracking.builder()
                 .salesOrder(salesOrder)
-                .status(OrderStatusB2B.PENDING.toString())
+                .statusB2C(OrderTrackingStatus.CREATED)
                 .updateDate(LocalDateTime.now())
                 .notes("Order created from quotation")
                 .updatedBy(quotation.getStaffId())
@@ -159,6 +159,10 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     public SalesOrderB2CResponse approveSalesOrder(UUID orderId, UUID managerId) {
         SalesOrder salesOrder = salesOrderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
+
+          if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED) {
+            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+        }
 
         // Validate B2C type
         if (salesOrder.getTypeOder() != SaleOderType.B2C) {
@@ -395,22 +399,22 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         return totalAmount.multiply(downPaymentPercentage);
     }
 
-    @Override
-    @Transactional
-    public ApiRespond approveOrder(String orderId) {
-        SalesOrder salesOrder = salesOrderRepository.findById(UUID.fromString(orderId))
-                .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
-
-        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED) {
-            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
-        }
-
-        salesOrder.setOrderStatusB2C(OrderStatusB2C.APPROVED);
-        salesOrderRepository.save(salesOrder);
-
-        log.info("Sales order {} approved by manager", orderId);
-        return ApiRespond.success("Đơn hàng đã được quản lý duyệt thành công.", salesOrder);
-    }
+//    @Override
+//    @Transactional
+//    public ApiRespond approveOrder(String orderId) {
+//        SalesOrder salesOrder = salesOrderRepository.findById(UUID.fromString(orderId))
+//                .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
+//
+//        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED) {
+//            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+//        }
+//
+//        salesOrder.setOrderStatusB2C(OrderStatusB2C.APPROVED);
+//        salesOrderRepository.save(salesOrder);
+//
+//        log.info("Sales order {} approved by manager", orderId);
+//        return ApiRespond.success("Đơn hàng đã được quản lý duyệt thành công.", salesOrder);
+//    }
 
     @Override
     @Transactional
@@ -474,6 +478,33 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         log.info("Sales order [{}] converted to contract successfully.", orderId);
         return response;
     }
+
+
+
+    @Override
+    @Transactional
+    public SalesOrderB2CResponse convertToComplete(UUID orderId) {
+        // Lấy đơn hàng
+        SalesOrder order = salesOrderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
+
+        // Kiểm tra trạng thái đơn hàng
+        if (order.getOrderStatusB2C() != OrderStatusB2C.IN_PRODUCTION) {
+            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+            // Nếu muốn thêm chi tiết, có thể dùng constructor: new AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
+        }
+
+        // Kiểm tra hợp đồng đã tồn tại chưa
+        if (order.getOrderTrackings() != null) {
+            throw new AppException(ErrorCode.SALES_CONTRACT_ALREADY_EXISTS);
+        }
+
+        order.setOrderStatusB2C(OrderStatusB2C.DELIVERED);
+        salesOrderRepository.save(order);
+
+        return mapToResponse(order);
+    }
+
 
 
 }

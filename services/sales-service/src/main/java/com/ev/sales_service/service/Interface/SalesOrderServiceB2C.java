@@ -29,13 +29,16 @@ public interface SalesOrderServiceB2C {
     // Thêm vào SalesOrderServiceB2C interface
     SalesOrderB2CResponse addOrderItemsToSalesOrder(UUID orderId);
 
-    ApiRespond approveOrder(String orderId);
+    //ApiRespond approveOrder(String orderId);
 
     ApiRespond confirmOrder(String orderId);
 
     ApiRespond rejectOrder(String orderId, String reason);
 
     SalesContractResponse convertToContract(UUID orderId);
+
+
+    SalesOrderB2CResponse convertToComplete(UUID orderId);
 
     // TODO: Add more methods as needed
 }

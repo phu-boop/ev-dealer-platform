@@ -7,6 +7,7 @@ import com.ev.sales_service.dto.response.SalesContractResponse;
 import com.ev.sales_service.entity.SalesContract;
 import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.enums.ContractStatus;
+import com.ev.sales_service.enums.OrderStatusB2C;
 import com.ev.sales_service.repository.SalesContractRepository;
 import com.ev.sales_service.repository.SalesOrderRepositoryB2C;
 import com.ev.sales_service.service.Interface.SalesContractService;
@@ -100,6 +101,8 @@ public class SalesContractServiceImpl implements SalesContractService {
                 .collect(Collectors.toList());
     }
 
+
+    // cap nhat orderSale
     @Override
     public SalesContractResponse signContract(UUID contractId, String digitalSignature) {
         log.info("Signing contract: {}", contractId);
@@ -111,6 +114,11 @@ public class SalesContractServiceImpl implements SalesContractService {
             salesContract.getContractStatus() != ContractStatus.PENDING_SIGNATURE) {
             throw new AppException(ErrorCode.INVALID_CONTRACT_STATUS);
         }
+
+        SalesOrder salesOrder = salesOrderRepository.findById(salesContract.getSalesOrder().getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+
+        salesOrder.setOrderStatusB2C(OrderStatusB2C.IN_PRODUCTION);
 
         salesContract.setDigitalSignature(digitalSignature);
         salesContract.setSigningDate(LocalDateTime.now());

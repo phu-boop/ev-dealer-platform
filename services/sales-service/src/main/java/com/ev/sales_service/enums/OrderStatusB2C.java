@@ -20,9 +20,6 @@ public enum OrderStatusB2C {
     /** Đơn hàng đang trong quá trình sản xuất / chuẩn bị hàng */
     IN_PRODUCTION,
 
-    /** Đơn hàng đã sẵn sàng để giao cho khách */
-    READY_FOR_DELIVERY,
-
     /** Đơn hàng đã được giao thành công đến khách hàng */
     DELIVERED,
 
