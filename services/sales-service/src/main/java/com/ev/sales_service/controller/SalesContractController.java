@@ -112,6 +112,14 @@ public class SalesContractController {
         return ResponseEntity.ok(ApiRespond.success("Contract deleted successfully", null));
     }
 
+    // Xóa(mem) hợp đồng
+    @PostMapping("/{contractId}")
+    public ResponseEntity<ApiRespond<Void>> cancleContract(@PathVariable UUID contractId) {
+        log.info("Deleting contract: {}", contractId);
+        salesContractService.cancleContract(contractId);
+        return ResponseEntity.ok(ApiRespond.success("Contract cancel successfully", null));
+    }
+
     // Tìm kiếm hợp đồng (filter theo khách hàng, trạng thái hoặc số hợp đồng)
     @GetMapping("/search")
     public ResponseEntity<ApiRespond<List<SalesContractResponse>>> searchContracts(

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Card, Descriptions, Tag, Button, Space, Row, Col, Timeline, Alert } from 'antd';
+import { Card, Descriptions, Tag, Button, Space, Row, Col, Timeline, Alert ,Modal} from 'antd';
 import { 
   DownloadOutlined, 
   EditOutlined, 
@@ -10,7 +10,7 @@ import {
   FilePdfOutlined
 } from '@ant-design/icons';
 
-const ContractDetails = ({ contract, onEdit, onDownload, onSign }) => {
+const ContractDetails = ({ contract, onEdit, onDownload, onSign, onCancel }) => {
   const getStatusColor = (status) => {
     const colors = {
       DRAFT: 'default',
@@ -22,6 +22,27 @@ const ContractDetails = ({ contract, onEdit, onDownload, onSign }) => {
     };
     return colors[status] || 'default';
   };
+  const [modal, contextHolder] = Modal.useModal();
+   const handleCancel = () => {
+    if (!contract?.contractId) return;
+
+    modal.confirm({
+      title: 'Xác nhận hủy hợp đồng',
+      content: 'Bạn có chắc chắn muốn hủy hợp đồng này không?',
+      okText: 'Hủy hợp đồng',
+      okType: 'danger',
+      cancelText: 'Đóng',
+      onOk: async () => {
+        try {
+          await onCancel(contract.contractId);
+        } catch (err) {
+          console.error(err);
+        }
+      },
+    });
+  };
+
+
 
   const getStatusText = (status) => {
     const texts = {
@@ -240,12 +261,13 @@ const ContractDetails = ({ contract, onEdit, onDownload, onSign }) => {
               >
                 Chỉnh sửa hợp đồng
               </Button>
+              {contextHolder}
               <Button 
                 block 
                 icon={<ClockCircleOutlined />}
-                onClick={() => console.log('Send for review')}
+                onClick={handleCancel}
               >
-                Gửi duyệt
+                Huỷ hợp đồng
               </Button>
             </Card>
           )}

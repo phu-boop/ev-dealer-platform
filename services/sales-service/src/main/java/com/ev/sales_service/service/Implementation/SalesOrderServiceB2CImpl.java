@@ -3,6 +3,7 @@ package com.ev.sales_service.service.Implementation;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
+import com.ev.sales_service.client.CustomerClient;
 import com.ev.sales_service.dto.request.SalesOrderB2CCreateRequest;
 import com.ev.sales_service.dto.response.*;
 import com.ev.sales_service.entity.*;
@@ -10,6 +11,7 @@ import com.ev.sales_service.enums.*;
 import com.ev.sales_service.repository.OrderItemRepository;
 import com.ev.sales_service.repository.QuotationRepository;
 import com.ev.sales_service.repository.SalesOrderRepositoryB2C;
+import com.ev.sales_service.service.Interface.EmailService;
 import com.ev.sales_service.service.Interface.SalesContractService;
 import com.ev.sales_service.service.Interface.SalesOrderServiceB2C;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     private final QuotationRepository quotationRepository;
     private final OrderItemRepository orderItemRepository;
     private final SalesContractService salesContractService;
+    private final EmailService emailService;
+    private final CustomerClient customerClient;
 
     @Override
     public SalesOrderB2CResponse createSalesOrderFromQuotation(UUID quotationId) {
@@ -186,6 +190,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         salesOrder.getOrderTrackings().add(tracking);
 
         SalesOrder approvedSalesOrder = salesOrderRepository.save(salesOrder);
+        // todo send mail to customer
         return mapToResponse(approvedSalesOrder);
     }
 
@@ -416,21 +421,48 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 //        return ApiRespond.success("Đơn hàng đã được quản lý duyệt thành công.", salesOrder);
 //    }
 
-    @Override
-    @Transactional
+     @Override
     public ApiRespond confirmOrder(String orderId) {
         SalesOrder salesOrder = salesOrderRepository.findById(UUID.fromString(orderId))
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
 
+        // Chỉ xác nhận nếu trạng thái hiện tại là APPROVED
         if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.APPROVED) {
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
         }
 
+        // --- Update trạng thái đơn hàng ---
         salesOrder.setOrderStatusB2C(OrderStatusB2C.CONFIRMED);
         salesOrderRepository.save(salesOrder);
 
         log.info("Sales order {} confirmed by customer", orderId);
+
+        // --- Lấy thông tin khách hàng ---
+        CustomerResponse customer = getCustomerInfo(salesOrder.getCustomerId());
+
+        // --- Gửi email xác nhận ---
+        try {
+            emailService.sendOrderConfirmedEmail(salesOrder, customer);
+            log.info("Order confirmation email sent to customer: {}", customer.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send confirmation email for order: {}", orderId, e);
+            // Không throw exception để không ảnh hưởng business logic chính
+        }
+
         return ApiRespond.success("Khách hàng đã xác nhận đơn hàng.", salesOrder);
+    }
+
+     private CustomerResponse getCustomerInfo(Long customerId) {
+        try {
+            ApiRespond<CustomerResponse> response = customerClient.getCustomerById(customerId);
+            if (response != null && "1000".equals(response.getCode()) && response.getData() != null) {
+                return response.getData();
+            }
+            throw new AppException(ErrorCode.CUSTOMER_NOT_FOUND);
+        } catch (Exception e) {
+            log.error("Failed to get customer info for id: {}", customerId, e);
+            throw new AppException(ErrorCode.CUSTOMER_SERVICE_UNAVAILABLE);
+        }
     }
 
     @Override
@@ -504,6 +536,28 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 
         return mapToResponse(order);
     }
+
+    @Override
+    @Transactional
+    public ApiRespond confirmOrderByCustomer(UUID orderId) {
+        SalesOrder salesOrder = salesOrderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
+
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.APPROVED) {
+            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+
+        salesOrder.setOrderStatusB2C(OrderStatusB2C.CONFIRMED);
+        salesOrderRepository.save(salesOrder);
+
+        log.info("Sales order {} confirmed by customer", orderId);
+
+        return ApiRespond.success("Đơn hàng đã được khách hàng xác nhận.", salesOrder);
+    }
+
+
+
+
 
 
 

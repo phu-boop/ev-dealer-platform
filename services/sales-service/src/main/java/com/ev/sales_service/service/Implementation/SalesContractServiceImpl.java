@@ -67,6 +67,12 @@ public class SalesContractServiceImpl implements SalesContractService {
         SalesContract salesContract = salesContractRepository.findById(contractId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_CONTRACT_NOT_FOUND));
 
+        if(salesContract.getContractStatus().equals(ContractStatus.SIGNED)){
+            SalesOrder salesOrder = salesOrderRepository.findById(salesContract.getSalesOrder().getOrderId())
+                    .orElseThrow(()->new AppException(ErrorCode.DATABASE_ERROR));
+            salesOrder.setOrderStatusB2C(OrderStatusB2C.IN_PRODUCTION);
+            salesOrderRepository.save(salesOrder);
+        }
         salesContract.setContractTerms(request.getContractTerms());
         salesContract.setSigningDate(request.getSigningDate());
         salesContract.setDigitalSignature(request.getDigitalSignature());
@@ -236,6 +242,18 @@ public class SalesContractServiceImpl implements SalesContractService {
         // Example logic, tùy repository bạn có thể implement thêm JPQL/Criteria
         List<SalesContract> contracts = salesContractRepository.searchContracts(customerId, status);
         return contracts.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public void cancleContract(UUID contractId) {
+        SalesContract contract = salesContractRepository.findById(contractId)
+                .orElseThrow(() -> new AppException(ErrorCode.SALES_CONTRACT_NOT_FOUND));
+        contract.setContractStatus(ContractStatus.CANCELLED);
+        SalesOrder salesOrder = salesOrderRepository.findById(contract.getSalesOrder().getOrderId())
+                        .orElseThrow(()-> new AppException(ErrorCode.DATABASE_ERROR));
+        salesOrder.setOrderStatusB2C(OrderStatusB2C.CANCELLED);
+        salesOrderRepository.save(salesOrder);
+        salesContractRepository.save(contract);
     }
 
 }

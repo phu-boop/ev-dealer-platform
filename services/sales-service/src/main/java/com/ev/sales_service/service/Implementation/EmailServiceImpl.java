@@ -4,6 +4,7 @@ import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.sales_service.dto.response.CustomerResponse;
 import com.ev.sales_service.entity.Quotation;
+import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.service.Interface.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -172,4 +173,49 @@ public class EmailServiceImpl implements EmailService {
                 quotation.getTermsConditions()
         );
     }
+
+
+    // Sale Order
+    @Override
+    public void sendOrderConfirmedEmail(SalesOrder salesOrder, CustomerResponse customer) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            // Tạo link xác nhận đơn hàng (giả sử có endpoint /api/orders/confirm/{orderId})
+            String confirmLink = "https://your-domain.com/api/orders/confirm/" + salesOrder.getOrderId();
+
+            // Set thông tin email
+            helper.setTo(customer.getEmail());
+            helper.setSubject("Xác nhận đơn hàng #" + salesOrder.getOrderId());
+            helper.setText(buildOrderConfirmedEmailContent(salesOrder, customer, confirmLink), true);
+
+            // Gửi email
+            mailSender.send(message);
+            log.info("Order confirmed email sent to: {}", customer.getEmail());
+        } catch (MessagingException e) {
+            log.error("Failed to send order confirmed email to: {}", customer.getEmail(), e);
+            throw new AppException(ErrorCode.EMAIL_SENDING_FAILED);
+        }
+    }
+
+    private String buildOrderConfirmedEmailContent(SalesOrder salesOrder, CustomerResponse customer, String confirmLink) {
+        return "<!DOCTYPE html>" +
+                "<html lang='vi'>" +
+                "<head><meta charset='UTF-8'><title>Xác Nhận Đơn Hàng</title></head>" +
+                "<body>" +
+                "<p>Kính gửi <strong>" + customer.getFullName() + "</strong>,</p>" +
+                "<p>Đơn hàng <strong>#" + salesOrder.getOrderId() + "</strong> của Quý khách đang chờ xác nhận.</p>" +
+                "<p>Chi tiết đơn hàng:</p>" +
+                "<ul>" +
+                "<li>Ngày tạo: " + salesOrder.getOrderDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + "</li>" +
+                "<li>Tổng tiền: " + salesOrder.getTotalAmount() + " VND</li>" +
+                "</ul>" +
+                "<p>Vui lòng nhấn nút dưới đây để xác nhận đơn hàng:</p>" +
+                "<p><a href='" + confirmLink + "' style='padding:10px 20px; background-color:#4CAF50; color:white; text-decoration:none;'>Xác nhận đơn hàng</a></p>" +
+                "<p>Trân trọng,<br/>Đội ngũ EV Automotive</p>" +
+                "</body>" +
+                "</html>";
+    }
+
 }

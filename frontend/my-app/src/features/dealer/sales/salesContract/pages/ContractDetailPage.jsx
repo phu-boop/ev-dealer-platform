@@ -106,9 +106,18 @@ const ContractDetailPage = () => {
     error,
     signContract, 
     updateContract,
-    fetchContractById 
+    fetchContractById,
+    cancelContract
   } = useSalesContracts();
-  
+  const handleCancel = async (contractId) => {
+  try {
+    await cancelContract(contractId);
+    // Refresh contract data sau khi hủy
+    fetchContractById(contractId);
+  } catch (err) {
+    console.error(err);
+  }
+};
   const [signModalVisible, setSignModalVisible] = useState(false);
 
   // Fetch contract data when component mounts or contractId changes
@@ -235,6 +244,7 @@ const ContractDetailPage = () => {
           onEdit={handleEdit}
           onDownload={handleDownload}
           onSign={() => setSignModalVisible(true)}
+          onCancel={handleCancel}
         />
       </ProCard>
 

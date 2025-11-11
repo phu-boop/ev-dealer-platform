@@ -186,6 +186,18 @@ export const useSalesContracts = (orderId) => {
     }
   }, []);
 
+  // Canlcel contract
+  const cancelContract = useCallback(async (contractId) => {
+    try {
+      const response = (await salesContractService.cancel(contractId)).data;
+      showSuccess('Xóa hợp đồng thành công');
+      return response.data;
+    } catch (err) {
+      showError('Lỗi khi xóa hợp đồng');
+      throw err;
+    }
+  }, []);
+
   // ✅ Sửa: Sử dụng useCallback cho fetchContractByOrderId trong useEffect
   useEffect(() => {
     if (orderId) {
@@ -216,5 +228,6 @@ export const useSalesContracts = (orderId) => {
     generateFromTemplate,
     validateContract,
     deleteContract,
+    cancelContract,
   };
 };

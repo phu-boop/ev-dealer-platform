@@ -8,9 +8,9 @@ const SalesOrderListPage = React.lazy(() =>
 const SalesOrderDetailPage = React.lazy(() =>
   import('./salesOrder/pages/SalesOrderDetailPage')
 );
-const SalesOrderCreatePage = React.lazy(() =>
-  import('./salesOrder/pages/SalesOrderCreatePage')
-);
+// const SalesOrderCreatePage = React.lazy(() =>
+//   import('./salesOrder/pages/SalesOrderCreatePage')
+// );
 
 // Lazy load Order Tracking pages
 const OrderTrackingPage = React.lazy(() =>
@@ -48,7 +48,7 @@ const SalesRoutes = () => {
       <Routes>
         {/* Sales Order Routes */}
         <Route path="orders" element={<SalesOrderListPage />} />
-        <Route path="orders/create" element={<SalesOrderCreatePage />} />
+        {/* <Route path="orders/create" element={<SalesOrderCreatePage />} /> */}
         <Route path="orders/:orderId" element={<SalesOrderDetailPage />} />
 
         {/* Order Tracking Routes */}

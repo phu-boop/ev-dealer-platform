@@ -23,8 +23,9 @@ const ContractForm = ({ initialValues, onSubmit, loading = false, orderInfo }) =
   const onFinish = (values) => {
     const formattedValues = {
       ...values,
-      contractDate: values.contractDate?.format('YYYY-MM-DD HH:mm:ss'),
-      signingDate: values.signingDate?.format('YYYY-MM-DD HH:mm:ss'),
+      contractDate: values.contractDate?.format('YYYY-MM-DDTHH:mm:ss'),
+      signingDate: values.signingDate?.format('YYYY-MM-DDTHH:mm:ss'),
+
     };
     onSubmit(formattedValues);
   };
@@ -118,8 +119,6 @@ const ContractForm = ({ initialValues, onSubmit, loading = false, orderInfo }) =
                 <Option value="DRAFT">Bản nháp</Option>
                 <Option value="PENDING_SIGNATURE">Chờ ký</Option>
                 <Option value="SIGNED">Đã ký</Option>
-                <Option value="EXPIRED">Hết hạn</Option>
-                <Option value="CANCELLED">Đã hủy</Option>
               </Select>
             </Form.Item>
           </Col>

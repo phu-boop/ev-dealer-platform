@@ -141,4 +141,10 @@ public class SalesOrderB2CController {
         );
     }
 
+    @PostMapping("{orderId}/confirm-customer")
+    public ResponseEntity<ApiRespond> confirmOrder(@PathVariable UUID orderId) {
+        ApiRespond response = salesOrderServiceB2C.confirmOrderByCustomer(orderId);
+        return ResponseEntity.ok(response);
+    }
+
 }

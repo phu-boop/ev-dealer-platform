@@ -40,5 +40,8 @@ public interface SalesOrderServiceB2C {
 
     SalesOrderB2CResponse convertToComplete(UUID orderId);
 
+    ApiRespond confirmOrderByCustomer(UUID orderId);
+
+
     // TODO: Add more methods as needed
 }

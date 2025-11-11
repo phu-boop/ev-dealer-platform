@@ -20,5 +20,5 @@ public interface SalesContractService {
     List<SalesContractResponse> getAllContracts();
     void deleteContract(UUID contractId);
     List<SalesContractResponse> searchContracts(Long customerId, ContractStatus status);
-
+    void cancleContract(UUID contractId) ;
 }

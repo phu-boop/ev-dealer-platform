@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { PageContainer, Alert, Spin } from '@ant-design/pro-components';
+import { PageContainer } from '@ant-design/pro-components';
+import { Alert, Spin } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from 'antd';
 import { ArrowLeftOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
