@@ -90,16 +90,6 @@ public class SalesOrderB2CController {
 //        ApiRespond respond = salesOrderServiceB2C.approveOrder(orderId);
 //        return ResponseEntity.ok(respond);
 //    }
-
-    /**
-     * ✅ Khách hàng xác nhận đơn hàng (APPROVED → CONFIRMED)
-     */
-    @PutMapping("/{orderId}/confirm")
-    public ResponseEntity<ApiRespond> confirmOrder(@PathVariable String orderId) {
-        ApiRespond respond = salesOrderServiceB2C.confirmOrder(orderId);
-        return ResponseEntity.ok(respond);
-    }
-
     /**
      * ✅ Manager hoặc khách hàng từ chối đơn hàng (APPROVED → REJECTED)
      */
@@ -139,12 +129,6 @@ public class SalesOrderB2CController {
         return ResponseEntity.ok(
                 ApiRespond.success("Tạo hợp đồng thành công từ đơn hàng đã xác nhận", response)
         );
-    }
-
-    @PostMapping("{orderId}/confirm-customer")
-    public ResponseEntity<ApiRespond> confirmOrder(@PathVariable UUID orderId) {
-        ApiRespond response = salesOrderServiceB2C.confirmOrderByCustomer(orderId);
-        return ResponseEntity.ok(response);
     }
 
 }

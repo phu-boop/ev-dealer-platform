@@ -5,6 +5,7 @@ import com.ev.common_lib.exception.ErrorCode;
 import com.ev.sales_service.dto.response.CustomerResponseRequest;
 import com.ev.sales_service.dto.response.QuotationResponse;
 import com.ev.sales_service.service.Interface.QuotationService;
+import com.ev.sales_service.service.Interface.SalesOrderServiceB2C;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,9 @@ import java.util.UUID;
 public class CustomerResponseController {
 
     private final QuotationService quotationService;
+
+    private final SalesOrderServiceB2C salesOrderServiceB2C;
+
 
     @GetMapping("/quotation/{quotationId}/accept")
     public ModelAndView acceptQuotation(@PathVariable UUID quotationId) {
@@ -88,7 +92,7 @@ public class CustomerResponseController {
         } catch (Exception e) {
             log.error("API Error accepting quotation {}: {}", quotationId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiRespond.error("9999","API Error accepting quotation",null));
+                    .body(ApiRespond.error("9999", "API Error accepting quotation", null));
         }
     }
 
@@ -106,7 +110,7 @@ public class CustomerResponseController {
         } catch (Exception e) {
             log.error("API Error rejecting quotation {}: {}", quotationId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiRespond.error("9999","API Error rejecting quotation ",null));
+                    .body(ApiRespond.error("9999", "API Error rejecting quotation ", null));
         }
     }
 
@@ -115,4 +119,47 @@ public class CustomerResponseController {
         modelAndView.addObject("errorMessage", errorMessage);
         return modelAndView;
     }
+
+
+    // ===================== ORDER CONFIRMATION (CUSTOMER) =====================
+
+    @GetMapping("/order/{orderId}/confirm")
+    public ModelAndView confirmOrder(@PathVariable UUID orderId) {
+        log.info("Customer confirming order via direct link: {}", orderId);
+        try {
+            // Gọi service xử lý xác nhận đơn hàng
+            salesOrderServiceB2C.handleCustomerOrderConfirmation(orderId, true);
+
+            ModelAndView modelAndView = new ModelAndView("response-success");
+            modelAndView.addObject("orderId", orderId);
+            modelAndView.addObject("action", "confirmed");
+            modelAndView.addObject("message", "Đơn hàng của Quý khách đã được xác nhận thành công!");
+            return modelAndView;
+
+        } catch (Exception e) {
+            log.error("Error confirming order {}: {}", orderId, e.getMessage());
+            return createErrorPage("Lỗi khi xác nhận đơn hàng: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/order/{orderId}/cancel")
+    public ModelAndView cancelOrder(@PathVariable UUID orderId) {
+        log.info("Customer cancelling order via direct link: {}", orderId);
+        try {
+            // Gọi service xử lý hủy đơn hàng
+            salesOrderServiceB2C.handleCustomerOrderConfirmation(orderId, false);
+
+            ModelAndView modelAndView = new ModelAndView("response-success");
+            modelAndView.addObject("orderId", orderId);
+            modelAndView.addObject("action", "cancelled");
+            modelAndView.addObject("message", "Đơn hàng của Quý khách đã được hủy thành công!");
+            return modelAndView;
+
+        } catch (Exception e) {
+            log.error("Error cancelling order {}: {}", orderId, e.getMessage());
+            return createErrorPage("Lỗi khi hủy đơn hàng: " + e.getMessage());
+        }
+    }
+
+
 }

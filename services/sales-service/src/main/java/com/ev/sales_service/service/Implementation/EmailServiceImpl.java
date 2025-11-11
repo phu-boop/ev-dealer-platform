@@ -175,6 +175,17 @@ public class EmailServiceImpl implements EmailService {
     }
 
 
+
+
+
+    //
+
+
+
+
+
+
+
     // Sale Order
     @Override
     public void sendOrderConfirmedEmail(SalesOrder salesOrder, CustomerResponse customer) {
@@ -182,8 +193,7 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            // Tạo link xác nhận đơn hàng (giả sử có endpoint /api/orders/confirm/{orderId})
-            String confirmLink = "https://your-domain.com/api/orders/confirm/" + salesOrder.getOrderId();
+            String confirmLink = "http://localhost:8080/sendmail/customer-response/order/" + salesOrder.getOrderId() + "/confirm";
 
             // Set thông tin email
             helper.setTo(customer.getEmail());

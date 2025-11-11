@@ -39,7 +39,7 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
 
         OrderTracking orderTracking = OrderTracking.builder()
                 .salesOrder(salesOrder)
-                .status(request.getStatus())
+                .statusB2C(request.getStatus())
                 .updateDate(LocalDateTime.now())
                 .notes(request.getNotes())
                 .updatedBy(request.getUpdatedBy())
@@ -58,7 +58,7 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
         OrderTracking orderTracking = orderTrackingRepository.findById(trackId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_TRACKING_NOT_FOUND));
 
-        orderTracking.setStatus(request.getStatus());
+        orderTracking.setStatusB2C(request.getStatus());
         orderTracking.setNotes(request.getNotes());
         orderTracking.setUpdateDate(LocalDateTime.now());
         orderTracking.setUpdatedBy(request.getUpdatedBy());

@@ -6,20 +6,14 @@ package com.ev.sales_service.enums;
 public enum OrderTrackingStatus {
     /** Đơn hàng mới được tạo, chưa được xử lý */
     CREATED,
+
     /** Đơn hàng đã được giao thành công */
     DELIVERED,
-
-
-
-
-
 
     /**phát triển sao*/
     /** Đơn hàng đã được nhân viên chỉnh sửa / thêm sản phẩm */
     EDITED,
 
-    /** Đơn hàng đã được quản lý duyệt để xử lý tiếp */
-    APPROVED,
 
     /** Khách hàng đã xác nhận đơn hàng */
     CONFIRMED,

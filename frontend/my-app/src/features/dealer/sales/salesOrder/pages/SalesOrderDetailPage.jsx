@@ -55,9 +55,16 @@ const SalesOrderDetailPage = () => {
       case 'CONFIRMED':
         return {
           canCRUDOrderItems: false,
-          canCRUDContract: false,
+          canCRUDContract: true,
           canCRUDTracking: true,
           canViewOnly: false
+        };
+      case 'IN_PRODUCTION':
+        return {
+          canCRUDOrderItems: false,
+          canCRUDContract: false,
+          canCRUDTracking: true,
+          canViewOnly: true
         };
       case 'DELIVERED':
       case 'CANCELLED':
@@ -164,7 +171,7 @@ const SalesOrderDetailPage = () => {
       message.warning('Không có quyền tạo tracking trong trạng thái hiện tại');
       return;
     }
-    navigate(`/dealer/staff/orders/${orderId}/tracking/create`);
+    navigate(`/dealer/staff/orders/${orderId}/tracking`);
   };
 
   return (

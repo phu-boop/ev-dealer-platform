@@ -21,6 +21,7 @@ public enum OrderStatusB2C {
     IN_PRODUCTION,
 
     /** Đơn hàng đã được giao thành công đến khách hàng */
+    /**commplete */
     DELIVERED,
 
     /** Đơn hàng đã bị hủy (do khách hàng hoặc hệ thống) */

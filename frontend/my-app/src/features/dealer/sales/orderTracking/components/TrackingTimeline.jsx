@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useOrderTracking } from '../hooks/useOrderTracking';
 import OrderStatus from '../../salesOrder/components/OrderStatus';
 import NoteForm from './NoteForm';
-
+import { useNavigate } from 'react-router-dom';
 /**
  * Component hiển thị timeline trạng thái đơn hàng
  * @param {Array} trackings - Danh sách tracking records
@@ -20,7 +20,7 @@ const TrackingTimeline = ({
 }) => {
   const [showNoteForm, setShowNoteForm] = useState(false);
   const { addNote } = useOrderTracking(orderId);
-
+  const navigate = useNavigate();
   const handleAddNote = async (noteData) => {
     try {
       await addNote(noteData.notes);
@@ -50,17 +50,26 @@ const TrackingTimeline = ({
             </p>
           )}
         </div>
+        <div className=''>
+        <button
+          onClick={() => navigate(`/dealer/staff/orders/${orderId}/tracking/history`)}
+          className="bg-blue-600 mr-3 text-white px-4 py-2 rounded-lg hover:bg-blue-400 transition-colors text-sm font-medium"
+        >
+          Xem chi tiết
+        </button>
         <button
           onClick={() => setShowNoteForm(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
         >
           📝 Thêm ghi chú
         </button>
+
+        </div>
       </div>
 
       {/* Note Form Modal */}
       {showNoteForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/10 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <NoteForm
               onSubmit={handleAddNote}

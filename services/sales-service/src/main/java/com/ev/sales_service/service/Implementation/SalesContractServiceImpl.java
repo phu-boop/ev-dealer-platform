@@ -67,12 +67,13 @@ public class SalesContractServiceImpl implements SalesContractService {
         SalesContract salesContract = salesContractRepository.findById(contractId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_CONTRACT_NOT_FOUND));
 
-        if(salesContract.getContractStatus().equals(ContractStatus.SIGNED)){
+        if(request.getContractStatus().equals(ContractStatus.SIGNED)){
             SalesOrder salesOrder = salesOrderRepository.findById(salesContract.getSalesOrder().getOrderId())
                     .orElseThrow(()->new AppException(ErrorCode.DATABASE_ERROR));
             salesOrder.setOrderStatusB2C(OrderStatusB2C.IN_PRODUCTION);
             salesOrderRepository.save(salesOrder);
         }
+        salesContract.setContractStatus(request.getContractStatus());
         salesContract.setContractTerms(request.getContractTerms());
         salesContract.setSigningDate(request.getSigningDate());
         salesContract.setDigitalSignature(request.getDigitalSignature());

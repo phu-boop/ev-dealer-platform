@@ -95,7 +95,7 @@ public class QuotationController {
 //        return ResponseEntity.ok(ApiRespond.success("Quotations fetched with pagination successfully", responses));
 //    }
 
-//    @GetMapping("/{quotationId}/available-promotions")
+    //    @GetMapping("/{quotationId}/available-promotions")
 //    public ResponseEntity<ApiRespond<List<PromotionResponse>>> getAvailablePromotions(
 //            @PathVariable UUID quotationId) {
 //        List<PromotionResponse> responses = quotationService.getAvailablePromotionsForQuotation(quotationId);
@@ -111,19 +111,20 @@ public class QuotationController {
     }
 
     @GetMapping("/dealer/{dealerId}")
-public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotationsByDealer(
-        @PathVariable UUID dealerId) {
-    log.info("Fetching quotations for dealer: {}", dealerId);
-    List<QuotationResponse> responses = quotationService.getQuotationsByDealer(dealerId);
-    return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for dealer", responses));
-}
-@DeleteMapping("/{quotationId}")
-public ResponseEntity<ApiRespond<String>> deleteQuotation(
-        @PathVariable UUID quotationId) {
-    log.info("Deleting quotation: {}", quotationId);
-    quotationService.deleteQuotation(quotationId);
-    return ResponseEntity.ok(ApiRespond.success("Quotation deleted successfully", "Deleted"));
-}
+    public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotationsByDealer(
+            @PathVariable UUID dealerId) {
+        log.info("Fetching quotations for dealer: {}", dealerId);
+        List<QuotationResponse> responses = quotationService.getQuotationsByDealer(dealerId);
+        return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for dealer", responses));
+    }
+
+    @DeleteMapping("/{quotationId}")
+    public ResponseEntity<ApiRespond<String>> deleteQuotation(
+            @PathVariable UUID quotationId) {
+        log.info("Deleting quotation: {}", quotationId);
+        quotationService.deleteQuotation(quotationId);
+        return ResponseEntity.ok(ApiRespond.success("Quotation deleted successfully", "Deleted"));
+    }
 
 
 }
