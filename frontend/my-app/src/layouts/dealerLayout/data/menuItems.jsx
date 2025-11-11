@@ -30,6 +30,7 @@ import {
   FiChevronRight,
   FiUser,
   FiShield,
+  FiDollarSign,
 } from "react-icons/fi";
 
 export const dealerManagerMenuItems = [
@@ -177,6 +178,11 @@ export const dealerManagerMenuItems = [
         icon: FiCreditCard,
         label: "Thanh Toán & Trả Góp",
         path: "/dealer/manager/payments",
+      },
+      {
+        icon: FiFileText,
+        label: "Hóa Đơn Của Tôi",
+        path: "/dealer/manager/payments/invoices",
       },
       {
         icon: FiBarChart2,

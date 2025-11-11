@@ -30,6 +30,7 @@ import {
   FiGift,
   FiRefreshCw,
   FiBell,
+  FiDollarSign,
 } from "react-icons/fi";
 
 export const adminMenuItems = [
@@ -188,6 +189,11 @@ export const adminMenuItems = [
         label: "Nhật Ký Hoạt Động",
         path: "/evm/admin/system/audit",
       },
+      {
+        icon: FiDollarSign,
+        label: "Quản Lý Phương Thức Thanh Toán",
+        path: "/evm/admin/payments/methods",
+      },
     ],
   },
 ];
@@ -269,6 +275,11 @@ export const evmStaffMenuItems = [
         icon: FiCreditCardAlt,
         label: "Công Nợ & Thanh Toán",
         path: "/evm/staff/dealers/debts",
+      },
+      {
+        icon: FiFileText,
+        label: "Hóa Đơn Đại Lý",
+        path: "/evm/staff/payments/dealer-invoices",
       },
       {
         icon: FiBell,
