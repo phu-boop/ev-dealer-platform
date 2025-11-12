@@ -57,6 +57,12 @@ public class ComplaintResponse {
     // Progress tracking
     private List<ProgressUpdateInfo> progressHistory; // Parsed from JSON
 
+    // Resolution fields
+    private String internalResolution; // Giải pháp nội bộ (nhân viên)
+    private String customerMessage; // Thông điệp cho khách hàng
+
+    // DEPRECATED: Giữ lại để tương thích ngược
+    @Deprecated
     private String resolution;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

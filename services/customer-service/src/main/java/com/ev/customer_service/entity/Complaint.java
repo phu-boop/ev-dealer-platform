@@ -76,7 +76,15 @@ public class Complaint {
     @Column(name = "progress_updates", columnDefinition = "TEXT")
     private String progressUpdates; // Lưu dạng JSON array các updates
 
-    // Kết quả xử lý cuối cùng
+    // Giải pháp xử lý nội bộ (dành cho nhân viên)
+    @Column(name = "internal_resolution", columnDefinition = "TEXT")
+    private String internalResolution;
+
+    // Thông điệp gửi cho khách hàng (hiển thị trong email)
+    @Column(name = "customer_message", columnDefinition = "TEXT")
+    private String customerMessage;
+
+    // DEPRECATED: Giữ lại để tương thích ngược, sẽ xóa sau
     @Column(name = "resolution", columnDefinition = "TEXT")
     private String resolution;
 

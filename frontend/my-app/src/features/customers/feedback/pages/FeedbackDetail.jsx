@@ -40,7 +40,8 @@ const FeedbackDetail = () => {
   
   // Form state
   const [selectedStaffId, setSelectedStaffId] = useState('');
-  const [resolutionText, setResolutionText] = useState('');
+  const [internalResolution, setInternalResolution] = useState(''); // Ghi chú nội bộ
+  const [customerMessage, setCustomerMessage] = useState(''); // Thông điệp gửi khách hàng
   const [selectedStatus, setSelectedStatus] = useState('');
   const [contactNote, setContactNote] = useState('');
   const [contactMethod, setContactMethod] = useState('PHONE');
@@ -331,21 +332,23 @@ const FeedbackDetail = () => {
       return;
     }
 
-    if (!resolutionText.trim()) {
-      toast.error('Vui lòng nhập giải pháp xử lý');
+    if (!customerMessage.trim()) {
+      toast.error('Vui lòng nhập thông điệp gửi khách hàng');
       return;
     }
 
     try {
       setIsSubmitting(true);
       await resolveComplaint(id, {
-        resolution: resolutionText,
+        internalResolution: internalResolution.trim() || null,
+        customerMessage: customerMessage.trim(),
         resolvedBy: 'Current Staff' // TODO: Get from session
       });
       
       toast.success('Đã đánh dấu phản hồi là đã giải quyết!');
       setShowResolveModal(false);
-      setResolutionText('');
+      setInternalResolution('');
+      setCustomerMessage('');
       loadComplaint();
     } catch (error) {
       console.error('Error resolving:', error);
@@ -386,8 +389,10 @@ const FeedbackDetail = () => {
   };
 
   const handleSendNotification = async () => {
-    // Kiểm tra xem có resolution chưa
-    if (!complaint?.resolution || complaint.resolution.trim() === '') {
+    // Kiểm tra xem có customer message chưa (check both new and old field)
+    const hasMessage = (complaint?.customerMessage && complaint.customerMessage.trim() !== '') ||
+                      (complaint?.resolution && complaint.resolution.trim() !== '');
+    if (!hasMessage) {
       toast.error('Chưa có kết quả xử lý. Vui lòng cập nhật kết quả trước khi gửi thông báo.');
       return;
     }
@@ -741,13 +746,23 @@ const FeedbackDetail = () => {
             )}
 
             {/* Resolution (if resolved) */}
-            {complaint.status === 'RESOLVED' && complaint.resolution && (
+            {complaint.status === 'RESOLVED' && (complaint.customerMessage || complaint.internalResolution) && (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
                 <div className="flex items-start space-x-3">
                   <FiCheck className="w-6 h-6 text-green-600 mt-1" />
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-green-900 mb-2">Giải pháp xử lý</h3>
-                    <p className="text-green-800 mb-3">{complaint.resolution}</p>
+                    {complaint.customerMessage && (
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-green-900 mb-2">Thông điệp gửi khách hàng</h3>
+                        <p className="text-green-800 mb-3 whitespace-pre-wrap">{complaint.customerMessage}</p>
+                      </div>
+                    )}
+                    {complaint.internalResolution && (
+                      <div className={complaint.customerMessage ? 'pt-4 border-t border-green-200' : ''}>
+                        <h3 className="text-sm font-semibold text-green-700 mb-2">Ghi chú nội bộ</h3>
+                        <p className="text-green-700 text-sm mb-3 whitespace-pre-wrap">{complaint.internalResolution}</p>
+                      </div>
+                    )}
                     <div className="space-y-2">
                       {complaint.resolvedAt && (
                         <p className="text-sm text-green-600 flex items-center">
@@ -770,6 +785,9 @@ const FeedbackDetail = () => {
 
           {/* Right Sidebar */}
           <div className="space-y-6">
+            {/* Feedback Summary Info */}
+            
+
             {/* Customer Info */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200/80 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Thông tin khách hàng</h3>
@@ -910,8 +928,9 @@ const FeedbackDetail = () => {
                     </button>
                   )}
 
-                  {/* Send Notification - Show when there is resolution */}
-                  {complaint.resolution && complaint.resolution.trim() !== '' && (
+                  {/* Send Notification - Show when there is customer message */}
+                  {((complaint.customerMessage && complaint.customerMessage.trim() !== '') || 
+                    (complaint.resolution && complaint.resolution.trim() !== '')) && (
                     <button
                       onClick={handleSendNotification}
                       className={`w-full px-4 py-2.5 rounded-lg font-medium flex items-center justify-center ${
@@ -1017,19 +1036,43 @@ const FeedbackDetail = () => {
 
       {/* Resolve Modal */}
       {showResolveModal && createModal(
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Giải pháp xử lý</h3>
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Giải pháp xử lý</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Vui lòng nhập thông điệp sẽ gửi cho khách hàng. Ghi chú nội bộ là tùy chọn.
+            </p>
             
+            {/* Customer Message - Required */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Thông điệp gửi khách hàng <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Nội dung này sẽ được gửi qua email cho khách hàng. Hãy viết một cách lịch sự và chuyên nghiệp.
+              </p>
+              <textarea
+                value={customerMessage}
+                onChange={(e) => setCustomerMessage(e.target.value)}
+                placeholder="VD: Chúng tôi đã kiểm tra và xử lý vấn đề của xe. Xin chân thành xin lỗi quý khách về sự bất tiện này. Xe đã được bảo dưỡng và sẵn sàng giao lại cho quý khách."
+                rows={5}
+                className="w-full px-4 py-3 border-2 border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-blue-50"
+              />
+            </div>
+
+            {/* Internal Notes - Optional */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Mô tả giải pháp
+                Ghi chú nội bộ (không gửi cho khách hàng)
               </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Ghi chú này chỉ dành cho nhân viên và quản lý, không hiển thị trong email gửi khách hàng.
+              </p>
               <textarea
-                value={resolutionText}
-                onChange={(e) => setResolutionText(e.target.value)}
-                placeholder="Nhập giải pháp đã áp dụng để giải quyết phản hồi..."
-                rows={5}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                value={internalResolution}
+                onChange={(e) => setInternalResolution(e.target.value)}
+                placeholder="VD: Đã kiểm tra hệ thống phanh, thay má phanh mới, test lái OK. Gửi mail xin lỗi và tặng voucher giảm giá 10% lần bảo dưỡng sau."
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-400 focus:border-transparent resize-none"
               />
             </div>
 
@@ -1037,7 +1080,8 @@ const FeedbackDetail = () => {
               <button
                 onClick={() => {
                   setShowResolveModal(false);
-                  setResolutionText('');
+                  setCustomerMessage('');
+                  setInternalResolution('');
                 }}
                 className="flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium"
                 disabled={isSubmitting}
@@ -1047,7 +1091,7 @@ const FeedbackDetail = () => {
               <button
                 onClick={handleResolve}
                 className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium disabled:opacity-50"
-                disabled={isSubmitting || !resolutionText.trim()}
+                disabled={isSubmitting || !customerMessage.trim()}
               >
                 {isSubmitting ? 'Đang lưu...' : 'Xác nhận'}
               </button>
