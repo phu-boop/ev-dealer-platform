@@ -39,5 +39,5 @@ public class OrderTracking {
     private String notes;
 
     @Column(name = "updated_by", columnDefinition = "BINARY(16)")
-    private UUID updatedBy; // nên đổi sang UUID nếu hệ thống bạn dùng UUID cho user/staff
+    private UUID updatedBy;
 }

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sales_orders") // Dùng chung cho 2 chức năng: đặt hàng từ hãng xe, người dùng đặt hàng
+@Table(name = "sales_orders")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,7 +31,7 @@ public class SalesOrder {
     private UUID dealerId;
 
     @Column(name = "customer_id")
-    private Long customerId; // Nếu là đơn đặt hàng xe từ hãng thì customerid = null
+    private Long customerId;
 
     @Column(name = "staff_id", columnDefinition = "BINARY(16)")
     private UUID staffId;

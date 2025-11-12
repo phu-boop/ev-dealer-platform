@@ -415,23 +415,6 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         return totalAmount.multiply(downPaymentPercentage);
     }
 
-//    @Override
-//    @Transactional
-//    public ApiRespond approveOrder(String orderId) {
-//        SalesOrder salesOrder = salesOrderRepository.findById(UUID.fromString(orderId))
-//                .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
-//
-//        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED) {
-//            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
-//        }
-//
-//        salesOrder.setOrderStatusB2C(OrderStatusB2C.APPROVED);
-//        salesOrderRepository.save(salesOrder);
-//
-//        log.info("Sales order {} approved by manager", orderId);
-//        return ApiRespond.success("Đơn hàng đã được quản lý duyệt thành công.", salesOrder);
-//    }
-
 
     private CustomerResponse getCustomerInfo(Long customerId) {
         try {

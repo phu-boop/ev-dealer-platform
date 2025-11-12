@@ -40,7 +40,7 @@ public class OrderTrackingController {
     public ResponseEntity<ApiRespond<?>> deleteTrackingRecord(@PathVariable UUID trackId) {
         log.info("Deleting tracking record: {}", trackId);
         orderTrackingService.deleteTrackingRecord(trackId);
-        return ResponseEntity.ok(ApiRespond.success("Tracking record deleted successfully",null));
+        return ResponseEntity.ok(ApiRespond.success("Tracking record deleted successfully", null));
     }
 
     @GetMapping("/{trackId}")

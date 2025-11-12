@@ -36,8 +36,6 @@ public interface SalesOrderServiceB2C {
 
     SalesOrderB2CResponse convertToComplete(UUID orderId);
 
-    void handleCustomerOrderConfirmation(UUID orderId, boolean confirmed) ;
+    void handleCustomerOrderConfirmation(UUID orderId, boolean confirmed);
 
-
-    // TODO: Add more methods as needed
 }

@@ -6,6 +6,8 @@ import com.ev.sales_service.dto.request.OrderTrackingRequest;
 import com.ev.sales_service.dto.response.OrderTrackingResponse;
 import com.ev.sales_service.entity.OrderTracking;
 import com.ev.sales_service.entity.SalesOrder;
+import com.ev.sales_service.enums.OrderStatusB2C;
+import com.ev.sales_service.enums.OrderTrackingStatus;
 import com.ev.sales_service.repository.OrderTrackingRepository;
 import com.ev.sales_service.repository.SalesOrderRepositoryB2C;
 import com.ev.sales_service.service.Interface.OrderTrackingService;
@@ -36,7 +38,10 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
 
         SalesOrder salesOrder = salesOrderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
-
+        // ✅ Chỉ cho phép tạo nếu đơn hàng đang ở trạng thái IN_PRODUCTION
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.IN_PRODUCTION) {
+            throw new AppException(ErrorCode.INVALID_TRACKING_OPERATION_STATE);
+        }
         OrderTracking orderTracking = OrderTracking.builder()
                 .salesOrder(salesOrder)
                 .statusB2C(request.getStatus())
@@ -58,7 +63,17 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
         OrderTracking orderTracking = orderTrackingRepository.findById(trackId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_TRACKING_NOT_FOUND));
 
+        SalesOrder salesOrder = salesOrderRepository.findById(orderTracking.getSalesOrder().getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        // ✅ Chỉ cho phép sửa nếu đơn hàng đang trong sản xuất
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.IN_PRODUCTION) {
+            throw new AppException(ErrorCode.INVALID_TRACKING_OPERATION_STATE);
+        }
         orderTracking.setStatusB2C(request.getStatus());
+        if (request.getStatus().equals(OrderTrackingStatus.DELIVERED)) {
+            salesOrder.setOrderStatusB2C(OrderStatusB2C.DELIVERED);
+            salesOrderRepository.save(salesOrder);
+        }
         orderTracking.setNotes(request.getNotes());
         orderTracking.setUpdateDate(LocalDateTime.now());
         orderTracking.setUpdatedBy(request.getUpdatedBy());

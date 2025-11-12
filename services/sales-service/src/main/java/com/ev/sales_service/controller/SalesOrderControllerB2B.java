@@ -39,7 +39,7 @@ public class SalesOrderControllerB2B {
     @PostMapping("/b2b")
     @PreAuthorize("hasRole('DEALER_MANAGER')") // Chỉ quản lý đại lý được đặt hàng
     public ResponseEntity<ApiRespond<SalesOrderDtoB2B>> createB2BOrder(
-                @Valid @RequestBody CreateB2BOrderRequest request,
+            @Valid @RequestBody CreateB2BOrderRequest request,
             @RequestHeader("X-User-Email") String email,
             @RequestHeader("X-User-ProfileId") UUID dealerId) {
 
@@ -47,8 +47,8 @@ public class SalesOrderControllerB2B {
         SalesOrderDtoB2B responseDto = salesOrderMapperB2B.toDto(createdOrder);
 
         return new ResponseEntity<>(
-            ApiRespond.success("B2B order created", responseDto),
-            HttpStatus.CREATED
+                ApiRespond.success("B2B order created", responseDto),
+                HttpStatus.CREATED
         );
     }
 
@@ -69,8 +69,8 @@ public class SalesOrderControllerB2B {
         SalesOrderDtoB2B responseDto = salesOrderMapperB2B.toDto(createdOrder);
 
         return new ResponseEntity<>(
-            ApiRespond.success("B2B order placed by staff successfully", responseDto),
-            HttpStatus.CREATED
+                ApiRespond.success("B2B order placed by staff successfully", responseDto),
+                HttpStatus.CREATED
         );
     }
 

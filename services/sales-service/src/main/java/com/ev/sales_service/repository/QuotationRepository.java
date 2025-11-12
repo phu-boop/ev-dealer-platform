@@ -2,6 +2,7 @@ package com.ev.sales_service.repository;
 
 import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.enums.QuotationStatus;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,7 +13,7 @@ import java.util.UUID;
 import java.util.List;
 
 @Repository
-public interface QuotationRepository extends JpaRepository<Quotation, UUID> {
+public interface QuotationRepository extends JpaRepository<Quotation, UUID>, JpaSpecificationExecutor<Quotation> {
 
     // Filter cơ bản
     List<Quotation> findByDealerId(UUID dealerId);
@@ -45,5 +46,6 @@ public interface QuotationRepository extends JpaRepository<Quotation, UUID> {
     boolean existsByQuotationIdAndStatus(UUID quotationId, QuotationStatus status);
 
     Quotation save(Quotation quotation);
+
 
 }

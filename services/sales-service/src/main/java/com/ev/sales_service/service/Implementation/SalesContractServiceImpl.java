@@ -39,6 +39,16 @@ public class SalesContractServiceImpl implements SalesContractService {
         SalesOrder salesOrder = salesOrderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
 
+        // ✅ Validate trạng thái đơn hàng trước khi tạo hợp đồng
+        if (salesOrder.getOrderStatusB2C() == null) {
+            throw new AppException(ErrorCode.INVALID_STATE);
+        }
+
+        // Chỉ cho phép tạo hợp đồng nếu đơn hàng đã CONFIRMED
+        // và chưa bắt đầu sản xuất hoặc bị hủy
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.CONFIRMED) {
+            throw new AppException(ErrorCode.INVALID_CONTRACT_OPERATION_STATE);
+        }
         // Check if contract already exists
         if (salesContractRepository.existsBySalesOrder_OrderId(request.getOrderId())) {
             throw new AppException(ErrorCode.SALES_CONTRACT_ALREADY_EXISTS);
@@ -67,9 +77,13 @@ public class SalesContractServiceImpl implements SalesContractService {
         SalesContract salesContract = salesContractRepository.findById(contractId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_CONTRACT_NOT_FOUND));
 
-        if(request.getContractStatus().equals(ContractStatus.SIGNED)){
-            SalesOrder salesOrder = salesOrderRepository.findById(salesContract.getSalesOrder().getOrderId())
-                    .orElseThrow(()->new AppException(ErrorCode.DATABASE_ERROR));
+        SalesOrder salesOrder = salesOrderRepository.findById(salesContract.getSalesOrder().getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        // và chưa bắt đầu sản xuất hoặc bị hủy
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.CONFIRMED) {
+            throw new AppException(ErrorCode.INVALID_CONTRACT_OPERATION_STATE);
+        }
+        if (request.getContractStatus().equals(ContractStatus.SIGNED)) {
             salesOrder.setOrderStatusB2C(OrderStatusB2C.IN_PRODUCTION);
             salesOrderRepository.save(salesOrder);
         }
@@ -116,15 +130,16 @@ public class SalesContractServiceImpl implements SalesContractService {
 
         SalesContract salesContract = salesContractRepository.findById(contractId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_CONTRACT_NOT_FOUND));
-
         if (salesContract.getContractStatus() != ContractStatus.DRAFT &&
-            salesContract.getContractStatus() != ContractStatus.PENDING_SIGNATURE) {
+                salesContract.getContractStatus() != ContractStatus.PENDING_SIGNATURE) {
             throw new AppException(ErrorCode.INVALID_CONTRACT_STATUS);
         }
 
         SalesOrder salesOrder = salesOrderRepository.findById(salesContract.getSalesOrder().getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
-
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.CONFIRMED) {
+            throw new AppException(ErrorCode.INVALID_CONTRACT_OPERATION_STATE);
+        }
         salesOrder.setOrderStatusB2C(OrderStatusB2C.IN_PRODUCTION);
 
         salesContract.setDigitalSignature(digitalSignature);
@@ -140,10 +155,13 @@ public class SalesContractServiceImpl implements SalesContractService {
     @Override
     public SalesContractResponse updateContractStatus(UUID contractId, String status) {
         log.info("Updating contract status: {} to {}", contractId, status);
-
         SalesContract salesContract = salesContractRepository.findById(contractId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_CONTRACT_NOT_FOUND));
-
+        SalesOrder salesOrder = salesOrderRepository.findById(salesContract.getSalesOrder().getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.CONFIRMED) {
+            throw new AppException(ErrorCode.INVALID_CONTRACT_OPERATION_STATE);
+        }
         ContractStatus newStatus = ContractStatus.valueOf(status);
         salesContract.setContractStatus(newStatus);
 
@@ -193,7 +211,7 @@ public class SalesContractServiceImpl implements SalesContractService {
         }
 
         if (salesContract.getContractStatus() == ContractStatus.SIGNED &&
-            salesContract.getDigitalSignature() == null) {
+                salesContract.getDigitalSignature() == null) {
             throw new AppException(ErrorCode.MISSING_DIGITAL_SIGNATURE);
         }
     }
@@ -202,7 +220,7 @@ public class SalesContractServiceImpl implements SalesContractService {
     public List<SalesContractResponse> getExpiringContracts(int days) {
         LocalDateTime targetDate = LocalDateTime.now().plusDays(days);
         List<SalesContract> contracts = salesContractRepository.findByStatusAndContractDateBefore(
-            ContractStatus.DRAFT, targetDate);
+                ContractStatus.DRAFT, targetDate);
 
         return contracts.stream()
                 .map(this::mapToResponse)
@@ -224,6 +242,7 @@ public class SalesContractServiceImpl implements SalesContractService {
         // TODO: Add additional mapping logic
         return response;
     }
+
     // SalesContractServiceImpl.java
     @Override
     public List<SalesContractResponse> getAllContracts() {
@@ -251,7 +270,7 @@ public class SalesContractServiceImpl implements SalesContractService {
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_CONTRACT_NOT_FOUND));
         contract.setContractStatus(ContractStatus.CANCELLED);
         SalesOrder salesOrder = salesOrderRepository.findById(contract.getSalesOrder().getOrderId())
-                        .orElseThrow(()-> new AppException(ErrorCode.DATABASE_ERROR));
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
         salesOrder.setOrderStatusB2C(OrderStatusB2C.CANCELLED);
         salesOrderRepository.save(salesOrder);
         salesContractRepository.save(contract);

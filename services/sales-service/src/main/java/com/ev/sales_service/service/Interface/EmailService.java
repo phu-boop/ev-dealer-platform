@@ -9,6 +9,5 @@ public interface EmailService {
     void sendQuotationEmail(Quotation quotation, CustomerResponse customer);
     void sendQuotationAcceptedEmail(Quotation quotation, CustomerResponse customer);
     void sendQuotationRejectedEmail(Quotation quotation, CustomerResponse customer);
-
     void sendOrderConfirmedEmail(SalesOrder salesOrder, CustomerResponse customer);
 }

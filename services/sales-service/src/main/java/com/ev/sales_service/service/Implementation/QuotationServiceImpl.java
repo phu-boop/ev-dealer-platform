@@ -26,11 +26,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintStream;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,15 +87,15 @@ public class QuotationServiceImpl implements QuotationService {
 
         // 2. Áp dụng promotions từ request
         if (request.getPromotionIds() != null && !request.getPromotionIds().isEmpty()) {
-        List<Promotion> promotionsFromDb = promotionRepository.findAllById(request.getPromotionIds());
-        for (Promotion promotion : promotionsFromDb) {
-            appliedPromotions.add(promotion);
-            BigDecimal discountAmount = quotation.getBasePrice()
-                    .multiply(promotion.getDiscountRate())
-                    .divide(BigDecimal.valueOf(1));
-            totalDiscount = totalDiscount.add(discountAmount);
+            List<Promotion> promotionsFromDb = promotionRepository.findAllById(request.getPromotionIds());
+            for (Promotion promotion : promotionsFromDb) {
+                appliedPromotions.add(promotion);
+                BigDecimal discountAmount = quotation.getBasePrice()
+                        .multiply(promotion.getDiscountRate())
+                        .divide(BigDecimal.valueOf(1));
+                totalDiscount = totalDiscount.add(discountAmount);
+            }
         }
-    }
 
         // 3. Áp dụng additionalDiscountRate từ request
         if (request.getAdditionalDiscountRate() != null) {
@@ -123,7 +126,6 @@ public class QuotationServiceImpl implements QuotationService {
 
         return mapToResponse(updatedQuotation);
     }
-
 
 
     // phương thức sendQuotationToCustomer
@@ -274,22 +276,6 @@ public class QuotationServiceImpl implements QuotationService {
 
 
     @Override
-    public List<QuotationResponse> getQuotationsByFilters(QuotationFilterRequest filterRequest) {
-        List<Quotation> quotations = quotationRepository.findByFilters(
-                filterRequest.getDealerId(),
-                filterRequest.getCustomerId(),
-                filterRequest.getStaffId(),
-                filterRequest.getStatus(),
-                filterRequest.getStartDate(),
-                filterRequest.getEndDate()
-        );
-
-        return quotations.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public void expireOldQuotations() {
         LocalDateTime now = LocalDateTime.now();
         List<Quotation> expiringQuotations = quotationRepository.findExpiringQuotations(now, now.plusDays(1));
@@ -410,22 +396,6 @@ public class QuotationServiceImpl implements QuotationService {
     }
 
     @Override
-    public List<QuotationResponse> getQuotationsByDealer(UUID dealerId) {
-        List<Quotation> quotations = quotationRepository.findByDealerId(dealerId);
-        return quotations.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<QuotationResponse> getQuotationsByStaff(UUID staffId) {
-        List<Quotation> quotations = quotationRepository.findByStaffId(staffId);
-        return quotations.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public void deleteQuotation(UUID quotationId) {
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
@@ -437,6 +407,103 @@ public class QuotationServiceImpl implements QuotationService {
 
         quotationRepository.delete(quotation);
         log.info("Quotation {} deleted successfully", quotationId);
+    }
+
+    @Override
+    public QuotationFilterRequest buildFilterRequestForStaff(UUID staffId, String status, String customer,
+                                                             String dateFrom, String dateTo, String search) {
+        QuotationFilterRequest filter = new QuotationFilterRequest();
+        filter.setStaffId(staffId);
+        parseCommonFilters(filter, status, customer, dateFrom, dateTo, search);
+        return filter;
+    }
+
+    @Override
+    public QuotationFilterRequest buildFilterRequestForDealer(UUID dealerId, String status, String customer,
+                                                              String dateFrom, String dateTo, String search) {
+        QuotationFilterRequest filter = new QuotationFilterRequest();
+        filter.setDealerId(dealerId);
+        parseCommonFilters(filter, status, customer, dateFrom, dateTo, search);
+        return filter;
+    }
+
+    private void parseCommonFilters(QuotationFilterRequest filter, String status, String customer,
+                                    String dateFrom, String dateTo, String search) {
+        if (status != null && !status.isEmpty()) {
+            try {
+                filter.setStatus(QuotationStatus.valueOf(status));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status parameter: {}", status);
+            }
+        }
+
+        if (customer != null && !customer.isEmpty()) {
+            try {
+                filter.setCustomerId(Long.parseLong(customer));
+            } catch (NumberFormatException e) {
+                log.warn("Invalid customer ID parameter: {}", customer);
+            }
+        }
+
+        if (dateFrom != null && !dateFrom.isEmpty()) {
+            try {
+                filter.setStartDate(LocalDate.parse(dateFrom).atStartOfDay());
+            } catch (DateTimeParseException e) {
+                log.warn("Invalid dateFrom parameter: {}", dateFrom);
+            }
+        }
+
+        if (dateTo != null && !dateTo.isEmpty()) {
+            try {
+                filter.setEndDate(LocalDate.parse(dateTo).atTime(23, 59, 59));
+            } catch (DateTimeParseException e) {
+                log.warn("Invalid dateTo parameter: {}", dateTo);
+            }
+        }
+
+        if (search != null && !search.isEmpty()) {
+            filter.setSearchKeyword(search);
+        }
+    }
+
+    @Override
+    public List<QuotationResponse> getQuotationsByFilters(QuotationFilterRequest filterRequest) {
+        Specification<Quotation> spec = Specification.where(null);
+
+        if (filterRequest.getDealerId() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("dealerId"), filterRequest.getDealerId()));
+        }
+
+        if (filterRequest.getStaffId() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("staffId"), filterRequest.getStaffId()));
+        }
+
+        if (filterRequest.getCustomerId() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("customerId"), filterRequest.getCustomerId()));
+        }
+
+        if (filterRequest.getStatus() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), filterRequest.getStatus()));
+        }
+
+        if (filterRequest.getStartDate() != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("quotationDate"), filterRequest.getStartDate()));
+        }
+
+        if (filterRequest.getEndDate() != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("quotationDate"), filterRequest.getEndDate()));
+        }
+
+        if (filterRequest.getSearchKeyword() != null && !filterRequest.getSearchKeyword().isEmpty()) {
+            String pattern = "%" + filterRequest.getSearchKeyword().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("quotationId").as(String.class)), pattern),
+                    cb.like(cb.lower(root.get("termsConditions")), pattern)
+            ));
+        }
+
+        List<Quotation> quotations = quotationRepository.findAll(spec);
+        return quotations.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
 
