@@ -103,7 +103,7 @@ const QuotationListPage = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`inline-flex items-center px-3 py-2 border text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`inline-flex  items-center px-3 py-2 border text-sm font-medium rounded-lg transition-all duration-200 ${
                   showFilters 
                     ? 'border-blue-300 bg-blue-50 text-blue-700' 
                     : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'

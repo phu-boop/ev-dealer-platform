@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { PageContainer } from '@ant-design/pro-components';
-import { Alert, Spin } from 'antd';
+import { Alert, Spin, Button, message, Modal } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from 'antd';
-import { ArrowLeftOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ExclamationCircleOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons';
 import { useSalesContracts } from '../hooks/useSalesContracts';
 import ContractForm from '../components/ContractForm';
 import dayjs from 'dayjs';
@@ -13,19 +12,84 @@ const ContractEditPage = () => {
   const navigate = useNavigate();
   const { contract, loading, error, fetchContractById, updateContract } = useSalesContracts();
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [formChanged, setFormChanged] = useState(false);
 
   useEffect(() => {
     if (contractId) {
       fetchContractById(contractId);
     }
-  }, [contractId, fetchContractById]); 
+  }, [contractId, fetchContractById]);
+
   const handleSubmit = async (values) => {
     setSubmitting(true);
+    setSubmitError(null);
+    
     try {
       await updateContract(contractId, values);
-      navigate(`/dealer/staff/contracts/${contractId}`);
+      message.success('Cập nhật hợp đồng thành công!');
+      setFormChanged(false);
+      navigate(`/dealer/staff/contracts/${contractId}`, {
+        replace: true,
+        state: { 
+          updated: true,
+          timestamp: new Date().getTime()
+        }
+      });
     } catch (error) {
-      // Error handled in hook
+      console.error('Lỗi khi cập nhật hợp đồng:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật hợp đồng';
+      setSubmitError(errorMessage);
+      message.error('Cập nhật hợp đồng thất bại!');
+      
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBack = () => {
+    if (formChanged) {
+      Modal.confirm({
+        title: 'Bạn có chắc muốn rời đi?',
+        content: 'Các thay đổi chưa được lưu sẽ bị mất.',
+        okText: 'Rời đi',
+        cancelText: 'Ở lại',
+        okButtonProps: { danger: true },
+        icon: <ExclamationCircleOutlined />,
+        onOk: () => navigate(`/dealer/staff/contracts/${contractId}`)
+      });
+    } else {
+      navigate(`/dealer/staff/contracts/${contractId}`);
+    }
+  };
+
+  const handleFormChange = (changedFields, allFields) => {
+    setFormChanged(true);
+  };
+
+  const handleRetry = () => {
+    setSubmitError(null);
+    fetchContractById(contractId);
+  };
+
+  const handleSaveAndContinue = async (values) => {
+    setSubmitting(true);
+    setSubmitError(null);
+    
+    try {
+      await updateContract(contractId, values);
+      message.success('Cập nhật hợp đồng thành công!');
+      setFormChanged(false);
+      // Stay on the same page but refresh data
+      fetchContractById(contractId);
+    } catch (error) {
+      console.error('Lỗi khi cập nhật hợp đồng:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật hợp đồng';
+      setSubmitError(errorMessage);
+      message.error('Cập nhật hợp đồng thất bại!');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSubmitting(false);
     }
@@ -54,11 +118,19 @@ const ContractEditPage = () => {
           showIcon
           icon={<ExclamationCircleOutlined />}
           action={
-            <Button size="small" onClick={() => fetchContractById(contractId)}>
+            <Button size="small" onClick={handleRetry}>
               Thử lại
             </Button>
           }
         />
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
+          <Button 
+            icon={<ArrowLeftOutlined />} 
+            onClick={() => navigate('/dealer/staff/contracts')}
+          >
+            Quay lại danh sách
+          </Button>
+        </div>
       </PageContainer>
     );
   }
@@ -72,12 +144,15 @@ const ContractEditPage = () => {
           description={`Không thể tìm thấy hợp đồng với ID: ${contractId}`}
           type="warning"
           showIcon
-          action={
-            <Button size="small" onClick={() => navigate('/dealer/staff/contracts')}>
-              Quay lại danh sách
-            </Button>
-          }
         />
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
+          <Button 
+            icon={<ArrowLeftOutlined />} 
+            onClick={() => navigate('/dealer/staff/contracts')}
+          >
+            Quay lại danh sách hợp đồng
+          </Button>
+        </div>
       </PageContainer>
     );
   }
@@ -92,25 +167,39 @@ const ContractEditPage = () => {
         breadcrumb: {
           items: [
             { title: 'Bán hàng' },
-            { title: 'Hợp đồng', path: '/dealer/staff/contracts' },
-            { title: `Hợp đồng #${contract.contractNumber || contract.contractId}`, path: `/dealer/staff/contracts/${contractId}` },
+            { title: 'Hợp đồng', path: '' },
+            { title: `Hợp đồng #${contract.contractNumber || contract.contractId}`, path: `` },
             { title: 'Chỉnh sửa' },
           ],
         },
       }}
       extra={[
         <Button 
+          key="cancel"
+          icon={<CloseOutlined />}
+          onClick={handleBack}
+          disabled={submitting}
+        >
+          Hủy
+        </Button>,
+        <Button 
           key="back" 
           icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate(`/dealer/staff/contracts/${contractId}`)}
+          onClick={() => navigate('/dealer/staff/contracts')}
+          disabled={submitting}
         >
-          Quay lại
+          Danh sách hợp đồng
         </Button>,
       ]}
       content={
         <div>
           <p style={{ margin: 0, color: '#666' }}>
             Chỉnh sửa thông tin hợp đồng bán hàng. Các thay đổi sẽ được cập nhật ngay lập tức.
+            {formChanged && (
+              <span style={{ color: '#fa8c16', marginLeft: 8 }}>
+                • Có thay đổi chưa được lưu
+              </span>
+            )}
           </p>
           {!canEdit && (
             <Alert
@@ -124,6 +213,22 @@ const ContractEditPage = () => {
         </div>
       }
     >
+      {/* Hiển thị lỗi submit nếu có */}
+      {submitError && (
+        <Alert
+          message="Lỗi cập nhật hợp đồng"
+          description={submitError}
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+          action={
+            <Button size="small" onClick={() => setSubmitError(null)}>
+              Đóng
+            </Button>
+          }
+        />
+      )}
+
       {canEdit ? (
         <ContractForm 
           initialValues={{
@@ -134,8 +239,24 @@ const ContractEditPage = () => {
             expiryDate: contract.expiryDate ? dayjs(contract.expiryDate) : null,
           }}
           onSubmit={handleSubmit}
+          onSaveAndContinue={handleSaveAndContinue}
+          onValuesChange={handleFormChange}
           loading={loading || submitting}
           isEdit={true}
+          submitError={submitError}
+          submitButtonProps={{
+            icon: <SaveOutlined />,
+            children: 'Lưu thay đổi',
+            type: 'primary',
+            loading: submitting,
+            disabled: !formChanged
+          }}
+          saveAndContinueButtonProps={{
+            icon: <SaveOutlined />,
+            children: 'Lưu và tiếp tục',
+            loading: submitting,
+            disabled: !formChanged
+          }}
         />
       ) : (
         <Alert
@@ -143,6 +264,11 @@ const ContractEditPage = () => {
           description="Hợp đồng này đã được ký hoặc đang trong trạng thái không cho phép chỉnh sửa."
           type="error"
           showIcon
+          action={
+            <Button size="small" onClick={handleBack}>
+              Quay lại
+            </Button>
+          }
         />
       )}
     </PageContainer>

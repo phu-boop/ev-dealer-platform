@@ -30,8 +30,9 @@ export const useOrderTracking = (orderId) => {
       setTrackings(historyResponse.data?.data || []);
       setCurrentStatus(currentResponse.data?.data);
     } catch (err) {
-      setError(err.message);
-      showError('Lỗi khi tải lịch sử theo dõi');
+      const errorMessage = err.response?.data?.message || err.message;
+      setError(errorMessage);
+      showError(errorMessage || 'Lỗi khi tải lịch sử theo dõi');
     } finally {
       setLoading(false);
     }
@@ -49,7 +50,8 @@ export const useOrderTracking = (orderId) => {
       await fetchTrackings();
       return response.data?.data;
     } catch (err) {
-      showError('Lỗi khi thêm trạng thái theo dõi');
+      const errorMessage = err.response?.data?.message || err.message;
+      showError(errorMessage || 'Lỗi khi thêm trạng thái theo dõi');
       throw err;
     }
   };
@@ -67,7 +69,8 @@ export const useOrderTracking = (orderId) => {
       await fetchTrackings();
       return response.data?.data;
     } catch (err) {
-      showError('Lỗi khi thêm ghi chú');
+      const errorMessage = err.response?.data?.message || err.message;
+      showError(errorMessage || 'Lỗi khi thêm ghi chú');
       throw err;
     }
   };
@@ -85,7 +88,8 @@ export const useOrderTracking = (orderId) => {
       await fetchTrackings();
       return response.data?.data;
     } catch (err) {
-      showError('Lỗi khi cập nhật theo dõi');
+      const errorMessage = err.response?.data?.message || err.message;
+      showError(errorMessage || 'Lỗi khi cập nhật theo dõi');
       throw err;
     }
   };
