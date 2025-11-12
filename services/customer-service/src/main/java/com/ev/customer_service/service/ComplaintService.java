@@ -154,7 +154,14 @@ public class ComplaintService {
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + complaintId));
 
         complaint.setStatus(ComplaintStatus.RESOLVED);
-        complaint.setResolution(request.getResolution());
+        
+        // Set new fields
+        complaint.setInternalResolution(request.getInternalResolution());
+        complaint.setCustomerMessage(request.getCustomerMessage());
+        
+        // Set deprecated field for backward compatibility
+        complaint.setResolution(request.getCustomerMessage());
+        
         complaint.setResolvedDate(LocalDateTime.now());
 
         Complaint saved = complaintRepository.save(complaint);
@@ -388,6 +395,8 @@ public class ComplaintService {
                 .assignedStaffName(complaint.getAssignedStaffName())
                 .internalNotes(complaint.getInternalNotes())
                 .progressHistory(parseProgressUpdates(complaint.getProgressUpdates()))
+                .internalResolution(complaint.getInternalResolution())
+                .customerMessage(complaint.getCustomerMessage())
                 .resolution(complaint.getResolution())
                 .resolvedDate(complaint.getResolvedDate())
                 .firstResponseAt(complaint.getFirstResponseAt())
@@ -425,8 +434,10 @@ public class ComplaintService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        // Kiểm tra complaint đã có resolution chưa
-        if (complaint.getResolution() == null || complaint.getResolution().isEmpty()) {
+        // Kiểm tra complaint đã có customer message chưa (check both new and old field for backward compatibility)
+        boolean hasMessage = (complaint.getCustomerMessage() != null && !complaint.getCustomerMessage().isEmpty()) ||
+                            (complaint.getResolution() != null && !complaint.getResolution().isEmpty());
+        if (!hasMessage) {
             throw new RuntimeException("Chưa có kết quả xử lý. Vui lòng cập nhật kết quả trước khi gửi thông báo.");
         }
 
@@ -448,7 +459,7 @@ public class ComplaintService {
                 new org.springframework.mail.javamail.MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(complaint.getCustomerEmail());
-            helper.setSubject("✅ Kết quả xử lý phản hồi - " + complaint.getComplaintCode());
+            helper.setSubject("Kết quả xử lý phản hồi - " + complaint.getComplaintCode());
             helper.setText(htmlContent, true); // true = HTML
             
             // Optionally set from address (if configured in application.properties)
@@ -481,7 +492,15 @@ public class ComplaintService {
     private String buildResolutionEmailHtml(Complaint complaint) {
         String customerName = complaint.getCustomerName();
         String complaintCode = complaint.getComplaintCode();
-        String resolution = complaint.getResolution();
+        
+        // Use customerMessage for email (customer-facing), fallback to resolution for backward compatibility
+        String customerMessage = complaint.getCustomerMessage() != null && !complaint.getCustomerMessage().isEmpty()
+            ? complaint.getCustomerMessage()
+            : (complaint.getResolution() != null ? complaint.getResolution() : "Đã xử lý xong");
+        
+        String description = complaint.getDescription() != null && !complaint.getDescription().isEmpty()
+            ? complaint.getDescription()
+            : "Không có mô tả";
         String staffName = complaint.getAssignedStaffName() != null 
             ? complaint.getAssignedStaffName() 
             : "Nhân viên hỗ trợ";
@@ -606,7 +625,7 @@ public class ComplaintService {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>✅ Phản Hồi Đã Được Xử Lý</h1>
+                        <h1> Phản Hồi Đã Được Xử Lý</h1>
                     </div>
                     
                     <div class="content">
@@ -629,6 +648,10 @@ public class ComplaintService {
                                 <span class="value">%s</span>
                             </div>
                             <div class="info-row">
+                                <span class="label" style="vertical-align: top;">Nội dung:</span>
+                                <span class="value" style="display: inline-block; margin-top: 0; color: #374151; max-width: 400px; white-space: pre-wrap; word-wrap: break-word;">%s</span>
+                            </div>
+                            <div class="info-row">
                                 <span class="label">Mức độ:</span>
                                 <span class="value">%s</span>
                             </div>
@@ -646,9 +669,8 @@ public class ComplaintService {
                             </div>
                         </div>
                         
-                        <div class="resolution-box">
-                            <h3>💡 Kết Quả Xử Lý</h3>
-                            <div class="resolution-text">%s</div>
+                        <div style="margin: 25px 0; padding: 20px; background: #f9fafb; border-radius: 8px;">
+                            <p style="color: #111827; line-height: 1.8; white-space: pre-wrap; margin: 0;">%s</p>
                         </div>
                         
                         <div class="divider"></div>
@@ -683,11 +705,12 @@ public class ComplaintService {
             customerName,
             complaintCode,
             typeDisplay,
+            description,
             severityDisplay,
             createdDate,
             resolvedDate,
             staffName,
-            resolution,
+            customerMessage,
             staffName
         );
     }
