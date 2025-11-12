@@ -13,11 +13,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ResolveComplaintRequest {
 
-    @NotBlank(message = "Resolution is required")
-    private String resolution; // Mô tả kết quả xử lý
+    // Giải pháp xử lý nội bộ (dành cho nhân viên/ghi chú)
+    private String internalResolution;
+
+    @NotBlank(message = "Customer message is required")
+    private String customerMessage; // Thông điệp gửi cho khách hàng qua email
 
     private String resolvedByStaffId;
     private String resolvedByStaffName;
 
     private Boolean sendNotification = true; // Có gửi thông báo cho khách hàng không
+
+    // DEPRECATED: Giữ lại để tương thích ngược
+    @Deprecated
+    private String resolution;
 }

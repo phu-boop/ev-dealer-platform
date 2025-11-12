@@ -72,18 +72,11 @@ public class Customer {
     private LocalDateTime updatedAt;
 
     // Relationships
-    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private CustomerProfile profile;
-
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<TestDriveAppointment> testDriveAppointments;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Complaint> complaints;
-
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<CommunicationHistory> communicationHistories;
-
 
     /**
      * Set default values before persisting
