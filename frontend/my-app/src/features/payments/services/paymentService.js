@@ -59,8 +59,8 @@ const paymentService = {
   /**
    * Xác nhận thanh toán thủ công (Dealer Staff, Dealer Manager)
    */
-  confirmManualPayment: (transactionId) => 
-    apiConstPaymentService.post(`/api/v1/payments/customer/transactions/${transactionId}/confirm`),
+  confirmManualPayment: (transactionId, data = {}) => 
+    apiConstPaymentService.post(`/api/v1/payments/customer/transactions/${transactionId}/confirm`, data),
 
   /**
    * Lấy lịch sử thanh toán của một đơn hàng
@@ -73,6 +73,14 @@ const paymentService = {
    */
   getCustomerTotalDebt: (customerId) => 
     apiConstPaymentService.get(`/api/v1/payments/customer/${customerId}/debt`),
+
+  /**
+   * Lấy danh sách thanh toán tiền mặt chờ duyệt (B2C orders) - Dealer Manager
+   */
+  getPendingCashPaymentsB2C: (params = {}) => {
+    const queryParams = new URLSearchParams(params).toString();
+    return apiConstPaymentService.get(`/api/v1/payments/customer/pending-cash-payments-b2c${queryParams ? '?' + queryParams : ''}`);
+  },
 
   // ==============================
   // Phase 3: B2B Payment Flow

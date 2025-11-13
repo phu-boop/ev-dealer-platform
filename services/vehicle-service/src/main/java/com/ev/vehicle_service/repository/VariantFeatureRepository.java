@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface VariantFeatureRepository extends JpaRepository<VariantFeature, VariantFeatureId> {
-    
+    boolean existsByVehicleFeature_FeatureId(Long featureId);
 }

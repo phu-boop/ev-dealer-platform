@@ -18,7 +18,8 @@ public enum ErrorCode {
     MISSING_REQUIRED_FIELD("2005", "Thiếu trường bắt buộc", HttpStatus.BAD_REQUEST),
     INVALID_EMAIL_FORMAT("2006", "Định dạng email không hợp lệ", HttpStatus.BAD_REQUEST),
     PASSWORD_TOO_SHORT("2007", "Mật khẩu phải có ít nhất 8 ký tự", HttpStatus.BAD_REQUEST),
-    PASSWORD_INVALID_FORMAT("2008", "Mật khẩu phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt", HttpStatus.BAD_REQUEST),
+    PASSWORD_INVALID_FORMAT("2008", "Mật khẩu phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+            HttpStatus.BAD_REQUEST),
     AGE_TOO_YOUNG("2009", "Người dùng phải từ 18 tuổi trở lên", HttpStatus.BAD_REQUEST),
     PHONE_INVALID_FORMAT("2010", "Số điện thoại phải từ 10 đến 12 chữ số", HttpStatus.BAD_REQUEST),
     TOO_MANY_REQUESTS("2011", "Thực hiện quá nhiều yêu cầu trong thời gian ngắn", HttpStatus.TOO_MANY_REQUESTS),
@@ -44,7 +45,8 @@ public enum ErrorCode {
     INTERNAL_ERROR("3001", "Lỗi hệ thống nội bộ", HttpStatus.INTERNAL_SERVER_ERROR),
     SERVICE_UNAVAILABLE("3002", "Dịch vụ tạm thời không khả dụng", HttpStatus.SERVICE_UNAVAILABLE),
     TIMEOUT("3003", "Yêu cầu quá thời gian chờ", HttpStatus.REQUEST_TIMEOUT),
-    DOWNSTREAM_SERVICE_UNAVAILABLE("3004", "Dịch vụ phụ thuộc đang tạm ngừng hoạt động", HttpStatus.SERVICE_UNAVAILABLE),
+    DOWNSTREAM_SERVICE_UNAVAILABLE("3004", "Dịch vụ phụ thuộc đang tạm ngừng hoạt động",
+            HttpStatus.SERVICE_UNAVAILABLE),
 
     // ===== 4xxx - Lỗi xác thực & phân quyền =====
     UNAUTHORIZED("4001", "Chưa xác thực", HttpStatus.UNAUTHORIZED),
@@ -95,9 +97,11 @@ public enum ErrorCode {
     INVALID_QUANTITY("6026", "Số lượng không hợp lệ", HttpStatus.BAD_REQUEST),
     INVALID_UNIT_PRICE("6027", "Đơn giá không hợp lệ", HttpStatus.BAD_REQUEST),
     ORDER_TRACKING_NOT_FOUND("6030", "Không tìm thấy lịch sử theo dõi đơn hàng", HttpStatus.NOT_FOUND),
-    INVALID_TRACKING_OPERATION_STATE("6031", "Chỉ được phép thao tác tracking khi đơn hàng đã được hoàng tất", HttpStatus.BAD_REQUEST),
+    INVALID_TRACKING_OPERATION_STATE("6031", "Chỉ được phép thao tác tracking khi đơn hàng đã được hoàng tất",
+            HttpStatus.BAD_REQUEST),
     ORDER_ITEM_OPERATION_INVALID_STATE("6032", "Chỉ được phép thao tác khi chưa tính toán", HttpStatus.BAD_REQUEST),
-    INVALID_CONTRACT_OPERATION_STATE("6033", "đơn hàng chưa được xác nhận hợp đồng  không được thao tác", HttpStatus.BAD_REQUEST),
+    INVALID_CONTRACT_OPERATION_STATE("6033", "đơn hàng chưa được xác nhận hợp đồng  không được thao tác",
+            HttpStatus.BAD_REQUEST),
     SALES_CONTRACT_NOT_FOUND("6040", "Không tìm thấy hợp đồng bán hàng", HttpStatus.NOT_FOUND),
     SALES_CONTRACT_ALREADY_EXISTS("6041", "Hợp đồng đã tồn tại cho đơn hàng này", HttpStatus.CONFLICT),
     INVALID_CONTRACT_STATUS("6042", "Trạng thái hợp đồng không hợp lệ cho thao tác này", HttpStatus.BAD_REQUEST),
@@ -118,6 +122,8 @@ public enum ErrorCode {
     FEATURE_NOT_FOUND("7004", "Không tìm thấy tính năng", HttpStatus.NOT_FOUND),
     VEHICLE_VARIANT_SKU_ALREADY_EXISTS("7005", "Phiên bản xe với mã SKU này đã tồn tại", HttpStatus.CONFLICT),
     VARIANT_FEATURE_NOT_FOUND("7006", "Không tìm thấy tính năng của phiên bản xe", HttpStatus.NOT_FOUND),
+    FEATURE_ALREADY_EXISTS("7007", "Tính năng với tên này đã tồn tại", HttpStatus.CONFLICT),
+    FEATURE_IS_ASSIGNED("7008", "Không thể xóa. Tính năng đang được gán cho phiên bản", HttpStatus.BAD_REQUEST),
 
     // ===== 8xxx - Lỗi kho hàng =====
     INVENTORY_NOT_FOUND("8001", "Không tìm thấy dữ liệu tồn kho cho phiên bản này", HttpStatus.NOT_FOUND),

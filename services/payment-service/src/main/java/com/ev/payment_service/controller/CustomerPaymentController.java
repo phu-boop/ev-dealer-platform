@@ -7,6 +7,9 @@ import com.ev.payment_service.service.Interface.ICustomerPaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -65,10 +68,12 @@ public class CustomerPaymentController {
     @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER')")
     public ResponseEntity<TransactionResponse> confirmManualPayment(
             @PathVariable UUID transactionId,
-            @AuthenticationPrincipal UserPrincipal principal) { // << ĐỔI sang UserPrincipal
+            @RequestBody(required = false) java.util.Map<String, String> request,
+            @AuthenticationPrincipal UserPrincipal principal) {
 
+        String notes = request != null ? request.get("notes") : null;
         TransactionResponse response = customerPaymentService.confirmManualPayment(
-                transactionId, principal.getEmail(), principal.getProfileId()
+                transactionId, principal.getEmail(), principal.getProfileId(), notes
         );
         return ResponseEntity.ok(response);
     }
@@ -96,6 +101,25 @@ public class CustomerPaymentController {
 
         BigDecimal totalDebt = customerPaymentService.getCustomerTotalDebt(customerId);
         return ResponseEntity.ok(totalDebt);
+    }
+
+    /**
+     * API 4: Lấy danh sách thanh toán tiền mặt chờ duyệt (B2C orders) - Dealer Manager
+     */
+    @GetMapping("/pending-cash-payments-b2c")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_MANAGER')")
+    public ResponseEntity<Page<TransactionResponse>> getPendingCashPaymentsB2C(
+            @PageableDefault(size = 10, sort = "transactionDate") Pageable pageable,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        
+        log.info("[CustomerPaymentController] GET /pending-cash-payments-b2c");
+        log.info("[CustomerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}", 
+                principal != null ? principal.getEmail() : "null", 
+                principal != null ? principal.getRole() : "null",
+                principal != null ? principal.getProfileId() : "null");
+        
+        Page<TransactionResponse> response = customerPaymentService.getPendingCashPaymentsB2C(pageable);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/debug-me")

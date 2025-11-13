@@ -5,8 +5,7 @@ public enum QuotationStatus {
     PENDING,    // Đã gửi cho quản lý duyệt
     APPROVED,   // Quản lý đã duyệt
     ACCEPTED,   // Đã chấp nhận (tương đương APPROVED, giữ lại để tương thích với dữ liệu cũ)
+    COMPLETE,   // Đã hoàn thành (tương đương ACCEPTED, giữ lại để tương thích với dữ liệu cũ)
     REJECTED,   // Quản lý đã từ chối
     EXPIRED,     // Hết hạn
-    SENT,
-    COMPLETE
 }

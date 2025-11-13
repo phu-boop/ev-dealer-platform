@@ -853,17 +853,13 @@ public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
         
         SalesOrder order = findOrderByIdOrThrow(orderId);
         
-        // Validate order type phải là B2B
-        if (order.getTypeOder() != SaleOderType.B2B) {
-            log.error("Order {} is not B2B type, cannot update payment status", orderId);
-            throw new AppException(ErrorCode.BAD_REQUEST);
-        }
-        
-        // Update payment status
+        // Update payment status for both B2B and B2C orders
+        // (Previously only B2B was supported, now supports both)
         order.setPaymentStatus(paymentStatus);
         salesOrderRepositoryB2B.save(order);
         
-        log.info("Payment status updated successfully for order {} to {}", orderId, paymentStatus);
+        log.info("Payment status updated successfully for order {} (Type: {}) to {}", 
+                orderId, order.getTypeOder(), paymentStatus);
     }
 
 }

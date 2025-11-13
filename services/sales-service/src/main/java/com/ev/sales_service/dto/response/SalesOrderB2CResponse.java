@@ -1,6 +1,7 @@
 package com.ev.sales_service.dto.response;
 
 import com.ev.sales_service.enums.OrderStatusB2C;
+import com.ev.sales_service.enums.PaymentStatus;
 import com.ev.sales_service.enums.SaleOderType;
 import lombok.Data;
 
@@ -24,6 +25,7 @@ public class SalesOrderB2CResponse {
     private UUID approvedBy;
     private SaleOderType typeOder;
     private LocalDateTime approvalDate;
+    private PaymentStatus paymentStatus; // Trạng thái thanh toán
 
     // Additional details
     private QuotationResponse quotation;
