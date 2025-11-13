@@ -184,6 +184,11 @@ export const dealerManagerMenuItems = [
         label: "Thanh Toán & Trả Góp",
         path: "/dealer/manager/payments/methods",
       },
+      {
+        icon: FiDollarSign,
+        label: "Yêu Cầu Thanh Toán Tiền Mặt (B2C)",
+        path: "/dealer/manager/payments/b2c-cash-payments",
+      },
     ],
   },
 
@@ -351,17 +356,26 @@ export const dealerStaffMenuItems = [
     ],
   },
 
+  // Quản lý thanh toán
+  {
+    icon: FiDollarSign,
+    label: "Quản Lý Thanh Toán",
+    path: "/dealer/staff/payments",
+    submenu: [
+      {
+        icon: FiShoppingCart,
+        label: "Danh Sách Đơn Hàng B2C",
+        path: "/dealer/staff/payments/b2c-orders",
+      },
+    ],
+  },
+
   // Tài chính & báo cáo
   {
     icon: FiCreditCard,
     label: "Tài Chính & Báo Cáo",
     path: "/dealer/staff/finance",
     submenu: [
-      {
-        icon: FiCreditCard,
-        label: "Thanh Toán",
-        path: "/dealer/staff/payments",
-      },
       {
         icon: FiBarChart2,
         label: "Doanh Số Cá Nhân",

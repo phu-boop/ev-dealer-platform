@@ -81,7 +81,7 @@ const PaymentForm = ({ paymentMethods, onSubmit, loading }) => {
           error={errors.amount}
           placeholder="Nhập số tiền thanh toán"
           min="1"
-          step="1000"
+          step="0.01"
           required
         />
         {formData.amount && (

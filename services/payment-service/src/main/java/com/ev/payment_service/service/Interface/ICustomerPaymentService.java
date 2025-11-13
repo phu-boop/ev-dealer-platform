@@ -3,6 +3,8 @@ package com.ev.payment_service.service.Interface;
 import com.ev.payment_service.dto.request.InitiatePaymentRequest;
 import com.ev.payment_service.dto.response.InitiatePaymentResponse;
 import com.ev.payment_service.dto.response.TransactionResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,7 +14,7 @@ public interface ICustomerPaymentService {
 
     InitiatePaymentResponse initiatePayment(UUID orderId, InitiatePaymentRequest request, String userEmail, UUID userProfileId);
 
-    TransactionResponse confirmManualPayment(UUID transactionId, String userEmail, UUID userProfileId);
+    TransactionResponse confirmManualPayment(UUID transactionId, String userEmail, UUID userProfileId, String notes);
 
     List<TransactionResponse> getPaymentHistory(UUID orderId);
 
@@ -22,4 +24,9 @@ public interface ICustomerPaymentService {
      * @return Tổng công nợ (remainingAmount từ tất cả PaymentRecord của khách hàng)
      */
     BigDecimal getCustomerTotalDebt(Long customerId);
+
+    /**
+     * Lấy danh sách thanh toán tiền mặt chờ duyệt (B2C orders) - Dealer Manager
+     */
+    Page<TransactionResponse> getPendingCashPaymentsB2C(Pageable pageable);
 }

@@ -12,4 +12,5 @@ public class TransactionResponse {
     private LocalDateTime transactionDate;
     private String status;
     private String notes;
+    private UUID orderId; // Order ID từ PaymentRecord (để hiển thị thông tin đơn hàng)
 }

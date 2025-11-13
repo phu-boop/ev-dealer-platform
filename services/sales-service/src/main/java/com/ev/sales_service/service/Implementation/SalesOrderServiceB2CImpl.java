@@ -36,8 +36,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
-        // Validate quotation status
-        if (quotation.getStatus() != QuotationStatus.ACCEPTED) {
+        // Validate quotation status (ACCEPTED or COMPLETE are both valid)
+        if (quotation.getStatus() != QuotationStatus.ACCEPTED && quotation.getStatus() != QuotationStatus.COMPLETE) {
             throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
         }
 
@@ -196,6 +196,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         response.setApprovedBy(salesOrder.getApprovedBy());
         response.setTypeOder(salesOrder.getTypeOder());
         response.setApprovalDate(salesOrder.getApprovalDate());
+        response.setPaymentStatus(salesOrder.getPaymentStatus()); // Payment status
 
         // Map Quotation
         if (salesOrder.getQuotation() != null) {

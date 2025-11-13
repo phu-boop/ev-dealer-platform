@@ -367,6 +367,10 @@ import DealerInvoiceManagement from "../features/payments/pages/DealerInvoiceMan
 import DealerInvoicesPage from "../features/payments/pages/DealerInvoicesPage.jsx";
 import DealerPaymentPage from "../features/payments/pages/DealerPaymentPage.jsx";
 import PayInvoicePage from "../features/payments/pages/PayInvoicePage.jsx";
+import B2COrdersListPage from "../features/payments/pages/B2COrdersListPage.jsx";
+import B2COrderDetailPage from "../features/payments/pages/B2COrderDetailPage.jsx";
+import PayB2COrderPage from "../features/payments/pages/PayB2COrderPage.jsx";
+import B2CCashPaymentsManagementPage from "../features/payments/pages/B2CCashPaymentsManagementPage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
 
 export default function AppRoutes() {
@@ -670,6 +674,14 @@ export default function AppRoutes() {
                 element={<DealerPaymentPage />}
               />
               <Route
+                path="manager/payments/b2c-cash-payments"
+                element={<B2CCashPaymentsManagementPage />}
+              />
+              <Route
+                path="manager/payments/b2c-orders/:orderId"
+                element={<B2COrderDetailPage />}
+              />
+              <Route
                 path="manager/payments/orders/:orderId"
                 element={<CustomerPaymentPage />}
               />
@@ -754,6 +766,18 @@ export default function AppRoutes() {
               <Route path="staff/*" element={<SalesRoutes />} />
 
               {/* Payment Management (Dealer Staff) */}
+              <Route
+                path="staff/payments/b2c-orders"
+                element={<B2COrdersListPage />}
+              />
+              <Route
+                path="staff/payments/b2c-orders/:orderId"
+                element={<B2COrderDetailPage />}
+              />
+              <Route
+                path="staff/payments/b2c-orders/:orderId/pay"
+                element={<PayB2COrderPage />}
+              />
               <Route
                 path="staff/payments/orders/:orderId"
                 element={<CustomerPaymentPage />}

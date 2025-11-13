@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface TransactionMapper {
 
     @Mapping(source = "paymentMethod.methodName", target = "paymentMethodName")
+    @Mapping(source = "paymentRecord.orderId", target = "orderId")
     TransactionResponse toResponse(Transaction transaction);
 }
