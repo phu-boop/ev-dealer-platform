@@ -184,28 +184,6 @@ Tạo file `.env` cho frontend và `application.properties` cho backend với c�
 
 ---
 
-## 🎮 Sử dụng
-
-### Chạy Frontend
-
-```bash
-cd frontend/my-app/
-npm run dev
-```
-
-Frontend sẽ chạy tại: `http://localhost:3000`
-
-### Chạy Backend Gateway
-
-```bash
-cd gateway/
-mvn spring-boot:run
-```
-
-API Gateway sẽ chạy tại: `http://localhost:8080`
-
----
-
 ## 📱 Screenshots
 
 _Coming soon..._
