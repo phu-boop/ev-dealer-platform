@@ -197,30 +197,7 @@ public class DataInitializer implements ApplicationRunner {
             staffDealer.setStatus(UserStatus.ACTIVE);
             userRepository.save(staffDealer);
             dealerStaffProfileService.SaveDealerStaffProfile(staffDealer,UUID.randomUUID(),null,null,null,null,null);
-// ========== DEALER_STAFF ==========
-            Role dealerStaffRole1 = roleRepository.findByName(RoleName.DEALER_STAFF.getRoleName())
-                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
-            roles.clear();
-            roles.add(dealerStaffRole1);
-            User staffDealer1 = new User();
-            staffDealer1.setEmail("StafffDealer1@gmail.com");
-            staffDealer1.setPassword(passwordEncoder.encode("123123123"));
-            staffDealer1.setRoles(new HashSet<>(roles));
-            staffDealer1.setStatus(UserStatus.ACTIVE);
-            userRepository.save(staffDealer1);
-            dealerStaffProfileService.SaveDealerStaffProfile(staffDealer1,UUID.randomUUID(),null,null,null,null,null);
-// ========== DEALER_STAFF ==========
-            Role dealerStaffRole2 = roleRepository.findByName(RoleName.DEALER_STAFF.getRoleName())
-                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
-            roles.clear();
-            roles.add(dealerStaffRole2);
-            User staffDealer2 = new User();
-            staffDealer2.setEmail("StafffDealer2@gmail.com");
-            staffDealer2.setPassword(passwordEncoder.encode("123123123"));
-            staffDealer2.setRoles(new HashSet<>(roles));
-            staffDealer2.setStatus(UserStatus.ACTIVE);
-            userRepository.save(staffDealer2);
-            dealerStaffProfileService.SaveDealerStaffProfile(staffDealer2,UUID.randomUUID(),null,null,null,null,null);
+
 // ========== EVM_STAFF ==========
             Role evmStaffRole = roleRepository.findByName(RoleName.EVM_STAFF.getRoleName())
                     .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));

@@ -14,6 +14,7 @@ import com.ev.common_lib.event.StockAlertEvent;
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
+import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.PhysicalVehicle;
 import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
 // import com.ev.inventory_service.dto.response.DealerInventoryDto;
@@ -21,9 +22,7 @@ import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
 // Sự kiện Kafka
 import com.ev.common_lib.event.DealerStockUpdatedEvent;
 
-
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
-import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.CentralInventory;
 import com.ev.inventory_service.model.DealerAllocation;
 import com.ev.inventory_service.model.InventoryTransaction;
@@ -71,7 +70,7 @@ import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
-import java.sql.Timestamp; 
+import java.sql.Timestamp;
 import java.time.Instant;
 // import java.lang.RuntimeException;
 //PDF Lib
@@ -135,19 +134,19 @@ public class InventoryServiceImpl implements InventoryService {
         // Nếu không có bản ghi tồn kho nào, trả về DTO rỗng
         if (central == null) {
             return InventoryStatusDto.builder()
-                .variantId(variantId)
-                .totalQuantity(0)
-                .allocatedQuantity(0)
-                .availableQuantity(0)
-                .reorderLevel(0)
-                .status(InventoryLevelStatus.OUT_OF_STOCK)
-                .build();
+                    .variantId(variantId)
+                    .totalQuantity(0)
+                    .allocatedQuantity(0)
+                    .availableQuantity(0)
+                    .reorderLevel(0)
+                    .status(InventoryLevelStatus.OUT_OF_STOCK)
+                    .build();
         }
 
         // Tính toán trạng thái chỉ dựa trên kho trung tâm
         int available = central.getAvailableQuantity();
         int reorder = central.getReorderLevel() != null ? central.getReorderLevel() : 0;
-        
+
         InventoryLevelStatus currentStatus;
         if (available <= 0) {
             currentStatus = InventoryLevelStatus.OUT_OF_STOCK;
@@ -190,15 +189,15 @@ public class InventoryServiceImpl implements InventoryService {
         // --- LOGIC TÌM KIẾM THEO TÊN XE ---
         if (search != null && !search.isBlank()) {
             // Gọi API của vehicle-catalog-service để lấy danh sách variantId
-            String searchUrl = vehicleCatalogUrl + "/vehicle-catalog/variants/search?keyword=" + search; // Cổng của vehicle-catalog-service
+            String searchUrl = vehicleCatalogUrl + "/vehicle-catalog/variants/search?keyword=" + search; // Cổng của
+                                                                                                         // vehicle-catalog-service
 
             ResponseEntity<ApiRespond<List<Long>>> response = restTemplate.exchange(
                     searchUrl,
                     HttpMethod.GET,
                     null,
                     new ParameterizedTypeReference<ApiRespond<List<Long>>>() {
-                    }
-            );
+                    });
 
             List<Long> variantIds = response.getBody().getData();
 
@@ -237,20 +236,20 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public void executeTransaction(TransactionRequestDto request, String staffEmail, String role, String profileId) {
-        
+
         // Chỉ xử lý RESTOCK ở đây
         if (request.getTransactionType() != TransactionType.RESTOCK) {
             throw new IllegalArgumentException("Invalid transaction type for this endpoint.");
         }
-        
+
         // Kiểm tra quyền
         if (!role.equals("EVM_STAFF") && !role.equals("ADMIN")) {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
-        
+
         // Xử lý logic nhập kho bằng VIN
-        handleRestock(request); 
-        
+        handleRestock(request);
+
         // Ghi log giao dịch
         InventoryTransaction transaction = new InventoryTransaction();
         transaction.setVariantId(request.getVariantId());
@@ -259,7 +258,7 @@ public class InventoryServiceImpl implements InventoryService {
         transaction.setStaffId(staffEmail);
         transaction.setNotes(request.getNotes());
         InventoryTransaction savedTransaction = transactionRepo.save(transaction);
-        
+
         // Gửi sự kiện Kafka
         try {
             kafkaTemplate.send("inventory_events", savedTransaction);
@@ -292,12 +291,14 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public void generateInventoryReport(OutputStream outputStream, LocalDate startDate, LocalDate endDate) throws IOException {
+    public void generateInventoryReport(OutputStream outputStream, LocalDate startDate, LocalDate endDate)
+            throws IOException {
 
         // 1. Lấy tất cả các giao dịch trong khoảng thời gian đã chọn
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
-        List<InventoryTransaction> transactions = transactionRepo.findAllByTransactionDateBetween(startDateTime, endDateTime);
+        List<InventoryTransaction> transactions = transactionRepo.findAllByTransactionDateBetween(startDateTime,
+                endDateTime);
 
         // 2. Dùng Apache POI để tạo file Excel từ danh sách giao dịch
         try (Workbook workbook = new XSSFWorkbook()) {
@@ -306,8 +307,8 @@ public class InventoryServiceImpl implements InventoryService {
             // --- Tạo Header ---
             Row headerRow = sheet.createRow(0);
             CellStyle headerStyle = createHeaderStyle(workbook);
-            String[] columns = {"ID Giao Dịch", "Ngày", "Loại Giao Dịch", "ID Sản Phẩm", "Số Lượng", "Từ Kho",
-                    "Đến Kho", "Nhân Viên", "Ghi Chú"};
+            String[] columns = { "ID Giao Dịch", "Ngày", "Loại Giao Dịch", "ID Sản Phẩm", "Số Lượng", "Từ Kho",
+                    "Đến Kho", "Nhân Viên", "Ghi Chú" };
             for (int i = 0; i < columns.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(columns[i]);
@@ -323,8 +324,10 @@ public class InventoryServiceImpl implements InventoryService {
                 row.createCell(2).setCellValue(tx.getTransactionType().name());
                 row.createCell(3).setCellValue(tx.getVariantId());
                 row.createCell(4).setCellValue(tx.getQuantity());
-                row.createCell(5).setCellValue(tx.getFromDealerId() != null ? "Đại lý " + tx.getFromDealerId() : "Kho Trung Tâm");
-                row.createCell(6).setCellValue(tx.getToDealerId() != null ? "Đại lý " + tx.getToDealerId() : "Kho Trung Tâm");
+                row.createCell(5).setCellValue(
+                        tx.getFromDealerId() != null ? "Đại lý " + tx.getFromDealerId() : "Kho Trung Tâm");
+                row.createCell(6)
+                        .setCellValue(tx.getToDealerId() != null ? "Đại lý " + tx.getToDealerId() : "Kho Trung Tâm");
                 row.createCell(7).setCellValue(tx.getStaffId());
                 row.createCell(8).setCellValue(tx.getNotes());
             }
@@ -339,11 +342,13 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public void generatePdfReport(OutputStream outputStream, LocalDate startDate, LocalDate endDate) throws IOException {
+    public void generatePdfReport(OutputStream outputStream, LocalDate startDate, LocalDate endDate)
+            throws IOException {
         // Lấy dữ liệu giao dịch
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
-        List<InventoryTransaction> transactions = transactionRepo.findAllByTransactionDateBetween(startDateTime, endDateTime);
+        List<InventoryTransaction> transactions = transactionRepo.findAllByTransactionDateBetween(startDateTime,
+                endDateTime);
 
         // Dùng iText để tạo file PDF
         PdfWriter writer = new PdfWriter(outputStream);
@@ -377,11 +382,11 @@ public class InventoryServiceImpl implements InventoryService {
                 try {
                     // Tạo đối tượng Image của iText từ byte[]
                     Image chartImage = new Image(ImageDataFactory.create(chartImageBytes));
-                    
+
                     // Căn giữa biểu đồ và set chiều rộng
                     chartImage.setWidth(UnitValue.createPercentValue(80)); // Rộng 80% trang
                     chartImage.setHorizontalAlignment(com.itextpdf.layout.properties.HorizontalAlignment.CENTER);
-    
+
                     document.add(chartImage); // Thêm biểu đồ vào tài liệu
                     document.add(new Paragraph(" ")); // Thêm khoảng trắng
                 } catch (Exception e) {
@@ -391,15 +396,15 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         // --- Tạo Bảng ---
-        float[] columnWidths = {1, 3, 2, 2, 1, 3, 3, 2, 4};
+        float[] columnWidths = { 1, 3, 2, 2, 1, 3, 3, 2, 4 };
         Table table = new Table(UnitValue.createPercentArray(columnWidths));
         table.setWidth(UnitValue.createPercentValue(100));
         table.setFontSize(9);
 
         // --- Thêm Header cho Bảng ---
-        String[] headers = {"ID", "Ngày", "Loại GD", "Variant ID", "SL", "Từ Kho", "Đến Kho", "Nhân Viên", "Ghi Chú"};
+        String[] headers = { "ID", "Ngày", "Loại GD", "Variant ID", "SL", "Từ Kho", "Đến Kho", "Nhân Viên", "Ghi Chú" };
         for (String header : headers) {
-            
+
             table.addHeaderCell(new Paragraph(header).setBold().setFontSize(13));
         }
 
@@ -445,7 +450,6 @@ public class InventoryServiceImpl implements InventoryService {
         CentralInventory inventory = centralRepo.findByVariantId(request.getVariantId())
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
-        
         // saveCentralInventoryHistory(inventory, EVMAction.UPDATE, updatedByEmail);
 
         inventory.setReorderLevel(request.getReorderLevel());
@@ -461,8 +465,7 @@ public class InventoryServiceImpl implements InventoryService {
         Pageable sortedPageable = PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
-                Sort.by("transactionDate").descending()
-        );
+                Sort.by("transactionDate").descending());
 
         // Nếu người dùng cung cấp cả ngày bắt đầu và kết thúc
         if (startDate != null && endDate != null) {
@@ -480,7 +483,7 @@ public class InventoryServiceImpl implements InventoryService {
     public void allocateStockForOrder(AllocationRequestDto request, String staffEmail) {
         for (AllocationRequestDto.AllocationItem item : request.getItems()) {
             CentralInventory central = centralRepo.findByVariantId(item.getVariantId())
-                .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+                    .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
             if (central.getAvailableQuantity() < item.getQuantity()) {
                 throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
@@ -489,7 +492,7 @@ public class InventoryServiceImpl implements InventoryService {
             central.setAvailableQuantity(central.getAvailableQuantity() - item.getQuantity());
             central.setAllocatedQuantity(central.getAllocatedQuantity() + item.getQuantity());
             centralRepo.save(central);
-            
+
             // Ghi log giao dịch "ALLOCATE"
             InventoryTransaction tx = new InventoryTransaction();
             tx.setTransactionType(TransactionType.ALLOCATE);
@@ -514,8 +517,8 @@ public class InventoryServiceImpl implements InventoryService {
 
             // Cập nhật bảng SKU (kho trung tâm)
             CentralInventory central = centralRepo.findByVariantId(variantId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
-            
+                    .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+
             if (central.getAllocatedQuantity() < quantity) {
                 System.err.println("Lỗi phân bổ: Không đủ hàng đã giữ.");
                 throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
@@ -528,34 +531,34 @@ public class InventoryServiceImpl implements InventoryService {
 
             // Cập nhật bảng SKU (kho đại lý)
             DealerAllocation allocation = dealerRepo.findByVariantIdAndDealerId(variantId, dealerId)
-                .orElseGet(() -> {
-                    DealerAllocation newAlloc = new DealerAllocation();
-                    newAlloc.setVariantId(variantId);
-                    newAlloc.setDealerId(dealerId);
-                    newAlloc.setAllocatedQuantity(0);
-                    newAlloc.setAvailableQuantity(0);
-                    return newAlloc; // 
-                });
-            
-            allocation.setAvailableQuantity(allocation.getAvailableQuantity() + quantity); 
+                    .orElseGet(() -> {
+                        DealerAllocation newAlloc = new DealerAllocation();
+                        newAlloc.setVariantId(variantId);
+                        newAlloc.setDealerId(dealerId);
+                        newAlloc.setAllocatedQuantity(0);
+                        newAlloc.setAvailableQuantity(0);
+                        return newAlloc; //
+                    });
+
+            allocation.setAvailableQuantity(allocation.getAvailableQuantity() + quantity);
             DealerAllocation savedAllocation = dealerRepo.save(allocation);
 
             try {
                 DealerStockUpdatedEvent event = DealerStockUpdatedEvent.builder()
-                    // Lấy từ dữ liệu "làm giàu" (Bước 2)
-                    .variantId(item.getVariantId())
-                    .variantName(item.getVariantName()) 
-                    .modelId(item.getModelId())         
-                    .modelName(item.getModelName())   
-                    
-                    // Lấy từ dữ liệu vừa save
-                    .dealerId(savedAllocation.getDealerId())
-                    .newAvailableQuantity(savedAllocation.getAvailableQuantity())
-                    .newAllocatedQuantity(savedAllocation.getAllocatedQuantity())
-                    
-                    // Thêm thời gian
-                    .lastUpdatedAt(Timestamp.from(Instant.now())) 
-                    .build();
+                        // Lấy từ dữ liệu "làm giàu" (Bước 2)
+                        .variantId(item.getVariantId())
+                        .variantName(item.getVariantName())
+                        .modelId(item.getModelId())
+                        .modelName(item.getModelName())
+
+                        // Lấy từ dữ liệu vừa save
+                        .dealerId(savedAllocation.getDealerId())
+                        .newAvailableQuantity(savedAllocation.getAvailableQuantity())
+                        .newAllocatedQuantity(savedAllocation.getAllocatedQuantity())
+
+                        // Thêm thời gian
+                        .lastUpdatedAt(Timestamp.from(Instant.now()))
+                        .build();
 
                 // Gửi sự kiện lên Topic
                 kafkaTemplate.send(TOPIC_DEALER_STOCK_UPDATED, event);
@@ -592,7 +595,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     /**
-     * Lấy trạng thái tồn kho cho NHIỀU variant 
+     * Lấy trạng thái tồn kho cho NHIỀU variant
      */
     @Override
     @Transactional(readOnly = true)
@@ -609,14 +612,14 @@ public class InventoryServiceImpl implements InventoryService {
 
         // Map kết quả (Dùng stream() của variantIds gốc để đảm bảo trả về đủ)
         return variantIds.stream()
-            .map(id -> {
-                // Lấy thông tin từ Map đã tra cứu
-                CentralInventory inventory = inventoryMap.get(id);
-                
-                // Gọi hàm helper đã sửa (chỉ 2 tham số)
-                return mapToInventoryStatusDto(inventory, id);
-            })
-            .collect(Collectors.toList());
+                .map(id -> {
+                    // Lấy thông tin từ Map đã tra cứu
+                    CentralInventory inventory = inventoryMap.get(id);
+
+                    // Gọi hàm helper đã sửa (chỉ 2 tham số)
+                    return mapToInventoryStatusDto(inventory, id);
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -629,53 +632,54 @@ public class InventoryServiceImpl implements InventoryService {
         Map<Long, CentralInventory> centralMap = centralRepo.findByVariantIdIn(variantIds).stream()
                 .collect(Collectors.toMap(CentralInventory::getVariantId, inv -> inv));
 
-        // (Bạn cần thêm phương thức findByVariantIdInAndDealerId vào DealerAllocationRepository)
+        // (Bạn cần thêm phương thức findByVariantIdInAndDealerId vào
+        // DealerAllocationRepository)
         Map<Long, DealerAllocation> dealerMap = dealerRepo.findByVariantIdInAndDealerId(variantIds, dealerId).stream()
                 .collect(Collectors.toMap(DealerAllocation::getVariantId, alloc -> alloc));
 
         return variantIds.stream()
-            .map(id -> {
-                CentralInventory central = centralMap.get(id);
-                DealerAllocation dealer = dealerMap.get(id);
+                .map(id -> {
+                    CentralInventory central = centralMap.get(id);
+                    DealerAllocation dealer = dealerMap.get(id);
 
-                InventoryComparisonDto dto = new InventoryComparisonDto();
-                dto.setVariantId(id);
+                    InventoryComparisonDto dto = new InventoryComparisonDto();
+                    dto.setVariantId(id);
 
-                // Lấy tồn kho trung tâm
-                int centralStock = (central != null) ? central.getAvailableQuantity() : 0;
-                dto.setCentralStockAvailable(centralStock);
+                    // Lấy tồn kho trung tâm
+                    int centralStock = (central != null) ? central.getAvailableQuantity() : 0;
+                    dto.setCentralStockAvailable(centralStock);
 
-                // Lấy tồn kho đại lý
-                int dealerStock = (dealer != null) ? dealer.getAvailableQuantity() : 0;
-                dto.setDealerStockAvailable(dealerStock);
+                    // Lấy tồn kho đại lý
+                    int dealerStock = (dealer != null) ? dealer.getAvailableQuantity() : 0;
+                    dto.setDealerStockAvailable(dealerStock);
 
-                // Xác định trạng thái chung (ưu tiên tồn kho đại lý, sau đó đến kho hãng)
-                if (dealerStock > 0) {
-                    dto.setStatus(InventoryLevelStatus.IN_STOCK);
-                } else if (centralStock > 0) {
-                    dto.setStatus(InventoryLevelStatus.IN_STOCK);
-                } else {
-                    dto.setStatus(InventoryLevelStatus.OUT_OF_STOCK);
-                }
+                    // Xác định trạng thái chung (ưu tiên tồn kho đại lý, sau đó đến kho hãng)
+                    if (dealerStock > 0) {
+                        dto.setStatus(InventoryLevelStatus.IN_STOCK);
+                    } else if (centralStock > 0) {
+                        dto.setStatus(InventoryLevelStatus.IN_STOCK);
+                    } else {
+                        dto.setStatus(InventoryLevelStatus.OUT_OF_STOCK);
+                    }
 
-                return dto;
-            })
-            .collect(Collectors.toList());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true) // Quan trọng: Đây là thao tác chỉ đọc
     public VinValidationResultDto validateVinsForShipment(List<String> vins) {
-        
+
         List<String> validVinsList = new ArrayList<>();
         Map<String, String> invalidVinsMap = new java.util.HashMap<>();
 
         // Tìm tất cả VINs trong DB (chỉ 1 query)
         List<PhysicalVehicle> foundVehicles = physicalVehicleRepo.findAllById(vins);
-        
+
         // Chuyển sang Map để tra cứu nhanh
         Map<String, PhysicalVehicle> vehicleMap = foundVehicles.stream()
-            .collect(Collectors.toMap(PhysicalVehicle::getVin, v -> v));
+                .collect(Collectors.toMap(PhysicalVehicle::getVin, v -> v));
 
         // Lặp qua danh sách VINs mà user nhập để kiểm tra
         for (String vin : vins) {
@@ -684,11 +688,11 @@ public class InventoryServiceImpl implements InventoryService {
                 invalidVinsMap.put(vin, "Không tìm thấy VIN trong kho.");
             } else {
                 PhysicalVehicle vehicle = vehicleMap.get(vin);
-                
+
                 // VIN có trạng thái không phù hợp
                 if (vehicle.getStatus() != VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE) {
-                    invalidVinsMap.put(vin, "Xe không ở kho trung tâm (Trạng thái: " + 
-                                       getVehicleStatusMessage(vehicle.getStatus()) + ").");
+                    invalidVinsMap.put(vin, "Xe không ở kho trung tâm (Trạng thái: " +
+                            getVehicleStatusMessage(vehicle.getStatus()) + ").");
                 } else {
                     // Hợp lệ!
                     validVinsList.add(vin);
@@ -697,9 +701,9 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         return VinValidationResultDto.builder()
-            .invalidVins(invalidVinsMap)
-            .validVins(validVinsList)
-            .build();
+                .invalidVins(invalidVinsMap)
+                .validVins(validVinsList)
+                .build();
     }
 
     @Override
@@ -718,32 +722,35 @@ public class InventoryServiceImpl implements InventoryService {
 
         // Lấy TẤT CẢ bản ghi kho (Dữ liệu "Phụ")
         Map<Long, CentralInventory> stockMap = centralRepo.findAll().stream()
-            .collect(Collectors.toMap(CentralInventory::getVariantId, stock -> stock));
+                .collect(Collectors.toMap(CentralInventory::getVariantId, stock -> stock));
 
         // Lọc danh sách "Chủ" dựa trên dữ liệu "Phụ"
         return allVariantIds.stream()
-            .filter(variantId -> {
-                CentralInventory stock = stockMap.get(variantId);
-                
-                InventoryLevelStatus currentStatus;
+                .filter(variantId -> {
+                    CentralInventory stock = stockMap.get(variantId);
 
-                if (stock == null) {
-                    // Nếu xe không có trong kho, nó là OUT_OF_STOCK
-                    currentStatus = InventoryLevelStatus.OUT_OF_STOCK;
-                } else {
-                    // Nếu có trong kho, tính toán trạng thái
-                    int available = stock.getAvailableQuantity();
-                    int reorder = (stock.getReorderLevel() != null) ? stock.getReorderLevel() : 0;
-                    
-                    if (available <= 0) currentStatus = InventoryLevelStatus.OUT_OF_STOCK;
-                    else if (available <= reorder) currentStatus = InventoryLevelStatus.LOW_STOCK;
-                    else currentStatus = InventoryLevelStatus.IN_STOCK;
-                }
-                
-                // Trả về true nếu trạng thái tính toán khớp với trạng thái đang lọc
-                return currentStatus == statusEnum;
-            })
-            .collect(Collectors.toList());
+                    InventoryLevelStatus currentStatus;
+
+                    if (stock == null) {
+                        // Nếu xe không có trong kho, nó là OUT_OF_STOCK
+                        currentStatus = InventoryLevelStatus.OUT_OF_STOCK;
+                    } else {
+                        // Nếu có trong kho, tính toán trạng thái
+                        int available = stock.getAvailableQuantity();
+                        int reorder = (stock.getReorderLevel() != null) ? stock.getReorderLevel() : 0;
+
+                        if (available <= 0)
+                            currentStatus = InventoryLevelStatus.OUT_OF_STOCK;
+                        else if (available <= reorder)
+                            currentStatus = InventoryLevelStatus.LOW_STOCK;
+                        else
+                            currentStatus = InventoryLevelStatus.IN_STOCK;
+                    }
+
+                    // Trả về true nếu trạng thái tính toán khớp với trạng thái đang lọc
+                    return currentStatus == statusEnum;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -752,24 +759,23 @@ public class InventoryServiceImpl implements InventoryService {
         // Tìm tất cả xe có variantId này
         // VÀ đang ở trạng thái sẵn sàng tại kho trung tâm
         List<PhysicalVehicle> vehicles = physicalVehicleRepo.findByVariantIdAndStatus(
-            variantId, 
-            VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE
-        );
+                variantId,
+                VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE);
 
         // Trả về danh sách VINs
         return vehicles.stream()
-            .map(PhysicalVehicle::getVin)
-            .collect(Collectors.toList());
+                .map(PhysicalVehicle::getVin)
+                .collect(Collectors.toList());
     }
 
     // ==========================================================
     // ===== LOGIC NGHIỆP VỤ MỚI CHO VIỆC TRẢ HÀNG =====
     // ==========================================================
-    
+
     @Override
     @Transactional
     public void returnStockForOrder(UUID orderId, String staffEmail) {
-        
+
         // Tìm tất cả các xe (vehicle) đã bị gán cho đơn hàng này
         // (Đây là các xe đã bị giao hoặc đang vận chuyển)
         List<PhysicalVehicle> vehiclesToReturn = physicalVehicleRepo.findAllByOrderId(orderId);
@@ -784,7 +790,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         // Phân nhóm các xe theo VariantId (ví dụ: 2 xe Variant 1, 1 xe Variant 2)
         Map<Long, Long> variantCounts = vehiclesToReturn.stream()
-            .collect(Collectors.groupingBy(PhysicalVehicle::getVariantId, Collectors.counting()));
+                .collect(Collectors.groupingBy(PhysicalVehicle::getVariantId, Collectors.counting()));
 
         // Lặp qua từng nhóm xe để trả về kho
         for (Map.Entry<Long, Long> entry : variantCounts.entrySet()) {
@@ -793,25 +799,25 @@ public class InventoryServiceImpl implements InventoryService {
 
             // Tìm kho trung tâm của variant này
             CentralInventory stock = centralRepo.findByVariantId(variantId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+                    .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
             // Cập nhật số lượng kho (Logic ngược của allocate + ship)
             // (shipAllocatedStock đã trừ total-- và allocated--)
             // (allocateStockForOrder đã trừ available-- và cộng allocated++)
             // -> Trả hàng (ngược lại của cả 2) sẽ là: total++ và available++
-            
+
             stock.setTotalQuantity(stock.getTotalQuantity() + quantityToReturn);
-            stock.setAvailableQuantity(stock.getAvailableQuantity() + quantityToReturn); 
+            stock.setAvailableQuantity(stock.getAvailableQuantity() + quantityToReturn);
 
             centralRepo.save(stock);
 
             checkStockThresholdAndNotify(variantId);
-            
+
             // Ghi lại giao dịch (Transaction)
             InventoryTransaction transaction = new InventoryTransaction();
             transaction.setVariantId(variantId);
             transaction.setQuantity(quantityToReturn);
-            transaction.setTransactionType(TransactionType.RETURN_FROM_DEALER); 
+            transaction.setTransactionType(TransactionType.RETURN_FROM_DEALER);
             transaction.setNotes("Trả hàng khiếu nại từ Order ID: " + orderId);
             transaction.setStaffId(staffEmail);
             transaction.setReferenceId(orderId.toString());
@@ -819,7 +825,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         // Cập nhật lại trạng thái của từng xe
-        for (PhysicalVehicle vehicle : vehiclesToReturn) { 
+        for (PhysicalVehicle vehicle : vehiclesToReturn) {
             vehicle.setStatus(VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE);
             vehicle.setLocationId(null);
             vehicle.setOrderId(null);
@@ -827,13 +833,13 @@ public class InventoryServiceImpl implements InventoryService {
         physicalVehicleRepo.saveAll(vehiclesToReturn);
     }
 
-    //--Helper methods--
+    // --Helper methods--
     private void handleRestock(TransactionRequestDto request) {
-        
+
         if (request.getVins() == null || request.getVins().isEmpty()) {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
-        
+
         int quantity = request.getVins().size();
 
         // Lưu từng chiếc xe vật lý vào bảng VIN
@@ -842,11 +848,11 @@ public class InventoryServiceImpl implements InventoryService {
             if (physicalVehicleRepo.existsById(vin)) {
                 throw new AppException(ErrorCode.DATA_ALREADY_EXISTS);
             }
-            
+
             PhysicalVehicle vehicle = new PhysicalVehicle();
             vehicle.setVin(vin);
             vehicle.setVariantId(request.getVariantId());
-            vehicle.setStatus(VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE); 
+            vehicle.setStatus(VehiclePhysicalStatus.IN_CENTRAL_WAREHOUSE);
             vehicle.setLocationId(null); // null = Kho trung tâm
             newVehicles.add(vehicle);
         }
@@ -875,7 +881,7 @@ public class InventoryServiceImpl implements InventoryService {
      * Xử lý cả trường hợp 'inventory' (kho TT) là null (khi xe chưa được nhập kho).
      */
     private InventoryStatusDto mapToInventoryStatusDto(CentralInventory inventory, Long variantId) {
-        
+
         // 1. Dùng Builder() thay vì new InventoryStatusDto()
         InventoryStatusDto.InventoryStatusDtoBuilder dtoBuilder = InventoryStatusDto.builder();
         dtoBuilder.variantId(variantId);
@@ -886,19 +892,19 @@ public class InventoryServiceImpl implements InventoryService {
             dtoBuilder.allocatedQuantity(0);
             dtoBuilder.totalQuantity(0);
             dtoBuilder.reorderLevel(0); // Ngưỡng mặc định
-            dtoBuilder.status(InventoryLevelStatus.OUT_OF_STOCK); 
+            dtoBuilder.status(InventoryLevelStatus.OUT_OF_STOCK);
         } else {
             // Trường hợp xe ĐÃ CÓ trong kho trung tâm
             // 1. Lấy reorderLevel và kiểm tra null, gán mặc định là 0
             int reorderLvl = (inventory.getReorderLevel() != null) ? inventory.getReorderLevel() : 0;
-            
+
             dtoBuilder.availableQuantity(inventory.getAvailableQuantity());
             dtoBuilder.allocatedQuantity(inventory.getAllocatedQuantity());
             dtoBuilder.totalQuantity(inventory.getTotalQuantity());
-            
+
             // 2. Dùng giá trị đã kiểm tra null
-            dtoBuilder.reorderLevel(reorderLvl); 
-            
+            dtoBuilder.reorderLevel(reorderLvl);
+
             // Logic xác định trạng thái (Dùng Enum)
             if (inventory.getAvailableQuantity() <= 0) {
                 dtoBuilder.status(InventoryLevelStatus.OUT_OF_STOCK);
@@ -925,14 +931,14 @@ public class InventoryServiceImpl implements InventoryService {
      */
     @Override
     public List<DealerInventoryDto> getDealerInventory(UUID dealerId, String search, HttpHeaders headers) {
-        
+
         // Lấy tất cả tồn kho (SKU) của Đại lý này
         List<DealerAllocation> dealerStock = dealerRepo.findByDealerId(dealerId);
-        
+
         // Lấy tất cả ID sản phẩm mà đại lý này có
         List<Long> variantIds = dealerStock.stream()
-                                    .map(DealerAllocation::getVariantId)
-                                    .collect(Collectors.toList());
+                .map(DealerAllocation::getVariantId)
+                .collect(Collectors.toList());
 
         // Nếu đại lý không có xe nào, trả về danh sách rỗng
         if (variantIds.isEmpty()) {
@@ -940,24 +946,24 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         String url = vehicleCatalogUrl + "/vehicle-catalog/variants/details-by-ids";
-        HttpEntity<List<Long>> requestEntity = new HttpEntity<>(variantIds, headers); 
+        HttpEntity<List<Long>> requestEntity = new HttpEntity<>(variantIds, headers);
 
         ResponseEntity<ApiRespond<List<VariantDetailDto>>> response;
         try {
             response = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                requestEntity,
-                new ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>>() {}
-            );
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    new ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>>() {
+                    });
         } catch (Exception e) {
             System.err.println("Failed to call vehicle-service /details-by-ids: " + e.getMessage());
-            e.printStackTrace(); 
+            e.printStackTrace();
             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
 
         if (response.getBody() == null || response.getBody().getData() == null) {
-             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
 
         // Map<VariantID, ThôngTinChiTiếtXe>
@@ -970,20 +976,21 @@ public class InventoryServiceImpl implements InventoryService {
 
         // Gộp dữ liệu và Lọc (nếu có)
         List<DealerInventoryDto> mergedList = variantIds.stream()
-            .map(id -> {
-                VariantDetailDto details = variantDetailsMap.get(id);
-                DealerAllocation stock = inventoryMap.get(id);
-                return DealerInventoryDto.merge(details, stock);
-            })
-            .filter(dto -> { // Lọc client-side (vì số lượng ít)
-                if (search == null || search.isBlank()) return true;
-                String query = search.toLowerCase();
-                return (dto.getModelName() != null && dto.getModelName().toLowerCase().contains(query)) ||
-                       (dto.getVersionName() != null && dto.getVersionName().toLowerCase().contains(query)) ||
-                       (dto.getColor() != null && dto.getColor().toLowerCase().contains(query)) ||
-                       (dto.getSkuCode() != null && dto.getSkuCode().toLowerCase().contains(query));
-            })
-            .collect(Collectors.toList());
+                .map(id -> {
+                    VariantDetailDto details = variantDetailsMap.get(id);
+                    DealerAllocation stock = inventoryMap.get(id);
+                    return DealerInventoryDto.merge(details, stock);
+                })
+                .filter(dto -> { // Lọc client-side (vì số lượng ít)
+                    if (search == null || search.isBlank())
+                        return true;
+                    String query = search.toLowerCase();
+                    return (dto.getModelName() != null && dto.getModelName().toLowerCase().contains(query)) ||
+                            (dto.getVersionName() != null && dto.getVersionName().toLowerCase().contains(query)) ||
+                            (dto.getColor() != null && dto.getColor().toLowerCase().contains(query)) ||
+                            (dto.getSkuCode() != null && dto.getSkuCode().toLowerCase().contains(query));
+                })
+                .collect(Collectors.toList());
 
         return mergedList;
     }
@@ -993,11 +1000,16 @@ public class InventoryServiceImpl implements InventoryService {
      */
     private String getVehicleStatusMessage(VehiclePhysicalStatus status) {
         switch (status) {
-            case AT_DEALER: return "Đã ở kho đại lý";
-            case SOLD: return "Đã bán cho khách hàng";
-            case IN_TRANSIT: return "Đang vận chuyển";
-            case IN_CENTRAL_WAREHOUSE: return "Sẵn sàng (Kho trung tâm)";
-            default: return status.name(); 
+            case AT_DEALER:
+                return "Đã ở kho đại lý";
+            case SOLD:
+                return "Đã bán cho khách hàng";
+            case IN_TRANSIT:
+                return "Đang vận chuyển";
+            case IN_CENTRAL_WAREHOUSE:
+                return "Sẵn sàng (Kho trung tâm)";
+            default:
+                return status.name();
         }
     }
 
@@ -1006,15 +1018,15 @@ public class InventoryServiceImpl implements InventoryService {
      */
     private List<Long> getAllVariantIdsFromCatalog() {
         String catalogUrl = vehicleCatalogUrl + "/vehicle-catalog/variants/all-ids";
-        
+
         try {
             ResponseEntity<ApiRespond<List<Long>>> response = restTemplate.exchange(
-                catalogUrl,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<ApiRespond<List<Long>>>() {}
-            );
-            
+                    catalogUrl,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<ApiRespond<List<Long>>>() {
+                    });
+
             if (response.getBody() != null && response.getBody().getData() != null) {
                 return response.getBody().getData();
             }
@@ -1032,15 +1044,16 @@ public class InventoryServiceImpl implements InventoryService {
     private void checkStockThresholdAndNotify(Long variantId) {
         try {
             CentralInventory inventory = centralRepo.findByVariantId(variantId).orElse(null);
-            if (inventory == null) return;
+            if (inventory == null)
+                return;
 
-            int currentStock = inventory.getAvailableQuantity(); 
+            int currentStock = inventory.getAvailableQuantity();
             int reorderLevel = (inventory.getReorderLevel() != null) ? inventory.getReorderLevel() : 0;
             Optional<StockAlert> existingAlert = stockAlertRepo.findFirstByVariantIdAndStatus(variantId, "NEW");
 
             if (currentStock <= reorderLevel && currentStock > 0) {
                 // ---- TRƯỜNG HỢP 1: DƯỚI NGƯỠNG (LOW_STOCK) ----
-                
+
                 if (existingAlert.isEmpty()) {
                     // Tạo cảnh báo mới
                     StockAlert newAlert = new StockAlert();
@@ -1051,7 +1064,7 @@ public class InventoryServiceImpl implements InventoryService {
                     newAlert.setStatus("NEW");
 
                     StockAlert savedAlert = stockAlertRepo.save(newAlert);
-                    
+
                     log.info("Đang làm giàu (enriching) sự kiện low-stock...");
                     VariantDetailDto details = callCatalogService(variantId);
 
@@ -1072,17 +1085,17 @@ public class InventoryServiceImpl implements InventoryService {
                     } catch (Exception e) {
                         log.warn("WARN: Gửi sự kiện Kafka (LOW_STOCK_ALERT) thất bại. {}", e.getMessage());
                     }
-                    
+
                 }
                 // Nếu existingAlert.isPresent() -> Đã cảnh báo rồi, không làm gì cả.
-                
+
             } else {
                 // ---- TRƯỜNG HỢP 2: TRÊN NGƯỠNG (STOCK_OK) ----
                 if (existingAlert.isPresent()) {
                     StockAlert alertToResolve = existingAlert.get();
-                    alertToResolve.setStatus("RESOLVED"); 
+                    alertToResolve.setStatus("RESOLVED");
                     stockAlertRepo.save(alertToResolve);
-                    
+
                 }
             }
         } catch (Exception e) {
@@ -1097,15 +1110,17 @@ public class InventoryServiceImpl implements InventoryService {
         String url = vehicleCatalogUrl + "/vehicle-catalog/variants/" + variantId;
         try {
             ResponseEntity<ApiRespond<VariantDetailDto>> response = restTemplate.exchange(
-                url, 
-                HttpMethod.GET, 
-                null, 
-                new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {}
-            );
-            
-            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || response.getBody().getData() == null) {
-                log.warn("Không thể lấy chi tiết variant {} từ catalog-service, response: {}", variantId, response.getStatusCode());
-                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {
+                    });
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null
+                    || response.getBody().getData() == null) {
+                log.warn("Không thể lấy chi tiết variant {} từ catalog-service, response: {}", variantId,
+                        response.getStatusCode());
+                throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
             }
             return response.getBody().getData();
 
@@ -1115,9 +1130,10 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
-    //--- Helped cho báo cáo ---
+    // --- Helped cho báo cáo ---
     /**
      * Tạo hình ảnh biểu đồ tròn (Pie Chart) từ dữ liệu giao dịch.
+     * 
      * @param transactions Danh sách giao dịch
      * @return Mảng byte[] của hình ảnh PNG
      */
@@ -1125,10 +1141,9 @@ public class InventoryServiceImpl implements InventoryService {
         try {
             // Tổng hợp dữ liệu: Đếm số lượng giao dịch theo từng loại
             Map<TransactionType, Long> data = transactions.stream()
-                .collect(Collectors.groupingBy(
-                    InventoryTransaction::getTransactionType, 
-                    Collectors.counting()
-                ));
+                    .collect(Collectors.groupingBy(
+                            InventoryTransaction::getTransactionType,
+                            Collectors.counting()));
 
             // Tạo dataset cho biểu đồ tròn
             DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
@@ -1139,12 +1154,11 @@ public class InventoryServiceImpl implements InventoryService {
 
             // Tạo biểu đồ (Chart)
             JFreeChart pieChart = ChartFactory.createPieChart(
-                "Tỷ Lệ Các Loại Giao Dịch", // Tiêu đề biểu đồ
-                dataset,
-                true,  // Hiển thị legend
-                true,
-                false
-            );
+                    "Tỷ Lệ Các Loại Giao Dịch", // Tiêu đề biểu đồ
+                    dataset,
+                    true, // Hiển thị legend
+                    true,
+                    false);
 
             @SuppressWarnings("unchecked")
             PiePlot<String> plot = (PiePlot<String>) pieChart.getPlot();
@@ -1153,13 +1167,13 @@ public class InventoryServiceImpl implements InventoryService {
             plot.setShadowPaint(null);
 
             Color[] colors = {
-                new Color(110, 190, 255), // Xanh dương
-                new Color(255, 159, 77),  // Cam
-                new Color(113, 221, 105), // Xanh lá
-                new Color(255, 105, 132), // Đỏ/Hồng
-                new Color(179, 136, 255), // Tím
-                new Color(255, 219, 88),  // Vàng
-                new Color(150, 150, 150)  // Xám (cho các loại khác)
+                    new Color(110, 190, 255), // Xanh dương
+                    new Color(255, 159, 77), // Cam
+                    new Color(113, 221, 105), // Xanh lá
+                    new Color(255, 105, 132), // Đỏ/Hồng
+                    new Color(179, 136, 255), // Tím
+                    new Color(255, 219, 88), // Vàng
+                    new Color(150, 150, 150) // Xám (cho các loại khác)
             };
 
             List<String> keys = dataset.getKeys();
@@ -1168,24 +1182,24 @@ public class InventoryServiceImpl implements InventoryService {
             }
 
             StandardPieSectionLabelGenerator labelGenerator = new StandardPieSectionLabelGenerator(
-                "{0} ({2})", // Định dạng 
-                new DecimalFormat("0"),    // Định dạng cho Giá trị (không dùng)
-                new DecimalFormat("0.0%")  // Định dạng cho % (1 số lẻ)
+                    "{0} ({2})", // Định dạng
+                    new DecimalFormat("0"), // Định dạng cho Giá trị (không dùng)
+                    new DecimalFormat("0.0%") // Định dạng cho % (1 số lẻ)
             );
             // Gán trình tạo nhãn này cho biểu đồ
             plot.setLabelGenerator(labelGenerator);
 
-            plot.setLabelBackgroundPaint(new Color(240, 240, 240)); 
+            plot.setLabelBackgroundPaint(new Color(240, 240, 240));
             plot.setLabelOutlinePaint(null);
             plot.setLabelShadowPaint(null);
-            
+
             // Xuất biểu đồ ra ByteArrayOutputStream (ảnh PNG)
             ByteArrayOutputStream chartOutputStream = new ByteArrayOutputStream();
             ChartUtils.writeChartAsPNG(
-                chartOutputStream, 
-                pieChart, 
-                500, // Chiều rộng (width)
-                300  // Chiều cao (height)
+                    chartOutputStream,
+                    pieChart,
+                    500, // Chiều rộng (width)
+                    300 // Chiều cao (height)
             );
 
             return chartOutputStream.toByteArray();
@@ -1200,28 +1214,29 @@ public class InventoryServiceImpl implements InventoryService {
      * Chuyển đổi TransactionType (enum) sang tên Tiếng Việt thân thiện.
      */
     private String getTransactionTypeName(TransactionType type) {
-        if (type == null) return "Không rõ";
-        
+        if (type == null)
+            return "Không rõ";
+
         switch (type) {
-            case RESTOCK: 
+            case RESTOCK:
                 return "Nhập kho TT"; // TT = Trung Tâm
-            case ALLOCATE: 
+            case ALLOCATE:
                 return "Giữ hàng (cho đơn)";
-            case TRANSFER_TO_DEALER: 
+            case TRANSFER_TO_DEALER:
                 return "Chuyển cho Đại lý";
-            case SALE: 
+            case SALE:
                 return "Bán hàng";
-            case RETURN_FROM_DEALER: 
+            case RETURN_FROM_DEALER:
                 return "Đại lý trả hàng";
-            case ADJUSTMENT_ADD: 
+            case ADJUSTMENT_ADD:
                 return "Kiểm kho (Tăng)";
-            case ADJUSTMENT_SUBTRACT: 
+            case ADJUSTMENT_SUBTRACT:
                 return "Kiểm kho (Giảm)";
-            case INITIAL_STOCK: 
+            case INITIAL_STOCK:
                 return "Nhập kho lần đầu";
-            case TRANSFER_TO_CENTRAL: 
+            case TRANSFER_TO_CENTRAL:
                 return "Đại lý chuyển về TT";
-            default: 
+            default:
                 return type.name(); // Trả về tên gốc nếu chưa định nghĩa
         }
     }

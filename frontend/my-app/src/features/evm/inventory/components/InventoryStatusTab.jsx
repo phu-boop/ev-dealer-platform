@@ -184,7 +184,6 @@ const InventoryStatusTab = () => {
     }
   }, [filters, page]); // Phụ thuộc vào filters và page
 
-  // useEffect gọi fetch (giữ nguyên)
   useEffect(() => {
     fetchInventory();
   }, [fetchInventory]);

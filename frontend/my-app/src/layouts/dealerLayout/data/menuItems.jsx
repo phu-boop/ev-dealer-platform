@@ -50,7 +50,7 @@ export const dealerManagerMenuItems = [
       },
       {
         icon: FiTag,
-        label: "Toàn Bộ Mẫu Xe",
+        label: "Tất cả Phiên bản",
         path: "/dealer/manager/vehicles/all",
       },
       // {
@@ -244,11 +244,11 @@ export const dealerStaffMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/staff/vehicles/available",
+        path: "/dealer/staff/inventory/stock",
       },
       {
         icon: FiTag,
-        label: "Toàn Bộ Mẫu Xe",
+        label: "Tất cả Phiên bản",
         path: "/dealer/staff/vehicles/all",
       },
       {
