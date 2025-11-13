@@ -23,6 +23,12 @@ const paymentService = {
     apiConstPaymentService.get('/api/v1/payments/methods/active-public'),
 
   /**
+   * Lấy active payment methods cho B2B (DEALER_MANAGER, ADMIN, EVM_STAFF)
+   */
+  getActiveB2BMethods: () => 
+    apiConstPaymentService.get('/api/v1/payments/methods/active-b2b'),
+
+  /**
    * Lấy chi tiết payment method theo ID
    */
   getPaymentMethodById: (methodId) => 
@@ -116,6 +122,20 @@ const paymentService = {
   getDealerDebtSummary: (params = {}) => {
     const queryParams = new URLSearchParams(params).toString();
     return apiConstPaymentService.get(`/api/v1/payments/dealer/debt-summary${queryParams ? '?' + queryParams : ''}`);
+  },
+
+  /**
+   * Kiểm tra xem đơn hàng đã có hóa đơn chưa
+   */
+  checkOrderHasInvoice: (orderId) =>
+    apiConstPaymentService.get(`/api/v1/payments/dealer/orders/${orderId}/has-invoice`),
+
+  /**
+   * Lấy danh sách thanh toán tiền mặt chờ duyệt (EVM Staff)
+   */
+  getPendingCashPayments: (params = {}) => {
+    const queryParams = new URLSearchParams(params).toString();
+    return apiConstPaymentService.get(`/api/v1/payments/dealer/pending-cash-payments${queryParams ? '?' + queryParams : ''}`);
   },
 
   // ==============================

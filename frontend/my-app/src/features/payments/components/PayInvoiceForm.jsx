@@ -30,17 +30,15 @@ const PayInvoiceForm = ({ invoice, onSubmit, onCancel, loading }) => {
 
   const loadPaymentMethods = async () => {
     try {
-      // Load B2B payment methods
-      const response = await paymentService.getAllPaymentMethods();
-      const methods = response.data.data || response.data || [];
-      // Filter B2B methods (scope = B2B or ALL)
-      const b2bMethods = methods.filter(m => m.scope === 'B2B' || m.scope === 'ALL');
-      setPaymentMethods(b2bMethods);
+      // Load B2B payment methods using the new endpoint for DEALER_MANAGER
+      const response = await paymentService.getActiveB2BMethods();
+      const methods = response.data?.data || response.data || [];
+      setPaymentMethods(methods);
       
-      if (b2bMethods.length > 0) {
+      if (methods.length > 0) {
         setFormData(prev => ({
           ...prev,
-          paymentMethodId: b2bMethods[0].methodId
+          paymentMethodId: methods[0].methodId
         }));
       }
     } catch (error) {
@@ -75,9 +73,8 @@ const PayInvoiceForm = ({ invoice, onSubmit, onCancel, loading }) => {
       newErrors.paymentMethodId = 'Vui lòng chọn phương thức thanh toán';
     }
 
-    if (!formData.transactionCode) {
-      newErrors.transactionCode = 'Vui lòng nhập mã giao dịch ngân hàng';
-    }
+    // Transaction code chỉ bắt buộc nếu là GATEWAY (nhưng có thể để trống)
+    // Không cần validate transactionCode
 
     if (!formData.paidDate) {
       newErrors.paidDate = 'Vui lòng chọn ngày thanh toán';
@@ -137,8 +134,8 @@ const PayInvoiceForm = ({ invoice, onSubmit, onCancel, loading }) => {
             error={errors.amount}
             placeholder="Nhập số tiền thanh toán"
             min="1"
-            max={invoice.remainingAmount}
-            step="1000"
+            max={Math.floor(invoice.remainingAmount * 100) / 100}
+            step="0.01"
             required
           />
           {formData.amount && (
@@ -164,30 +161,44 @@ const PayInvoiceForm = ({ invoice, onSubmit, onCancel, loading }) => {
             <option value="">-- Chọn phương thức thanh toán --</option>
             {paymentMethods.map((method) => (
               <option key={method.methodId} value={method.methodId}>
-                {method.methodName}
+                {method.methodName} {method.methodType === 'GATEWAY' ? '(VNPAY)' : '(Tiền mặt)'}
               </option>
             ))}
           </select>
           {errors.paymentMethodId && (
             <p className="mt-1 text-sm text-red-500">{errors.paymentMethodId}</p>
           )}
+          {formData.paymentMethodId && (() => {
+            const selectedMethod = paymentMethods.find(m => m.methodId === formData.paymentMethodId);
+            const isCash = selectedMethod?.methodType === 'MANUAL';
+            return isCash ? (
+              <p className="mt-2 text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
+                ⚠️ Thanh toán bằng tiền mặt sẽ cần được EVM staff duyệt trước khi cập nhật công nợ.
+              </p>
+            ) : null;
+          })()}
         </div>
 
-        <div>
-          <Input
-            label="Mã Giao Dịch Ngân Hàng *"
-            type="text"
-            name="transactionCode"
-            value={formData.transactionCode}
-            onChange={handleChange}
-            error={errors.transactionCode}
-            placeholder="Ví dụ: VCB_123456789"
-            required
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Mã giao dịch từ ngân hàng để đối soát
-          </p>
-        </div>
+        {formData.paymentMethodId && (() => {
+          const selectedMethod = paymentMethods.find(m => m.methodId === formData.paymentMethodId);
+          const isGateway = selectedMethod?.methodType === 'GATEWAY';
+          return isGateway ? (
+            <div>
+              <Input
+                label="Mã Giao Dịch Ngân Hàng"
+                type="text"
+                name="transactionCode"
+                value={formData.transactionCode}
+                onChange={handleChange}
+                error={errors.transactionCode}
+                placeholder="Ví dụ: VCB_123456789 (nếu có)"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Mã giao dịch từ VNPAY để đối soát (tùy chọn)
+              </p>
+            </div>
+          ) : null;
+        })()}
 
         <div>
           <Input

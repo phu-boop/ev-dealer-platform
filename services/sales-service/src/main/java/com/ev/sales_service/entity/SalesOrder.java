@@ -2,6 +2,7 @@ package com.ev.sales_service.entity;
 
 import com.ev.sales_service.enums.OrderStatusB2B;
 import com.ev.sales_service.enums.OrderStatusB2C;
+import com.ev.sales_service.enums.PaymentStatus;
 import com.ev.sales_service.enums.SaleOderType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -68,6 +69,11 @@ public class SalesOrder {
 
     @Column(name = "approval_date")
     private LocalDateTime approvalDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 50)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.NONE;
 
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;

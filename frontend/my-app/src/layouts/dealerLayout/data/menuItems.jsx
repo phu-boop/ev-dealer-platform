@@ -168,26 +168,21 @@ export const dealerManagerMenuItems = [
     ],
   },
 
-  // Tài chính & thanh toán
+  // Quản lý thanh toán
   {
-    icon: FiCreditCard,
-    label: "Tài Chính & Thanh Toán",
-    path: "/dealer/manager/finance",
+    icon: FiDollarSign,
+    label: "Quản Lý Thanh Toán",
+    path: "/dealer/manager/payments",
     submenu: [
-      {
-        icon: FiCreditCard,
-        label: "Thanh Toán & Trả Góp",
-        path: "/dealer/manager/payments",
-      },
       {
         icon: FiFileText,
         label: "Hóa Đơn Của Tôi",
         path: "/dealer/manager/payments/invoices",
       },
       {
-        icon: FiBarChart2,
-        label: "Công Nợ Khách Hàng",
-        path: "/dealer/manager/debts",
+        icon: FiCreditCard,
+        label: "Thanh Toán & Trả Góp",
+        path: "/dealer/manager/payments/methods",
       },
     ],
   },

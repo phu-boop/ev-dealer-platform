@@ -76,4 +76,12 @@ public class PaymentMethodServiceImpl implements IPaymentMethodService {
 
         return paymentMethodMapper.toResponse(entity);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PaymentMethodResponse> getActiveB2BMethods() {
+        return paymentMethodRepository.findActiveB2BMethods().stream()
+                .map(paymentMethodMapper::toResponse)
+                .collect(Collectors.toList());
+    }
 }

@@ -103,4 +103,13 @@ public class PaymentMethodController {
     public ResponseEntity<PaymentMethodResponse> getPaymentMethodById(@PathVariable("id") UUID methodId) {
         return ResponseEntity.ok(paymentMethodService.getPaymentMethodById(methodId));
     }
+
+    /**
+     * [DEALER_MANAGER] Lấy các PTTT đang hoạt động cho B2B (scope B2B hoặc ALL)
+     */
+    @GetMapping("/active-b2b")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF', 'DEALER_MANAGER')")
+    public ResponseEntity<List<PaymentMethodResponse>> getActiveB2BMethods() {
+        return ResponseEntity.ok(paymentMethodService.getActiveB2BMethods());
+    }
 }

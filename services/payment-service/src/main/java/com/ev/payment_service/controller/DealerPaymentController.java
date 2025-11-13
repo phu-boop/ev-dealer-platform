@@ -317,6 +317,36 @@ public class DealerPaymentController {
         Page<DealerDebtSummaryResponse> response = dealerPaymentService.getDealerDebtSummary(pageable);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * API 6: Kiểm tra xem đơn hàng đã có hóa đơn chưa
+     * GET /api/v1/payments/dealer/orders/{orderId}/has-invoice
+     */
+    @GetMapping("/orders/{orderId}/has-invoice")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+    public ResponseEntity<Map<String, Boolean>> checkOrderHasInvoice(@PathVariable UUID orderId) {
+        log.info("[DealerPaymentController] GET /orders/{}/has-invoice", orderId);
+
+        boolean hasInvoice = dealerPaymentService.hasInvoiceForOrder(orderId);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("hasInvoice", hasInvoice);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * API 7: Lấy danh sách thanh toán tiền mặt chờ duyệt (EVM Staff)
+     * GET /api/v1/payments/dealer/pending-cash-payments
+     */
+    @GetMapping("/pending-cash-payments")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+    public ResponseEntity<Page<DealerTransactionResponse>> getPendingCashPayments(
+            @PageableDefault(size = 10, sort = "transactionDate") Pageable pageable) {
+        log.info("[DealerPaymentController] GET /pending-cash-payments");
+
+        Page<DealerTransactionResponse> response = dealerPaymentService.getPendingCashPayments(pageable);
+        return ResponseEntity.ok(response);
+    }
     
     /**
      * Lấy dealerId từ managerId (hoặc staffId) bằng cách gọi User Service

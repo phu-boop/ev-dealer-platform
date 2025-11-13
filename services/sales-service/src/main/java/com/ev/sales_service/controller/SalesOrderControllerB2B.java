@@ -262,4 +262,22 @@ public class SalesOrderControllerB2B {
         return ResponseEntity.ok(ApiRespond.success("Đã giải quyết khiếu nại thành công", responseDto));
     }
 
+    // API Cập nhật trạng thái thanh toán (được gọi từ Payment Service)
+    // PUT /sales-orders/{orderId}/payment-status?status=UNPAID
+    @PutMapping("/{orderId}/payment-status")
+    public ResponseEntity<ApiRespond<Void>> updatePaymentStatus(
+            @PathVariable UUID orderId,
+            @RequestParam String status) {
+
+        try {
+            com.ev.sales_service.enums.PaymentStatus paymentStatus = 
+                com.ev.sales_service.enums.PaymentStatus.valueOf(status.toUpperCase());
+            
+            salesOrderServiceB2B.updatePaymentStatus(orderId, paymentStatus);
+            return ResponseEntity.ok(ApiRespond.success("Cập nhật trạng thái thanh toán thành công", null));
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+    }
+
 }

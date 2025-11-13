@@ -330,6 +330,14 @@ import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
 import StaffNotificationPage from "../features/evm/notification/pages/StaffNotificationPage.jsx";
 import B2BOrderDetailsPage from "../features/evm/notification/pages/B2BOrderDetailsPage.jsx";
 
+// EVM Orders & Invoices Management
+import B2BOrdersManagementPage from "../features/evm/orders/pages/B2BOrdersManagementPage.jsx";
+import CashPaymentsManagementPage from "../features/evm/orders/pages/CashPaymentsManagementPage.jsx";
+import CreateInvoiceFromOrderPage from "../features/evm/orders/pages/CreateInvoiceFromOrderPage.jsx";
+import DealerDebtManagementPage from "../features/evm/orders/pages/DealerDebtManagementPage.jsx";
+import DealerInvoicesListPage from "../features/evm/orders/pages/DealerInvoicesListPage.jsx";
+import DealerInvoiceDetailsPage from "../features/evm/orders/pages/DealerInvoiceDetailsPage.jsx";
+
 // Dealer
 import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPage.jsx";
 import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
@@ -358,6 +366,7 @@ import CustomerPaymentPage from "../features/payments/pages/CustomerPaymentPage.
 import DealerInvoiceManagement from "../features/payments/pages/DealerInvoiceManagement.jsx";
 import DealerInvoicesPage from "../features/payments/pages/DealerInvoicesPage.jsx";
 import DealerPaymentPage from "../features/payments/pages/DealerPaymentPage.jsx";
+import PayInvoicePage from "../features/payments/pages/PayInvoicePage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
 
 export default function AppRoutes() {
@@ -497,6 +506,36 @@ export default function AppRoutes() {
                 path="staff/payments/dealer-invoices"
                 element={<DealerInvoiceManagement />}
               />
+
+              {/* Orders & Invoices Management (EVM Staff) */}
+              <Route
+                path="staff/orders"
+                element={<B2BOrdersManagementPage />}
+              />
+              <Route
+                path="staff/orders/:orderId/create-invoice"
+                element={<CreateInvoiceFromOrderPage />}
+              />
+              
+              {/* Debt Management (EVM Staff) */}
+              <Route
+                path="staff/debt"
+                element={<DealerDebtManagementPage />}
+              />
+              <Route
+                path="staff/debt/:dealerId/invoices"
+                element={<DealerInvoicesListPage />}
+              />
+              <Route
+                path="staff/debt/invoices/:invoiceId"
+                element={<DealerInvoiceDetailsPage />}
+              />
+              
+              {/* Cash Payments Management (EVM Staff) */}
+              <Route
+                path="staff/payments/cash-payments"
+                element={<CashPaymentsManagementPage />}
+              />
             </Route>
           </Route>
         </Route>
@@ -621,6 +660,10 @@ export default function AppRoutes() {
               <Route
                 path="manager/payments/invoices"
                 element={<DealerInvoicesPage />}
+              />
+              <Route
+                path="manager/payments/invoices/:invoiceId/pay"
+                element={<PayInvoicePage />}
               />
               <Route
                 path="manager/payments/invoices/:invoiceId"

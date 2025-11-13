@@ -68,6 +68,10 @@ const DealerInvoicesPage = () => {
     navigate(`/dealer/manager/payments/invoices/${invoiceId}`);
   };
 
+  const handlePayInvoice = (invoiceId) => {
+    navigate(`/dealer/manager/payments/invoices/${invoiceId}/pay`);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -96,6 +100,7 @@ const DealerInvoicesPage = () => {
         pagination={pagination}
         onFilterChange={setFilters}
         onViewInvoice={handleViewInvoice}
+        onPayInvoice={handlePayInvoice}
         onRefresh={loadInvoices}
       />
     </div>

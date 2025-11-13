@@ -41,5 +41,15 @@ public interface IDealerPaymentService {
      * Lấy tổng hợp công nợ của tất cả Đại lý (EVM Staff)
      */
     Page<DealerDebtSummaryResponse> getDealerDebtSummary(Pageable pageable);
+
+    /**
+     * Kiểm tra xem đơn hàng đã có hóa đơn chưa
+     */
+    boolean hasInvoiceForOrder(UUID orderId);
+
+    /**
+     * Lấy danh sách thanh toán tiền mặt chờ duyệt (EVM Staff)
+     */
+    Page<DealerTransactionResponse> getPendingCashPayments(Pageable pageable);
 }
 
