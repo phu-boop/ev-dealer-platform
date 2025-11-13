@@ -23,3 +23,12 @@ export const resetPassword = (email, otp, newPassword) =>
       `auth/reset-password?email=${email}&otp=${otp}&newPassword=${newPassword}`
     )
     .then((res) => res.data);
+
+    
+export const registerFCMToken = (userId, fcmToken) =>
+    apiConst.post(`users/${userId}/fcm-token`, { fcmToken })
+        .then((res) => res.data);
+
+export const getIddealerByIdMember = (idDealer) =>
+    apiConst.post(`users/profile/idDealer`, { idDealer })
+        .then((res) => res.data);

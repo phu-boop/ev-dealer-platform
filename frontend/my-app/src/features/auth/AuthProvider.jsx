@@ -21,6 +21,10 @@ export function AuthProvider({children}) {
     const [name, setName] = useState(sessionStorage.getItem("name") || null);
     const [fullName, setFullName] = useState(sessionStorage.getItem("fullName") || null);
     const [memberId, setMemberId] = useState(sessionStorage.getItem("memberId") || null);
+    const [avatarUrl, setAvatarUrl] = useState(sessionStorage.getItem("avatarUrl") || null);
+
+    const [dealerId, setDealerId] = useState(sessionStorage.getItem("dealerId") || null);
+
     const [userData, setUserData] = useState(() => {
         try {
             const storedUserData = sessionStorage.getItem("userData");
@@ -31,7 +35,7 @@ export function AuthProvider({children}) {
         }
     });
 
-    const login = (newToken, newRoles, newId, newEmail, newName, newFullName, newMemberId, newUserData) => {
+    const login = (newToken, newRoles, newId, newEmail, newName, newFullName, newMemberId, newUserData, newAvataUrl) => {
         sessionStorage.setItem("id_user", newId);
         sessionStorage.setItem("token", newToken);
         sessionStorage.setItem("roles", JSON.stringify(newRoles));
@@ -40,6 +44,7 @@ export function AuthProvider({children}) {
         sessionStorage.setItem("fullName", newFullName);
         sessionStorage.setItem("userData", JSON.stringify(newUserData));
         sessionStorage.setItem("memberId", newMemberId);
+        sessionStorage.setItem("avatarUrl", newAvataUrl);
 
         setEmail(newEmail);
         setToken(newToken);
@@ -49,6 +54,15 @@ export function AuthProvider({children}) {
         setFullName(newFullName);
         setUserData(newUserData);
         setMemberId(newMemberId);
+        setAvatarUrl(newAvataUrl);
+
+        //Tự động trích xuất dealerId từ userData (profile)
+        let newDealerId = null;
+        if (newUserData && newUserData.dealerId) {
+            newDealerId = newUserData.dealerId;
+            sessionStorage.setItem("dealerId", newDealerId);
+        }
+        setDealerId(newDealerId);
     };
 
     const logout = () => {
@@ -61,6 +75,8 @@ export function AuthProvider({children}) {
         setMemberId(null);
         setUserData(null);
         setToken(null);
+        setAvatarUrl(null);
+        setDealerId(null); //Xóa dealerId khi logout
     };
 
     useEffect(() => {
@@ -72,6 +88,8 @@ export function AuthProvider({children}) {
         const storedFullName = sessionStorage.getItem("fullName");
         const storedMemberId = sessionStorage.getItem("memberId");
         const storedUserData = sessionStorage.getItem("userData");
+        const storedAvatarUrl = sessionStorage.getItem("avatarUrl");
+        const storedDealerId = sessionStorage.getItem("dealerId"); // Lấy dealerId từ session
 
         if (storedToken) setToken(storedToken);
         if (storedEmail) setEmail(storedEmail);
@@ -79,6 +97,8 @@ export function AuthProvider({children}) {
         if (storedName) setName(storedName);
         if (storedFullName) setFullName(storedFullName);
         if (storedMemberId) setMemberId(storedMemberId);
+        if (storedAvatarUrl) setAvatarUrl(storedAvatarUrl);
+        if (storedDealerId) setDealerId(storedDealerId); // Tải dealerId vào state
 
         if (storedRoles) {
             try {
@@ -109,6 +129,7 @@ export function AuthProvider({children}) {
                 name,
                 fullName,
                 memberId,
+                dealerId,   //Cung cấp dealerId
                 userData,
                 login,
                 logout

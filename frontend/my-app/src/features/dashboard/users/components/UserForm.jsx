@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 import {X, Save, User, Mail, Phone, MapPin, Calendar, Eye, EyeOff, Edit} from "lucide-react";
-
+import {dealerService} from "../services/dealerService";
 export default function UserForm({isOpen, onClose, onSubmit, initialData, mode = "add"}) {
     const [formData, setFormData] = useState({
         email: "",
@@ -18,53 +18,139 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
 
     const [errors, setErrors] = useState({});
     const [isEditing, setIsEditing] = useState(false);
+    const [dealers, setDealers] = useState([]); // Thêm state cho danh sách dealers
+    const [availableRoles, setAvailableRoles] = useState([]);
 
     useEffect(() => {
-        if (initialData) {
-            // Chuyển đổi roles từ object sang string
-            const roles = initialData.roles.map(role => role.name);
-            setFormData({...initialData, roles, password: ""});
+        const roles = sessionStorage.getItem("roles");
+
+        if (roles?.includes("ADMIN")) {
+        setAvailableRoles(["ADMIN", "EVM_STAFF", "DEALER_MANAGER"]);
+        } else if (roles?.includes("EVM_STAFF")) {
+        setAvailableRoles(["DEALER_MANAGER"]);
         } else {
-            setFormData({
-                email: "",
-                phone: "",
-                name: "",
-                fullName: "",
-                password: "",
-                address: "",
-                city: "",
-                country: "",
-                birthday: "",
-                gender: "MALE"
-            });
+        setAvailableRoles(["DEALER_STAFF"]);
+        } 
+    }, []);
+    // Thêm useEffect để fetch danh sách dealers
+    useEffect(() => {
+        const fetchDealers = async () => {
+            try {
+                const response = (await dealerService.getAll()).data;
+                console.log("Fetched dealers:", response);
+                if (response.code === "1000") {
+                    setDealers(response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching dealers:", error);
+            }
+        };
+
+        if (isOpen) {
+            fetchDealers();
         }
-        setErrors({});
-        setIsEditing(mode === "edit");
-    }, [initialData, isOpen, mode]);
+    }, [isOpen]);
+
+   useEffect(() => {
+    if (initialData) {
+        // Xác định role từ roles array
+        const roles = initialData.roles || [];
+        const mainRole = roles.length > 0 ? roles[0].name : '';
+        
+        // Chuẩn bị dữ liệu cơ bản
+        const baseData = {
+            ...initialData,
+            role: mainRole,
+            password: "", // Luôn để password trống khi edit
+            gender: initialData.gender || 'MALE' // Đảm bảo gender không null
+        };
+
+        // Thêm dữ liệu profile-specific
+        if (initialData.dealerStaffProfile) {
+            Object.assign(baseData, initialData.dealerStaffProfile);
+        } else if (initialData.dealerManagerProfile) {
+            Object.assign(baseData, initialData.dealerManagerProfile);
+        } else if (initialData.evmStaffProfile) {
+            Object.assign(baseData, initialData.evmStaffProfile);
+        } else if (initialData.adminProfile) {
+            Object.assign(baseData, initialData.adminProfile);
+        }
+
+        setFormData(baseData);
+    } else {
+        setFormData({
+            email: "",
+            phone: "",
+            name: "",
+            fullName: "",
+            password: "",
+            address: "",
+            city: "",
+            country: "",
+            birthday: "",
+            gender: "MALE", // Mặc định là MALE
+            role: "",
+            // Dealer Staff fields
+            dealerId: "",
+            position: "",
+            department: "",
+            hireDate: "",
+            salary: "",
+            commissionRate: "",
+            // Dealer Manager fields
+            managementLevel: "",
+            approvalLimit: "",
+            // EVM Staff fields
+            specialization: ""
+        });
+    }
+    setErrors({});
+    setIsEditing(mode === "edit");
+}, [initialData, isOpen, mode]);
 
     if (!isOpen) return null;
 
-    const validateForm = () => {
-        const newErrors = {};
+   const validateForm = () => {
+    const newErrors = {};
 
-        if (!formData.email) newErrors.email = "Email là bắt buộc";
-        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email không hợp lệ";
+    if (!formData.email) newErrors.email = "Email là bắt buộc";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email không hợp lệ";
 
-        if (!formData.phone) newErrors.phone = "Số điện thoại là bắt buộc";
+    if (!formData.phone) newErrors.phone = "Số điện thoại là bắt buộc";
 
-        if (!formData.name) newErrors.name = "Tên là bắt buộc";
+    if (!formData.name) newErrors.name = "Tên là bắt buộc";
 
-        if (!formData.fullName) newErrors.fullName = "Họ và tên là bắt buộc";
+    if (!formData.fullName) newErrors.fullName = "Họ và tên là bắt buộc";
 
-        if (!initialData && !formData.password) {
-            newErrors.password = "Mật khẩu là bắt buộc";
-        } else if (formData.password && formData.password.length < 6) {
-            newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-        }
+    if (!initialData && !formData.password) {
+        newErrors.password = "Mật khẩu là bắt buộc";
+    } else if (formData.password && formData.password.length < 6) {
+        newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+    // Đảm bảo gender không null
+    if (!formData.gender) {
+        newErrors.gender = "Giới tính là bắt buộc";
+    }
+
+    // Role-specific validation
+    if (formData.role === "DEALER_STAFF") {
+        if (!formData.dealerId) newErrors.dealerId = "Mã đại lý là bắt buộc";
+        if (!formData.department) newErrors.department = "Phòng ban là bắt buộc";
+    }
+
+    if (formData.role === "DEALER_MANAGER") {
+        if (!formData.dealerId) newErrors.dealerId = "Mã đại lý là bắt buộc";
+        if (!formData.managementLevel) newErrors.managementLevel = "Cấp quản lý là bắt buộc";
+    }
+
+    if (formData.role === "EVM_STAFF") {
+        if (!formData.department) newErrors.department = "Phòng ban là bắt buộc";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+};
 
     const handleChange = (e) => {
         if (mode === "view" && !isEditing) return; // Không cho phép chỉnh sửa ở chế độ xem khi không bật chỉnh sửa
@@ -163,7 +249,7 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                 readOnly={isReadOnly}
                                 className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                                     errors.email ? "border-red-500" : "border-gray-300"
-                                } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                                } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-gray-100 cursor-not-allowed"}`}
                             />
                         </div>
                         {errors.email && (
@@ -377,11 +463,12 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                     isReadOnly ? "bg-gray-100 cursor-not-allowed" : "border-gray-300"
                                 }`}
                             >
-                                <option value="">-- Chọn vai trò --</option>
-                                <option value="EVM_STAFF">EVM Staff</option>
-                                <option value="DEALER_MANAGER">Dealer Manager</option>
-                                <option value="DEALER_STAFF">Dealer Staff</option>
-                                <option value="ADMIN">Admin</option>
+                                  <option value="">Tất cả</option>
+                                    {availableRoles.map((role) => (
+                                    <option key={role} value={role}>
+                                        {role}
+                                    </option>
+                                    ))}
                             </select>
                         </div>
 
@@ -421,20 +508,30 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                         {/* Dealer Manager */}
                         {formData.role === "DEALER_MANAGER" && (
                             <>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Dealer ID *
-                                    </label>
-                                    <input
-                                        name="dealerId"
-                                        type="number"
-                                        placeholder="Nhập mã đại lý"
-                                        value={formData.dealerId || ""}
-                                        onChange={handleChange}
-                                        readOnly={isReadOnly}
-                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
+                                <div className="mb-4">
+                            <label className="block text-sm font-semibold text-indigo-700 mb-2">
+                                Dealer ID <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                name="dealerId"
+                                value={formData.dealerId || ""}
+                                onChange={handleChange}
+                                disabled={isReadOnly}
+                                className={`w-full px-4 py-2 border-2 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 transition-colors duration-200 ${
+                                    errors.dealerId ? "border-red-500 bg-red-50" : "border-gray-300 bg-white hover:bg-indigo-50"
+                                } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                            >
+                                <option value="">-- Chọn đại lý --</option>
+                                {dealers.map((dealer) => (
+                                    <option key={dealer.dealerId} value={dealer.dealerId}>
+                                        {dealer.dealerName}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.dealerId && (
+                                <p className="mt-1 text-sm text-red-600">{errors.dealerId}</p>
+                            )}
+                        </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -476,9 +573,12 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                         value={formData.approvalLimit || ""}
                                         onChange={handleChange}
                                         readOnly={isReadOnly}
-                                        className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                        className=""
                                     />
                                 </div>
+                                <button>
+                                    xem 
+                                </button>
                             </>
                         )}
 
@@ -495,15 +595,32 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mã đại lý *
                                         </label>
-                                        <input
+                                        <select
                                             name="dealerId"
-                                            type="number"
-                                            placeholder="Nhập mã đại lý"
                                             value={formData.dealerId || ""}
                                             onChange={handleChange}
-                                            readOnly={isReadOnly}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white"
-                                        />
+                                            disabled={isReadOnly}
+                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                                                errors.dealerId ? "border-red-500" : "border-gray-300"
+                                            } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                                        >
+                                            <option value="">-- Chọn đại lý --</option>
+                                            {sessionStorage.getItem("roles")?.includes("DEALER_MANAGER") ? (
+                                                <option
+                                                    value={sessionStorage.getItem("dealerId")
+                                                }>
+                                                    Đại lý của tôi
+                                                </option>
+                                            ) :   
+                                            (dealers.map((dealer) => (
+                                                <option key={dealer.dealerId} value={dealer.dealerId}>
+                                                    {dealer.dealerName}
+                                                </option>
+                                            ))) }
+                                        </select>
+                                        {errors.dealerId && (
+                                            <p className="mt-1 text-sm text-red-600">{errors.dealerId}</p>
+                                        )}
                                     </div>
 
                                     {/* Department */}

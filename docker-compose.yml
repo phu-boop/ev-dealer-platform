@@ -1,4 +1,3 @@
-
 version: "3.9"
 
 services:
@@ -71,12 +70,13 @@ services:
       - redis-db
     volumes:
       - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint: ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    entrypoint:
+      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
     restart: always
     networks:
       - app-network
 
-  # Customer-service 
+  # Customer-service
   customer-service:
     build:
       context: .
@@ -88,11 +88,16 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/customer_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 12345678
+      # External service URLs for staff assignment feature
+      USER_SERVICE_URL: http://user-service:8081/api/users
+      NOTIFICATION_SERVICE_URL: http://payment-service:8085/api/notifications
     depends_on:
       - db
+      - user-service
     volumes:
       - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint: ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    entrypoint:
+      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
     networks:
       - app-network
 
@@ -112,7 +117,8 @@ services:
       - db
     volumes:
       - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint: ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    entrypoint:
+      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
     networks:
       - app-network
 
@@ -132,7 +138,8 @@ services:
       - db
     volumes:
       - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint: ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    entrypoint:
+      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
     networks:
       - app-network
 
@@ -152,7 +159,8 @@ services:
       - db
     volumes:
       - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint: ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    entrypoint:
+      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
     networks:
       - app-network
 
@@ -172,7 +180,8 @@ services:
       - db
     volumes:
       - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint: ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    entrypoint:
+      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
     networks:
       - app-network
 
@@ -192,7 +201,8 @@ services:
       - db
     volumes:
       - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint: ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    entrypoint:
+      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
     networks:
       - app-network
 

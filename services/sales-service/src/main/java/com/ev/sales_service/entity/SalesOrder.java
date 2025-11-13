@@ -1,5 +1,9 @@
 package com.ev.sales_service.entity;
 
+import com.ev.sales_service.enums.OrderStatusB2B;
+import com.ev.sales_service.enums.OrderStatusB2C;
+import com.ev.sales_service.enums.PaymentStatus;
+import com.ev.sales_service.enums.SaleOderType;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -16,21 +20,21 @@ import java.util.UUID;
 public class SalesOrder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "order_id", columnDefinition = "BINARY(16)")
     private UUID orderId;
 
     @OneToOne
-    @JoinColumn(name = "quotation_id", nullable = false)
+    @JoinColumn(name = "quotation_id")
     private Quotation quotation;
 
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID customerId;
+    @Column(name = "customer_id")
+    private Long customerId;
 
-    @Column(name = "staff_id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "staff_id", columnDefinition = "BINARY(16)")
     private UUID staffId;
 
     @Column(name = "order_date", nullable = false)
@@ -39,8 +43,13 @@ public class SalesOrder {
     @Column(name = "delivery_date")
     private LocalDateTime deliveryDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "order_status", length = 50)
-    private String orderStatus;
+    private OrderStatusB2B orderStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status_b2c", length = 50)
+    private OrderStatusB2C orderStatusB2C;
 
     @Column(name = "total_amount", precision = 15, scale = 2)
     private BigDecimal totalAmount;
@@ -54,15 +63,28 @@ public class SalesOrder {
     @Column(name = "approved_by", columnDefinition = "BINARY(16)")
     private UUID approvedBy;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_oder", length = 50)
+    private SaleOderType typeOder;
+
     @Column(name = "approval_date")
     private LocalDateTime approvalDate;
 
-    @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> orderItems;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 50)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.NONE;
 
+    // SalesOrder.java
     @OneToOne(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
     private SalesContract salesContract;
 
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
+    private List<OrderItem> orderItems;
+
+    @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
     private List<OrderTracking> orderTrackings;
 }

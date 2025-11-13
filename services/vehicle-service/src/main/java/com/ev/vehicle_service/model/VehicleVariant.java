@@ -1,6 +1,6 @@
 package com.ev.vehicle_service.model;
 
-import com.ev.vehicle_service.model.Enum.VehicleStatus;
+import com.ev.common_lib.model.enums.VehicleStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -62,6 +62,9 @@ public class VehicleVariant {
     @CreationTimestamp
     @Column(name = "created_date", updatable = false)
     private LocalDateTime createdDate;
+
+    @Column(name = "image_url")
+    private String imageUrl;
     
     // ... updatedBy, updatedDate ...
 

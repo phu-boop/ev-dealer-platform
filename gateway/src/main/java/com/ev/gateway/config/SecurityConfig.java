@@ -44,12 +44,21 @@ public class SecurityConfig {
                         
                         // payment-service
                         "/payments/**",
-                        
-                        // sales-service
+
+
+                        // "/sales/**"
                         "/sales/**",
-                        
+
                         // vehicle-service
-                        "/vehicles/**"
+                        "/vehicles/**",
+
+                        // reporting-service
+                        "/reporting/**",
+                        
+                        // sendmail
+                        "/sendmail/customer-response/**",
+
+                        "/ws/**"
                     ).permitAll()
                     
                     // ===== Các route khác cần JWT =====

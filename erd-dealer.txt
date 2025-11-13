@@ -1,0 +1,72 @@
+@startuml DealerService_ERD
+
+package "Dealer Service Database" {
+  entity "dealers" as DLR_DEALERS {
+    * dealer_id [PK]
+    --
+    dealer_code
+    dealer_name
+    address
+    city
+    region
+    phone
+    email
+    tax_number
+    status
+  }
+  
+  entity "dealer_contracts" as DLR_CONTRACTS {
+    * contract_id [PK]
+    * dealer_id [FK]
+    --
+    contract_number
+    contract_terms
+    target_sales
+    commission_rate
+    start_date
+    end_date
+    contract_status
+  }
+  
+  entity "dealer_targets" as DLR_TARGETS {
+    * target_id [PK]
+    * dealer_id [FK]
+    --
+    target_period
+    sales_target
+    actual_sales
+    achievement_rate
+    set_date
+  }
+  
+  entity "dealer_performance" as DLR_PERF {
+    * performance_id [PK]
+    * dealer_id [FK]
+    --
+    period
+    total_sales
+    customer_satisfaction
+    delivery_time_avg
+    ranking
+  }
+  
+  entity "dealer_locations" as DLR_LOC {
+    * location_id [PK]
+    * dealer_id [FK]
+    --
+    address
+    city
+    phone
+    manager_name
+    capacity
+    status
+  }
+}
+
+' --- RELATIONSHIPS ---
+DLR_DEALERS ||--o{ DLR_CONTRACTS : "1:N"
+DLR_DEALERS ||--o{ DLR_TARGETS : "1:N"
+DLR_DEALERS ||--o{ DLR_PERF : "1:N"
+DLR_DEALERS ||--o{ DLR_LOC : "1:N"
+
+@enduml

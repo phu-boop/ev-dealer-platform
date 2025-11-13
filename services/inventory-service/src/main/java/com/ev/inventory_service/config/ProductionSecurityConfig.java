@@ -22,17 +22,16 @@ public class ProductionSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 
                 // Đại lý, Nhân viên hãng, và Admin đều có thể xem tồn kho.
-                .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyAuthority("DEALER_STAFF", "EVM_STAFF", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyRole("DEALER_STAFF", "DEALER_MANAGER", "EVM_STAFF")
 
-                
                 // Chỉ Nhân viên hãng và Admin mới được thực hiện các giao dịch kho (nhập, xuất, điều chuyển)
-                .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyAuthority("EVM_STAFF", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyRole("EVM_STAFF", "ADMIN")
                 
                 // Chỉ Quản lý đại lí và (admin) mới có thể thực hiện chỉnh ngưỡng cảnh báo cho đại lí của họ
-                .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**").hasAnyAuthority("DEALER_MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**").hasAnyRole("DEALER_MANAGER", "ADMIN")
 
                 // Chỉ Nhân viên hãng và (admin) mới có thể thực hiện chỉnh ngưỡng cảnh báo cho hãng của họ
-                .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**").hasAnyAuthority("EVM_STAFF", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**").hasAnyRole("EVM_STAFF", "ADMIN")
                 // Các request khác (nếu có) ít nhất phải được xác thực
                 .anyRequest().authenticated() 
             );

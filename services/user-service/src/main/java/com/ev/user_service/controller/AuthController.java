@@ -1,5 +1,6 @@
 package com.ev.user_service.controller;
 
+import com.ev.user_service.dto.respond.ProfileRespond;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +19,7 @@ import com.ev.user_service.service.LoginAttemptService;
 import com.ev.user_service.service.RecaptchaService;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
@@ -62,6 +64,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Get current user successful", loginRespond));
     }
 
+
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/refresh")
     public ResponseEntity<ApiRespond<?>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
@@ -92,14 +95,12 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Logout successful", null));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiRespond<?>> forgotPassword(@RequestParam String email) {
         authService.sendOtp(email);
         return ResponseEntity.ok(ApiRespond.success("OTP sent to your email", null));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
     @PostMapping("/reset-password")
     public ResponseEntity<ApiRespond<?>> resetPassword(@RequestParam String email,
                                                        @RequestParam String otp,

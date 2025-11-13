@@ -1,26 +1,42 @@
 package com.ev.vehicle_service.services.Interface;
 
+import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.dto.vehicle.ComparisonDto;
 // import com.ev.vehicle_service.dto.request.CreateVariantRequest;
 import com.ev.vehicle_service.dto.request.CreateModelRequest;
+import com.ev.vehicle_service.dto.request.CreateVariantRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
 import com.ev.vehicle_service.dto.request.UpdateModelRequest;
+import com.ev.vehicle_service.dto.request.FeatureRequest;
 import com.ev.vehicle_service.dto.response.ModelDetailDto;
 import com.ev.vehicle_service.dto.response.ModelSummaryDto;
-import com.ev.vehicle_service.dto.response.VariantDetailDto;
 import com.ev.vehicle_service.model.VehicleModel;
 import com.ev.vehicle_service.model.VehicleVariant;
+import com.ev.vehicle_service.model.VehicleFeature;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface VehicleCatalogService {
 
     List<ModelSummaryDto> getAllModels();
 
+    /**
+     * Lấy TẤT CẢ ID của các phiên bản (không phân trang)
+     */
+    List<Long> getAllVariantIds();
+
     ModelDetailDto getModelDetails(Long modelId);
 
     VariantDetailDto getVariantDetails(Long variantId);
 
-    VehicleModel createModelWithVariants(CreateModelRequest request);
+    VehicleModel createModelWithVariants(CreateModelRequest request); // Tạo 1 mẫu xe mới (có thể thêm 1 vài phiên bản đi kèm theo)
+
+    VehicleVariant createVariant(Long modelId, CreateVariantRequest request, String createdByEmail); // Tạo phiên bản xe mới
 
     VehicleModel updateModel(Long modelId, UpdateModelRequest request, String updatedByEmail);
     
@@ -31,4 +47,30 @@ public interface VehicleCatalogService {
     void deactivateVariant(Long variantId, String updatedByEmail);
 
     List<Long> searchVariantIdsByCriteria(String keyword, String color, String versionName);
+
+    // --- Methods for Features ---
+    List<VehicleFeature> getAllFeatures();
+    
+    VehicleVariant assignFeatureToVariant(Long variantId, FeatureRequest request, String updatedByEmail);
+    
+    void unassignFeatureFromVariant(Long variantId, Long featureId, String updatedByEmail);
+
+    List<VariantDetailDto> getVariantDetailsByIds(List<Long> variantIds);
+
+    /**
+     * Lấy phiên bản xe để so sánh
+     */
+    List<ComparisonDto> getComparisonData(List<Long> variantIds, UUID dealerId, HttpHeaders headers);
+
+    // Lấy tất cả phiên bản xe cho report
+    List<VariantDetailDto> getAllVariantsForBackfill();
+
+    // Lấy phiên bản từ modelID
+    List<VariantDetailDto> getVariantsByModelId(Long modelId);
+
+    /**
+     * Triển khai logic cho API phân trang/tìm kiếm
+     * @param status (MỚI) Lọc theo trạng thái tồn kho
+     */
+    Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Pageable pageable);
 }

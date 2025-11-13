@@ -1,7 +1,9 @@
 package com.ev.sales_service.entity;
 
+import com.ev.sales_service.enums.OrderTrackingStatus;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -22,8 +24,13 @@ public class OrderTracking {
     @JoinColumn(name = "order_id", nullable = false)
     private SalesOrder salesOrder;
 
-    @Column(name = "status", length = 50, nullable = false)
+
+    @Column(name = "status", length = 50, nullable = true)
     private String status; // ví dụ: "Pending", "Approved", "Delivered", v.v.
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statusB2C", length = 50, nullable = true)
+    private OrderTrackingStatus statusB2C;
 
     @Column(name = "update_date", nullable = false)
     private LocalDateTime updateDate;
@@ -32,5 +39,5 @@ public class OrderTracking {
     private String notes;
 
     @Column(name = "updated_by", columnDefinition = "BINARY(16)")
-    private UUID updatedBy; // nên đổi sang UUID nếu hệ thống bạn dùng UUID cho user/staff
+    private UUID updatedBy;
 }

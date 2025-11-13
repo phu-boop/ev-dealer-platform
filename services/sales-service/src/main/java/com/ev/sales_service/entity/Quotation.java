@@ -1,6 +1,7 @@
 package com.ev.sales_service.entity;
 
 import com.ev.sales_service.enums.QuotationStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -15,7 +16,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Quotation {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "quotation_id", columnDefinition = "BINARY(16)")
@@ -24,11 +24,14 @@ public class Quotation {
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID customerId;
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId;
 
-    @Column(name = "model_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID modelId;
+    @Column(name = "model_id", nullable = false)
+    private Long modelId;
+
+    @Column(name = "variant_id", nullable = false)
+    private Long variantId;
 
     @Column(name = "staff_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID staffId;
@@ -55,9 +58,16 @@ public class Quotation {
     @Column(name = "status", length = 50)
     private QuotationStatus status;
 
-    @OneToOne(mappedBy = "quotation")
-    private SalesOrder salesOrder;
+     @OneToOne(mappedBy = "quotation")
+     @EqualsAndHashCode.Exclude
+     private SalesOrder salesOrder;
 
-    @ManyToMany(mappedBy = "quotations")
+    @ManyToMany
+    @JoinTable(
+        name = "quotation_promotions",
+        joinColumns = @JoinColumn(name = "quotation_id"),
+        inverseJoinColumns = @JoinColumn(name = "promotion_id")
+    )
+    @JsonIgnore
     private Set<Promotion> promotions;
 }

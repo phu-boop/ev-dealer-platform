@@ -5,6 +5,8 @@ import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Join;
 import com.ev.vehicle_service.model.*;
 
+import java.util.List;
+
 public class VehicleVariantSpecification {
 
     public static Specification<VehicleVariant> hasColor(String color) {
@@ -16,17 +18,33 @@ public class VehicleVariantSpecification {
     }
 
     public static Specification<VehicleVariant> hasKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null; // Trả về null nếu không có gì để tìm
+        }
+    
+        // Nếu có keyword, trả về Specification
         return (root, query, cb) -> {
             String likePattern = "%" + keyword.toLowerCase() + "%";
-            // Lấy đường dẫn tới modelName từ quan hệ ManyToOne
             Join<VehicleVariant, VehicleModel> modelJoin = root.join("vehicleModel");
-            
-            // Tìm kiếm trên nhiều trường với logic OR
             return cb.or(
                 cb.like(cb.lower(modelJoin.get("modelName")), likePattern),
                 cb.like(cb.lower(root.get("versionName")), likePattern),
-                cb.like(cb.lower(root.get("color")), likePattern)
+                cb.like(cb.lower(root.get("color")), likePattern),
+                cb.like(cb.lower(root.get("skuCode")), likePattern)
             );
         };
     }
+
+    /**
+     * Lọc các variant có ID nằm trong danh sách được cung cấp.
+     */
+    public static Specification<VehicleVariant> hasVariantIdIn(List<Long> variantIds) {
+        if (variantIds == null || variantIds.isEmpty()) {
+            // Trả về một spec luôn sai (không trả về gì)
+            return (root, query, cb) -> cb.disjunction(); 
+        }
+        // Trả về: WHERE variantId IN (id1, id2, ...)
+        return (root, query, cb) -> root.get("variantId").in(variantIds);
+    }
+    
 }

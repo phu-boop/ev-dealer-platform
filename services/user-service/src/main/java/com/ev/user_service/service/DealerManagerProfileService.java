@@ -22,7 +22,6 @@ public class DealerManagerProfileService {
 
     @Transactional
     public DealerManagerProfile SaveDealerManagerProfile(User user, UUID dealerId, String managementLevel, BigDecimal approvalLimit, String department){
-
         DealerManagerProfile dealerManagerProfile = DealerManagerProfile.builder()
                 .user(user)
                 .dealerId(dealerId)
@@ -33,3 +32,6 @@ public class DealerManagerProfileService {
         return dealerManagerProfileRepository.save(dealerManagerProfile);
     }
 }
+
+
+

@@ -44,6 +44,8 @@ public class User {
     LocalDate birthday;
     String city;
     String country;
+    @Column(length = 2000)
+    String url;
     @Enumerated(EnumType.STRING)
     Gender gender;
     @CreationTimestamp
@@ -79,4 +81,22 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private AdminProfile adminProfile;
+
+    public UUID getProfileId() {
+        if (evmStaffProfile != null) {
+            return evmStaffProfile.getEvmStaffId();
+        }
+        if (dealerManagerProfile != null) {
+            return dealerManagerProfile.getManagerId();
+        }
+        if (dealerStaffProfile != null) {
+            return dealerStaffProfile.getStaffId();
+        }
+        if (adminProfile != null) {
+            return adminProfile.getAdmin_id();
+        }
+        return null;
+    }
+
+
 }

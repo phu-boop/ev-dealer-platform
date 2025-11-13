@@ -1,5 +1,6 @@
 package com.ev.user_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import jakarta.persistence.*;
 
@@ -22,6 +23,7 @@ public class DealerStaffProfile {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JsonIgnore
     private User user;
 
     @Column(name = "dealer_id", nullable = false)
@@ -39,6 +41,6 @@ public class DealerStaffProfile {
     @Column(name = "salary", precision = 15, scale = 2)
     private BigDecimal salary;
 
-    @Column(name = "commission_rate", precision = 5, scale = 4)
+    @Column(name = "commission_rate", precision = 5, scale = 2)
     private BigDecimal commissionRate;
 }

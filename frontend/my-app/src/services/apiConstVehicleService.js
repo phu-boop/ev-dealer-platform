@@ -3,7 +3,7 @@ import axios from "axios";
 const apiConstVehicleService = axios.create({
   baseURL: "http://localhost:8080/vehicles/",
   headers: { "Content-Type": "application/json" },
-  withCredentials: true
+  withCredentials: true,
 });
 
 apiConstVehicleService.interceptors.request.use((config) => {
@@ -17,7 +17,11 @@ apiConstVehicleService.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       try {
-        const res = await axios.post("http://localhost:8080/auth/refresh", {}, { withCredentials: true });
+        const res = await axios.post(
+          "http://localhost:8080/auth/refresh",
+          {},
+          { withCredentials: true }
+        );
         const newToken = res.data.data.accessToken;
         sessionStorage.setItem("token", newToken);
         error.config.headers.Authorization = `Bearer ${newToken}`;

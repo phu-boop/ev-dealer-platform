@@ -21,8 +21,8 @@ public class OrderItem {
     @JoinColumn(name = "order_id", nullable = false)
     private SalesOrder salesOrder;
 
-    @Column(name = "model_id", nullable = false)
-    private Long modelId;
+    @Column(name = "variant_id", nullable = false)
+    private Long variantId;
 
     @Column(name = "quantity")
     private Integer quantity;
