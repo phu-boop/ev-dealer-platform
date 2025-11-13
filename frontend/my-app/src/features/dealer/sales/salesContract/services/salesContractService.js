@@ -47,4 +47,6 @@ export const salesContractService = {
     apiConstSaleService.get(`/api/v1/sales-contracts/search`, {
       params: { customerId, status },
     }),
+  cancel: (contractId) =>
+    apiConstSaleService.post(`/api/v1/sales-contracts/${contractId}`),
 };

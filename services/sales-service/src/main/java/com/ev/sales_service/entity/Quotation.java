@@ -1,6 +1,7 @@
 package com.ev.sales_service.entity;
 
 import com.ev.sales_service.enums.QuotationStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -57,8 +58,9 @@ public class Quotation {
     @Column(name = "status", length = 50)
     private QuotationStatus status;
 
-    @OneToOne(mappedBy = "quotation")
-    private SalesOrder salesOrder;
+     @OneToOne(mappedBy = "quotation")
+     @EqualsAndHashCode.Exclude
+     private SalesOrder salesOrder;
 
     @ManyToMany
     @JoinTable(
@@ -66,5 +68,6 @@ public class Quotation {
         joinColumns = @JoinColumn(name = "quotation_id"),
         inverseJoinColumns = @JoinColumn(name = "promotion_id")
     )
+    @JsonIgnore
     private Set<Promotion> promotions;
 }

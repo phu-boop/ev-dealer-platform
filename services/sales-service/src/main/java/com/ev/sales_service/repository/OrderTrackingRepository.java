@@ -15,8 +15,8 @@ public interface OrderTrackingRepository extends JpaRepository<OrderTracking, UU
 
     List<OrderTracking> findBySalesOrder_OrderIdOrderByUpdateDateDesc(UUID orderId);
 
-    @Query("SELECT ot FROM OrderTracking ot WHERE ot.salesOrder.orderId = :orderId AND ot.status = :status")
-    List<OrderTracking> findByOrderIdAndStatus(@Param("orderId") UUID orderId, @Param("status") String status);
+    @Query("SELECT ot FROM OrderTracking ot WHERE ot.salesOrder.orderId = :orderId AND ot.statusB2C = :status")
+    List<OrderTracking> findByOrderIdAndStatusB2C(@Param("orderId") UUID orderId, @Param("status") String status);
 
     @Query("SELECT ot FROM OrderTracking ot WHERE ot.updateDate BETWEEN :startDate AND :endDate")
     List<OrderTracking> findByUpdateDateBetween(@Param("startDate") LocalDateTime startDate,

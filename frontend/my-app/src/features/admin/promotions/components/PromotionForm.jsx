@@ -162,14 +162,14 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
       }
     }
 
-    // Validate selected models
-    if (selectedModels.length === 0) {
-      newErrors.applicableModels = "Vui lòng chọn ít nhất một model xe";
-    }
-
     // Validate selected dealers
     if (selectedDealers.length === 0) {
       newErrors.dealers = "Vui lòng chọn ít nhất một đại lý";
+    }
+
+    // Validate selected models
+    if (selectedModels.length === 0) {
+      newErrors.applicableModels = "Vui lòng chọn ít nhất một model xe";
     }
     
     setErrors(newErrors);
@@ -339,8 +339,13 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
   };
 
   const availableModels = vehicleModels.filter(
-    model => !selectedModels.some(selected => selected.modelId === model.modelId)
-  );
+  (model) =>
+    model && 
+    !selectedModels.some(
+      (selected) => selected && selected.modelId === model.modelId
+    )
+);
+
 
     const availableDealers = dealers.filter(
     dealer => !selectedDealers.some(selected => selected.dealerId === dealer.dealerId)
@@ -538,44 +543,49 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
               {selectedModels.length > 0 && (
                 <div className="mb-4">
                   <div className="flex flex-wrap gap-2">
-                    {selectedModels.map((model) => (
-                      <div
-                        key={model.modelId}
-                        className="inline-flex items-center gap-2 bg-white border border-gray-200 shadow-sm px-3 py-1.5 rounded-full text-sm hover:shadow-md transition-all duration-200"
-                      >
-                        {/* Tên model */}
-                        <span className="font-semibold text-gray-800">{model.modelName}</span>
+                    {selectedModels
+  .filter((model) => model != null) // Bỏ các model null/undefined
+  .map((model) => {
+    console.log("Selected model:", model); // Debug từng model
+    return (
+      <div
+        key={model.modelId || Math.random()} // phòng trường hợp modelId null
+        className="inline-flex items-center gap-2 bg-white border border-gray-200 shadow-sm px-3 py-1.5 rounded-full text-sm hover:shadow-md transition-all duration-200"
+      >
+        {/* Tên model */}
+        <span className="font-semibold text-gray-800">{model?.modelName || ''}</span>
 
-                        {/* Dấu gạch nối */}
-                        <span className="text-gray-400">-</span>
+        {/* Dấu gạch nối */}
+        <span className="text-gray-400">-</span>
 
-                        {/* Hãng xe */}
-                        <span className="text-blue-600 font-medium">{model.brand}</span>
+        {/* Hãng xe */}
+        <span className="text-blue-600 font-medium">{model?.brand || ''}</span>
 
-                        {/* Trạng thái */}
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            model.status === 'IN_PRODUCTION'
-                              ? 'bg-green-100 text-green-700'
-                              : model.status === 'DISCONTINUED'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}
-                        >
-                          {model.status.replace('_', ' ')}
-                        </span>
+        {/* Trạng thái */}
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+            model?.status === 'IN_PRODUCTION'
+              ? 'bg-green-100 text-green-700'
+              : model?.status === 'DISCONTINUED'
+              ? 'bg-red-100 text-red-700'
+              : 'bg-yellow-100 text-yellow-700'
+          }`}
+        >
+          {model?.status?.replace('_', ' ') || ''}
+        </span>
 
-                        {/* Nút xóa */}
-                        <button
-                          type="button"
-                          onClick={() => removeModel(model.modelId)}
-                          className="ml-1 text-gray-500 hover:text-red-500 transition-colors duration-200"
-                        >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
-                      </div>
+        {/* Nút xóa */}
+        <button
+          type="button"
+          onClick={() => removeModel(model.modelId)}
+          className="ml-1 text-gray-500 hover:text-red-500 transition-colors duration-200"
+        >
+          <XMarkIcon className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  })}
 
-                    ))}
                   </div>
                 </div>
               )}

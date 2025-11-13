@@ -6,6 +6,8 @@ import com.ev.sales_service.dto.request.OrderTrackingRequest;
 import com.ev.sales_service.dto.response.OrderTrackingResponse;
 import com.ev.sales_service.entity.OrderTracking;
 import com.ev.sales_service.entity.SalesOrder;
+import com.ev.sales_service.enums.OrderStatusB2C;
+import com.ev.sales_service.enums.OrderTrackingStatus;
 import com.ev.sales_service.repository.OrderTrackingRepository;
 import com.ev.sales_service.repository.SalesOrderRepositoryB2C;
 import com.ev.sales_service.service.Interface.OrderTrackingService;
@@ -36,20 +38,23 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
 
         SalesOrder salesOrder = salesOrderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
-
+        // ✅ Chỉ cho phép tạo nếu đơn hàng đang ở trạng thái IN_PRODUCTION
+        if (salesOrder.getOrderStatusB2C() != (OrderStatusB2C.IN_PRODUCTION)) {
+            throw new AppException(ErrorCode.INVALID_TRACKING_OPERATION_STATE);
+        }
         OrderTracking orderTracking = OrderTracking.builder()
                 .salesOrder(salesOrder)
-                .status(request.getStatus())
+                .statusB2C(request.getStatus())
                 .updateDate(LocalDateTime.now())
                 .notes(request.getNotes())
                 .updatedBy(request.getUpdatedBy())
                 .build();
 
         OrderTracking savedTracking = orderTrackingRepository.save(orderTracking);
-
-        // Update order status if different from current
-        if (!salesOrder.getOrderStatus().toString().equals(request.getStatus())) {
-            // TODO: Update order status through SalesOrderService
+         // ✅ Nếu tracking đã giao hàng -> cập nhật trạng thái đơn hàng
+        if (request.getStatusB2C() == OrderTrackingStatus.DELIVERED) {
+            salesOrder.setOrderStatusB2C(OrderStatusB2C.DELIVERED);
+            salesOrderRepository.save(salesOrder);
         }
 
         log.info("Tracking record created successfully: {}", savedTracking.getTrackId());
@@ -63,16 +68,32 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
         OrderTracking orderTracking = orderTrackingRepository.findById(trackId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_TRACKING_NOT_FOUND));
 
-        orderTracking.setStatus(request.getStatus());
+        SalesOrder salesOrder = salesOrderRepository.findById(orderTracking.getSalesOrder().getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+
+        // ✅ Chỉ cho phép cập nhật khi đơn hàng đang trong sản xuất
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.IN_PRODUCTION) {
+            throw new AppException(ErrorCode.INVALID_TRACKING_OPERATION_STATE);
+        }
+
+        // ✅ Cập nhật trạng thái tracking
+        orderTracking.setStatusB2C(request.getStatusB2C());
         orderTracking.setNotes(request.getNotes());
         orderTracking.setUpdateDate(LocalDateTime.now());
         orderTracking.setUpdatedBy(request.getUpdatedBy());
+
+        // ✅ Nếu tracking đã giao hàng -> cập nhật trạng thái đơn hàng
+        if (request.getStatusB2C() == OrderTrackingStatus.DELIVERED) {
+            salesOrder.setOrderStatusB2C(OrderStatusB2C.DELIVERED);
+            salesOrderRepository.save(salesOrder);
+        }
 
         OrderTracking updatedTracking = orderTrackingRepository.save(orderTracking);
         log.info("Tracking record updated successfully: {}", trackId);
 
         return mapToResponse(updatedTracking);
     }
+
 
     @Override
     public void deleteTrackingRecord(UUID trackId) {
@@ -111,7 +132,7 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
 
     @Override
     public List<OrderTrackingResponse> getTrackingByStatus(String status) {
-        List<OrderTracking> trackingRecords = orderTrackingRepository.findByOrderIdAndStatus(null, status);
+        List<OrderTracking> trackingRecords = orderTrackingRepository.findByOrderIdAndStatusB2C(null, status);
         return trackingRecords.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -126,11 +147,11 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
 
         // Get current status from latest tracking record
         OrderTracking currentTracking = orderTrackingRepository.findLatestByOrderId(orderId);
-        String currentStatus = currentTracking != null ? currentTracking.getStatus() : "PENDING";
+        OrderTrackingStatus currentStatus = currentTracking != null ? currentTracking.getStatusB2C() : OrderTrackingStatus.CREATED;
 
         OrderTracking orderTracking = OrderTracking.builder()
                 .salesOrder(salesOrder)
-                .status(currentStatus)
+                .statusB2C(currentStatus)
                 .updateDate(LocalDateTime.now())
                 .notes(notes)
                 .updatedBy(updatedBy)

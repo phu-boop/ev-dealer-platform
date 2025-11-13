@@ -1,254 +1,203 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Báo Giá Xe - VinEV</title>
-    <style>
-        :root {
-            --primary: #10b981;
-            --primary-dark: #059669;
-            --secondary: #3b82f6;
-            --accent: #f59e0b;
-            --dark: #1f2937;
-            --light: #f8fafc;
-            --gray: #6b7280;
-        }
+  <meta charset="UTF-8">
+  <title>Báo Giá Xe - EV Automotive</title>
+  <style>
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #f5f6fa;
+      color: #1e293b;
+      line-height: 1.5;
+    }
 
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-            min-height: 100vh;
-        }
+    .container {
+      max-width: 680px;
+      margin: 24px auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 4px 5px 10px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+    }
 
-        .container {
-            max-width: 650px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
-        }
+    .header {
+      background: #3b82f6;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
 
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-            position: relative;
-        }
+    .header h1 {
+      font-size: 20px;
+      margin: 0;
+      font-weight: 600;
+    }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+    .header p {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
 
-        .logo {
-            position: relative;
-            width: 70px;
-            height: 70px;
-            margin-right: 15px;
-        }
+    .body {
+      padding: 24px 20px;
+    }
 
-        .logo-circle {
-            position: absolute;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.8);
-        }
+    .greeting {
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
 
-        .logo-spinner {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid white;
-            border-top-color: transparent;
-            top: 10px;
-            left: 10px;
-            animation: spin 8s linear infinite;
-        }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 20px 0;
+    }
 
-        .logo-leaf {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            color: white;
-            font-size: 22px;
-        }
+    .info-card {
+      background: #f9fafb;
+      padding: 14px 12px;
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
+    }
 
-        .logo-car {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            color: white;
-            font-size: 16px;
-        }
+    .info-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
 
-        .brand-name {
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
+    .info-value {
+      font-weight: 600;
+      font-size: 14px;
+      color: #1e293b;
+    }
 
-        .content {
-            background: white;
-            padding: 40px;
-        }
+    .price-card {
+      text-align: center;
+      padding: 16px;
+      border-radius: 8px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      margin: 20px 0;
+    }
 
-        .footer {
-            text-align: center;
-            color: var(--gray);
-            font-size: 14px;
-            padding: 30px;
-            background: #f8fafc;
-            border-top: 1px solid #e5e7eb;
-        }
+    .final-price {
+      font-size: 22px;
+      font-weight: 700;
+      color: #10b981;
+    }
 
-        .price {
-            color: var(--primary-dark);
-            font-weight: bold;
-            font-size: 20px;
-        }
+    .terms-section {
+      background: #fefce8;
+      border: 1px solid #fef08a;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #1e293b;
+    }
 
-        .info-item {
-            margin: 15px 0;
-            padding: 18px;
-            background: #f8fafc;
-            border-left: 4px solid var(--primary);
-            border-radius: 0 8px 8px 0;
-            transition: all 0.3s ease;
-        }
+    .action-section {
+      text-align: center;
+      margin-top: 16px;
+    }
 
-        .info-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
+    .btn {
+      display: inline-block;
+      padding: 10px 24px;
+      margin: 6px;
+      border-radius: 8px;
+      font-weight: 500;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s;
+      color: white;
+    }
 
-        .action-buttons {
-            text-align: center;
-            margin: 40px 0;
-            padding: 30px;
-            background: #f8fafc;
-            border-radius: 12px;
-        }
+    .btn-accept {
+      background: #10b981;
+    }
 
-        .btn {
-            display: inline-block;
-            padding: 14px 28px;
-            margin: 0 12px;
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+    .btn-accept:hover {
+      background: #059669;
+    }
 
-        .btn-accept {
-            background: var(--primary);
-            color: white;
-        }
+    .btn-reject {
+      background: #ef4444;
+    }
 
-        .btn-accept:hover {
-            background: var(--primary-dark);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
-        }
+    .btn-reject:hover {
+      background: #dc2626;
+    }
 
-        .btn-reject {
-            background: #ef4444;
-            color: white;
-        }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      padding: 16px 12px;
+      border-top: 1px solid #e2e8f0;
+    }
 
-        .btn-reject:hover {
-            background: #dc2626;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
-        }
-
-        .section-title {
-            color: var(--dark);
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
-            margin-top: 30px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    @media (max-width: 640px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .body { padding: 16px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo-container">
-                <div class="logo">
-                    <div class="logo-circle"></div>
-                    <div class="logo-spinner"></div>
-                    <div class="logo-leaf">🌿</div>
-                    <div class="logo-car">🚗</div>
-                </div>
-                <div class="brand-name">VinEV</div>
-            </div>
-            <h2 style="margin: 10px 0 0; font-weight: 500; font-size: 24px;">Báo Giá Xe Của Quý Khách</h2>
-        </div>
-
-        <div class="content">
-            <p>Kính gửi Quý khách <strong th:text="${customer.fullName}"></strong>,</p>
-
-            <p>Cảm ơn Quý khách đã quan tâm đến sản phẩm của VinEV. Dưới đây là báo giá chi tiết:</p>
-
-            <div class="info-item">
-                <strong>Mã báo giá:</strong> <span th:text="${quotation.quotationId}"></span>
-            </div>
-
-            <div class="info-item">
-                <strong>Ngày báo giá:</strong> <span th:text="${quotationDate}"></span>
-            </div>
-
-            <div class="info-item">
-                <strong>Hiệu lực đến:</strong> <span th:text="${validUntil}"></span>
-            </div>
-
-            <h3 class="section-title">Thông tin giá</h3>
-            <div class="info-item">
-                <strong>Giá cơ bản:</strong> <span class="price" th:text="${#numbers.formatDecimal(quotation.basePrice, 0, 'COMMA', 2, 'POINT') + ' VND'}"></span>
-            </div>
-
-            <div class="info-item">
-                <strong>Giảm giá:</strong> <span class="price" th:text="${#numbers.formatDecimal(quotation.discountAmount, 0, 'COMMA', 2, 'POINT') + ' VND'}"></span>
-            </div>
-
-            <div class="info-item">
-                <strong>Giá cuối cùng:</strong> <span class="price" th:text="${#numbers.formatDecimal(quotation.finalPrice, 0, 'COMMA', 2, 'POINT') + ' VND'}"></span>
-            </div>
-
-            <h3 class="section-title">Điều khoản và điều kiện</h3>
-            <p th:text="${quotation.termsConditions}"></p>
-
-            <!-- ACTION BUTTONS -->
-            <div class="action-buttons">
-                <p style="margin-bottom: 20px; font-size: 18px;"><strong>Vui lòng phản hồi báo giá này:</strong></p>
-                <a th:href="${'http://localhost:8080/sendmail/customer-response/quotation/' + quotation.quotationId + '/accept'}"
-                   class="btn btn-accept">✅ Chấp Nhận Báo Giá</a>
-                <a th:href="${'http://localhost:8080/sendmail/customer-response/quotation/' + quotation.quotationId + '/reject'}"
-                   class="btn btn-reject">❌ Từ Chối Báo Giá</a>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Trân trọng,<br>
-            <strong>Đội ngũ VinEV</strong><br>
-            Email: sales@vinev.com<br>
-            Hotline: 1800-xxxx</p>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>Báo Giá Xe - EV Automotive</h1>
+      <p>Đồng hành cùng Quý khách</p>
     </div>
+
+    <div class="body">
+      <p class="greeting">Kính gửi Quý khách <strong th:text="${customer.fullName}"></strong>,</p>
+
+      <p>Cảm ơn Quý khách đã quan tâm đến sản phẩm của EV Automotive. Dưới đây là báo giá dành riêng cho Quý khách:</p>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-label">Mã báo giá</div>
+          <div class="info-value" th:text="${quotation.quotationId}"></div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Ngày báo giá</div>
+          <div class="info-value" th:text="${quotationDate}"></div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Hiệu lực đến</div>
+          <div class="info-value" th:text="${validUntil}"></div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Thời hạn hiệu lực</div>
+          <div class="info-value">7 Ngày</div>
+        </div>
+      </div>
+
+      <div class="price-card">
+        <div>Giá cuối cùng</div>
+        <div class="final-price" th:text="${#numbers.formatDecimal(quotation.finalPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}"></div>
+        <div style="font-size:12px;color:#64748b;">Đã bao gồm VAT & phí trước bạ</div>
+      </div>
+
+      <div class="terms-section" th:text="${quotation.termsConditions}">
+      </div>
+
+      <div class="action-section">
+        <a th:href="${acceptUrl}" class="btn btn-accept">Chấp Nhận</a>
+        <a th:href="${rejectUrl}" class="btn btn-reject">Từ Chối</a>
+        <p style="margin-top:8px;font-size:12px;color:#64748b;">Báo giá có hiệu lực 7 ngày kể từ ngày gửi.</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <strong>EV Automotive</strong> • sales@ev-automotive.com • 1800-1234
+    </div>
+  </div>
 </body>
 </html>

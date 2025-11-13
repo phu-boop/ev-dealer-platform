@@ -1,161 +1,6 @@
-// import React from 'react';
-// import { Card, Descriptions, Tag, Button, Space, Row, Col, Timeline } from 'antd';
-// import { DownloadOutlined, EditOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
-// const ContractDetails = ({ contract, onEdit, onDownload, onSign }) => {
-//   const getStatusColor = (status) => {
-//     const colors = {
-//       DRAFT: 'default',
-//       PENDING_SIGNATURE: 'orange',
-//       SIGNED: 'green',
-//       EXPIRED: 'red',
-//       CANCELLED: 'red'
-//     };
-//     return colors[status] || 'default';
-//   };
-
-//   const getStatusText = (status) => {
-//     const texts = {
-//       DRAFT: 'Bản nháp',
-//       PENDING_SIGNATURE: 'Chờ ký',
-//       SIGNED: 'Đã ký',
-//       EXPIRED: 'Hết hạn',
-//       CANCELLED: 'Đã hủy'
-//     };
-//     return texts[status] || status;
-//   };
-
-//   const timelineItems = [
-//     {
-//       color: 'green',
-//       children: (
-//         <div>
-//           <p><strong>Tạo hợp đồng</strong></p>
-//           <p>{new Date(contract.contractDate).toLocaleString('vi-VN')}</p>
-//         </div>
-//       ),
-//     },
-//     ...(contract.signingDate ? [{
-//       color: 'blue',
-//       children: (
-//         <div>
-//           <p><strong>Ký hợp đồng</strong></p>
-//           <p>{new Date(contract.signingDate).toLocaleString('vi-VN')}</p>
-//           {contract.digitalSignature && (
-//             <Tag color="green">Đã ký số</Tag>
-//           )}
-//         </div>
-//       ),
-//     }] : []),
-//   ];
-
-//   return (
-//     <Row gutter={16}>
-//       <Col span={16}>
-//         <Card 
-//           title="Chi tiết hợp đồng" 
-//           extra={
-//             <Space>
-//               {contract.contractFileUrl && (
-//                 <Button 
-//                   icon={<DownloadOutlined />} 
-//                   onClick={onDownload}
-//                   type="primary"
-//                   ghost
-//                 >
-//                   Tải hợp đồng
-//                 </Button>
-//               )}
-//               <Button 
-//                 icon={<EditOutlined />} 
-//                 onClick={onEdit}
-//               >
-//                 Chỉnh sửa
-//               </Button>
-//             </Space>
-//           }
-//         >
-//           <Descriptions bordered column={2}>
-//             <Descriptions.Item label="Mã hợp đồng" span={1}>
-//               {contract.contractId}
-//             </Descriptions.Item>
-//             <Descriptions.Item label="Mã đơn hàng" span={1}>
-//               {contract.orderId}
-//             </Descriptions.Item>
-//             <Descriptions.Item label="Ngày tạo" span={1}>
-//               {new Date(contract.contractDate).toLocaleString('vi-VN')}
-//             </Descriptions.Item>
-//             <Descriptions.Item label="Ngày ký" span={1}>
-//               {contract.signingDate ? new Date(contract.signingDate).toLocaleString('vi-VN') : 'Chưa ký'}
-//             </Descriptions.Item>
-//             <Descriptions.Item label="Trạng thái" span={2}>
-//               <Tag color={getStatusColor(contract.contractStatus)} style={{ fontSize: '14px', padding: '4px 8px' }}>
-//                 {getStatusText(contract.contractStatus)}
-//               </Tag>
-//             </Descriptions.Item>
-//             {contract.digitalSignature && (
-//               <Descriptions.Item label="Chữ ký số" span={2}>
-//                 <Tag color="green" icon={<CheckCircleOutlined />}>
-//                   Đã ký số
-//                 </Tag>
-//               </Descriptions.Item>
-//             )}
-//             {contract.contractFileUrl && (
-//               <Descriptions.Item label="File hợp đồng" span={2}>
-//                 <Button 
-//                   type="link" 
-//                   icon={<FileTextOutlined />}
-//                   href={contract.contractFileUrl} 
-//                   target="_blank"
-//                 >
-//                   Xem file hợp đồng
-//                 </Button>
-//               </Descriptions.Item>
-//             )}
-//             <Descriptions.Item label="Điều khoản hợp đồng" span={2}>
-//               <div 
-//                 style={{ 
-//                   whiteSpace: 'pre-wrap',
-//                   maxHeight: '300px',
-//                   overflowY: 'auto',
-//                   padding: '12px',
-//                   backgroundColor: '#f5f5f5',
-//                   borderRadius: '6px'
-//                 }}
-//               >
-//                 {contract.contractTerms}
-//               </div>
-//             </Descriptions.Item>
-//           </Descriptions>
-//         </Card>
-//       </Col>
-      
-//       <Col span={8}>
-//         <Card title="Lịch sử hợp đồng">
-//           <Timeline items={timelineItems} />
-//         </Card>
-        
-//         {contract.contractStatus === 'PENDING_SIGNATURE' && (
-//           <Card title="Hành động" style={{ marginTop: 16 }}>
-//             <Button 
-//               type="primary" 
-//               block 
-//               size="large"
-//               onClick={onSign}
-//               icon={<CheckCircleOutlined />}
-//             >
-//               Ký hợp đồng
-//             </Button>
-//           </Card>
-//         )}
-//       </Col>
-//     </Row>
-//   );
-// };
-
-// export default ContractDetails;
 import React from 'react';
-import { Card, Descriptions, Tag, Button, Space, Row, Col, Timeline, Alert } from 'antd';
+import { Card, Descriptions, Tag, Button, Space, Row, Col, Timeline, Alert ,Modal} from 'antd';
 import { 
   DownloadOutlined, 
   EditOutlined, 
@@ -165,7 +10,7 @@ import {
   FilePdfOutlined
 } from '@ant-design/icons';
 
-const ContractDetails = ({ contract, onEdit, onDownload, onSign }) => {
+const ContractDetails = ({ contract, onEdit, onDownload, onSign, onCancel }) => {
   const getStatusColor = (status) => {
     const colors = {
       DRAFT: 'default',
@@ -177,6 +22,27 @@ const ContractDetails = ({ contract, onEdit, onDownload, onSign }) => {
     };
     return colors[status] || 'default';
   };
+  const [modal, contextHolder] = Modal.useModal();
+   const handleCancel = () => {
+    if (!contract?.contractId) return;
+
+    modal.confirm({
+      title: 'Xác nhận hủy hợp đồng',
+      content: 'Bạn có chắc chắn muốn hủy hợp đồng này không?',
+      okText: 'Hủy hợp đồng',
+      okType: 'danger',
+      cancelText: 'Đóng',
+      onOk: async () => {
+        try {
+          await onCancel(contract.contractId);
+        } catch (err) {
+          console.error(err);
+        }
+      },
+    });
+  };
+
+
 
   const getStatusText = (status) => {
     const texts = {
@@ -395,12 +261,13 @@ const ContractDetails = ({ contract, onEdit, onDownload, onSign }) => {
               >
                 Chỉnh sửa hợp đồng
               </Button>
+              {contextHolder}
               <Button 
                 block 
                 icon={<ClockCircleOutlined />}
-                onClick={() => console.log('Send for review')}
+                onClick={handleCancel}
               >
-                Gửi duyệt
+                Huỷ hợp đồng
               </Button>
             </Card>
           )}

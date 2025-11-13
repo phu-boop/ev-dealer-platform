@@ -1,89 +1,97 @@
-// components/QuotationTable.jsx
 import React from 'react';
 
 const QuotationTable = ({ quotations, loading, error, onView, onDelete, canDelete }) => {
-  // Format functions và các hàm helper giữ nguyên từ code cũ
   const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined) return 'N/A';
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
-    }).format(amount || 0);
+    }).format(amount);
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
   const getStatusColor = (status) => {
     const colors = {
-      PENDING: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-      ACCEPTED: 'bg-green-100 text-green-800 border border-green-200',
-      APPROVED: 'bg-green-100 text-green-800 border border-green-200',
-      REJECTED: 'bg-red-100 text-red-800 border border-red-200',
-      EXPIRED: 'bg-gray-100 text-gray-800 border border-gray-200',
-      DRAFT: 'bg-blue-100 text-blue-800 border border-blue-200'
+      DRAFT: 'bg-slate-100 text-slate-700',
+      PENDING: 'bg-amber-50 text-amber-700',
+      SENT: 'bg-blue-50 text-blue-700',
+      ACCEPTED: 'bg-emerald-50 text-emerald-700',
+      COMPLETE: 'bg-green-50 text-green-700',
+      REJECTED: 'bg-rose-50 text-rose-700',
+      EXPIRED: 'bg-gray-100 text-gray-600'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800 border border-gray-200';
+    return colors[status] || 'bg-gray-100 text-gray-600';
   };
 
   const getStatusText = (status) => {
     const statusMap = {
-      PENDING: 'Chờ duyệt',
+      DRAFT: 'Bản nháp',
+      PENDING: 'Chờ xử lý',
+      SENT: 'Đã gửi',
       ACCEPTED: 'Đã chấp nhận',
-      APPROVED: 'Đã duyệt',
+      COMPLETE: 'Hoàn thành',
       REJECTED: 'Từ chối',
-      EXPIRED: 'Hết hạn',
-      DRAFT: 'Bản nháp'
+      EXPIRED: 'Hết hạn'
     };
     return statusMap[status] || status;
   };
 
-  // Skeleton Loading Rows
+  // Enhanced Skeleton Loading
   const SkeletonRow = () => (
-    <tr className="animate-pulse">
-      <td className="px-6 py-4 whitespace-nowrap">
+    <tr className="animate-pulse border-b border-gray-100 last:border-0">
+      <td className="px-6 py-4">
         <div className="h-4 bg-gray-200 rounded w-20"></div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="h-4 bg-gray-200 rounded w-32"></div>
       </td>
       <td className="px-6 py-4">
-        <div className="h-4 bg-gray-200 rounded w-40"></div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
         <div className="h-4 bg-gray-200 rounded w-24"></div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-6 py-4">
         <div className="h-4 bg-gray-200 rounded w-20"></div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-6 py-4">
+        <div className="h-4 bg-gray-200 rounded w-28"></div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-24"></div>
+          <div className="h-3 bg-gray-200 rounded w-16"></div>
+        </div>
+      </td>
+      <td className="px-6 py-4">
         <div className="h-4 bg-gray-200 rounded w-20"></div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="h-6 bg-gray-200 rounded w-20"></div>
+      <td className="px-6 py-4">
+        <div className="h-6 bg-gray-200 rounded-full w-20"></div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="h-8 bg-gray-200 rounded w-20"></div>
+      <td className="px-6 py-4">
+        <div className="flex space-x-3">
+          <div className="h-8 bg-gray-200 rounded w-12"></div>
+          <div className="h-8 bg-gray-200 rounded w-12"></div>
+        </div>
       </td>
     </tr>
   );
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-50/80 border-b border-gray-100">
               <tr>
-                {['Mã BG', 'Khách hàng', 'Thông tin xe', 'Giá', 'Ngày tạo', 'Hiệu lực', 'Trạng thái', 'Thao tác'].map((header) => (
-                  <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {['Mã BG', 'Khách hàng', 'Model', 'Phiên bản', 'Giá trị', 'Ngày tạo', 'Trạng thái', 'Thao tác'].map((header) => (
+                  <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     {header}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {[...Array(5)].map((_, index) => (
+            <tbody>
+              {[...Array(6)].map((_, index) => (
                 <SkeletonRow key={index} />
               ))}
             </tbody>
@@ -93,134 +101,125 @@ const QuotationTable = ({ quotations, loading, error, onView, onDelete, canDelet
     );
   }
 
-  // Error và Empty states giữ nguyên từ code cũ, có thể tùy chỉnh thêm
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
-        {/* Error content từ code cũ */}
+      <div className="bg-gradient-to-br from-rose-50 to-rose-50/60 border border-rose-200 rounded-2xl p-8 text-center">
+        <div className="text-rose-600 font-semibold text-lg mb-2">Đã xảy ra lỗi</div>
+        <div className="text-rose-500 text-sm">{error}</div>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-6 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
+        >
+          Thử lại
+        </button>
       </div>
     );
   }
 
   if (!quotations.length) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-12 text-center">
-        {/* Empty state content từ code cũ */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div className="text-gray-600 font-semibold text-lg mb-1">Không có báo giá nào</div>
+        <div className="text-gray-400 text-sm">Hãy tạo báo giá mới để bắt đầu</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden backdrop-blur-sm">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50/80 backdrop-blur-sm">
+        <table className="w-full">
+          <thead className="bg-gradient-to-r from-gray-50 to-gray-50/80 border-b border-gray-100">
             <tr>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Mã BG
               </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Khách hàng
               </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Thông tin xe
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Model
               </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Giá
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Phiên bản
               </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Giá trị
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Ngày tạo
               </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Hiệu lực đến
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Trạng thái
               </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Thao tác
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-100">
             {quotations.map((quotation) => (
               <tr 
                 key={quotation.quotationId} 
-                className="hover:bg-gray-50/80 transition-all duration-200 group cursor-pointer"
-                onClick={() => onView(quotation)}
+                className="hover:bg-gray-50/50 transition-all duration-200 group border-b border-gray-100 last:border-0"
               >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-semibold text-gray-900 font-mono">
+                <td className="px-6 py-4">
+                  <div className="text-sm font-semibold text-gray-900 font-mono bg-gray-50 px-3 py-1.5 rounded-lg inline-block">
                     #{quotation.quotationId?.slice(-8)}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {quotation.customerInfo ? (
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {quotation.customerInfo.fullName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {quotation.customerInfo.phone}
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-gray-400">-</span>
-                  )}
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-700">
+                    ID: {quotation.customerId}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
-                  {quotation.modelInfo && quotation.variantInfo ? (
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {quotation.modelInfo.brand} {quotation.modelInfo.modelName}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {quotation.variantInfo.versionName}
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-gray-400">-</span>
-                  )}
+                  <div className="text-sm text-gray-700 font-medium">
+                    {quotation.modelId}
+                  </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-bold text-green-600">
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-600">
+                    {quotation.variantId}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm font-bold text-emerald-600">
                     {formatCurrency(quotation.finalPrice)}
                   </div>
                   {quotation.discountAmount > 0 && (
-                    <div className="text-xs text-red-500 line-through">
+                    <div className="text-xs text-rose-500 line-through mt-1">
                       {formatCurrency(quotation.basePrice)}
                     </div>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(quotation.quotationDate)}
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-500">
+                    {formatDate(quotation.quotationDate)}
+                  </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(quotation.validUntil)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(quotation.status)}`}>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex px-3 py-1.5 text-xs font-medium rounded-full ${getStatusColor(quotation.status)}`}>
                     {getStatusText(quotation.status)}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <td className="px-6 py-4">
+                  <div className="flex space-x-2">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onView(quotation);
-                      }}
-                      className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
+                      onClick={() => onView(quotation)}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
                     >
                       Xem
                     </button>
                     {canDelete && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(quotation.quotationId);
-                        }}
-                        className="text-red-600 hover:text-red-800 font-medium transition-colors duration-200"
+                        onClick={() => onDelete(quotation.quotationId)}
+                        className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
                       >
                         Xóa
                       </button>
@@ -231,6 +230,18 @@ const QuotationTable = ({ quotations, loading, error, onView, onDelete, canDelet
             ))}
           </tbody>
         </table>
+      </div>
+      
+      {/* Table Footer */}
+      <div className="bg-gray-50/50 border-t border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Hiển thị <span className="font-semibold text-gray-700">{quotations.length}</span> báo giá
+          </div>
+          <div className="text-xs text-gray-400">
+            Cập nhật lúc {new Date().toLocaleTimeString('vi-VN')}
+          </div>
+        </div>
       </div>
     </div>
   );

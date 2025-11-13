@@ -27,7 +27,7 @@ public class Outbox {
     @Column(columnDefinition = "LONGTEXT")
     private String payload;
 
-    private String status; // NEW, SENDING, SENT, FAILED
+    private String status;
     private int attempts;
 
     private LocalDateTime lastAttemptAt;

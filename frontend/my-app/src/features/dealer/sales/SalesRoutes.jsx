@@ -1,66 +1,3 @@
-// import React from 'react';
-// import { Route, Routes } from 'react-router-dom';
-
-// // Lazy load components
-// const SalesOrderListPage = React.lazy(() =>
-//   import('./salesOrder/pages/SalesOrderListPage')
-// );
-// const SalesOrderDetailPage = React.lazy(() =>
-//   import('./salesOrder/pages/SalesOrderDetailPage')
-// );
-// const OrderTrackingPage = React.lazy(() =>
-//   import('./orderTracking/pages/OrderTrackingPage')
-// );
-// const OrderItemListPage = React.lazy(() =>
-//   import('./orderItem/pages/OrderItemListPage')
-// );
-// const TrackingHistoryPage = React.lazy(() =>
-//   import('./orderTracking/pages/TrackingHistoryPage')
-// );
-
-// // Sales Contract components
-// const ContractListPage = React.lazy(() =>
-//   import('../sales/salesContract/pages/ContractListPage')
-// );
-// const ContractDetailPage = React.lazy(() =>
-//   import('../sales/salesContract/pages/ContractDetailPage')
-// );
-// const ContractCreatePage = React.lazy(() =>
-//   import('../sales/salesContract/pages/ContractCreatePage')
-// );
-
-// const SalesRoutes = () => {
-//   return (
-//     <React.Suspense fallback={<div>Loading sales module...</div>}>
-//       <Routes>
-//         {/* Sales Order Routes */}
-//         <Route path="orders" element={<SalesOrderListPage />} />
-//         <Route path="orders/:orderId" element={<SalesOrderDetailPage />} />
-        
-//         {/* Order Tracking Routes in oderSale*/}
-//         <Route path="orders/:orderId/tracking" element={<OrderTrackingPage />} />
-//         <Route path="orders/:orderId/tracking/history" element={<TrackingHistoryPage />} />
-        
-//         {/* Order Item Routes */}
-//         <Route path="orders/:orderId/items" element={<OrderItemListPage />} />
-
-
-//         {/* Sales Tracking Routes */}
-//         <Route path="delivery" element={<OrderTrackingPage />} />
-
-//         {/* Sales Contract Routes */}
-//         <Route path="contracts" element={<ContractListPage />} />
-//         <Route path="contracts/:contractId" element={<ContractDetailPage />} />
-//         <Route path="orders/:orderId/contract/create" element={<ContractCreatePage />} />
-//       </Routes>
-//     </React.Suspense>
-//   );
-// };
-
-// export default SalesRoutes;
-
-
-
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 
@@ -71,9 +8,9 @@ const SalesOrderListPage = React.lazy(() =>
 const SalesOrderDetailPage = React.lazy(() =>
   import('./salesOrder/pages/SalesOrderDetailPage')
 );
-const SalesOrderCreatePage = React.lazy(() =>
-  import('./salesOrder/pages/SalesOrderCreatePage')
-);
+// const SalesOrderCreatePage = React.lazy(() =>
+//   import('./salesOrder/pages/SalesOrderCreatePage')
+// );
 
 // Lazy load Order Tracking pages
 const OrderTrackingPage = React.lazy(() =>
@@ -111,7 +48,7 @@ const SalesRoutes = () => {
       <Routes>
         {/* Sales Order Routes */}
         <Route path="orders" element={<SalesOrderListPage />} />
-        <Route path="orders/create" element={<SalesOrderCreatePage />} />
+        {/* <Route path="orders/create" element={<SalesOrderCreatePage />} /> */}
         <Route path="orders/:orderId" element={<SalesOrderDetailPage />} />
 
         {/* Order Tracking Routes */}
@@ -124,6 +61,7 @@ const SalesRoutes = () => {
 
         {/* Sales Contract Routes */}
         <Route path="contracts" element={<ContractListPage />} />
+        <Route path="contracts/create" element={<ContractCreatePage />} />
         <Route path="contracts/:contractId" element={<ContractDetailPage />} />
         <Route path="contracts/:contractId/edit" element={<ContractEditPage />} />
         <Route path="orders/:orderId/contract/create" element={<ContractCreatePage />} />
@@ -136,4 +74,3 @@ const SalesRoutes = () => {
 };
 
 export default SalesRoutes;
-

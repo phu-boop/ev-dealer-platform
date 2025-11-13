@@ -17,6 +17,7 @@ import com.ev.common_lib.exception.ErrorCode;
 import com.ev.user_service.mapper.UserMapper;
 import reactor.core.publisher.Sinks;
 
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -75,17 +76,18 @@ public class UserService {
     }
 
     public List<UserRespond> getAllUserDealerManage() {
-        return userRepository.findAll()
-                .stream()
-                .filter(user -> user.getRoleToString().contains("DEALER_MANAGER"))
-                .map(userMapper::usertoUserRespond)
-                .collect(Collectors.toList());
+        return userRepository.findAll().stream().filter(user -> user.getRoleToString().contains("DEALER_MANAGER")).map(userMapper::usertoUserRespond).collect(Collectors.toList());
     }
 
-    public List<UserRespond> getAllUserStaffDealer() {
+    public List<UserRespond> getAllUserStaffDealer(UUID dealerId) {
+        System.out.printf("pgufg",dealerId);
         return userRepository.findAll()
                 .stream()
                 .filter(user -> user.getRoleToString().contains("DEALER_STAFF"))
+                .filter(user -> user.getDealerStaffProfile() != null)
+                .filter(user -> dealerId == null ||
+                        (user.getDealerStaffProfile().getDealerId() != null &&
+                                dealerId.equals(user.getDealerStaffProfile().getDealerId())))
                 .map(userMapper::usertoUserRespond)
                 .collect(Collectors.toList());
     }
@@ -183,7 +185,7 @@ public class UserService {
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
         // check dealer id
-        if(dealerManagerProfileRepository.existsByDealerId(userRequest.getDealerId())){
+        if (dealerManagerProfileRepository.existsByDealerId(userRequest.getDealerId())) {
             throw new AppException(ErrorCode.DEALER_MANAGER_ALREADY_EXISTS);
         }
         dealerManagerProfileService.SaveDealerManagerProfile(user, userRequest

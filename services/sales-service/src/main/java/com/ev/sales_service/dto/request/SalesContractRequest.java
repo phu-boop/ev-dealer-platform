@@ -1,5 +1,6 @@
     package com.ev.sales_service.dto.request;
 
+    import com.ev.sales_service.enums.ContractStatus;
     import lombok.Data;
 
     import java.time.LocalDateTime;
@@ -14,4 +15,5 @@
         private String digitalSignature;
         private String contractFileUrl;
         private String contractNumber;
+        private ContractStatus contractStatus;
     }

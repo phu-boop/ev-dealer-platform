@@ -24,7 +24,7 @@ const QuotationCreatePage = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [quotationId, setQuotationId] = useState(null);
-    const [errorMessage, setErrorMessage] = useState(''); // Thêm state để lưu message lỗi
+    const [errorMessage, setErrorMessage] = useState('');
 
     const [customers, setCustomers] = useState([]);
     const [models, setModels] = useState([]);
@@ -54,6 +54,26 @@ const QuotationCreatePage = () => {
     const [calculationResult, setCalculationResult] = useState(null);
     const [quotationDetail, setQuotationDetail] = useState(null);
 
+    // Format date for datetime-local input
+    const formatDateForInput = (date) => {
+        if (!date) return '';
+        const d = new Date(date);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 16);
+    };
+
+    // Set default validUntil to 7 days from now
+    useEffect(() => {
+        if (currentStep === 3 && !sendData.validUntil) {
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            setSendData(prev => ({
+                ...prev,
+                validUntil: formatDateForInput(nextWeek)
+            }));
+        }
+    }, [currentStep]);
+
     useEffect(() => {
         loadInitialData();
     }, []);
@@ -81,14 +101,11 @@ const QuotationCreatePage = () => {
     const handleApiError = (error, defaultMessage) => {
         console.error('API Error:', error);
         
-        // Reset error message trước
         setErrorMessage('');
         
-        // Kiểm tra các cấu trúc response error khác nhau
         let errorMessage = defaultMessage;
         
         if (error.response) {
-            // Server trả về response với status code ngoài 2xx
             const responseData = error.response.data;
             
             if (responseData && responseData.message) {
@@ -99,16 +116,12 @@ const QuotationCreatePage = () => {
                 errorMessage = responseData;
             }
         } else if (error.request) {
-            // Request được gửi nhưng không nhận được response
             errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
         } else {
-            // Có lỗi khi thiết lập request
             errorMessage = error.message || defaultMessage;
         }
         
-        // Hiển thị thông báo lỗi
         toast.error(errorMessage);
-        // Lưu message vào state để có thể sử dụng ở nơi khác nếu cần
         setErrorMessage(errorMessage);
         
         return errorMessage;
@@ -117,7 +130,7 @@ const QuotationCreatePage = () => {
     const loadInitialData = async () => {
         try {
             setLoading(true);
-            setErrorMessage(''); // Reset error message
+            setErrorMessage('');
             const [customersRes, modelsRes] = await Promise.all([
                 getCustomers(),
                 getVehicleModels()
@@ -134,7 +147,7 @@ const QuotationCreatePage = () => {
 
     const loadVariants = async (modelId) => {
         try {
-            setErrorMessage(''); // Reset error message
+            setErrorMessage('');
             const variantsRes = await getVehicleVariantsByModelId(modelId);
             setVariants(variantsRes.data?.data || variantsRes.data || []);
         } catch (error) {
@@ -144,7 +157,7 @@ const QuotationCreatePage = () => {
 
     const loadPromotions = async (modelId) => {
         try {
-            setErrorMessage(''); // Reset error message
+            setErrorMessage('');
             const dealerId = getCurrentDealerId();
             const promotionsRes = await getActivePromotions(dealerId, modelId);
             setPromotions(Array.isArray(promotionsRes) ? promotionsRes : []);
@@ -156,7 +169,7 @@ const QuotationCreatePage = () => {
     const handleCreateDraft = async () => {
         try {
             setLoading(true);
-            setErrorMessage(''); // Reset error message
+            setErrorMessage('');
             const response = await createQuotationDraft({
                 ...formData,
                 customerId: parseInt(formData.customerId),
@@ -179,7 +192,7 @@ const QuotationCreatePage = () => {
     const handleCalculate = async () => {
         try {
             setLoading(true);
-            setErrorMessage(''); // Reset error message
+            setErrorMessage('');
             const response = await calculateQuotation(quotationId, {
                 ...calculationData,
                 additionalDiscountRate: parseFloat(calculationData.additionalDiscountRate) || 0
@@ -190,12 +203,9 @@ const QuotationCreatePage = () => {
             setCurrentStep(3);
             toast.success('Tính toán giá thành công!');
         } catch (error) {
-            // Đặc biệt xử lý lỗi từ API calculate
             const errorMsg = handleApiError(error, 'Lỗi khi tính toán giá');
             
-            // Nếu có lỗi cụ thể từ API, có thể xử lý thêm ở đây
             if (errorMsg.includes('Promotion is not applicable')) {
-                // Có thể thực hiện các hành động bổ sung khi promotion không áp dụng được
                 console.log('Khuyến mãi không áp dụng được, vui lòng chọn khuyến mãi khác');
             }
         } finally {
@@ -206,7 +216,7 @@ const QuotationCreatePage = () => {
     const handleSendQuotation = async () => {
         try {
             setLoading(true);
-            setErrorMessage(''); // Reset error message
+            setErrorMessage('');
             const response = await sendQuotation(quotationId, {
                 ...sendData,
                 customerId: formData.customerId,
@@ -257,80 +267,125 @@ const QuotationCreatePage = () => {
         }));
     };
 
+    const getStepTitles = () => {
+        const steps = {
+            1: 'Thông tin cơ bản',
+            2: 'Tính toán giá',
+            3: 'Gửi báo giá', 
+            4: 'Hoàn thành'
+        };
+        return steps[currentStep] || 'Tạo báo giá';
+    };
+
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Đang tải...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <ToastContainer position="top-right" autoClose={3000}/>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+            <ToastContainer 
+                position="top-right" 
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+            />
 
-            <div className="max-w-full mx-auto">
-                <div className="bg-white rounded-2xl overflow-hidden">
-                    <div className="px-20 py-8">
-                        <h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
-                            Tạo Báo Giá Mới
-                        </h1>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Header Section */}
+                <div className="text-center mb-8">
+                    
+                    <h1 className="text-4xl font-bold text-gray-900 mb-3">
+                        {getStepTitles()}
+                    </h1>
+                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                        {currentStep === 1 && "Bắt đầu bằng cách chọn khách hàng và dòng xe"}
+                        {currentStep === 2 && "Tính toán giá với các khuyến mãi có sẵn"}
+                        {currentStep === 3 && "Xác nhận và gửi báo giá cho khách hàng"}
+                        {currentStep === 4 && "Báo giá đã được gửi thành công"}
+                    </p>
+                </div>
 
-                        {/* Progress Steps Cải Tiến */}
-                        <div className="mb-12">
-                            <div
-                                className="flex items-center justify-between w-full">
-                                {[1, 2, 3, 4].map((step) => (
-                                    <div key={step}
-                                         className="flex items-center flex-1 last:flex-none">
-                                        <div
-                                            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 flex-shrink-0 ${
-                                                currentStep >= step
-                                                    ? 'bg-blue-600 border-blue-600 text-white'
-                                                    : 'border-gray-300 text-gray-500'
-                                            }`}>
-                                            {step}
-                                        </div>
-                                        {step < 4 && (
-                                            <div className={`h-1 flex-1 mx-4 ${
-                                                currentStep > step ? 'bg-blue-600' : 'bg-gray-300'
-                                            }`}/>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="flex justify-between mt-2 text-sm text-gray-600 w-full">
-                                <span className="text-center w-1/4">Thông tin cơ bản</span>
-                                <span className="text-center w-1/4">Tính toán giá</span>
-                                <span className="text-center w-1/4">Gửi báo giá</span>
-                                <span className="text-center w-1/4">Hoàn thành</span>
-                            </div>
+                {/* Progress Steps */}
+                <div className="max-w-4xl mx-auto mb-12">
+                    <div className="flex items-center justify-between relative">
+                        {/* Progress Line */}
+                        <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 -z-10">
+                            <div 
+                                className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-500"
+                                style={{ 
+                                    width: `${((currentStep - 1) / 3) * 100}%` 
+                                }}
+                            ></div>
                         </div>
 
-                        {/* Hiển thị error message chi tiết nếu cần */}
-                        {errorMessage && (
-                            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0">
-                                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        {[1, 2, 3, 4].map((step) => (
+                            <div key={step} className="flex flex-col items-center relative z-10">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                                    currentStep >= step 
+                                        ? 'bg-gradient-to-br from-blue-500 to-cyan-500 border-blue-500 text-white shadow-lg shadow-blue-200' 
+                                        : 'bg-white border-gray-300 text-gray-400'
+                                }`}>
+                                    {currentStep > step ? (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                         </svg>
-                                    </div>
-                                    <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-red-800">
-                                            Có lỗi xảy ra
-                                        </h3>
-                                        <div className="mt-1 text-sm text-red-700">
-                                            {errorMessage}
-                                        </div>
-                                    </div>
+                                    ) : (
+                                        step
+                                    )}
+                                </div>
+                                <span className={`text-sm font-medium mt-3 transition-colors duration-300 ${
+                                    currentStep >= step ? 'text-gray-900' : 'text-gray-500'
+                                }`}>
+                                    {step === 1 && 'Thông tin'}
+                                    {step === 2 && 'Tính toán'}
+                                    {step === 3 && 'Gửi'}
+                                    {step === 4 && 'Hoàn thành'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Error Message Display */}
+                {errorMessage && (
+                    <div className="max-w-4xl mx-auto mb-8">
+                        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 shadow-sm">
+                            <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0 w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mt-0.5">
+                                    <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold text-red-800 mb-2">
+                                        Có lỗi xảy ra
+                                    </h3>
+                                    <p className="text-red-700 leading-relaxed">
+                                        {errorMessage}
+                                    </p>
                                 </div>
                             </div>
-                        )}
+                        </div>
+                    </div>
+                )}
 
-                        {/* Step Content */}
-                        <div className="mt-8">
+                {/* Step Content */}
+                <div className="max-w-6xl mx-auto">
+                    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div className="p-8">
                             {currentStep === 1 && (
                                 <Step1BasicInfo
                                     formData={formData}
@@ -339,7 +394,7 @@ const QuotationCreatePage = () => {
                                     variants={variants}
                                     onChange={handleInputChange}
                                     onSubmit={handleCreateDraft}
-                                    errorMessage={errorMessage} // Truyền error message xuống component con nếu cần
+                                    errorMessage={errorMessage}
                                 />
                             )}
 
@@ -351,7 +406,7 @@ const QuotationCreatePage = () => {
                                     onChange={handleCalculationChange}
                                     onSubmit={handleCalculate}
                                     onBack={() => setCurrentStep(1)}
-                                    errorMessage={errorMessage} // Truyền error message xuống component con
+                                    errorMessage={errorMessage}
                                 />
                             )}
 
@@ -362,7 +417,7 @@ const QuotationCreatePage = () => {
                                     onChange={handleSendDataChange}
                                     onSubmit={handleSendQuotation}
                                     onBack={() => setCurrentStep(2)}
-                                    errorMessage={errorMessage} // Truyền error message xuống component con
+                                    errorMessage={errorMessage}
                                 />
                             )}
 
@@ -374,6 +429,15 @@ const QuotationCreatePage = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Footer Info */}
+                {currentStep !== 4 && (
+                    <div className="text-center mt-8">
+                        <p className="text-gray-500 text-sm">
+                            Bước {currentStep} của 4 • Mọi thông tin đều được bảo mật
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

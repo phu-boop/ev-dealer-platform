@@ -75,21 +75,21 @@ const TrackingHistoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className=" bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Navigation Header */}
         <div className="mb-6">
           <nav className="flex items-center space-x-4 text-sm">
             <Link 
-              to="/sales-orders" 
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              to="/dealer/orders" 
+              className=" hover:text-blue-700 font-medium"
             >
               📦 Danh sách đơn hàng
             </Link>
             <span className="text-gray-400">/</span>
             <Link 
-              to={`/sales-orders/${orderId}`}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              to={`/dealer/orders/${orderId}`}
+              className="hover:text-blue-700 font-medium"
             >
               Đơn hàng #{orderId?.slice(-8)}
             </Link>
@@ -130,17 +130,17 @@ const TrackingHistoryPage = () => {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => navigate(`/sales-orders/${orderId}`)}
+                onClick={() => navigate(`/dealer/orders/${orderId}`)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
               >
                 ← Quay lại đơn hàng
               </button>
               <button
                 onClick={handleAddTracking}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
               >
                 <span>➕</span>
-                Thêm trạng thái
+                Cập nhật trạng thái
               </button>
             </div>
           </div>
@@ -197,7 +197,7 @@ const TrackingHistoryPage = () => {
         </div>
 
         {/* Main Timeline */}
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="">
           <div className="p-6 border-b">
             <h2 className="text-lg font-semibold text-gray-900">
               Dòng thời gian trạng thái

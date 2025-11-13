@@ -42,10 +42,10 @@ useEffect(() => {
   let currentPath = location.pathname;
 
   // Nếu path bắt đầu bằng /dealer/staff/orders và dài hơn 3 cấp, cắt bỏ phần sau
-  if (currentPath.startsWith('/dealer/staff/orders')) {
+  if (currentPath.startsWith('/dealer/orders')||currentPath.startsWith('/dealer/contracts')) {
     const parts = currentPath.split('/');
-    if (parts.length > 4) { // vd: /dealer/staff/orders/uuid
-      currentPath = parts.slice(0, 4).join('/');
+    if (parts.length > 3) { // vd: /dealer/staff/orders/uuid
+      currentPath = parts.slice(0, 3).join('/');
     }
   }
 

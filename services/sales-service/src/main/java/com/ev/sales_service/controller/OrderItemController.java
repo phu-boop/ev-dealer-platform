@@ -40,7 +40,7 @@ public class OrderItemController {
     public ResponseEntity<ApiRespond<Void>> deleteOrderItem(@PathVariable UUID orderItemId) {
         log.info("Deleting order item: {}", orderItemId);
         orderItemService.deleteOrderItem(orderItemId);
-        return ResponseEntity.ok(ApiRespond.success("Order item deleted successfully",null));
+        return ResponseEntity.ok(ApiRespond.success("Order item deleted successfully", null));
     }
 
     @GetMapping("/{orderItemId}")
@@ -70,6 +70,6 @@ public class OrderItemController {
     public ResponseEntity<ApiRespond<Void>> validateOrderItems(@RequestBody List<OrderItemRequest> orderItems) {
         log.info("Validating order items");
         orderItemService.validateOrderItems(orderItems);
-        return ResponseEntity.ok(ApiRespond.success("Order items validated successfully",null));
+        return ResponseEntity.ok(ApiRespond.success("Order items validated successfully", null));
     }
 }

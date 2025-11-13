@@ -1,4 +1,3 @@
-// components/FilterPanel.jsx
 import React, { useState } from 'react';
 import { XMarkIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 
@@ -7,11 +6,13 @@ const FilterPanel = ({ filters, onApply, onClear, onClose }) => {
 
   const statusOptions = [
     { value: '', label: 'Tất cả trạng thái' },
-    { value: 'PENDING', label: 'Chờ duyệt' },
-    { value: 'APPROVED', label: 'Đã duyệt' },
+    { value: 'DRAFT', label: 'Bản nháp' },
+    { value: 'PENDING', label: 'Chờ xử lý' },
+    { value: 'SENT', label: 'Đã gửi' },
+    { value: 'ACCEPTED', label: 'Đã chấp nhận' },
+    { value: 'COMPLETE', label: 'Hoàn thành' },
     { value: 'REJECTED', label: 'Từ chối' },
-    { value: 'EXPIRED', label: 'Hết hạn' },
-    { value: 'DRAFT', label: 'Bản nháp' }
+    { value: 'EXPIRED', label: 'Hết hạn' }
   ];
 
   const handleFilterChange = (key, value) => {
@@ -37,30 +38,28 @@ const FilterPanel = ({ filters, onApply, onClear, onClose }) => {
     onClear();
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '');
-
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 backdrop-blur-sm p-6 mb-6 animate-in slide-in-from-top duration-300">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Bộ lọc nâng cao</h3>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 animate-in slide-in-from-top duration-200">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-medium text-gray-800">Bộ lọc</h3>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          className="p-1 hover:bg-gray-100 rounded-md transition-colors duration-200"
         >
-          <XMarkIcon className="h-5 w-5 text-gray-500" />
+          <XMarkIcon className="h-4 w-4 text-gray-500" />
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Status Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Trạng thái
           </label>
           <select
             value={localFilters.status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="w-full pl-3 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl bg-white transition-all duration-200"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 rounded-lg bg-white transition-all duration-200"
           >
             {statusOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -72,70 +71,70 @@ const FilterPanel = ({ filters, onApply, onClear, onClose }) => {
 
         {/* Date From */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Từ ngày
           </label>
           <div className="relative">
-            <CalendarDaysIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <CalendarDaysIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
             <input
               type="date"
               value={localFilters.dateFrom}
               onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-              className="w-full pl-10 pr-3 py-2.5 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl bg-white transition-all duration-200"
+              className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 rounded-lg bg-white transition-all duration-200"
             />
           </div>
         </div>
 
         {/* Date To */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Đến ngày
           </label>
           <div className="relative">
-            <CalendarDaysIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <CalendarDaysIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
             <input
               type="date"
               value={localFilters.dateTo}
               onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-              className="w-full pl-10 pr-3 py-2.5 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl bg-white transition-all duration-200"
+              className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 rounded-lg bg-white transition-all duration-200"
             />
           </div>
         </div>
 
         {/* Customer Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Khách hàng
           </label>
           <input
             type="text"
             value={localFilters.customer}
             onChange={(e) => handleFilterChange('customer', e.target.value)}
-            placeholder="Tên khách hàng..."
-            className="w-full px-3 py-2.5 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl bg-white transition-all duration-200"
+            placeholder="ID khách hàng..."
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 rounded-lg bg-white transition-all duration-200"
           />
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
         <button
           onClick={handleClear}
-          className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-gray-400"
         >
           Xóa bộ lọc
         </button>
         
-        <div className="flex space-x-3">
+        <div className="flex space-x-2">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-gray-400"
           >
             Hủy
           </button>
           <button
             onClick={handleApply}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm hover:shadow-md"
+            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm"
           >
             Áp dụng
           </button>

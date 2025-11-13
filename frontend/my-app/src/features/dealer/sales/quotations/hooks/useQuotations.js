@@ -21,7 +21,7 @@ export const useQuotations = () => {
 
   const userRole = sessionStorage.getItem("roles");
   const profileId = sessionStorage.getItem("profileId");
-  console.log(profileId);
+
   const fetchQuotations = useCallback(async (filterParams = {}) => {
     setLoading(true);
     setError(null);
