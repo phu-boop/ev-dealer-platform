@@ -87,6 +87,24 @@ export const getStatistics = async (dealerId, startDate, endDate) => {
   return response.data;
 };
 
+/**
+ * Ghi kết quả và phản hồi sau khi hoàn thành lái thử
+ */
+export const submitFeedback = async (id, feedbackData) => {
+  const response = await apiConstTestDrive.post(`/api/test-drives/${id}/feedback`, feedbackData);
+  return response.data;
+};
+
+/**
+ * Lấy danh sách lịch hẹn có feedback
+ */
+export const getAppointmentsWithFeedback = async (dealerId) => {
+  const response = await apiConstTestDrive.get('/api/test-drives/with-feedback', {
+    params: { dealerId }
+  });
+  return response.data;
+};
+
 export default {
   getTestDrivesByDealer,
   getTestDriveById,
@@ -98,4 +116,6 @@ export default {
   filterTestDrives,
   getCalendarView,
   getStatistics,
+  submitFeedback,
+  getAppointmentsWithFeedback,
 };

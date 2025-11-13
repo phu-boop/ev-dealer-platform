@@ -2,6 +2,8 @@ package com.ev.sales_service.dto.response;
 
 import com.ev.sales_service.enums.OrderStatusB2B;
 import com.ev.sales_service.enums.OrderStatusB2C;
+import com.ev.sales_service.enums.PaymentStatus;
+import com.ev.sales_service.enums.SaleOderType;
 import com.ev.sales_service.enums.ContractStatus; // Giả sử bạn có enum này
 import lombok.Data;
 import java.math.BigDecimal;
@@ -21,6 +23,8 @@ public class SalesOrderDtoB2B {
     private LocalDateTime deliveryDate;
     private OrderStatusB2B orderStatus; // Status cho B2B orders
     private OrderStatusB2C orderStatusB2C; // Status cho B2C orders (có thể null nếu là B2B)
+    private PaymentStatus paymentStatus; // Trạng thái thanh toán
+    private SaleOderType typeOder; // B2B hoặc B2C
     private BigDecimal totalAmount;
     private Boolean managerApproval;
     private UUID approvedBy;

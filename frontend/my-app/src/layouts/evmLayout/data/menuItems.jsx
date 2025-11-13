@@ -30,6 +30,7 @@ import {
   FiGift,
   FiRefreshCw,
   FiBell,
+  FiDollarSign,
 } from "react-icons/fi";
 
 export const adminMenuItems = [
@@ -188,6 +189,11 @@ export const adminMenuItems = [
         label: "Nhật Ký Hoạt Động",
         path: "/evm/admin/system/audit",
       },
+      {
+        icon: FiDollarSign,
+        label: "Quản Lý Phương Thức Thanh Toán",
+        path: "/evm/admin/payments/methods",
+      },
     ],
   },
 ];
@@ -271,9 +277,38 @@ export const evmStaffMenuItems = [
         path: "/evm/staff/dealers/debts",
       },
       {
+        icon: FiFileText,
+        label: "Hóa Đơn Đại Lý",
+        path: "/evm/staff/payments/dealer-invoices",
+      },
+      {
         icon: FiBell,
         label: "Thông báo từ đại lí",
         path: "/evm/notifications",
+      },
+    ],
+  },
+
+  // Quản lý thanh toán
+  {
+    icon: FiDollarSign,
+    label: "Quản Lý Thanh Toán",
+    path: "/evm/staff/payments",
+    submenu: [
+      {
+        icon: FiShoppingCart,
+        label: "Quản Lý Đơn Hàng B2B",
+        path: "/evm/staff/orders",
+      },
+      {
+        icon: FiCreditCard,
+        label: "Công Nợ Đại Lý",
+        path: "/evm/staff/debt",
+      },
+      {
+        icon: FiDollarSign,
+        label: "Đại Lý Thanh Toán Tiền Mặt",
+        path: "/evm/staff/payments/cash-payments",
       },
     ],
   },

@@ -30,6 +30,7 @@ import {
   FiChevronRight,
   FiUser,
   FiShield,
+  FiDollarSign,
 } from "react-icons/fi";
 
 export const dealerManagerMenuItems = [
@@ -167,21 +168,21 @@ export const dealerManagerMenuItems = [
     ],
   },
 
-  // Tài chính & thanh toán
+  // Quản lý thanh toán
   {
-    icon: FiCreditCard,
-    label: "Tài Chính & Thanh Toán",
-    path: "/dealer/manager/finance",
+    icon: FiDollarSign,
+    label: "Quản Lý Thanh Toán",
+    path: "/dealer/manager/payments",
     submenu: [
+      {
+        icon: FiFileText,
+        label: "Hóa Đơn Của Tôi",
+        path: "/dealer/manager/payments/invoices",
+      },
       {
         icon: FiCreditCard,
         label: "Thanh Toán & Trả Góp",
-        path: "/dealer/manager/payments",
-      },
-      {
-        icon: FiBarChart2,
-        label: "Công Nợ Khách Hàng",
-        path: "/dealer/manager/debts",
+        path: "/dealer/manager/payments/methods",
       },
     ],
   },
