@@ -633,6 +633,11 @@ export default function AppRoutes() {
                 element={<UserManagement />}
               />
 
+              <Route
+                path="manager/vehicles/all"
+                element={<DealerProductCatalogPage />}
+              />
+
               {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
 

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import 'antd/dist/reset.css';
 /* src/index.css */
 @tailwind base;
 @tailwind components;

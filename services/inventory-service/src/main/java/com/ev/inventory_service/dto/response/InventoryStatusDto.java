@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import java.util.List;
 
+import com.ev.common_lib.model.enums.InventoryLevelStatus;
+
 @Data
 @Builder
 public class InventoryStatusDto {

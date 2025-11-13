@@ -9,10 +9,10 @@ import com.ev.common_lib.dto.inventory.AllocationRequestDto;
 import com.ev.common_lib.dto.inventory.ShipmentRequestDto;
 import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
-
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.request.CreateTransferRequestDto;
+import com.ev.inventory_service.dto.response.DealerInventoryDto;
 import com.ev.inventory_service.model.PhysicalVehicle;
 import com.ev.inventory_service.model.Enum.VehiclePhysicalStatus;
 // import com.ev.inventory_service.dto.response.DealerInventoryDto;
@@ -55,6 +55,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Value;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 
 import java.io.OutputStream;
 import java.io.IOException;
