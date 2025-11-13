@@ -3,6 +3,18 @@ import { getTransactionHistory } from "../services/inventoryService";
 import { getVariantDetailsByIds } from "../../catalog/services/vehicleCatalogService";
 // import Pagination from '../../../../components/Pagination';
 
+const TRANSACTION_TYPE_LABELS = {
+  INITIAL_STOCK: "Nhập kho ban đầu",
+  RESTOCK: "Bổ sung hàng",
+  TRANSFER_TO_DEALER: "Xuất đến đại lý",
+  TRANSFER_TO_CENTRAL: "Chuyển về kho TT",
+  SALE: "Bán hàng",
+  ADJUSTMENT_ADD: "Điều chỉnh tăng",
+  ADJUSTMENT_SUBTRACT: "Điều chỉnh giảm",
+  ALLOCATE: "Chuẩn bị",
+  RETURN_FROM_DEALER: "Trả hàng từ đại lý",
+};
+
 const TransactionHistoryTab = () => {
   const [history, setHistory] = useState({ content: [], totalPages: 0 });
   const [filters, setFilters] = useState({ startDate: "", endDate: "" });
@@ -55,6 +67,31 @@ const TransactionHistoryTab = () => {
     fetchHistory();
   }, [fetchHistory]);
 
+  // Helper function để render badge màu sắc (Tùy chọn thêm cho đẹp)
+  const renderTransactionType = (type) => {
+    const label = TRANSACTION_TYPE_LABELS[type] || type;
+
+    // Tùy chọn: Thêm màu sắc cho từng loại nếu muốn
+    let className = "px-2 py-1 rounded text-xs font-medium ";
+    if (
+      [
+        "INITIAL_STOCK",
+        "RESTOCK",
+        "ADJUSTMENT_ADD",
+        "RETURN_FROM_DEALER",
+      ].includes(type)
+    ) {
+      className += "bg-green-100 text-green-800"; // Màu xanh lá cho hành động Tăng
+    } else if (["SALE", "ADJUSTMENT_SUBTRACT"].includes(type)) {
+      className += "bg-red-100 text-red-800"; // Màu đỏ cho hành động Giảm/Bán
+    } else if (["TRANSFER_TO_DEALER", "TRANSFER_TO_CENTRAL"].includes(type)) {
+      className += "bg-blue-100 text-blue-800"; // Màu xanh dương cho Điều chuyển
+    } else {
+      className += "bg-gray-100 text-gray-800"; // Mặc định
+    }
+    return <span className={className}>{label}</span>;
+  };
+
   return (
     <div>
       <div className="flex gap-4 mb-6">
@@ -106,8 +143,10 @@ const TransactionHistoryTab = () => {
                     </p>
                     <p className="text-xs text-gray-500">SKU: {tx.skuCode}</p>
                   </td>
-                  <td className="p-3">{tx.transactionType}</td>{" "}
-                  <td className="p-3 text-center">{tx.quantity}</td>
+                  <td className="p-3">
+                    {renderTransactionType(tx.transactionType)}
+                  </td>
+                  <td className="p-3 text-center font-medium">{tx.quantity}</td>
                   <td className="p-3">
                     {tx.fromDealerId
                       ? `Đại lý #${tx.fromDealerId}`
