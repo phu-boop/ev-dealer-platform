@@ -107,7 +107,7 @@ Application
 ├── gateway/                  # Spring Boot API Gateway
 ├── services/                 # Microservices
 │   ├── user-service/
-│   ├── order-service/
+│   ├── sales-service/
 │   ├── dealer-service/
 │   ├── vehicle-service/
 │   ├── inventory-service/
@@ -181,28 +181,6 @@ mvn clean install
 ### Bước 3: Cấu hình
 
 Tạo file `.env` cho frontend và `application.properties` cho backend với các thông tin kết nối database, API keys, etc.
-
----
-
-## 🎮 Sử dụng
-
-### Chạy Frontend
-
-```bash
-cd frontend/my-app/
-npm run dev
-```
-
-Frontend sẽ chạy tại: `http://localhost:3000`
-
-### Chạy Backend Gateway
-
-```bash
-cd gateway/
-mvn spring-boot:run
-```
-
-API Gateway sẽ chạy tại: `http://localhost:8080`
 
 ---
 
