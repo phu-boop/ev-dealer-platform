@@ -107,7 +107,7 @@ Application
 ├── gateway/                  # Spring Boot API Gateway
 ├── services/                 # Microservices
 │   ├── user-service/
-│   ├── order-service/
+│   ├── sales-service/
 │   ├── dealer-service/
 │   ├── vehicle-service/
 │   ├── inventory-service/
