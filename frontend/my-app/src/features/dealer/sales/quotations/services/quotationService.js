@@ -18,7 +18,13 @@ export const getQuotationsByDealer = async (dealerId, filters = {}) => {
 export const getQuotationsByStaff = async (staffId, filters = {}) => {
   try {
     const response = await apiConstSaleService.get(`${BASE_URL}/staff/${staffId}`, {
-      params: filters
+      params: {
+        status: filters.status || '',
+        customer: filters.customer || '',
+        dateFrom: filters.dateFrom || '',
+        dateTo: filters.dateTo || '',
+        search: filters.search || ''
+      }
     });
     return response.data;
   } catch (error) {
@@ -52,7 +58,7 @@ export const convertToSalesOrder = async (quotationId) => {
     const response = await apiConstSaleService.post(`${BASE_URL}/${quotationId}/convert-to-order`);
     return response.data;
   } catch (error) {
-    console.error(`Lỗi khi xóa chuyển ${quotationId}:`, error);
+    console.error(`Lỗi khi chuyển ${quotationId} thành đơn hàng:`, error);
     throw error;
   }
 };

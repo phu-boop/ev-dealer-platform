@@ -649,6 +649,12 @@ export default function AppRoutes() {
               {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
 
+              {/* Quotation Management */}
+              <Route path="manager/quotations" element={<QuotationCreatePage />} />
+              <Route path="manager/list/quotations" element={<QuotationListPage />} />
+
+              {/* Sales Module */}
+              <Route path="manager/*" element={<SalesRoutes />} />
               {/* System Management */}
               <Route
                 path="manager/settings/staff/*"

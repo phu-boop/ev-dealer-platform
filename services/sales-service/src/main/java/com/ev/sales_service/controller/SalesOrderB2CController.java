@@ -1,8 +1,11 @@
 package com.ev.sales_service.controller;
 
+import com.ev.sales_service.dto.request.OrderItemRequest;
+import com.ev.sales_service.dto.response.SalesContractResponse;
 import com.ev.sales_service.dto.response.SalesOrderB2CResponse;
 import com.ev.sales_service.service.Interface.SalesOrderServiceB2C;
 import com.ev.common_lib.dto.respond.ApiRespond;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -64,4 +67,59 @@ public class SalesOrderB2CController {
         SalesOrderB2CResponse response = salesOrderServiceB2C.approveSalesOrder(orderId, managerId);
         return ResponseEntity.ok(ApiRespond.success("Sales order approved successfully", response));
     }
+
+    @GetMapping("/{orderId}/model-id")
+    public ResponseEntity<Long> getModelIdBySalesOrderId(@PathVariable UUID orderId) {
+        Long modelId = salesOrderServiceB2C.getModelIdBySalesOrderId(orderId);
+        return ResponseEntity.ok(modelId);
+    }
+
+    @PutMapping("/{orderId}/order-items")
+    public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> addOrderItemsToSalesOrder(
+            @PathVariable UUID orderId) {
+        log.info("Recalculating/adding order items for B2C sales order: {}", orderId);
+        SalesOrderB2CResponse response = salesOrderServiceB2C.addOrderItemsToSalesOrder(orderId);
+        return ResponseEntity.ok(ApiRespond.success("Order items recalculated successfully", response));
+    }
+
+    /**
+     * ✅ Manager hoặc khách hàng từ chối đơn hàng (APPROVED → REJECTED)
+     */
+    @PutMapping("/{orderId}/reject")
+    public ResponseEntity<ApiRespond> rejectOrder(@PathVariable String orderId,
+                                                  @RequestParam(required = false) String reason) {
+        ApiRespond respond = salesOrderServiceB2C.rejectOrder(orderId, reason);
+        return ResponseEntity.ok(respond);
+    }
+
+
+    @PostMapping("/{orderId}/convert-to-contract")
+    public ResponseEntity<ApiRespond<SalesContractResponse>> convertToContract(
+            @PathVariable UUID orderId) {
+
+        log.info("Converting SalesOrder [{}] to contract...", orderId);
+
+        // Service đã xử lý tất cả kiểm tra lỗi theo ErrorCode
+        SalesContractResponse response = salesOrderServiceB2C.convertToContract(orderId);
+
+        // Trả về ApiRespond với message và data
+        return ResponseEntity.ok(
+                ApiRespond.success("Tạo hợp đồng thành công từ đơn hàng đã xác nhận", response)
+        );
+    }
+
+
+    @PostMapping("/{orderId}/complete")
+    public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> convertToComplete(
+            @PathVariable UUID orderId) {
+
+        // Service đã xử lý tất cả kiểm tra lỗi theo ErrorCode
+        SalesOrderB2CResponse response = salesOrderServiceB2C.convertToComplete(orderId);
+
+        // Trả về ApiRespond với message và data
+        return ResponseEntity.ok(
+                ApiRespond.success("Tạo hợp đồng thành công từ đơn hàng đã xác nhận", response)
+        );
+    }
+
 }

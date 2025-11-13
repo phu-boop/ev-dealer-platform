@@ -6,6 +6,7 @@ import com.ev.sales_service.dto.request.OrderItemRequest;
 import com.ev.sales_service.dto.response.OrderItemResponse;
 import com.ev.sales_service.entity.OrderItem;
 import com.ev.sales_service.entity.SalesOrder;
+import com.ev.sales_service.enums.OrderStatusB2C;
 import com.ev.sales_service.repository.OrderItemRepository;
 import com.ev.sales_service.repository.SalesOrderRepositoryB2C;
 import com.ev.sales_service.service.Interface.OrderItemService;
@@ -36,7 +37,11 @@ public class OrderItemServiceImpl implements OrderItemService {
 
         SalesOrder salesOrder = salesOrderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
-
+        // validate if saleOrder calculated
+        if (!salesOrder.getOrderStatusB2C().equals(OrderStatusB2C.PENDING)) {
+            throw new AppException(ErrorCode.ORDER_ITEM_OPERATION_INVALID_STATE);
+        }
+        ;
         // Validate if variant already exists in order
         if (orderItemRepository.existsByVariantIdAndSalesOrder_OrderId(request.getVariantId(), request.getOrderId())) {
             throw new AppException(ErrorCode.ORDER_ITEM_ALREADY_EXISTS);
@@ -49,7 +54,7 @@ public class OrderItemServiceImpl implements OrderItemService {
                 .unitPrice(request.getUnitPrice())
                 .discount(request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO)
                 .finalPrice(calculateFinalPrice(request.getUnitPrice(), request.getQuantity(),
-                             request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO))
+                        request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO))
                 .build();
 
         OrderItem savedItem = orderItemRepository.save(orderItem);
@@ -71,8 +76,14 @@ public class OrderItemServiceImpl implements OrderItemService {
         orderItem.setUnitPrice(request.getUnitPrice());
         orderItem.setDiscount(request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO);
         orderItem.setFinalPrice(calculateFinalPrice(request.getUnitPrice(), request.getQuantity(),
-                              request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO));
+                request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO));
 
+        SalesOrder salesOrder = salesOrderRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
+        if (!salesOrder.getOrderStatusB2C().equals(OrderStatusB2C.PENDING)) {
+            throw new AppException(ErrorCode.ORDER_ITEM_OPERATION_INVALID_STATE);
+        }
+        ;
         OrderItem updatedItem = orderItemRepository.save(orderItem);
         log.info("Order item updated successfully: {}", orderItemId);
 
@@ -81,11 +92,16 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     @Override
     public void deleteOrderItem(UUID orderItemId) {
-        log.info("Deleting order item: {}", orderItemId);
-
         OrderItem orderItem = orderItemRepository.findById(orderItemId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
 
+        log.info("Deleting order item: {}", orderItemId);
+        SalesOrder salesOrder = salesOrderRepository.findById(orderItem.getSalesOrder().getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
+        if (!salesOrder.getOrderStatusB2C().equals(OrderStatusB2C.PENDING)) {
+            throw new AppException(ErrorCode.ORDER_ITEM_OPERATION_INVALID_STATE);
+        }
+        ;
         orderItemRepository.delete(orderItem);
         log.info("Order item deleted successfully: {}", orderItemId);
     }
@@ -116,7 +132,10 @@ public class OrderItemServiceImpl implements OrderItemService {
         // Create new items
         SalesOrder salesOrder = salesOrderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
-
+        if (!salesOrder.getOrderStatusB2C().equals(OrderStatusB2C.PENDING)) {
+            throw new AppException(ErrorCode.ORDER_ITEM_OPERATION_INVALID_STATE);
+        }
+        ;
         List<OrderItem> newItems = orderItems.stream()
                 .map(request -> OrderItem.builder()
                         .salesOrder(salesOrder)
@@ -125,7 +144,7 @@ public class OrderItemServiceImpl implements OrderItemService {
                         .unitPrice(request.getUnitPrice())
                         .discount(request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO)
                         .finalPrice(calculateFinalPrice(request.getUnitPrice(), request.getQuantity(),
-                                     request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO))
+                                request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO))
                         .build())
                 .collect(Collectors.toList());
 

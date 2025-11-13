@@ -1,92 +1,3 @@
-// import React, { useState } from 'react';
-// import { PageContainer, ProCard } from '@ant-design/pro-components';
-// import { useParams, useNavigate } from 'react-router-dom';
-// import { Button, Space } from 'antd';
-// import { ArrowLeftOutlined } from '@ant-design/icons';
-// import { useSalesContracts } from '../hooks/useSalesContracts';
-// import ContractDetails from '../components/ContractDetails';
-// import ContractSignModal from '../components/ContractSignModal';
-
-// const ContractDetailPage = () => {
-//   const { contractId } = useParams();
-//   const navigate = useNavigate();
-//   const { contract, loading, signContract, updateContract } = useSalesContracts();
-//   const [signModalVisible, setSignModalVisible] = useState(false);
-
-//   const handleSign = async (contractId, digitalSignature) => {
-//     try {
-//       await signContract(contractId, digitalSignature);
-//       setSignModalVisible(false);
-//     } catch (error) {
-//       // Error handled in hook
-//     }
-//   };
-
-//   const handleEdit = () => {
-//     navigate(`/dealer/staff/contracts/${contractId}/edit`);
-//   };
-
-//   const handleDownload = () => {
-//     if (contract?.contractFileUrl) {
-//       window.open(contract.contractFileUrl, '_blank');
-//     }
-//   };
-
-//   if (loading) {
-//     return <div>Loading...</div>;
-//   }
-
-//   if (!contract) {
-//     return <div>Không tìm thấy hợp đồng</div>;
-//   }
-
-//   return (
-//     <PageContainer
-//       header={{
-//         title: `Hợp đồng #${contract.contractNumber}`,
-//         breadcrumb: {
-//           items: [
-//             { title: 'Bán hàng' },
-//             { title: 'Hợp đồng', path: '/dealer/staff/contracts' },
-//             { title: `Hợp đồng #${contract.contractNumber}` },
-//           ],
-//         },
-//       }}
-//       extra={[
-//         <Button 
-//           key="back" 
-//           icon={<ArrowLeftOutlined />} 
-//           onClick={() => navigate('/dealer/staff/contracts')}
-//         >
-//           Quay lại
-//         </Button>,
-//       ]}
-//       content={
-//         <div>
-//           <p>Chi tiết hợp đồng bán hàng</p>
-//         </div>
-//       }
-//     >
-//       <ProCard>
-//         <ContractDetails 
-//           contract={contract} 
-//           onEdit={handleEdit}
-//           onDownload={handleDownload}
-//           onSign={() => setSignModalVisible(true)}
-//         />
-//       </ProCard>
-
-//       <ContractSignModal
-//         visible={signModalVisible}
-//         contract={contract}
-//         onSign={handleSign}
-//         onCancel={() => setSignModalVisible(false)}
-//         loading={loading}
-//       />
-//     </PageContainer>
-//   );
-// };
-
 // export default ContractDetailPage;
 import React, { useState, useEffect } from 'react';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
@@ -106,17 +17,26 @@ const ContractDetailPage = () => {
     error,
     signContract, 
     updateContract,
-    fetchContractById 
+    fetchContractById,
+    cancelContract
   } = useSalesContracts();
-  
+  const handleCancel = async (contractId) => {
+  try {
+    await cancelContract(contractId);
+    // Refresh contract data sau khi hủy
+    fetchContractById(contractId);
+  } catch (err) {
+    console.error(err);
+  }
+};
   const [signModalVisible, setSignModalVisible] = useState(false);
 
   // Fetch contract data when component mounts or contractId changes
   useEffect(() => {
-    if (contractId) {
-      fetchContractById(contractId);
-    }
-  }, [contractId, fetchContractById]);
+  if (contractId) {
+    fetchContractById(contractId);
+  }
+}, [contractId, fetchContractById]);
 
   const handleSign = async (contractId, digitalSignature) => {
     try {
@@ -130,7 +50,7 @@ const ContractDetailPage = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/sales/contracts/${contractId}/edit`);
+    navigate(`/dealer/staff/contracts/${contractId}/edit`);
   };
 
   const handleDownload = () => {
@@ -184,7 +104,7 @@ const ContractDetailPage = () => {
           type="warning"
           showIcon
           action={
-            <Button size="small" onClick={() => navigate('/sales/contracts')}>
+            <Button size="small" onClick={() => navigate('/dealer/staff/contracts')}>
               Quay lại danh sách
             </Button>
           }
@@ -200,7 +120,7 @@ const ContractDetailPage = () => {
         breadcrumb: {
           items: [
             { title: 'Bán hàng' },
-            { title: 'Hợp đồng', path: '/sales/contracts' },
+            { title: 'Hợp đồng', path: '/dealer/staff/contracts' },
             { title: `Hợp đồng #${contract.contractNumber || contract.contractId}` },
           ],
         },
@@ -209,7 +129,7 @@ const ContractDetailPage = () => {
         <Button 
           key="back" 
           icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate('/sales/contracts')}
+          onClick={() => navigate('/dealer/staff/contracts')}
         >
           Quay lại
         </Button>,
@@ -235,6 +155,7 @@ const ContractDetailPage = () => {
           onEdit={handleEdit}
           onDownload={handleDownload}
           onSign={() => setSignModalVisible(true)}
+          onCancel={handleCancel}
         />
       </ProCard>
 

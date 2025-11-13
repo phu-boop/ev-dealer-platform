@@ -346,17 +346,17 @@ export default function PromotionForm({ onSubmit, onCancel, initialData, isEdit 
         newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
       }
     }
+    // Validate selected dealers
+    if (selectedDealers.length === 0) {
+      newErrors.dealers = "Vui lòng chọn ít nhất một đại lý";
+    }
+    
 
     // Validate selected models
     if (selectedModels.length === 0) {
       newErrors.applicableModels = "Vui lòng chọn ít nhất một model xe";
     }
 
-    // Validate selected dealers
-    if (selectedDealers.length === 0) {
-      newErrors.dealers = "Vui lòng chọn ít nhất một đại lý";
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

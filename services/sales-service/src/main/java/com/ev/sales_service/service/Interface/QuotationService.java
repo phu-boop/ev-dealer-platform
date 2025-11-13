@@ -5,6 +5,8 @@ import com.ev.sales_service.dto.response.CustomerResponseRequest;
 import com.ev.sales_service.dto.response.PromotionResponse;
 import com.ev.sales_service.dto.response.QuotationResponse;
 import com.ev.sales_service.dto.response.SalesOrderB2CResponse;
+import com.ev.sales_service.entity.Promotion;
+import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.enums.QuotationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable; // ✅ đúng
@@ -33,20 +35,18 @@ public interface QuotationService {
     // Quản lý và tìm kiếm
     QuotationResponse getQuotationById(UUID quotationId);
 
-    List<QuotationResponse> getQuotationsByFilters(QuotationFilterRequest filterRequest);
 
-    //    Page<QuotationResponse> getQuotationsWithPagination(QuotationFilterRequest filterRequest, Pageable pageable);
-//    QuotationResponse updateQuotation(UUID quotationId, QuotationCreateRequest request);
-//    void deleteQuotation(UUID quotationId);
     void expireOldQuotations();
 
-    // Utility methods
-//    List<PromotionResponse> getAvailablePromotionsForQuotation(UUID quotationId);
-//    boolean validateQuotationForOrder(UUID quotationId);
-//    SalesOrderB2CResponse convertToSalesOrderB2C(UUID quotationId)
-    List<QuotationResponse> getQuotationsByStaff(UUID staffId);
 
-    List<QuotationResponse> getQuotationsByDealer(UUID dealerId);
     void deleteQuotation(UUID quotationId);
+
+    QuotationFilterRequest buildFilterRequestForStaff(UUID staffId, String status, String customer,
+                                                      String dateFrom, String dateTo, String search);
+
+    QuotationFilterRequest buildFilterRequestForDealer(UUID dealerId, String status, String customer,
+                                                       String dateFrom, String dateTo, String search);
+
+    List<QuotationResponse> getQuotationsByFilters(QuotationFilterRequest filterRequest);
 
 }

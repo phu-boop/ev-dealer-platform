@@ -49,7 +49,14 @@ export const salesOrderB2CApi = {
    * @returns {Promise} Promise trả về sales order đã duyệt
    */
   approve: (orderId, managerId) => 
-    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/approve?managerId=${managerId}`)
+    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/approve?managerId=${managerId}`),
+  /**
+   * Thêm hoặc recalculating order items
+   * @param {string} orderId - ID của sales order
+   * @returns {Promise} ApiRespond<SalesOrderB2CResponse>
+   */
+  addOrderItemsToSalesOrder: (orderId) =>
+    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/order-items`),
 };
 
 export const salesOrderService = {
@@ -87,5 +94,15 @@ export const salesOrderService = {
   updateOrderStatus: async (orderId, status, reason = '') => {
     const response = await salesOrderB2CApi.updateStatus(orderId, status);
     return response.data?.data;
+  },
+  
+   /**
+   * Thêm hoặc recalculating order items
+   * @param {string} orderId - ID của sales order
+   * @returns {Promise} ApiRespond<SalesOrderB2CResponse>
+   */
+  recalcOrderItems: async (orderId) => {
+    const response = await salesOrderB2CApi.addOrderItemsToSalesOrder(orderId);
+    return response.data.data;
   }
 };
