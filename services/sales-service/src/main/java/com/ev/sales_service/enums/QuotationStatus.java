@@ -8,9 +8,4 @@ public enum QuotationStatus {
     COMPLETE,   // Đã hoàn thành (tương đương ACCEPTED, giữ lại để tương thích với dữ liệu cũ)
     REJECTED,   // Quản lý đã từ chối
     EXPIRED,     // Hết hạn
-<<<<<<< HEAD
-    SENT,
-=======
->>>>>>> 9c7c8f3 (hot fix)
-    COMPLETE
 }

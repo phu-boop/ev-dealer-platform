@@ -25,5 +25,4 @@ public enum OrderStatusB2C {
     DELIVERED,
     /** Đơn hàng đã bị hủy (do khách hàng hoặc hệ thống) */
     CANCELLED,
-    EDITED  // Đã chỉnh sửa (giữ lại để tương thích với dữ liệu cũ)
 }
