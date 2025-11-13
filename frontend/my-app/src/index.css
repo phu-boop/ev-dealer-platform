@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import 'antd/dist/reset.css';
 /* src/index.css */
 @tailwind base;
 @tailwind components;
@@ -105,9 +104,16 @@
   z-index: 9999 !important;
 }
 
+/* Ẩn thanh cuộn cho Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
-
-
+/* Ẩn thanh cuộn cho IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
 
 /* Profile Dropdown Animations và Styles */
 @keyframes scaleIn {
@@ -144,7 +150,8 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
   }
   50% {
@@ -162,7 +169,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -201,13 +209,21 @@
 }
 
 .gradient-border::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(45deg, #ff6b6b, #ee5a24, #feca57, #ff9ff3, #48dbfb, #1dd1a1);
+  background: linear-gradient(
+    45deg,
+    #ff6b6b,
+    #ee5a24,
+    #feca57,
+    #ff9ff3,
+    #48dbfb,
+    #1dd1a1
+  );
   border-radius: 1rem;
   z-index: -1;
   opacity: 0;
@@ -222,8 +238,7 @@
 /* Enhanced Avatar Styles */
 .avatar-glow {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 
-    0 8px 25px -8px rgba(59, 130, 246, 0.4),
+  box-shadow: 0 8px 25px -8px rgba(59, 130, 246, 0.4),
     0 4px 12px -4px rgba(59, 130, 246, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   position: relative;
@@ -231,7 +246,7 @@
 }
 
 .avatar-glow::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
@@ -255,15 +270,13 @@
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(40px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 .enhanced-dropdown::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -6px;
   right: 20px;
@@ -281,17 +294,15 @@
   background: linear-gradient(135deg, #3b82f6, #6366f1);
   background-size: 200% 200%;
   animation: shimmer 3s infinite linear;
-  box-shadow: 
-    0 4px 12px rgba(59, 130, 246, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .role-badge-enhanced::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
@@ -312,8 +323,7 @@
 
 .role-badge-enhanced:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 
-    0 8px 20px rgba(59, 130, 246, 0.4),
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -328,13 +338,17 @@
 }
 
 .action-btn-enhanced::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
   width: 0;
   height: 0;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.1) 0%,
+    transparent 70%
+  );
   transition: all 0.4s;
   transform: translate(-50%, -50%);
 }
@@ -348,14 +362,17 @@
   background: rgba(255, 255, 255, 0.95);
   border-color: rgba(59, 130, 246, 0.3);
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 
-    0 12px 25px -8px rgba(59, 130, 246, 0.3),
+  box-shadow: 0 12px 25px -8px rgba(59, 130, 246, 0.3),
     0 6px 15px -6px rgba(0, 0, 0, 0.1);
 }
 
 /* Logout Button Enhancements */
 .logout-btn-enhanced {
-  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05), rgba(185, 28, 28, 0.02));
+  background: linear-gradient(
+    135deg,
+    rgba(220, 38, 38, 0.05),
+    rgba(185, 28, 28, 0.02)
+  );
   backdrop-filter: blur(10px);
   border: 1px solid rgba(220, 38, 38, 0.1);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -364,13 +381,17 @@
 }
 
 .logout-btn-enhanced::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
   width: 0;
   height: 0;
-  background: radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(220, 38, 38, 0.1) 0%,
+    transparent 70%
+  );
   transition: all 0.4s;
   transform: translate(-50%, -50%);
 }
@@ -381,11 +402,14 @@
 }
 
 .logout-btn-enhanced:hover {
-  background: linear-gradient(135deg, rgba(220, 38, 38, 0.08), rgba(185, 28, 28, 0.04));
+  background: linear-gradient(
+    135deg,
+    rgba(220, 38, 38, 0.08),
+    rgba(185, 28, 28, 0.04)
+  );
   border-color: rgba(220, 38, 38, 0.3);
   transform: translateY(-2px);
-  box-shadow: 
-    0 8px 20px -8px rgba(220, 38, 38, 0.2),
+  box-shadow: 0 8px 20px -8px rgba(220, 38, 38, 0.2),
     0 4px 12px -4px rgba(0, 0, 0, 0.1);
 }
 
@@ -439,22 +463,22 @@
     background: rgba(17, 24, 39, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  
+
   .enhanced-dropdown {
     background: rgba(17, 24, 39, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  
+
   .enhanced-dropdown::before {
     background: rgba(17, 24, 39, 0.98);
     border-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .action-btn-enhanced {
     background: rgba(31, 41, 55, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  
+
   .action-btn-enhanced:hover {
     background: rgba(55, 65, 81, 0.95);
   }
@@ -468,7 +492,7 @@
     right: 50%;
     transform: translateX(50%);
   }
-  
+
   .enhanced-dropdown::before {
     right: 50%;
     transform: translateX(50%) rotate(45deg);
@@ -485,7 +509,8 @@
 }
 
 @keyframes float-logo {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -494,7 +519,8 @@
 }
 
 @keyframes pulse-soft {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -531,7 +557,11 @@
 .ev-logo-outer-glow {
   position: absolute;
   inset: -1rem;
-  background: linear-gradient(to right, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+  background: linear-gradient(
+    to right,
+    rgba(16, 185, 129, 0.2),
+    rgba(5, 150, 105, 0.2)
+  );
   border-radius: 50%;
   filter: blur(1.5rem);
   opacity: 0.7;
@@ -648,21 +678,10 @@
   .ev-logo-main {
     padding: 1.5rem;
   }
-  
+
   .ev-logo-outer-glow {
     inset: -0.5rem;
   }
-}
-
-
-
-/* Ẩn thanh cuộn nhưng vẫn cuộn được */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none; /* IE & Edge */
-  scrollbar-width: none;    /* Firefox */
 }
 
 /* Toast Notification Styles - Simple & Clean */
@@ -673,7 +692,8 @@
 .Toastify__toast {
   border-radius: 8px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    sans-serif !important;
   padding: 16px 20px !important;
   min-height: 64px !important;
   border-left: 4px solid !important;

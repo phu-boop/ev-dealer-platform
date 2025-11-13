@@ -386,7 +386,7 @@ const AllocationPage = () => {
                 </div>
 
                 {/* Trạng thái và Hành động */}
-                <div className="flex-shrink-0 flex flex-col items-end space-y-2 w-full md:w-auto">
+                <div className="shrink-0 flex flex-col items-end space-y-2 w-full md:w-auto">
                   <StatusBadge status={order.orderStatus} />
 
                   {order.orderStatus === "PENDING" && (

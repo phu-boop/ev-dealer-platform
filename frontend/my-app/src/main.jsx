@@ -7,6 +7,10 @@ import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import AppRoutes from "./routes/index.jsx";
 import initFirebaseMessaging from "./services/firebase/firebaseMessagingListener.jsx";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
 // 🔥 Khởi động FCM với error handling
 try {
   initFirebaseMessaging();

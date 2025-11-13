@@ -31,6 +31,9 @@ export const useNotificationSocket = (isEnabled = true) => {
 
           // 2. Refresh lại số lượng chưa đọc
           queryClient.invalidateQueries(["unreadNotificationCount"]);
+
+          // 3. Refresh lại thanh cảnh báo màu vàng (StockAlerts.jsx)
+          queryClient.invalidateQueries(["activeAlerts"]);
         });
       },
       onStompError: (frame) => {

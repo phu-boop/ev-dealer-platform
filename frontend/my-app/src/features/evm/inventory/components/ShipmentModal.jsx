@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiX, FiPackage, FiChevronsRight } from "react-icons/fi";
 import { shipB2BOrder } from "../services/evmSalesService";
 import { validateVins, getAvailableVins } from "../services/inventoryService";
+import Swal from "sweetalert2";
 
 /**
  * Modal để EVM Staff nhập số VIN và thực hiện giao hàng.
@@ -184,7 +185,11 @@ const ShipmentModal = ({ isOpen, onClose, order }) => {
     // 4. Gọi API
     try {
       await shipB2BOrder(order.orderId, shipmentData);
-      alert("Giao hàng thành công!");
+      await Swal.fire({
+        icon: "success",
+        title: "Thành công!",
+        text: "Giao hàng đã được xác nhận thành công.",
+      });
       onClose(true); // Đóng modal và báo hiệu đã giao hàng (true)
     } catch (err) {
       setError(err.response?.data?.message || "Lỗi khi giao hàng");

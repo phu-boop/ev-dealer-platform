@@ -4,8 +4,17 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSalesContracts } from '../hooks/useSalesContracts';
 import { useSalesOrders } from '../../salesOrder/hooks/useSalesOrders';
+<<<<<<< HEAD
+<<<<<<< HEAD
 import ContractForm from '../components/ContractForm';
 import { Spin } from 'antd';
+=======
+import { ContractForm } from '../components/ContractForm';
+>>>>>>> db1dc0643d99796268a2cbfe7d089bdd3a70ca4b
+=======
+import ContractForm from '../components/ContractForm';
+import { Spin } from 'antd';
+>>>>>>> b309f3896278852ef156955393c9233618568eda
 
 const ContractCreatePage = () => {
   const { orderId } = useParams();

@@ -20,7 +20,7 @@ import java.util.UUID;
 public class SalesOrder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) 
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "order_id", columnDefinition = "BINARY(16)")
     private UUID orderId;
 
@@ -74,9 +74,6 @@ public class SalesOrder {
     @Column(name = "payment_status", length = 50)
     @Builder.Default
     private PaymentStatus paymentStatus = PaymentStatus.NONE;
-
-    @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> orderItems;
 
     // SalesOrder.java
     @OneToOne(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)

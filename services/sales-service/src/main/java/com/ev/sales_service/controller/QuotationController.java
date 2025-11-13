@@ -106,12 +106,12 @@ public class QuotationController {
             @RequestParam(required = false) String search) {
 
         UUID staffIdUuid = UUID.fromString(staffId);
-        log.info("Fetching quotations for staff: {} with filters - status: {}, customer: {}, dateFrom: {}, dateTo: {}, search: {}",
+        log.info(
+                "Fetching quotations for staff: {} with filters - status: {}, customer: {}, dateFrom: {}, dateTo: {}, search: {}",
                 staffIdUuid, status, customer, dateFrom, dateTo, search);
 
         QuotationFilterRequest filterRequest = quotationService.buildFilterRequestForStaff(
-                staffIdUuid, status, customer, dateFrom, dateTo, search
-        );
+                staffIdUuid, status, customer, dateFrom, dateTo, search);
 
         List<QuotationResponse> responses = quotationService.getQuotationsByFilters(filterRequest);
         return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for staff", responses));
@@ -126,16 +126,15 @@ public class QuotationController {
             @RequestParam(required = false) String dateTo,
             @RequestParam(required = false) String search) {
 
-        log.info("Fetching quotations for dealer: {} with filters - status: {}, customer: {}, dateFrom: {}, dateTo: {}, search: {}",
+        log.info(
+                "Fetching quotations for dealer: {} with filters - status: {}, customer: {}, dateFrom: {}, dateTo: {}, search: {}",
                 dealerId, status, customer, dateFrom, dateTo, search);
 
         QuotationFilterRequest filterRequest = quotationService.buildFilterRequestForDealer(
-                dealerId, status, customer, dateFrom, dateTo, search
-        );
+                dealerId, status, customer, dateFrom, dateTo, search);
 
         List<QuotationResponse> responses = quotationService.getQuotationsByFilters(filterRequest);
         return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for dealer", responses));
     }
-
 
 }

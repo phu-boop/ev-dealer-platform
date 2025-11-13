@@ -21,6 +21,7 @@ import {
 
 import OrderDetailModal from "../components/OrderDetailModal.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
+import LoadingTruck from "../../../../components/common/loading/LoadingTruck.jsx";
 
 const DealerOrdersPage = () => {
   const [activeTab, setActiveTab] = useState("PENDING"); // Mặc định hiển thị tab "Chờ duyệt"
@@ -237,10 +238,18 @@ const DealerOrdersPage = () => {
         </nav>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white p-6 rounded-lg shadow-md min-h-[500px] relative">
         {error && <p className="text-red-500 mb-4">{error}</p>}
         {isLoading ? (
-          <p className="text-gray-500">Đang tải đơn hàng...</p>
+          activeTab === "IN_TRANSIT" ? (
+            <div className="w-full h-96 flex justify-center items-center">
+              <LoadingTruck />
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 py-10">
+              Đang tải dữ liệu...
+            </p>
+          )
         ) : orders.length === 0 ? (
           <p className="text-gray-500">Không có đơn hàng nào trong mục này.</p>
         ) : (

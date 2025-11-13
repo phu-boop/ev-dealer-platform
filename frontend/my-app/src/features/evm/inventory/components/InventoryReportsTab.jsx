@@ -4,6 +4,7 @@ import {
   updateCentralReorderLevel,
 } from "../services/inventoryService";
 import { saveAs } from "file-saver";
+import Swal from "sweetalert2";
 
 const InventoryReportsTab = () => {
   const [reportParams, setReportParams] = useState({
@@ -18,8 +19,23 @@ const InventoryReportsTab = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
-    if (!reportParams.startDate || !reportParams.endDate) {
-      alert("Vui lòng chọn ngày bắt đầu và kết thúc.");
+    let errorMessage = "";
+
+    if (!reportParams.startDate && !reportParams.endDate) {
+      errorMessage = "Vui lòng chọn ngày bắt đầu và ngày kết thúc.";
+    } else if (!reportParams.startDate) {
+      errorMessage = "Vui lòng chọn ngày bắt đầu.";
+    } else if (!reportParams.endDate) {
+      errorMessage = "Vui lòng chọn ngày kết thúc.";
+    }
+
+    // 2. Nếu có lỗi thì hiển thị thông báo
+    if (errorMessage) {
+      await Swal.fire({
+        icon: "info",
+        title: "Cảnh báo",
+        text: errorMessage, // Sử dụng thông báo tùy chỉnh
+      });
       return;
     }
     setIsExporting(true);
@@ -34,7 +50,11 @@ const InventoryReportsTab = () => {
       );
     } catch (error) {
       console.error("Failed to export report", error);
-      alert("Xuất báo cáo thất bại.");
+      await Swal.fire({
+        icon: "error",
+        title: "Thất bại!",
+        text: "Xuất báo cáo thất bại.",
+      });
     } finally {
       setIsExporting(false);
     }
@@ -44,13 +64,22 @@ const InventoryReportsTab = () => {
     e.preventDefault();
     try {
       await updateCentralReorderLevel(reorderParams);
-      alert("Cập nhật ngưỡng tồn kho thành công!");
+      await Swal.fire({
+        icon: "success",
+        title: "Thành công!",
+        text: "Cập nhật ngưỡng tồn kho thành công!",
+        timer: 1000, // Tự tắt sau 1 giây
+        timerProgressBar: true,
+      });
       setReorderParams({ variantId: "", reorderLevel: "" });
     } catch (error) {
-      alert(
-        "Cập nhật thất bại: " +
-          (error.response?.data?.message || "Lỗi không xác định")
-      );
+      await Swal.fire({
+        icon: "error",
+        title: "Thất bại!",
+        text:
+          "Cập nhật ngưỡng tồn kho thất bại!" +
+          (error.response?.data?.message || "Lỗi không xác định"),
+      });
     }
   };
 
@@ -109,7 +138,7 @@ const InventoryReportsTab = () => {
             }
             placeholder="ID Phiên bản (Variant ID)"
             required
-            className="p-2 border rounded-lg flex-grow"
+            className="p-2 border rounded-lg grow"
           />
           <input
             type="number"
