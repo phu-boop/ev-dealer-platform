@@ -208,10 +208,9 @@ const SalesReportPage = () => {
           >
             <option value="">Tất cả Khu vực</option>
             {/* TODO: Nên load danh sách này từ API */}
-            <option value="Southeast">Southeast</option>
-            <option value="North">Miền Bắc</option>
-            <option value="Central">Miền Trung</option>
-            <option value="South">Miền Nam</option>
+            <option value="Miền Bắc">Miền Bắc</option>
+            <option value="Miền Trung">Miền Trung</option>
+            <option value="Miền Nam">Miền Nam</option>
           </select>
 
           <select

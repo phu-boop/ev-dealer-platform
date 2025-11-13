@@ -3,7 +3,7 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSalesContracts } from '../hooks/useSalesContracts';
 import { useSalesOrders } from '../../salesOrder/hooks/useSalesOrders';
-import ContractForm from '../components/ContractForm';
+import { ContractForm } from '../components/ContractForm';
 
 const ContractCreatePage = () => {
   const { orderId } = useParams();

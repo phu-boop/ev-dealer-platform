@@ -11,7 +11,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -36,13 +35,6 @@ public class DevSecurityConfig {
                 // )
                 .authorizeHttpRequests(auth -> auth
 
-                
-                .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyRole("EVM_STAFF", "ADMIN","DEALER_MANAGER","DEALER_STAFF")
-                .requestMatchers(HttpMethod.GET, "/my-stock").hasAnyRole("DEALER_MANAGER", "DEALER_STAFF")
-                .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyRole("EVM_STAFF", "ADMIN") 
-                .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**").hasAnyRole("DEALER_MANAGER", "ADMIN") 
-                .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**").hasAnyRole("EVM_STAFF", "ADMIN") 
-                .anyRequest().authenticated()
                     .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyRole("DEALER_STAFF", "EVM_STAFF", "ADMIN") 
                     .requestMatchers(HttpMethod.GET, "/my-stock").hasAnyRole("DEALER_MANAGER", "DEALER_STAFF")
                     .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyRole("EVM_STAFF", "ADMIN") 
@@ -59,8 +51,7 @@ public class DevSecurityConfig {
                             response.getWriter().write(body);
                         })
                 )
-                // Đặt filter của gateway chạy TRƯỚC AnonymousAuthenticationFilter để set Authentication đúng
-                .addFilterBefore(gatewayHeaderFilter, org.springframework.security.web.authentication.AnonymousAuthenticationFilter.class);
+                .addFilterBefore(gatewayHeaderFilter, UsernamePasswordAuthenticationFilter.class);
         ;
         return http.build();
     }
