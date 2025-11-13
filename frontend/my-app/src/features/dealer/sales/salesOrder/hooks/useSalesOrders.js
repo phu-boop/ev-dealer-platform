@@ -82,6 +82,36 @@ export const useSalesOrders = () => {
     }
   };
 
+  // 🟢 Chuyển trạng thái sang EDITED
+  const markOrderAsEdited = async (orderId, staffId) => {
+    try {
+      const data = await salesOrderService.markOrderAsEdited(orderId, staffId);
+      showSuccess('Đơn hàng đã được chuyển sang trạng thái EDITED');
+      await fetchOrders(); // Refresh list
+      return data;
+    } catch (err) {
+      console.error("Mark order as EDITED error:", err);
+      showError('Lỗi khi chuyển trạng thái sang EDITED');
+      throw err;
+    }
+  };
+
+  // Thêm hàm gửi duyệt đơn
+  const sendOrderForApproval = async (orderId,dealerId) => {
+    try {
+      const response = await salesOrderService.sendForApproval(orderId,dealerId); 
+      const data = response.data?.data || null;
+      showSuccess('Đơn hàng đã được gửi quản lý duyệt');
+      await fetchOrders();
+      return data;
+    } catch (err) {
+      console.error("Send order for approval error:", err);
+      showError('Lỗi khi gửi quản lý duyệt');
+      throw err;
+    }
+  };
+
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -94,6 +124,8 @@ export const useSalesOrders = () => {
     createOrder,
     updateStatus,
     approveOrder,
-    recalcOrderItems
+    recalcOrderItems,
+    markOrderAsEdited,
+    sendOrderForApproval
   };
 };

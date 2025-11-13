@@ -349,24 +349,9 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         salesOrder.setDownPayment(newDownPayment);
 
         // Cập nhật trạng thái và reset phê duyệt
-        salesOrder.setOrderStatusB2C(OrderStatusB2C.EDITED);
         salesOrder.setManagerApproval(false);
         salesOrder.setApprovedBy(null);
         salesOrder.setApprovalDate(null);
-
-        // Ghi nhận tracking
-        OrderTracking tracking = OrderTracking.builder()
-                .salesOrder(salesOrder)
-                .status(OrderStatusB2C.EDITED.toString())
-                .updateDate(LocalDateTime.now())
-                .notes("Updated order items, total amount: " + newTotalAmount)
-                .updatedBy(salesOrder.getStaffId())
-                .build();
-
-        if (salesOrder.getOrderTrackings() == null) {
-            salesOrder.setOrderTrackings(new ArrayList<>());
-        }
-        salesOrder.getOrderTrackings().add(tracking);
 
         SalesOrder updatedSalesOrder = salesOrderRepository.save(salesOrder);
         log.info("Recalculated {} order items for sales order {}, total amount: {}",
@@ -374,6 +359,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 
         return mapToResponse(updatedSalesOrder);
     }
+
+    //
     // ==========================
     // Helper methods
     // ==========================
@@ -514,6 +501,32 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         }
 
         salesOrderRepository.save(order);
+    }
+
+
+    @Override
+    @Transactional
+    public SalesOrderB2CResponse markOrderAsEdited(UUID orderId, UUID staffId) {
+        SalesOrder salesOrder = salesOrderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
+
+        // Kiểm tra loại đơn B2C
+        if (salesOrder.getTypeOder() != SaleOderType.B2C) {
+            throw new AppException(ErrorCode.INVALID_ORDER_TYPE);
+        }
+
+        // Chỉ cho phép nếu trạng thái hiện tại là PENDING (có thể tuỳ business)
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.PENDING) {
+            throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+
+        // Cập nhật trạng thái
+        salesOrder.setOrderStatusB2C(OrderStatusB2C.EDITED);
+
+        SalesOrder updatedOrder = salesOrderRepository.save(salesOrder);
+        log.info("Sales order {} marked as EDITED by staff {}", orderId, staffId);
+
+        return mapToResponse(updatedOrder);
     }
 
 

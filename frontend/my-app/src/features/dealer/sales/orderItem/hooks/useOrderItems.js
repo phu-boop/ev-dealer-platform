@@ -43,7 +43,7 @@ export const useOrderItems = (orderId) => {
       await fetchItems();
       return response.data?.data;
     } catch (err) {
-      showError('Lỗi khi thêm sản phẩm');
+      showError(err.response.data.message);
       throw err;
     }
   };

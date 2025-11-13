@@ -50,21 +50,21 @@ const ContractCreatePage = () => {
             <div className="flex items-center gap-2 text-sm">
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate('/dealer/staff')}
+                onClick={() => navigate('/dealer')}
               >
                 Bán hàng
               </span>
               <span>/</span>
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate('/dealer/staff/orders')}
+                onClick={() => navigate('/dealer/orders')}
               >
                 Đơn hàng
               </span>
               <span>/</span>
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate(`/dealer/staff/orders/${orderId}`)}
+                onClick={() => navigate(`/dealer/orders/${orderId}`)}
               >
                 Đơn hàng #{orderId}
               </span>

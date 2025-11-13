@@ -38,4 +38,6 @@ public interface SalesOrderServiceB2C {
 
     void handleCustomerOrderConfirmation(UUID orderId, boolean confirmed);
 
+    SalesOrderB2CResponse markOrderAsEdited(UUID orderId, UUID staffId);
+
 }

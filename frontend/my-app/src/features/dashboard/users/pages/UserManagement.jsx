@@ -38,6 +38,7 @@ export default function UserManagement() {
     };
 
     const fetchUsers = async () => {
+        const dealerId = sessionStorage.getItem('dealerId');
         try {
             setLoading(true);
             if( sessionStorage.getItem("roles").includes("EVM_STAFF")){
@@ -49,7 +50,7 @@ export default function UserManagement() {
                     showMessage("Lỗi khi tải danh sách user");
                 }
             }else if( sessionStorage.getItem("roles").includes("DEALER_MANAGER")){
-                const response = await mngUserService.getAllDealerStaff();
+                const response = await mngUserService.getAllDealerStaff({ dealerId: dealerId });
                 console.log("Fetched users:", response);
                 if (response.data.code === "1000") {
                     setUsers(response.data.data);

@@ -37,7 +37,8 @@ export const mngUserService = {
     // ----- GET -----
     getAll: () => apiConst.get('/users'),
     getAllDealerManager: () => apiConst.get('/users/dealer-managers'),
-    getAllDealerStaff: () => apiConst.get('/users/dealer-staffs'),
+    getAllDealerStaff: (params) => apiConst.get('/users/dealer-staffs', { params }),
+
     getById: (id) => apiConst.get(`/users/${id}`),
 
     // ----- CREATE -----

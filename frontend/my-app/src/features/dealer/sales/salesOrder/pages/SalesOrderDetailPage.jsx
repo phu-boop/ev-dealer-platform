@@ -30,7 +30,8 @@ const SalesOrderDetailPage = () => {
     orders, 
     loading: ordersLoading, 
     error: ordersError,
-    recalcOrderItems 
+    recalcOrderItems,
+    sendOrderForApproval
   } = useSalesOrders();
   
   const { 
@@ -80,8 +81,8 @@ const SalesOrderDetailPage = () => {
       case 'PENDING':
         return {
           canCRUDOrderItems: true,
-          canCRUDContract: true,
-          canCRUDTracking: true,
+          canCRUDContract: false,
+          canCRUDTracking: false,
           canViewOnly: false,
           canApprove: isManager,
           canRecalc: true
@@ -98,8 +99,8 @@ const SalesOrderDetailPage = () => {
       case 'APPROVED':
         return {
           canCRUDOrderItems: false,
-          canCRUDContract: true,
-          canCRUDTracking: true,
+          canCRUDContract: false,
+          canCRUDTracking: false,
           canViewOnly: false,
           canApprove: false,
           canRecalc: false
@@ -108,7 +109,7 @@ const SalesOrderDetailPage = () => {
         return {
           canCRUDOrderItems: false,
           canCRUDContract: true,
-          canCRUDTracking: true,
+          canCRUDTracking: false,
           canViewOnly: false,
           canApprove: false,
           canRecalc: false
@@ -202,7 +203,7 @@ const SalesOrderDetailPage = () => {
           <p className="text-gray-500 mb-6">Đơn hàng với ID {orderId} không tồn tại.</p>
           <Button
             type="primary"
-            onClick={() => navigate('/dealer/staff/orders')}
+            onClick={() => navigate('/dealer/orders')}
             className="bg-blue-600 hover:bg-blue-700"
           >
             Quay lại danh sách
@@ -211,6 +212,26 @@ const SalesOrderDetailPage = () => {
       </div>
     );
   }
+
+  const handleSubmitForApproval = async () => {
+  setActionLoading(true);
+  try {
+    // Giả sử bạn có hook hoặc API gọi sendForApproval
+    const response = await sendOrderForApproval(orderId, sessionStorage.getItem("profileId")); // implement API call
+    if (response?.code === '1000') {
+      message.success('Đơn hàng đã được gửi quản lý duyệt');
+      // Có thể refresh dữ liệu để cập nhật trạng thái
+      // reloadOrders(); hoặc call lại hook orders
+    } else {
+      console.log("hih");
+    }
+  } catch (error) {
+    handleApiError(error, 'Gửi quản lý duyệt thất bại');
+  } finally {
+    setActionLoading(false);
+  }
+};
+
 
   // Xử lý hợp đồng với bắt lỗi
   const handleGenerateContract = async () => {
@@ -239,7 +260,7 @@ const SalesOrderDetailPage = () => {
       message.warning('Không có quyền tạo hợp đồng trong trạng thái hiện tại');
       return;
     }
-    navigate(`/dealer/staff/orders/${orderId}/contract/create`);
+    navigate(`/dealer/orders/${orderId}/contract/create`);
   };
 
   const handleSign = async (contractId, digitalSignature) => {
@@ -272,10 +293,9 @@ const SalesOrderDetailPage = () => {
       if (response?.code === '1000') {
         message.success('Tính toán lại thành công');
       } else {
-        handleApiError(null, response?.message || 'Tính toán lại thất bại');
       }
     } catch (error) {
-      handleApiError(error, 'Tính toán lại thất bại');
+      console.log(error);
     } finally {
       setRecalcLoading(false);
     }
@@ -287,7 +307,7 @@ const SalesOrderDetailPage = () => {
       message.warning('Không có quyền tạo tracking trong trạng thái hiện tại');
       return;
     }
-    navigate(`/dealer/staff/orders/${orderId}/tracking/create`);
+    navigate(`/dealer/orders/${orderId}/tracking`);
   };
 
   // Xử lý xóa với bắt lỗi
@@ -338,7 +358,7 @@ const SalesOrderDetailPage = () => {
             <Button 
               type="text" 
               icon={<ArrowLeftOutlined />} 
-              onClick={() => navigate('/dealer/staff/orders')}
+              onClick={() => navigate('/dealer/orders')}
               className="flex items-center"
             >
               Quay lại
@@ -349,21 +369,23 @@ const SalesOrderDetailPage = () => {
         breadcrumb: {
           items: [
             { title: 'Bán hàng' },
-            { title: <Link to="/dealer/staff/orders">Đơn hàng</Link> },
+            { title: <Link to="/dealer/orders">Đơn hàng</Link> },
             { title: `Đơn hàng #${orderId.slice(-8).toUpperCase()}` },
           ],
         },
       }}
       extra={[
-        <Button 
-          key="tracking" 
-          icon={<BarChartOutlined />}
-          onClick={handleCreateTracking}
-          disabled={!permissions.canCRUDTracking}
-          className="flex items-center"
+
+        <Button
+          key="submitForApproval"
+          type="default"
+          onClick={handleSubmitForApproval}
+          disabled={order.orderStatusB2C !== 'PENDING'} // Chỉ cho trạng thái chờ xử lý
+          className="flex items-center bg-orange-500 hover:bg-orange-600 text-white"
         >
-          Thêm tracking
+          Gửi quản lý duyệt
         </Button>,
+
         <Button 
           key="contract" 
           type="primary" 
@@ -374,6 +396,16 @@ const SalesOrderDetailPage = () => {
         >
           Tạo hợp đồng
         </Button>,
+        <Button 
+          key="tracking" 
+          icon={<BarChartOutlined />}
+          onClick={handleCreateTracking}
+          disabled={!permissions.canCRUDTracking}
+          className="flex items-center"
+        >
+          Thêm tracking
+        </Button>
+
       ]}
       className="bg-transparent"
     >
@@ -442,7 +474,7 @@ const SalesOrderDetailPage = () => {
                 {permissions.canCRUDOrderItems && (
                   <Button
                     type="default"
-                    onClick={() => navigate(`/dealer/staff/orders/${orderId}/items/create`)}
+                    onClick={() => navigate(`/dealer/orders/${orderId}/items/create`)}
                   >
                     Thêm sản phẩm
                   </Button>
@@ -463,7 +495,7 @@ const SalesOrderDetailPage = () => {
                   orderId={orderId}
                   readOnly={!permissions.canCRUDOrderItems || permissions.canViewOnly}
                   onEdit={permissions.canCRUDOrderItems ? 
-                    (itemId) => navigate(`/dealer/staff/orders/${orderId}/items/${itemId}/edit`) : 
+                    (itemId) => navigate(`/dealer/orders/${orderId}/items/${itemId}/edit`) : 
                     undefined
                   }
                   onDelete={permissions.canCRUDOrderItems ? 
@@ -525,7 +557,7 @@ const SalesOrderDetailPage = () => {
                   <ContractDetails
                     contract={contract}
                     onEdit={permissions.canCRUDContract ? 
-                      () => navigate(`/dealer/staff/contracts/${contract.contractId}/edit`) : 
+                      () => navigate(`/dealer/contracts/${contract.contractId}/edit`) : 
                       undefined
                     }
                     onDownload={() => contract.contractFileUrl && window.open(contract.contractFileUrl, '_blank')}
@@ -609,7 +641,7 @@ const SalesOrderDetailPage = () => {
                     undefined
                   }
                   onEdit={permissions.canCRUDTracking ? 
-                    (trackId) => navigate(`/dealer/staff/orders/${orderId}/tracking/${trackId}/edit`) : 
+                    (trackId) => navigate(`/dealer/orders/${orderId}/tracking/${trackId}/edit`) : 
                     undefined
                   }
                   onDelete={permissions.canCRUDTracking ? 
@@ -640,7 +672,7 @@ const SalesOrderDetailPage = () => {
 // Helper functions
 const getStatusDescription = (status) => {
   const descriptions = {
-    PENDING: 'Đơn hàng mới được tạo, chưa được duyệt. Bạn có thể thêm/sửa sản phẩm và hợp đồng.',
+    PENDING: 'Đơn hàng mới được tạo, chưa được duyệt. Bạn có thể thêm/sửa sản phẩm và tính toán lại giá.',
     EDITED: 'Đơn hàng đã được chỉnh sửa và đang chờ quản lý duyệt.',
     APPROVED: 'Đơn hàng đã được quản lý duyệt, đang chờ khách hàng xác nhận.',
     CONFIRMED: 'Khách hàng đã xác nhận đơn hàng. Hãy tiến hành ký hợp đồng.',

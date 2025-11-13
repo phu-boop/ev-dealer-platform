@@ -81,14 +81,14 @@ const TrackingHistoryPage = () => {
         <div className="mb-6">
           <nav className="flex items-center space-x-4 text-sm">
             <Link 
-              to="/dealer/staff/orders" 
+              to="/dealer/orders" 
               className=" hover:text-blue-700 font-medium"
             >
               📦 Danh sách đơn hàng
             </Link>
             <span className="text-gray-400">/</span>
             <Link 
-              to={`/dealer/staff/orders/${orderId}`}
+              to={`/dealer/orders/${orderId}`}
               className="hover:text-blue-700 font-medium"
             >
               Đơn hàng #{orderId?.slice(-8)}
@@ -130,7 +130,7 @@ const TrackingHistoryPage = () => {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => navigate(`/dealer/staff/orders/${orderId}`)}
+                onClick={() => navigate(`/dealer/orders/${orderId}`)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
               >
                 ← Quay lại đơn hàng

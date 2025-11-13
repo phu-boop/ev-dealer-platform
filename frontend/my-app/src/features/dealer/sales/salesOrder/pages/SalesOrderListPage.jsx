@@ -452,7 +452,7 @@ const OrderRow = ({ order, isManager, onApprove, approvingOrderId }) => {
       <td className="px-6 py-4 whitespace-nowrap text-right">
         <div className="flex justify-end items-center space-x-2">
           <Link
-            to={`/dealer/staff/orders/${order.orderId}`}
+            to={`/dealer/orders/${order.orderId}`}
             className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             <EyeOutlined className="mr-2" />

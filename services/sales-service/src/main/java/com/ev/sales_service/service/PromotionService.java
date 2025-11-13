@@ -114,13 +114,6 @@ public class PromotionService {
                 continue;
             }
 
-            // Chưa đến ngày bắt đầu
-            if (promotion.getStartDate().isAfter(now)) {
-                if (promotion.getStatus().equals(PromotionStatus.DRAFT)) {
-                    promotion.setStatus(PromotionStatus.NEAR); // Đã duyệt nhưng chưa tới hạn
-                }
-                continue;
-            }
             // Đang trong thời gian hoạt động
             if (promotion.getStartDate().isBefore(now) && promotion.getEndDate().isAfter(now)) {
                 if (promotion.getStatus().equals(PromotionStatus.DRAFT)) {

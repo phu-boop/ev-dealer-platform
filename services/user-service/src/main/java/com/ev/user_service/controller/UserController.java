@@ -57,12 +57,17 @@ public class UserController {
         );
     }
 
-    // Cho Dealer Manager xem tất cả Dealer Staff cùng Dealer của họ
+    // Cho Dealer Manager xem tất cả Dealer Staff theo dealerId
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_MANAGER')")
     @GetMapping("/dealer-staffs")
-    public ResponseEntity<ApiRespond<List<UserRespond>>> getAllUserStaffDealer() {
+    public ResponseEntity<ApiRespond<List<UserRespond>>> getAllUserStaffDealer(
+            @RequestParam(required = false) UUID dealerId) {
+
         return ResponseEntity.ok(
-                ApiRespond.success("Get all Dealer Staff successfully", userService.getAllUserStaffDealer())
+                ApiRespond.success(
+                    "Get all Dealer Staff successfully",
+                    userService.getAllUserStaffDealer(dealerId)
+                )
         );
     }
 

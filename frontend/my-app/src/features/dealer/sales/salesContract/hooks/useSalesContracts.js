@@ -109,7 +109,7 @@ export const useSalesContracts = (orderId) => {
       showSuccess('Tạo hợp đồng thành công');
       return response.data;
     } catch (err) {
-      showError('Lỗi khi tạo hợp đồng');
+      showError(err.response.data.message);
       throw err;
     }
   }, []);
