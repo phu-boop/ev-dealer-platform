@@ -16,6 +16,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +39,8 @@ public class OrderItemServiceImpl implements OrderItemService {
         SalesOrder salesOrder = salesOrderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
         // validate if saleOrder calculated
-        if (!salesOrder.getOrderStatusB2C().equals(OrderStatusB2C.PENDING)) {
+
+        if (salesOrder.getOrderStatusB2C() != (OrderStatusB2C.PENDING)) {
             throw new AppException(ErrorCode.ORDER_ITEM_OPERATION_INVALID_STATE);
         }
         ;
@@ -78,9 +80,9 @@ public class OrderItemServiceImpl implements OrderItemService {
         orderItem.setFinalPrice(calculateFinalPrice(request.getUnitPrice(), request.getQuantity(),
                 request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO));
 
-        SalesOrder salesOrder = salesOrderRepository.findById(request.getOrderId())
+        SalesOrder salesOrder = salesOrderRepository.findById(orderItem.getSalesOrder().getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
-        if (!salesOrder.getOrderStatusB2C().equals(OrderStatusB2C.PENDING)) {
+        if (salesOrder.getOrderStatusB2C()!=(OrderStatusB2C.PENDING)) {
             throw new AppException(ErrorCode.ORDER_ITEM_OPERATION_INVALID_STATE);
         }
         ;

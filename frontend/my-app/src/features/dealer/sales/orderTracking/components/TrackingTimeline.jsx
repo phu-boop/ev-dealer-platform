@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useOrderTracking } from '../hooks/useOrderTracking';
-import OrderStatus from '../../salesOrder/components/OrderStatus';
 import NoteForm from './NoteForm';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,7 +11,10 @@ const TrackingTimeline = ({
   currentStatus, 
   loading, 
   orderId, 
-  onEditTracking 
+  readOnly = false,
+  onCreate,
+  onEdit,
+  onDelete
 }) => {
   const [showNoteForm, setShowNoteForm] = useState(false);
   const { addNote } = useOrderTracking(orderId);
@@ -24,6 +26,18 @@ const TrackingTimeline = ({
       setShowNoteForm(false);
     } catch (error) {
       console.error('Lỗi thêm ghi chú:', error);
+    }
+  };
+
+  const handleEditTracking = (tracking) => {
+    if (onEdit && tracking.trackId) {
+      onEdit(tracking.trackId);
+    }
+  };
+
+  const handleDeleteTracking = (tracking) => {
+    if (onDelete && tracking.trackId) {
+      onDelete(tracking.trackId);
     }
   };
 
@@ -48,18 +62,22 @@ const TrackingTimeline = ({
           )}
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
+          {!readOnly && (
           <button
-            onClick={() => navigate(`/dealer/staff/orders/${orderId}/tracking/history`)}
+            onClick={() => navigate(`/dealer/orders/${orderId}/tracking/history`)}
             className="flex-1 sm:flex-none bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-600 px-4 py-2.5 rounded-xl hover:from-blue-100 hover:to-cyan-100 transition-all duration-200 text-sm font-medium border border-blue-100 hover:border-blue-200 shadow-sm"
           >
             Cập nhật
           </button>
-          <button
-            onClick={() => setShowNoteForm(true)}
-            className="flex-1 sm:flex-none bg-gradient-to-r from-green-50 to-emerald-50 text-green-600 px-4 py-2.5 rounded-xl hover:from-green-100 hover:to-emerald-100 transition-all duration-200 text-sm font-medium border border-green-100 hover:border-green-200 shadow-sm"
-          >
-            ✏️ Thêm ghi chú
-          </button>
+          )}
+          {!readOnly && (
+            <button
+              onClick={() => setShowNoteForm(true)}
+              className="flex-1 sm:flex-none bg-gradient-to-r from-green-50 to-emerald-50 text-green-600 px-4 py-2.5 rounded-xl hover:from-green-100 hover:to-emerald-100 transition-all duration-200 text-sm font-medium border border-green-100 hover:border-green-200 shadow-sm"
+            >
+              ✏️ Thêm ghi chú
+            </button>
+          )}
         </div>
       </div>
 
@@ -89,7 +107,9 @@ const TrackingTimeline = ({
               key={tracking.trackId}
               tracking={tracking}
               isLatest={index === 0}
-              onEditTracking={onEditTracking}
+              readOnly={readOnly}
+              onEdit={handleEditTracking}
+              onDelete={handleDeleteTracking}
             />
           ))
         )}
@@ -99,7 +119,7 @@ const TrackingTimeline = ({
 };
 
 // Component cho mỗi item trong timeline
-const TimelineItem = ({ tracking, isLatest, onEditTracking }) => {
+const TimelineItem = ({ tracking, isLatest, readOnly, onEdit, onDelete }) => {
   const formatDateTime = (date) => {
     return new Date(date).toLocaleString('vi-VN', {
       day: '2-digit',
@@ -179,14 +199,27 @@ const TimelineItem = ({ tracking, isLatest, onEditTracking }) => {
             </div>
           </div>
           
-          {onEditTracking && tracking.status && (
-            <button
-              onClick={() => onEditTracking(tracking)}
-              className="text-gray-400 hover:text-blue-500 transition-all duration-200 p-2 hover:bg-blue-50 rounded-lg flex-shrink-0"
-              title="Chỉnh sửa trạng thái"
-            >
-              <span className="text-lg">✏️</span>
-            </button>
+          {!readOnly && tracking.status && (
+            <div className="flex gap-1">
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(tracking)}
+                  className="text-gray-400 hover:text-blue-500 transition-all duration-200 p-2 hover:bg-blue-50 rounded-lg flex-shrink-0"
+                  title="Chỉnh sửa trạng thái"
+                >
+                  <span className="text-lg">✏️</span>
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => onDelete(tracking)}
+                  className="text-gray-400 hover:text-red-500 transition-all duration-200 p-2 hover:bg-red-50 rounded-lg flex-shrink-0"
+                  title="Xóa trạng thái"
+                >
+                  <span className="text-lg">🗑️</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
 

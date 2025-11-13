@@ -546,6 +546,8 @@ export default function AppRoutes() {
           }
         >
           <Route path="dealer" element={<DealerLayout />}>
+            {/* Sales Module */}
+            <Route path="*" element={<SalesRoutes />} />
             <Route index element={<DashboardForDealer />} />
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
@@ -652,8 +654,6 @@ export default function AppRoutes() {
                 element={<QuotationListPage />}
               />
 
-              {/* Sales Module */}
-              <Route path="manager/*" element={<SalesRoutes />} />
               {/* System Management */}
               <Route
                 path="manager/settings/staff/*"
@@ -745,9 +745,6 @@ export default function AppRoutes() {
                 path="staff/promotions"
                 element={<CustomerPromotionView />}
               />
-
-              {/* Sales Module */}
-              <Route path="staff/*" element={<SalesRoutes />} />
 
               {/* Payment Management (Dealer Staff) */}
               <Route

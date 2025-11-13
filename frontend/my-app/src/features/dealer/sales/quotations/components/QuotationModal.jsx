@@ -72,7 +72,7 @@ const QuotationModal = ({ quotation, isOpen, onClose, loading }) => {
           timer: 2000,
           showConfirmButton: false,
         });
-        window.location.href = `/dealer/staff/orders/${response.data.orderId}`;
+        window.location.href = `/dealer/orders/${response.data.orderId}`;
       } catch (error) {
         Swal.fire({
           title: 'Lỗi!',

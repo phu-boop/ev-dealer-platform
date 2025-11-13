@@ -122,4 +122,15 @@ public class SalesOrderB2CController {
         );
     }
 
+
+    @PutMapping("/{orderId}/mark-edited")
+    public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> markOrderAsEdited(
+            @PathVariable UUID orderId,
+            @RequestParam UUID staffId) {
+        log.info("Marking B2C sales order {} as EDITED by staff {}", orderId, staffId);
+        SalesOrderB2CResponse response = salesOrderServiceB2C.markOrderAsEdited(orderId, staffId);
+        return ResponseEntity.ok(ApiRespond.success("Sales order marked as EDITED successfully", response));
+    }
+
+
 }

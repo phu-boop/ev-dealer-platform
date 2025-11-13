@@ -20,7 +20,7 @@ import java.util.UUID;
 public class SalesOrder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) 
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "order_id", columnDefinition = "BINARY(16)")
     private UUID orderId;
 

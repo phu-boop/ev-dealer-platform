@@ -128,7 +128,7 @@ const OrderItemCreatePage = () => {
             Không tìm thấy mã đơn hàng để thêm sản phẩm.
           </p>
           <Link
-            to="/dealer/staff/orders"
+            to="/dealer/orders"
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Quay lại danh sách đơn hàng
@@ -146,10 +146,7 @@ const OrderItemCreatePage = () => {
           <nav className="flex mb-6" aria-label="Breadcrumb">
             <ol className="flex items-center space-x-4">
               <li>
-                <Link
-                  to="/dealer/staff/orders"
-                  className="text-gray-400 hover:text-gray-500"
-                >
+                <Link to="/dealer/orders" className="text-gray-400 hover:text-gray-500">
                   📦 Đơn hàng
                 </Link>
               </li>
@@ -157,10 +154,7 @@ const OrderItemCreatePage = () => {
                 <span className="text-gray-400">/</span>
               </li>
               <li>
-                <Link
-                  to={`/dealer/staff/orders/${orderId}`}
-                  className="text-gray-400 hover:text-gray-500"
-                >
+                <Link to={`/dealer/orders/${orderId}`} className="text-gray-400 hover:text-gray-500">
                   Đơn hàng #{orderId.slice(-8)}
                 </Link>
               </li>
@@ -183,7 +177,7 @@ const OrderItemCreatePage = () => {
               </p>
             </div>
             <Link
-              to={`/dealer/staff/orders/${orderId}`}
+              to={`/dealer/orders/${orderId}`}
               className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
             >
               ← Quay lại

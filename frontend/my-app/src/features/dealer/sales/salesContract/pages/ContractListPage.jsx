@@ -106,11 +106,11 @@ const ContractListPage = () => {
   };
 
   const handleView = (contract) => {
-    navigate(`/dealer/staff/contracts/${contract.contractId}`);
+    navigate(`/dealer/contracts/${contract.contractId}`);
   };
 
   const handleEdit = (contract) => {
-    navigate(`/dealer/staff/contracts/${contract.contractId}/edit`);
+    navigate(`/dealer/contracts/${contract.contractId}/edit`);
   };
 
   return (
@@ -144,7 +144,7 @@ const ContractListPage = () => {
           key="create" 
           type="primary" 
           icon={<PlusOutlined />}
-          onClick={() => navigate('/dealer/staff/contracts/create')}
+          onClick={() => navigate('/dealer/contracts/create')}
         >
           Tạo hợp đồng
         </Button>,

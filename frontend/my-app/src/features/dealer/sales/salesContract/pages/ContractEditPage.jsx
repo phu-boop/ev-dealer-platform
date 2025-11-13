@@ -29,7 +29,7 @@ const ContractEditPage = () => {
       await updateContract(contractId, values);
       message.success('Cập nhật hợp đồng thành công!');
       setFormChanged(false);
-      navigate(`/dealer/staff/contracts/${contractId}`, {
+      navigate(`/dealer/contracts/${contractId}`, {
         replace: true,
         state: { 
           updated: true,
@@ -58,10 +58,10 @@ const ContractEditPage = () => {
         cancelText: 'Ở lại',
         okButtonProps: { danger: true },
         icon: <ExclamationCircleOutlined />,
-        onOk: () => navigate(`/dealer/staff/contracts/${contractId}`)
+        onOk: () => navigate(`/dealer/contracts/${contractId}`)
       });
     } else {
-      navigate(`/dealer/staff/contracts/${contractId}`);
+      navigate(`/dealer/contracts/${contractId}`);
     }
   };
 
@@ -126,7 +126,7 @@ const ContractEditPage = () => {
         <div style={{ marginTop: 16, textAlign: 'center' }}>
           <Button 
             icon={<ArrowLeftOutlined />} 
-            onClick={() => navigate('/dealer/staff/contracts')}
+            onClick={() => navigate('/dealer/contracts')}
           >
             Quay lại danh sách
           </Button>
@@ -148,7 +148,7 @@ const ContractEditPage = () => {
         <div style={{ marginTop: 16, textAlign: 'center' }}>
           <Button 
             icon={<ArrowLeftOutlined />} 
-            onClick={() => navigate('/dealer/staff/contracts')}
+            onClick={() => navigate('/dealer/contracts')}
           >
             Quay lại danh sách hợp đồng
           </Button>
@@ -185,7 +185,7 @@ const ContractEditPage = () => {
         <Button 
           key="back" 
           icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate('/dealer/staff/contracts')}
+          onClick={() => navigate('/dealer/contracts')}
           disabled={submitting}
         >
           Danh sách hợp đồng

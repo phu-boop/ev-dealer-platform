@@ -50,7 +50,7 @@ const ContractDetailPage = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/dealer/staff/contracts/${contractId}/edit`);
+    navigate(`/dealer/contracts/${contractId}/edit`);
   };
 
   const handleDownload = () => {
@@ -104,7 +104,7 @@ const ContractDetailPage = () => {
           type="warning"
           showIcon
           action={
-            <Button size="small" onClick={() => navigate('/dealer/staff/contracts')}>
+            <Button size="small" onClick={() => navigate('/dealer/contracts')}>
               Quay lại danh sách
             </Button>
           }
@@ -120,7 +120,7 @@ const ContractDetailPage = () => {
         breadcrumb: {
           items: [
             { title: 'Bán hàng' },
-            { title: 'Hợp đồng', path: '/dealer/staff/contracts' },
+            { title: 'Hợp đồng', path: '/dealer/contracts' },
             { title: `Hợp đồng #${contract.contractNumber || contract.contractId}` },
           ],
         },
@@ -129,7 +129,7 @@ const ContractDetailPage = () => {
         <Button 
           key="back" 
           icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate('/dealer/staff/contracts')}
+          onClick={() => navigate('/dealer/contracts')}
         >
           Quay lại
         </Button>,

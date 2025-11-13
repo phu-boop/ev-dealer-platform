@@ -5,11 +5,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSalesContracts } from '../hooks/useSalesContracts';
 import { useSalesOrders } from '../../salesOrder/hooks/useSalesOrders';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import ContractForm from '../components/ContractForm';
 import { Spin } from 'antd';
 =======
 import { ContractForm } from '../components/ContractForm';
 >>>>>>> db1dc0643d99796268a2cbfe7d089bdd3a70ca4b
+=======
+import ContractForm from '../components/ContractForm';
+import { Spin } from 'antd';
+>>>>>>> b309f3896278852ef156955393c9233618568eda
 
 const ContractCreatePage = () => {
   const { orderId } = useParams();
@@ -54,21 +59,21 @@ const ContractCreatePage = () => {
             <div className="flex items-center gap-2 text-sm">
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate('/dealer/staff')}
+                onClick={() => navigate('/dealer')}
               >
                 Bán hàng
               </span>
               <span>/</span>
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate('/dealer/staff/orders')}
+                onClick={() => navigate('/dealer/orders')}
               >
                 Đơn hàng
               </span>
               <span>/</span>
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate(`/dealer/staff/orders/${orderId}`)}
+                onClick={() => navigate(`/dealer/orders/${orderId}`)}
               >
                 Đơn hàng #{orderId}
               </span>

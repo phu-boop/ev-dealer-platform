@@ -41,6 +41,6 @@ public class DealerStaffProfile {
     @Column(name = "salary", precision = 15, scale = 2)
     private BigDecimal salary;
 
-    @Column(name = "commission_rate", precision = 5, scale = 4)
+    @Column(name = "commission_rate", precision = 5, scale = 2)
     private BigDecimal commissionRate;
 }
