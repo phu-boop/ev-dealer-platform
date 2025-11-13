@@ -145,7 +145,7 @@ public class QuotationServiceImpl implements QuotationService {
         quotation.setValidUntil(request.getValidUntil());
         quotation.setTermsConditions(request.getTermsConditions());
         quotation.setQuotationDate(LocalDateTime.now());
-        quotation.setStatus(QuotationStatus.SENT);
+        quotation.setStatus(QuotationStatus.PENDING); // PENDING = đã gửi cho quản lý duyệt
 
         Quotation updatedQuotation = quotationRepository.save(quotation);
 
@@ -169,7 +169,7 @@ public class QuotationServiceImpl implements QuotationService {
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
-        if (quotation.getStatus() != QuotationStatus.SENT) {
+        if (quotation.getStatus() != QuotationStatus.PENDING) { // PENDING = đã gửi cho quản lý duyệt
             throw new AppException(ErrorCode.INVALID_QUOTATION_STATUS);
         }
 

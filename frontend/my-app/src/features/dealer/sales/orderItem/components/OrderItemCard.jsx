@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 /**
  * Component Card hiển thị thông tin chi tiết của một Order Item
@@ -7,19 +7,19 @@ import React, { useState } from 'react';
  * @param {function} onDelete - Callback khi click delete
  * @param {boolean} readOnly - Chế độ chỉ đọc
  */
-const OrderItemCard = ({ 
-  item, 
-  onEdit, 
-  onDelete, 
+const OrderItemCard = ({
+  item,
+  onEdit,
+  onDelete,
   readOnly = false,
-  showActions = true 
+  showActions = true,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount || 0);
   };
 
@@ -39,14 +39,20 @@ const OrderItemCard = ({
         <div className="flex justify-between items-start">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">#{item.variantId}</span>
+              <span className="text-white font-bold text-sm">
+                #{item.variantId}
+              </span>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Biến thể #{item.variantId}</h3>
-              <p className="text-sm text-gray-500">Mã: {item.orderItemId?.slice(-8)}</p>
+              <h3 className="font-semibold text-gray-900">
+                Biến thể #{item.variantId}
+              </h3>
+              <p className="text-sm text-gray-500">
+                Mã: {item.orderItemId?.slice(-8)}
+              </p>
             </div>
           </div>
-          
+
           <div className="text-right">
             <div className="text-lg font-bold text-green-600">
               {formatCurrency(item.finalPrice)}
@@ -68,13 +74,13 @@ const OrderItemCard = ({
             <InfoRow label="Đơn giá" value={formatCurrency(item.unitPrice)} />
           </div>
           <div className="space-y-2">
-            <InfoRow 
-              label="Giảm giá" 
-              value={`${item.discount}%`} 
+            <InfoRow
+              label="Giảm giá"
+              value={`${item.discount}%`}
               valueClassName={item.discount > 0 ? "text-red-600" : ""}
             />
-            <InfoRow 
-              label="Tiết kiệm" 
+            <InfoRow
+              label="Tiết kiệm"
               value={formatCurrency(calculateDiscountAmount())}
               valueClassName="text-green-600"
             />
@@ -88,7 +94,9 @@ const OrderItemCard = ({
             <InfoRow label="Mã biến thể" value={item.variantId} />
             {item.itemNotes && (
               <div>
-                <span className="text-xs font-medium text-gray-500">Ghi chú:</span>
+                <span className="text-xs font-medium text-gray-500">
+                  Ghi chú:
+                </span>
                 <p className="text-sm text-gray-700 mt-1 bg-gray-50 p-2 rounded">
                   {item.itemNotes}
                 </p>
@@ -99,8 +107,12 @@ const OrderItemCard = ({
                 {item.color && <InfoRow label="Màu sắc" value={item.color} />}
                 {item.specifications && (
                   <div className="col-span-2">
-                    <span className="text-xs font-medium text-gray-500">Thông số kỹ thuật:</span>
-                    <p className="text-sm text-gray-700 mt-1">{item.specifications}</p>
+                    <span className="text-xs font-medium text-gray-500">
+                      Thông số kỹ thuật:
+                    </span>
+                    <p className="text-sm text-gray-700 mt-1">
+                      {item.specifications}
+                    </p>
                   </div>
                 )}
               </div>
@@ -116,8 +128,12 @@ const OrderItemCard = ({
             onClick={() => setIsExpanded(!isExpanded)}
             className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
           >
-            {isExpanded ? 'Ẩn chi tiết' : 'Xem chi tiết'}
-            <span className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+            {isExpanded ? "Ẩn chi tiết" : "Xem chi tiết"}
+            <span
+              className={`transform transition-transform ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+            >
               ▼
             </span>
           </button>

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useOrderItems } from '../hooks/useOrderItems';
-import OrderItemForm from '../components/OrderItemForm';
-import { showSuccess, showError } from '../../../../../utils/notification';
+import React, { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useOrderItems } from "../hooks/useOrderItems";
+import OrderItemForm from "../components/OrderItemForm";
+import { showSuccess, showError } from "../../../../../utils/notification";
 
 /**
  * Trang tạo mới Order Item độc lập
@@ -12,31 +12,31 @@ const OrderItemCreatePage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { createItem, validateItems, loading } = useOrderItems();
-  
+
   const [formData, setFormData] = useState({
-    variantId: '',
+    variantId: "",
     quantity: 1,
     unitPrice: 0,
     discount: 0,
-    itemNotes: '',
-    color: '',
-    specifications: ''
+    itemNotes: "",
+    color: "",
+    specifications: "",
   });
   const [validationErrors, setValidationErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle form change
   const handleChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     // Clear validation error when user starts typing
     if (validationErrors[field]) {
-      setValidationErrors(prev => ({
+      setValidationErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: "",
       }));
     }
   };
@@ -44,25 +44,25 @@ const OrderItemCreatePage = () => {
   // Validate form
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.variantId) {
-      errors.variantId = 'Mã biến thể là bắt buộc';
+      errors.variantId = "Mã biến thể là bắt buộc";
     } else if (formData.variantId <= 0) {
-      errors.variantId = 'Mã biến thể phải là số dương';
+      errors.variantId = "Mã biến thể phải là số dương";
     }
-    
+
     if (!formData.quantity || formData.quantity <= 0) {
-      errors.quantity = 'Số lượng phải lớn hơn 0';
+      errors.quantity = "Số lượng phải lớn hơn 0";
     }
-    
+
     if (!formData.unitPrice || formData.unitPrice <= 0) {
-      errors.unitPrice = 'Đơn giá phải lớn hơn 0';
+      errors.unitPrice = "Đơn giá phải lớn hơn 0";
     }
-    
+
     if (formData.discount < 0 || formData.discount > 100) {
-      errors.discount = 'Giảm giá phải từ 0% đến 100%';
+      errors.discount = "Giảm giá phải từ 0% đến 100%";
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -70,36 +70,37 @@ const OrderItemCreatePage = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
-      showError('Vui lòng kiểm tra lại thông tin');
+      showError("Vui lòng kiểm tra lại thông tin");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // Validate với backend trước
-      await validateItems([{
-        ...formData,
-        orderId: orderId
-      }]);
-      
+      await validateItems([
+        {
+          ...formData,
+          orderId: orderId,
+        },
+      ]);
+
       // Nếu validate thành công, tạo order item
       await createItem({
         ...formData,
-        orderId: orderId
+        orderId: orderId,
       });
-      
-      showSuccess('Thêm sản phẩm vào đơn hàng thành công');
-      
+
+      showSuccess("Thêm sản phẩm vào đơn hàng thành công");
+
       // Quay lại trang trước đó
       setTimeout(() => {
         navigate(-1);
       }, 1500);
-      
     } catch (error) {
-      console.error('Lỗi khi tạo order item:', error);
+      console.error("Lỗi khi tạo order item:", error);
       // Error đã được xử lý trong hook
     } finally {
       setIsSubmitting(false);
@@ -120,8 +121,12 @@ const OrderItemCreatePage = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">❌</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Thiếu thông tin đơn hàng</h3>
-          <p className="text-gray-600 mb-4">Không tìm thấy mã đơn hàng để thêm sản phẩm.</p>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Thiếu thông tin đơn hàng
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Không tìm thấy mã đơn hàng để thêm sản phẩm.
+          </p>
           <Link
             to="/dealer/orders"
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -164,7 +169,9 @@ const OrderItemCreatePage = () => {
 
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Thêm sản phẩm mới</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Thêm sản phẩm mới
+              </h1>
               <p className="text-gray-600 mt-2">
                 Thêm sản phẩm vào đơn hàng #{orderId.slice(-8)}
               </p>
@@ -183,10 +190,14 @@ const OrderItemCreatePage = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Thông tin sản phẩm</h2>
-                <p className="text-sm text-gray-600 mt-1">Nhập thông tin chi tiết về sản phẩm</p>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Thông tin sản phẩm
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Nhập thông tin chi tiết về sản phẩm
+                </p>
               </div>
-              
+
               <div className="p-6">
                 <OrderItemForm
                   item={formData}
@@ -205,7 +216,9 @@ const OrderItemCreatePage = () => {
           <div className="space-y-6">
             {/* Order Summary */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Tóm tắt đơn hàng</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">
+                Tóm tắt đơn hàng
+              </h3>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Mã đơn hàng:</span>
@@ -226,19 +239,30 @@ const OrderItemCreatePage = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Đơn giá × SL:</span>
-                  <span>{formatCurrency(formData.unitPrice * formData.quantity)}</span>
+                  <span>
+                    {formatCurrency(formData.unitPrice * formData.quantity)}
+                  </span>
                 </div>
                 {formData.discount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Giảm giá ({formData.discount}%):</span>
+                    <span className="text-gray-600">
+                      Giảm giá ({formData.discount}%):
+                    </span>
                     <span className="text-red-600">
-                      -{formatCurrency(formData.unitPrice * formData.quantity * (formData.discount / 100))}
+                      -
+                      {formatCurrency(
+                        formData.unitPrice *
+                          formData.quantity *
+                          (formData.discount / 100)
+                      )}
                     </span>
                   </div>
                 )}
                 <div className="border-t border-gray-200 pt-2 mt-2">
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-900">Thành tiền:</span>
+                    <span className="font-semibold text-gray-900">
+                      Thành tiền:
+                    </span>
                     <span className="text-lg font-bold text-green-600">
                       {formatCurrency(finalPrice)}
                     </span>
@@ -267,9 +291,9 @@ const OrderItemCreatePage = () => {
 
 // Helper function
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
   }).format(amount || 0);
 };
 

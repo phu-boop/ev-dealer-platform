@@ -5,6 +5,8 @@ import com.ev.gateway.util.JwtUtil;
 import com.ev.gateway.service.RedisService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.core.Ordered;
@@ -15,20 +17,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.util.List;
 
 @Component
 public class JwtGlobalFilter implements GlobalFilter, Ordered {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtGlobalFilter.class);
     private final JwtUtil jwtUtil;
     private final RedisService redisService;
 
-    //  Danh sách path được bỏ qua xác thực
+    //  Danh sách path được bỏ qua xác thực (không yêu cầu token)
     private static final List<String> EXCLUDED_PATHS = List.of(
             "/auth",
             "/users",
-            "/sendmail"
+            "/sendmail",
+            "/ws"
     );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {
@@ -45,22 +48,25 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        // Ngoại lệ
+        // Ngoại lệ: Bỏ qua xác thực hoàn toàn
         if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
+            log.debug("[JwtGlobalFilter] Path excluded from authentication: {}", path);
             return chain.filter(exchange);
         }
 
+        // Tất cả các path khác đều yêu cầu token (Gateway xác thực)
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.warn("[JwtGlobalFilter] Missing or invalid Authorization header for path: {}", path);
             return this.onError(exchange, ErrorCode.UNAUTHORIZED.getCode(), ErrorCode.UNAUTHORIZED.getMessage(), HttpStatus.UNAUTHORIZED);
-
         }
 
         String token = authHeader.substring(7);
 
         try {
             if (redisService.contains(token)) {
-            return this.onError(exchange, ErrorCode.TOKEN_LOGGED_OUT.getCode(), ErrorCode.TOKEN_LOGGED_OUT.getMessage(), ErrorCode.TOKEN_LOGGED_OUT.getHttpStatus());
+                log.warn("[JwtGlobalFilter] Token found in blacklist (logged out) for path: {}", path);
+                return this.onError(exchange, ErrorCode.TOKEN_LOGGED_OUT.getCode(), ErrorCode.TOKEN_LOGGED_OUT.getMessage(), ErrorCode.TOKEN_LOGGED_OUT.getHttpStatus());
             }
 
             String email = jwtUtil.extractEmail(token);
@@ -68,8 +74,18 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             Long userId = jwtUtil.extractUserId(token);
             String profileId = jwtUtil.extractProfileId(token);
 
+            // Log debug cho payment service
+            if (path.startsWith("/payments")) {
+                log.debug("[JwtGlobalFilter] [PAYMENT_SERVICE] Authentication successful - Path: {} | Email: {} | Role: {} | UserId: {} | ProfileId: {}", 
+                        path, email, role, userId, profileId);
+            }
+            
+            log.info("[JwtGlobalFilter] Extracted from JWT - Path: {} | Email: {} | Role: {} | UserId: {} | ProfileId: {}", 
+                    path, email, role, userId, profileId);
+
             if (!jwtUtil.isTokenValid(token, email)) {
-            return this.onError(exchange, ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage(), ErrorCode.TOKEN_INVALID.getHttpStatus());
+                log.warn("[JwtGlobalFilter] Token invalid for email: {} | Path: {}", email, path);
+                return this.onError(exchange, ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage(), ErrorCode.TOKEN_INVALID.getHttpStatus());
             }
 
             ServerWebExchange mutatedExchange = exchange.mutate()
@@ -78,14 +94,25 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
                         headers.add("X-User-Role", role);
                         headers.add("X-User-Id", String.valueOf(userId));
                         headers.add("X-User-ProfileId", profileId);
+                        
+                        // Log debug cho payment service
+                        if (path.startsWith("/payments")) {
+                            log.debug("[JwtGlobalFilter] [PAYMENT_SERVICE] Added headers to request - X-User-Email: {}, X-User-Role: {}, X-User-Id: {}, X-User-ProfileId: {}", 
+                                    email, role, userId, profileId);
+                        } else {
+                            log.debug("[JwtGlobalFilter] Added headers - X-User-Email: {}, X-User-Role: {}, X-User-ProfileId: {}", 
+                                    email, role, profileId);
+                        }
                     }))
                     .build();
 
             return chain.filter(mutatedExchange);
 
         } catch (ExpiredJwtException e) {
+            log.warn("[JwtGlobalFilter] Token expired for path: {} | Error: {}", path, e.getMessage());
             return this.onError(exchange, ErrorCode.TOKEN_EXPIRED.getCode(), ErrorCode.TOKEN_EXPIRED.getMessage(), ErrorCode.TOKEN_EXPIRED.getHttpStatus());
         } catch (JwtException e) {
+            log.error("[JwtGlobalFilter] JWT exception for path: {} | Error: {}", path, e.getMessage(), e);
             return this.onError(exchange, ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage(), ErrorCode.TOKEN_INVALID.getHttpStatus());
         }
     }

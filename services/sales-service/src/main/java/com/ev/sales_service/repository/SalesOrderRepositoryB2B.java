@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
+import java.time.LocalDateTime;
 
 @Repository
 public interface SalesOrderRepositoryB2B extends JpaRepository<SalesOrder, UUID>, JpaSpecificationExecutor<SalesOrder> {
@@ -45,4 +47,13 @@ public interface SalesOrderRepositoryB2B extends JpaRepository<SalesOrder, UUID>
 
     // Lấy tất cả đơn B2B || B2C  của dealer mà không cần filter status
     Page<SalesOrder> findAllByDealerIdAndTypeOder(UUID dealerId, SaleOderType typeOder, Pageable pageable);
+    
+    List<SalesOrder> findAllByOrderStatusAndDeliveryDateBetween(
+        OrderStatusB2B status, 
+        LocalDateTime startDate, 
+        LocalDateTime endDate
+    );
+
+    // Lấy danh sách đơn hàng B2B || B2C với trạng thái cụ thể
+    List<SalesOrder> findAllByTypeOderAndOrderStatus(SaleOderType typeOder, OrderStatusB2B orderStatus);
 }

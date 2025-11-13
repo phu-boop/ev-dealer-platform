@@ -15,6 +15,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/favicon.ico", "/error", "/.well-known/**").permitAll()
                 .anyRequest().permitAll()
             );
         return http.build();

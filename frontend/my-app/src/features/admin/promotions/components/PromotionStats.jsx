@@ -5,8 +5,7 @@ import {
   ClockIcon, 
   PlayIcon, 
   XCircleIcon,
-  StopIcon,
-  CalendarIcon
+  StopIcon 
 } from '@heroicons/react/24/outline';
 
 const StatCard = ({ title, value, color, icon: Icon, description }) => (
@@ -29,8 +28,7 @@ const StatCard = ({ title, value, color, icon: Icon, description }) => (
 export const PromotionStats = ({ promotions }) => {
   const stats = {
     total: promotions.length,
-    pending: promotions.filter(p => p.status === 'DRAFT').length,
-    near: promotions.filter(p => p.status === 'NEAR').length,
+    pending: promotions.filter(p => p.status === 'UPCOMING').length,
     active: promotions.filter(p => p.status === 'ACTIVE').length,
     expired: promotions.filter(p => p.status === 'EXPIRED').length,
     inactive: promotions.filter(p => p.status === 'INACTIVE').length,
@@ -50,13 +48,6 @@ export const PromotionStats = ({ promotions }) => {
       color: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
       icon: ClockIcon,
       description: 'Cần phê duyệt'
-    },
-    {
-      title: 'Sắp diễn ra',
-      value: stats.near,
-      color: { bg: 'bg-cyan-100', text: 'text-cyan-600' },
-      icon: CalendarIcon,
-      description: 'Chuẩn bị bắt đầu'
     },
     {
       title: 'Đang hoạt động',
@@ -82,7 +73,7 @@ export const PromotionStats = ({ promotions }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
       {statConfigs.map((stat, index) => (
         <StatCard key={index} {...stat} />
       ))}

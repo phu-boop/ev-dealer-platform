@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { FiBell, FiMessageSquare, FiCheckCircle } from 'react-icons/fi';
-import { useClickOutside } from '../../hooks/useClickOutside';
+import React, { useState, useRef } from "react";
+import { FiBell, FiMessageSquare, FiCheckCircle } from "react-icons/fi";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 export const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,12 +10,30 @@ export const NotificationDropdown = () => {
 
   // Mock data - thay thế bằng API thực tế
   const notifications = [
-    { id: 1, type: 'order', message: 'Đơn hàng mới #ORD-001', time: '5 phút trước', unread: true },
-    { id: 2, type: 'customer', message: 'Khách hàng đặt lịch lái thử', time: '1 giờ trước', unread: true },
-    { id: 3, type: 'inventory', message: 'Xe mới đã về kho', time: '2 giờ trước', unread: false }
+    {
+      id: 1,
+      type: "order",
+      message: "Đơn hàng mới #ORD-001",
+      time: "5 phút trước",
+      unread: true,
+    },
+    {
+      id: 2,
+      type: "customer",
+      message: "Khách hàng đặt lịch lái thử",
+      time: "1 giờ trước",
+      unread: true,
+    },
+    {
+      id: 3,
+      type: "inventory",
+      message: "Xe mới đã về kho",
+      time: "2 giờ trước",
+      unread: false,
+    },
   ];
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -56,17 +74,25 @@ export const NotificationDropdown = () => {
                     key={notification.id}
                     style={{ animationDelay: `${index * 50}ms` }}
                     className={`px-5 py-4 border-b border-gray-100/60 last:border-b-0 transition-all duration-200 cursor-pointer group animate-fadeIn ${
-                      notification.unread ? 'bg-blue-50/50 hover:bg-blue-100/50' : 'hover:bg-gray-50/50'
+                      notification.unread
+                        ? "bg-blue-50/50 hover:bg-blue-100/50"
+                        : "hover:bg-gray-50/50"
                     }`}
                   >
                     <div className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                        notification.unread ? 'bg-blue-500' : 'bg-transparent'
-                      }`} />
+                      <div
+                        className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
+                          notification.unread ? "bg-blue-500" : "bg-transparent"
+                        }`}
+                      />
                       <div className="flex-1 min-w-0">
-                        <p className={`font-medium text-sm mb-1 ${
-                          notification.unread ? 'text-gray-900' : 'text-gray-600'
-                        }`}>
+                        <p
+                          className={`font-medium text-sm mb-1 ${
+                            notification.unread
+                              ? "text-gray-900"
+                              : "text-gray-600"
+                          }`}
+                        >
                           {notification.message}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">

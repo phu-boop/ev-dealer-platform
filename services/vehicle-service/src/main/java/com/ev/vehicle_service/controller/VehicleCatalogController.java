@@ -2,6 +2,8 @@ package com.ev.vehicle_service.controller;
 
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.dto.vehicle.ComparisonDto;
+
 import com.ev.vehicle_service.dto.request.CreateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
@@ -24,8 +26,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpHeaders;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/vehicle-catalog") 
@@ -112,7 +117,7 @@ public class VehicleCatalogController {
         
         return new ResponseEntity<>(ApiRespond.success("Variant created successfully", responseDto), HttpStatus.CREATED);
     }
-        /**
+    /**
      * Lấy tất cả các phiên bản (variants) thuộc về một mẫu xe cụ thể.
      */
     @GetMapping("/models/{modelId}/variants")
@@ -178,16 +183,64 @@ public class VehicleCatalogController {
     }
 
     /**
-     * API MỚI: Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
-     * Dùng cho trang "Tất cả sản phẩm" ở frontend.
+     * Lấy dữ liệu gộp để so sánh các phiên bản.
+     * Nhận vào danh sách các ID của phiên bản cần so sánh.
+     */
+    @PostMapping("/compare")
+    // THÊM CHÚ THÍCH @PreAuthorize NÀY:
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF','DEALER_MANAGER', 'DEALER_STAFF') or " +
+                  "( (hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')) and " +
+                  "  #dealerId.toString() == authentication.details['profileId'] )")
+    public ResponseEntity<ApiRespond<List<ComparisonDto>>> getComparisonDetails(
+            @RequestBody List<Long> variantIds,
+            @RequestHeader("X-User-ProfileId") UUID dealerId,
+            @RequestHeader(value = "X-User-Email", required = false) String email,
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) String userId
+    ) {
+        // Tạo HttpHeaders để chuyển tiếp các header xác thực đến inventory-service
+        HttpHeaders headers = new HttpHeaders();
+        if (email != null) headers.set("X-User-Email", email);
+        if (role != null) headers.set("X-User-Role", role);
+        if (userId != null) headers.set("X-User-Id", userId);
+        if (dealerId != null) headers.set("X-User-ProfileId", dealerId.toString());
+        
+        List<ComparisonDto> results = vehicleCatalogService.getComparisonData(variantIds, dealerId, headers);
+        return ResponseEntity.ok(ApiRespond.success("Fetched comparison data successfully", results));
+    }
+
+    /**
+     * Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
      */
     @GetMapping("/variants/paginated")
     public ResponseEntity<ApiRespond<Page<VariantDetailDto>>> getAllVariantsPaginated(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status, 
             @PageableDefault(size = 10, sort = "variantId") Pageable pageable) {
         
-        Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, pageable);
+        // Truyền 'status' xuống service
+        Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, status, pageable);
         return ResponseEntity.ok(ApiRespond.success("Fetched paginated variants successfully", results));
+    }
+
+    /**
+     * API MỚI: Lấy TẤT CẢ các phiên bản (không phân trang).
+     * Phục vụ riêng cho việc backfill cache của reporting-service.
+     */
+    @GetMapping("/variants/all-for-backfill")
+    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getAllVariantsForBackfill() {
+        List<VariantDetailDto> results = vehicleCatalogService.getAllVariantsForBackfill();
+        return ResponseEntity.ok(ApiRespond.success("Fetched all variants for backfill", results));
+    }
+
+    /**
+     * Lấy TẤT CẢ các ID của phiên bản (dùng cho giao tiếp nội bộ)
+     */
+    @GetMapping("/variants/all-ids")
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") // Chỉ nội bộ
+    public ResponseEntity<ApiRespond<List<Long>>> getAllVariantIds() {
+        List<Long> ids = vehicleCatalogService.getAllVariantIds();
+        return ResponseEntity.ok(ApiRespond.success("Fetched all variant IDs", ids));
     }
 
     // ==========================================================

@@ -1,9 +1,36 @@
 import {
-  FiHome, FiPackage, FiTag, FiList, FiFileText, FiShoppingCart, FiClipboard,
-  FiTruck, FiUsers, FiCalendar, FiMessageCircle, FiArchive, FiNavigation,
-  FiCreditCard, FiPieChart, FiTrendingUp, FiBarChart2, FiSettings, FiUserPlus,
-  FiSliders, FiGift, FiChevronDown, FiLogOut, FiX, FiMenu, FiBell,
-  FiMessageSquare, FiHelpCircle, FiChevronRight, FiUser, FiShield
+  FiHome,
+  FiPackage,
+  FiTag,
+  FiList,
+  FiFileText,
+  FiShoppingCart,
+  FiClipboard,
+  FiTruck,
+  FiUsers,
+  FiCalendar,
+  FiMessageCircle,
+  FiArchive,
+  FiNavigation,
+  FiCreditCard,
+  FiPieChart,
+  FiTrendingUp,
+  FiBarChart2,
+  FiSettings,
+  FiUserPlus,
+  FiSliders,
+  FiGift,
+  FiChevronDown,
+  FiLogOut,
+  FiX,
+  FiMenu,
+  FiBell,
+  FiMessageSquare,
+  FiHelpCircle,
+  FiChevronRight,
+  FiUser,
+  FiShield,
+  FiDollarSign,
 } from "react-icons/fi";
 
 export const dealerManagerMenuItems = [
@@ -19,18 +46,18 @@ export const dealerManagerMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/manager/vehicles/available",
+        path: "/dealer/manager/inventory/stock",
       },
       {
         icon: FiTag,
-        label: "Toàn Bộ Mẫu Xe",
+        label: "Tất cả Phiên bản",
         path: "/dealer/manager/vehicles/all",
       },
-      {
-        icon: FiSliders,
-        label: "So Sánh Mẫu Xe",
-        path: "/dealer/manager/vehicles/compare",
-      },
+      // {
+      //   icon: FiSliders,
+      //   label: "So Sánh Mẫu Xe",
+      //   path: "/dealer/manager/vehicles/compare",
+      // },
       {
         icon: FiFileText,
         label: "Tạo Báo Giá",
@@ -141,21 +168,21 @@ export const dealerManagerMenuItems = [
     ],
   },
 
-  // Tài chính & thanh toán
+  // Quản lý thanh toán
   {
-    icon: FiCreditCard,
-    label: "Tài Chính & Thanh Toán",
-    path: "/dealer/manager/finance",
+    icon: FiDollarSign,
+    label: "Quản Lý Thanh Toán",
+    path: "/dealer/manager/payments",
     submenu: [
+      {
+        icon: FiFileText,
+        label: "Hóa Đơn Của Tôi",
+        path: "/dealer/manager/payments/invoices",
+      },
       {
         icon: FiCreditCard,
         label: "Thanh Toán & Trả Góp",
-        path: "/dealer/manager/payments",
-      },
-      {
-        icon: FiBarChart2,
-        label: "Công Nợ Khách Hàng",
-        path: "/dealer/manager/debts",
+        path: "/dealer/manager/payments/methods",
       },
     ],
   },
@@ -217,11 +244,11 @@ export const dealerStaffMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/staff/vehicles/available",
+        path: "/dealer/staff/inventory/stock",
       },
       {
         icon: FiTag,
-        label: "Toàn Bộ Mẫu Xe",
+        label: "Tất cả Phiên bản",
         path: "/dealer/staff/vehicles/all",
       },
       {

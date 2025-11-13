@@ -10,10 +10,10 @@ import {
 /**
  * Form thêm/chỉnh sửa Order Item với đầy đủ trường từ backend
  */
-const OrderItemForm = ({ 
-  item, 
-  onSubmit, 
-  onCancel, 
+const OrderItemForm = ({
+  item,
+  onSubmit,
+  onCancel,
   loading = false,
   validationErrors = {},
   onChange,
@@ -21,13 +21,13 @@ const OrderItemForm = ({
   orderId
 }) => {
   const [formData, setFormData] = useState({
-    variantId: '',
+    variantId: "",
     quantity: 1,
     unitPrice: 0,
     discount: 0,
-    itemNotes: '',
-    color: '',
-    specifications: ''
+    itemNotes: "",
+    color: "",
+    specifications: "",
   });
 
   const [variants, setVariants] = useState([]);
@@ -49,13 +49,13 @@ const OrderItemForm = ({
   useEffect(() => {
     if (item) {
       setFormData({
-        variantId: item.variantId || '',
+        variantId: item.variantId || "",
         quantity: item.quantity || 1,
         unitPrice: item.unitPrice || 0,
         discount: item.discount || 0,
-        itemNotes: item.itemNotes || '',
-        color: item.color || '',
-        specifications: item.specifications || ''
+        itemNotes: item.itemNotes || "",
+        color: item.color || "",
+        specifications: item.specifications || "",
       });
     }
   }, [item]);
@@ -197,17 +197,17 @@ const OrderItemForm = ({
     e.preventDefault();
     onSubmit({
       ...formData,
-      finalPrice: finalPrice
+      finalPrice: finalPrice,
     });
   };
 
   const handleChange = (field, value) => {
     const newFormData = {
       ...formData,
-      [field]: value
+      [field]: value,
     };
     setFormData(newFormData);
-    
+
     // Notify parent component if onChange prop is provided
     if (onChange) {
       onChange(field, value);
@@ -215,9 +215,9 @@ const OrderItemForm = ({
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount || 0);
   };
 
@@ -519,7 +519,7 @@ const OrderItemForm = ({
           {loading && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
           )}
-          {mode === 'edit' ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}
+          {mode === "edit" ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
         </button>
       </div>
     </form>

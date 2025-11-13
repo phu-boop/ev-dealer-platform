@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useOrderItems } from '../hooks/useOrderItems';
-import OrderItemForm from './OrderItemForm';
-import OrderItemCard from './OrderItemCard';
+import React, { useState } from "react";
+import { useOrderItems } from "../hooks/useOrderItems";
+import OrderItemForm from "./OrderItemForm";
+import OrderItemCard from "./OrderItemCard";
 
 /**
  * Component hiển thị danh sách sản phẩm trong đơn hàng
@@ -9,14 +9,8 @@ import OrderItemCard from './OrderItemCard';
  * @param {boolean} readOnly - Chế độ chỉ đọc (không cho phép chỉnh sửa)
  */
 const OrderItemList = ({ orderId, readOnly = false }) => {
-  const {
-    items,
-    loading,
-    error,
-    createItem,
-    updateItem,
-    deleteItem
-  } = useOrderItems(orderId);
+  const { items, loading, error, createItem, updateItem, deleteItem } =
+    useOrderItems(orderId);
 
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -28,11 +22,11 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
     try {
       await createItem({
         ...itemData,
-        orderId: orderId
+        orderId: orderId,
       });
       setShowForm(false);
     } catch (error) {
-      console.error('Lỗi khi thêm sản phẩm:', error);
+      console.error("Lỗi khi thêm sản phẩm:", error);
     } finally {
       setFormLoading(false);
     }
@@ -45,7 +39,7 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
       await updateItem(editingItem.orderItemId, itemData);
       setEditingItem(null);
     } catch (error) {
-      console.error('Lỗi khi cập nhật sản phẩm:', error);
+      console.error("Lỗi khi cập nhật sản phẩm:", error);
     } finally {
       setFormLoading(false);
     }
@@ -53,20 +47,20 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
 
   // Xử lý xóa sản phẩm
   const handleDeleteItem = async (itemId) => {
-    if (window.confirm('Bạn có chắc muốn xóa sản phẩm này khỏi đơn hàng?')) {
+    if (window.confirm("Bạn có chắc muốn xóa sản phẩm này khỏi đơn hàng?")) {
       try {
         await deleteItem(itemId);
       } catch (error) {
-        console.error('Lỗi khi xóa sản phẩm:', error);
+        console.error("Lỗi khi xóa sản phẩm:", error);
       }
     }
   };
 
   // Format tiền tệ
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount || 0);
   };
 
@@ -86,7 +80,9 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-        <div className="text-red-600 font-medium mb-2">Lỗi tải danh sách sản phẩm</div>
+        <div className="text-red-600 font-medium mb-2">
+          Lỗi tải danh sách sản phẩm
+        </div>
         <p className="text-red-500 text-sm">{error}</p>
       </div>
     );
@@ -97,9 +93,12 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
       {/* Header với tổng tiền */}
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Sản phẩm đặt hàng</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Sản phẩm đặt hàng
+          </h3>
           <p className="text-sm text-gray-500">
-            {items.length} sản phẩm - Tổng tiền: <span className="font-semibold text-green-600">
+            {items.length} sản phẩm - Tổng tiền:{" "}
+            <span className="font-semibold text-green-600">
               {formatCurrency(calculateTotal())}
             </span>
           </p>
@@ -123,7 +122,7 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
       {(showForm || editingItem) && (
         <div className="bg-gray-50 rounded-lg p-4 border">
           <h4 className="font-medium text-gray-900 mb-3">
-            {editingItem ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
+            {editingItem ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
           </h4>
           <OrderItemForm
             item={editingItem}
@@ -142,8 +141,12 @@ const OrderItemList = ({ orderId, readOnly = false }) => {
       {items.length === 0 ? (
         <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
           <div className="text-gray-400 text-4xl mb-3">📦</div>
-          <h4 className="text-gray-500 font-medium mb-1">Chưa có sản phẩm nào</h4>
-          <p className="text-gray-400 text-sm">Thêm sản phẩm vào đơn hàng để bắt đầu</p>
+          <h4 className="text-gray-500 font-medium mb-1">
+            Chưa có sản phẩm nào
+          </h4>
+          <p className="text-gray-400 text-sm">
+            Thêm sản phẩm vào đơn hàng để bắt đầu
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

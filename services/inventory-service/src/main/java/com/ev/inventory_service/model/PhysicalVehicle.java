@@ -26,6 +26,7 @@ public class PhysicalVehicle {
     // Nếu là KHO TRUNG TÂM, locationId là null.
     // Nếu là ĐẠI LÝ, locationId là UUID của đại lý đó.
     private UUID locationId; 
+    private UUID orderId;
 
     private LocalDate manufactureDate; // Ngày sản xuất
     private String notes; // Ghi chú (ví dụ: "Trầy xước nhẹ cản sau")

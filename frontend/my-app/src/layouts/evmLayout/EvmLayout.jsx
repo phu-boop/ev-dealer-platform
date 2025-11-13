@@ -1,24 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../features/auth/AuthProvider.jsx";
-import { useSidebar } from './hooks/useSidebar';
-import { useNotifications } from './hooks/useNotifications';
-import { Sidebar } from './components/Sidebar/Sidebar.jsx';
-import { Header } from './components/Header/Header.jsx';
-import { Footer } from './components/Footer/Footer.jsx';
-import { MainContent } from './components/MainContent/MainContent.jsx';
-import { adminMenuItems, evmStaffMenuItems } from './data/menuItems.jsx';
+import { Sidebar } from "./components/Sidebar/Sidebar.jsx";
+import { Header } from "./components/Header/Header.jsx";
+import { Footer } from "./components/Footer/Footer.jsx";
+import { MainContent } from "./components/MainContent/MainContent.jsx";
+import { adminMenuItems, evmStaffMenuItems } from "./data/menuItems.jsx";
 import Swal from "sweetalert2";
+
+// Hooks
+import { useSidebar } from "./hooks/useSidebar";
+import { useNotifications } from "./hooks/useNotifications"; // Hook Firebase
+import { useSocketToggle } from "./hooks/useSocketToggle.js"; // Hook Tắt/Bật
+import { useNotificationSocket } from "../../features/evm/notification/hooks/useNotificationSocket"; // Hook Socket B2B
 
 const EvmLayout = () => {
   const { logout, email, name, fullName, roles } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Custom hooks
   const sidebar = useSidebar();
-  const notifications = useNotifications(roles, navigate);
-  
+  const notifications = useNotifications(roles, navigate); // Hook Firebase
+  const socketToggle = useSocketToggle();
+
+  // Hook Socket B2B (sẽ chỉ kết nối nếu socketToggle.showSocketBell = true)
+  useNotificationSocket(socketToggle.showSocketBell);
+
   // Local state
   const [menuItems, setMenuItems] = useState([]);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -26,7 +34,7 @@ const EvmLayout = () => {
 
   // User data
   const user = { email, name, fullName, roles };
-  const role = roles.includes("ADMIN") ? 'ADMIN' : 'EVM_STAFF';
+  const role = roles.includes("ADMIN") ? "ADMIN" : "EVM_STAFF";
 
   // Set menu items based on role
   useEffect(() => {
@@ -47,14 +55,16 @@ const EvmLayout = () => {
     const newOpenSubmenus = new Set();
     menuItems.forEach((item) => {
       if (item.submenu) {
-        const isActiveSubmenu = item.submenu.some((sub) => sub.path === location.pathname);
+        const isActiveSubmenu = item.submenu.some(
+          (sub) => sub.path === location.pathname
+        );
         if (isActiveSubmenu) {
           newOpenSubmenus.add(item.path);
         }
       }
     });
     sidebar.setOpenSubmenus(newOpenSubmenus);
-  }, [location, menuItems]);
+  }, [location, menuItems, sidebar.setActivePath, sidebar.setOpenSubmenus]);
 
   // Handle navigation
   const handleNavigation = (path) => {
@@ -86,14 +96,17 @@ const EvmLayout = () => {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isProfileDropdownOpen && profileDropdownRef.current && 
-          !profileDropdownRef.current.contains(event.target)) {
+      if (
+        isProfileDropdownOpen &&
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
         setIsProfileDropdownOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isProfileDropdownOpen]);
 
   return (
@@ -117,14 +130,14 @@ const EvmLayout = () => {
           activePath={sidebar.activePath}
           role={role}
           user={user}
-          notifications={notifications.notifications}
-          unreadCount={notifications.unreadCount}
-          isNotificationDropdownOpen={notifications.isNotificationDropdownOpen}
-          setIsNotificationDropdownOpen={notifications.setIsNotificationDropdownOpen}
-          markAsRead={notifications.markAsRead}
-          markAllAsRead={notifications.markAllAsRead}
+          // 1. Props cho chuông Firebase (Admin)
+          firebaseNotifications={notifications}
+          // 2. Props cho Tắt/Bật Socket (Admin)
+          socketToggle={socketToggle}
+          // 3. Props cho Profile Dropdown
           isProfileDropdownOpen={isProfileDropdownOpen}
           setIsProfileDropdownOpen={setIsProfileDropdownOpen}
+          profileDropdownRef={profileDropdownRef} // Truyền ref
           handleLogout={handleLogout}
           navigate={navigate}
         />

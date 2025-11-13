@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { orderItemService } from '../services/orderItemService';
-import { showSuccess, showError } from '../../../../../utils/notification';
+import { useState, useEffect } from "react";
+import { orderItemService } from "../services/orderItemService";
+import { showSuccess, showError } from "../../../../../utils/notification";
 
 /**
  * Hook quản lý order items
@@ -17,7 +17,7 @@ export const useOrderItems = (orderId) => {
    */
   const fetchItems = async () => {
     if (!orderId) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -25,7 +25,7 @@ export const useOrderItems = (orderId) => {
       setItems(response.data?.data || []);
     } catch (err) {
       setError(err.message);
-      showError('Lỗi khi tải danh sách sản phẩm');
+      showError("Lỗi khi tải danh sách sản phẩm");
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,7 @@ export const useOrderItems = (orderId) => {
   const createItem = async (itemData) => {
     try {
       const response = await orderItemService.create(itemData);
-      showSuccess('Thêm sản phẩm thành công');
+      showSuccess("Thêm sản phẩm thành công");
       await fetchItems();
       return response.data?.data;
     } catch (err) {
@@ -57,11 +57,11 @@ export const useOrderItems = (orderId) => {
   const updateItem = async (itemId, itemData) => {
     try {
       const response = await orderItemService.update(itemId, itemData);
-      showSuccess('Cập nhật sản phẩm thành công');
+      showSuccess("Cập nhật sản phẩm thành công");
       await fetchItems();
       return response.data?.data;
     } catch (err) {
-      showError('Lỗi khi cập nhật sản phẩm');
+      showError("Lỗi khi cập nhật sản phẩm");
       throw err;
     }
   };
@@ -73,10 +73,10 @@ export const useOrderItems = (orderId) => {
   const deleteItem = async (itemId) => {
     try {
       await orderItemService.delete(itemId);
-      showSuccess('Xóa sản phẩm thành công');
+      showSuccess("Xóa sản phẩm thành công");
       await fetchItems();
     } catch (err) {
-      showError('Lỗi khi xóa sản phẩm');
+      showError("Lỗi khi xóa sản phẩm");
       throw err;
     }
   };
@@ -89,11 +89,11 @@ export const useOrderItems = (orderId) => {
   const updateBulk = async (updatedItems) => {
     try {
       const response = await orderItemService.updateBulk(orderId, updatedItems);
-      showSuccess('Cập nhật danh sách sản phẩm thành công');
+      showSuccess("Cập nhật danh sách sản phẩm thành công");
       await fetchItems();
       return response.data?.data;
     } catch (err) {
-      showError('Lỗi khi cập nhật danh sách sản phẩm');
+      showError("Lỗi khi cập nhật danh sách sản phẩm");
       throw err;
     }
   };
@@ -108,7 +108,7 @@ export const useOrderItems = (orderId) => {
       const response = await orderItemService.validate(itemsToValidate);
       return response.data?.data;
     } catch (err) {
-      showError('Lỗi khi kiểm tra sản phẩm');
+      showError("Lỗi khi kiểm tra sản phẩm");
       throw err;
     }
   };
@@ -128,6 +128,6 @@ export const useOrderItems = (orderId) => {
     updateItem,
     deleteItem,
     updateBulk,
-    validateItems
+    validateItems,
   };
 };

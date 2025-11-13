@@ -27,7 +27,10 @@ import {
   FiCalendar,
   FiMessageCircle,
   FiSliders,
-  FiGift
+  FiGift,
+  FiRefreshCw,
+  FiBell,
+  FiDollarSign,
 } from "react-icons/fi";
 
 export const adminMenuItems = [
@@ -72,7 +75,7 @@ export const adminMenuItems = [
       {
         icon: FiArchive,
         label: "Kho Trung Tâm",
-        path: "/evm/admin/distribution/warehouse",
+        path: "/evm/admin/distribution/inventory/central",
       },
       {
         icon: FiNavigation,
@@ -101,7 +104,7 @@ export const adminMenuItems = [
       {
         icon: FiFileText,
         label: "Hợp Đồng & Chỉ Tiêu",
-        path: "/evm/admin/dealers/contracts", 
+        path: "/evm/admin/dealers/contracts",
       },
       {
         icon: FiCreditCardAlt,
@@ -113,6 +116,11 @@ export const adminMenuItems = [
         label: "Tài Khoản Đại Lý",
         path: "/evm/admin/dealers/accounts",
       },
+      {
+        icon: FiBell,
+        label: "Thông báo từ đại lí",
+        path: "/evm/notifications",
+      },
     ],
   },
 
@@ -122,25 +130,25 @@ export const adminMenuItems = [
     label: "Báo Cáo & Phân Tích",
     path: "/evm/admin/reports",
     submenu: [
-      { 
-        icon: FiTrendingUp, 
-        label: "(DONE)Thông báo", 
-        path: "/evm/admin/reports/notifications" 
+      {
+        icon: FiTrendingUp,
+        label: "(DONE)Thông báo",
+        path: "/evm/admin/reports/notifications",
       },
-      { 
-        icon: FiTrendingUp, 
-        label: "Doanh Số", 
-        path: "/evm/admin/reports/sales" 
+      {
+        icon: FiTrendingUp,
+        label: "Doanh Số",
+        path: "/evm/admin/reports/sales",
       },
-      { 
-        icon: FiPieChart, 
-        label: "Tồn Kho", 
-        path: "/evm/admin/reports/inventory" 
+      {
+        icon: FiPieChart,
+        label: "Tồn Kho",
+        path: "/evm/admin/reports/inventory",
       },
-      { 
-        icon: FiCpu, 
-        label: "Dự Báo AI", 
-        path: "/evm/admin/reports/forecast" 
+      {
+        icon: FiCpu,
+        label: "Dự Báo AI",
+        path: "/evm/admin/reports/forecast",
       },
       {
         icon: FiMap,
@@ -172,9 +180,19 @@ export const adminMenuItems = [
         path: "/evm/admin/system/config",
       },
       {
+        icon: FiRefreshCw,
+        label: "Đồng bộ Dữ liệu (Backfill)",
+        path: "/evm/admin/system/data-backfill",
+      },
+      {
         icon: FiActivity,
         label: "Nhật Ký Hoạt Động",
         path: "/evm/admin/system/audit",
+      },
+      {
+        icon: FiDollarSign,
+        label: "Quản Lý Phương Thức Thanh Toán",
+        path: "/evm/admin/payments/methods",
       },
     ],
   },
@@ -258,6 +276,40 @@ export const evmStaffMenuItems = [
         label: "Công Nợ & Thanh Toán",
         path: "/evm/staff/dealers/debts",
       },
+      {
+        icon: FiFileText,
+        label: "Hóa Đơn Đại Lý",
+        path: "/evm/staff/payments/dealer-invoices",
+      },
+      {
+        icon: FiBell,
+        label: "Thông báo từ đại lí",
+        path: "/evm/notifications",
+      },
+    ],
+  },
+
+  // Quản lý thanh toán
+  {
+    icon: FiDollarSign,
+    label: "Quản Lý Thanh Toán",
+    path: "/evm/staff/payments",
+    submenu: [
+      {
+        icon: FiShoppingCart,
+        label: "Quản Lý Đơn Hàng B2B",
+        path: "/evm/staff/orders",
+      },
+      {
+        icon: FiCreditCard,
+        label: "Công Nợ Đại Lý",
+        path: "/evm/staff/debt",
+      },
+      {
+        icon: FiDollarSign,
+        label: "Đại Lý Thanh Toán Tiền Mặt",
+        path: "/evm/staff/payments/cash-payments",
+      },
     ],
   },
 
@@ -299,18 +351,18 @@ export const dealerManagerMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/manager/vehicles/available",
+        path: "/dealer/manager/inventory/stock",
       },
       {
         icon: FiTag,
         label: "Toàn Bộ Mẫu Xe",
         path: "/dealer/manager/vehicles/all",
       },
-      {
-        icon: FiSliders,
-        label: "So Sánh Mẫu Xe",
-        path: "/dealer/manager/vehicles/compare",
-      },
+      // {
+      //   icon: FiSliders,
+      //   label: "So Sánh Mẫu Xe",
+      //   path: "/dealer/manager/vehicles/compare",
+      // },
       {
         icon: FiFileText,
         label: "Tạo Báo Giá",

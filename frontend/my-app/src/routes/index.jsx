@@ -48,7 +48,7 @@
 // export default function AppRoutes() {
 //   return (
 //     <AuthProvider>
-//       {/* 
+//       {/*
 //         /                               ================= (Public)
 //         ├── /login
 //         ├── /oauth-success
@@ -213,7 +213,6 @@
 //                 element={<DealerProductCatalogPage />}
 //               />
 
-
 //               <Route
 //                   path="manager/quotations/*"
 //                   element={<QuotationManagement />}
@@ -280,8 +279,6 @@
 //   );
 // }
 
-
-
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
@@ -307,10 +304,20 @@ import CustomerPromotionView from "../features/dealer/promotions/CustomerPromoti
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
 
 // customer pages
-import CustomerList from "../features/customers/pages/CustomerList.jsx";
-import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
-import EditCustomer from "../features/customers/pages/EditCustomer.jsx";
-import CustomerDetail from "../features/customers/pages/CustomerDetail.jsx";
+import CustomerList from "../features/customers/management/pages/CustomerList.jsx";
+import CreateCustomer from "../features/customers/management/pages/CreateCustomer.jsx";
+import CustomerDetail from "../features/customers/management/pages/CustomerDetail.jsx";
+
+// test drive pages
+import TestDriveManagement from "../features/customers/testdrive/pages/TestDriveManagement.jsx";
+import CreateTestDrive from "../features/customers/testdrive/pages/CreateTestDrive.jsx";
+import EditTestDrive from "../features/customers/testdrive/pages/EditTestDrive.jsx";
+
+// feedback pages
+import FeedbackManagement from "../features/customers/feedback/pages/FeedbackManagement.jsx";
+import CreateFeedback from "../features/customers/feedback/pages/CreateFeedback.jsx";
+import FeedbackDetail from "../features/customers/feedback/pages/FeedbackDetail.jsx";
+import FeedbackStatistics from "../features/customers/feedback/pages/FeedbackStatistics.jsx";
 
 // EVM
 import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
@@ -318,6 +325,18 @@ import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.
 import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
+
+// Thông báo (Socket)
+import StaffNotificationPage from "../features/evm/notification/pages/StaffNotificationPage.jsx";
+import B2BOrderDetailsPage from "../features/evm/notification/pages/B2BOrderDetailsPage.jsx";
+
+// EVM Orders & Invoices Management
+import B2BOrdersManagementPage from "../features/evm/orders/pages/B2BOrdersManagementPage.jsx";
+import CashPaymentsManagementPage from "../features/evm/orders/pages/CashPaymentsManagementPage.jsx";
+import CreateInvoiceFromOrderPage from "../features/evm/orders/pages/CreateInvoiceFromOrderPage.jsx";
+import DealerDebtManagementPage from "../features/evm/orders/pages/DealerDebtManagementPage.jsx";
+import DealerInvoicesListPage from "../features/evm/orders/pages/DealerInvoicesListPage.jsx";
+import DealerInvoiceDetailsPage from "../features/evm/orders/pages/DealerInvoiceDetailsPage.jsx";
 
 // Dealer
 import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPage.jsx";
@@ -327,7 +346,12 @@ import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/Dea
 
 // Manage Dealer
 import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
+// Reporting
+import SalesReportPage from "../features/admin/reporting/pages/SalesReportPage.jsx";
+import InventoryReportPage from "../features/admin/reporting/pages/InventoryReportPage.jsx";
 
+// SYSTEM (ADMIN)
+import BackfillPage from "../features/admin/system/pages/BackfillPage.jsx";
 
 // Staff Dealer
 import QuotationCreatePage from "../features/dealer/sales/quotation/pages/QuotationCreatePage.jsx";
@@ -335,6 +359,15 @@ import QuotationListPage from "../features/dealer/sales/quotations/pages/Quotati
 
 //feature sale
 import SalesRoutes from "../features/dealer/sales/SalesRoutes.jsx";
+
+// Payment features
+import PaymentMethodsManagement from "../features/payments/pages/PaymentMethodsManagement.jsx";
+import CustomerPaymentPage from "../features/payments/pages/CustomerPaymentPage.jsx";
+import DealerInvoiceManagement from "../features/payments/pages/DealerInvoiceManagement.jsx";
+import DealerInvoicesPage from "../features/payments/pages/DealerInvoicesPage.jsx";
+import DealerPaymentPage from "../features/payments/pages/DealerPaymentPage.jsx";
+import PayInvoicePage from "../features/payments/pages/PayInvoicePage.jsx";
+import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -349,6 +382,8 @@ export default function AppRoutes() {
           <Route path="login" element={<Login />} />
           <Route path="oauth-success" element={<OAuthSuccess />} />
           <Route path="reset-password" element={<ResetPassword />} />
+          {/* Public Payment Routes */}
+          <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
         </Route>
 
         {/* ================================================================== */}
@@ -363,6 +398,13 @@ export default function AppRoutes() {
             <Route path="settings" element={<SecuritySettings />} />
             <Route path="promotions/*" element={<MainPromotion />} />
 
+            <Route path="notifications" element={<StaffNotificationPage />} />
+            {/* (Route chi tiết đơn hàng) */}
+            <Route
+              path="b2b-orders/:orderId"
+              element={<B2BOrderDetailsPage />}
+            />
+
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route
@@ -370,7 +412,6 @@ export default function AppRoutes() {
                 element={<AdminPromotionManager />}
               />
               <Route path="admin/system/users" element={<UserManagement />} />
-              <Route path="admin/notifications" element={<UserManagement />} />
               <Route
                 path="admin/reports/notifications"
                 element={<NotificationManagement />}
@@ -379,9 +420,49 @@ export default function AppRoutes() {
                 path="admin/distribution/allocation"
                 element={<AllocationPage />}
               />
+              <Route path="admin/dealers/list" element={<DealersPage />} />
+
+              {/* Quản lý danh mục xe */}
               <Route
-                path="admin/dealers/list"
-                element={<DealersPage />}
+                path="admin/products/catalog"
+                element={<VehicleCatalogManager />}
+              />
+
+              {/* Quản lý phiên bản, màu sắc xe (thiếu tiềm kiếm (lọc theo màu, phiên bản)) */}
+              <Route
+                path="admin/products/variants"
+                element={<VariantManager />}
+              />
+
+              {/* Giá Sỉ & Chiết Khấu */}
+              <Route
+                path="admin/products/promotions"
+                element={<MainPromotion />}
+              />
+
+              {/* Quản lý phân phối & kho */}
+              <Route
+                path="admin/distribution/inventory/central"
+                element={<InventoryCentral />}
+              />
+
+              {/* Báo cáo */}
+              <Route path="admin/reports/sales" element={<SalesReportPage />} />
+              <Route
+                path="admin/reports/inventory"
+                element={<InventoryReportPage />}
+              />
+
+              {/* Khôi phục dữ liệu cho báo cáo */}
+              <Route
+                path="admin/system/data-backfill"
+                element={<BackfillPage />}
+              />
+
+              {/* Payment Methods Management (Admin) */}
+              <Route
+                path="admin/payments/methods"
+                element={<PaymentMethodsManagement />}
               />
             </Route>
 
@@ -414,13 +495,46 @@ export default function AppRoutes() {
                 element={<AllocationPage />}
               />
               {/* --------------------------------MANAGE DEALER-------------------------------------------------- */}
-              <Route
-                path="staff/dealers/list"
-                element={<DealersPage />}
-              />
+              <Route path="staff/dealers/list" element={<DealersPage />} />
               <Route
                 path="staff/dealers/dealer-accounts"
                 element={<UserManagement />}
+              />
+
+              {/* Payment Management (EVM Staff) */}
+              <Route
+                path="staff/payments/dealer-invoices"
+                element={<DealerInvoiceManagement />}
+              />
+
+              {/* Orders & Invoices Management (EVM Staff) */}
+              <Route
+                path="staff/orders"
+                element={<B2BOrdersManagementPage />}
+              />
+              <Route
+                path="staff/orders/:orderId/create-invoice"
+                element={<CreateInvoiceFromOrderPage />}
+              />
+              
+              {/* Debt Management (EVM Staff) */}
+              <Route
+                path="staff/debt"
+                element={<DealerDebtManagementPage />}
+              />
+              <Route
+                path="staff/debt/:dealerId/invoices"
+                element={<DealerInvoicesListPage />}
+              />
+              <Route
+                path="staff/debt/invoices/:invoiceId"
+                element={<DealerInvoiceDetailsPage />}
+              />
+              
+              {/* Cash Payments Management (EVM Staff) */}
+              <Route
+                path="staff/payments/cash-payments"
+                element={<CashPaymentsManagementPage />}
               />
             </Route>
           </Route>
@@ -450,21 +564,59 @@ export default function AppRoutes() {
                 path="manager/customers/create"
                 element={<CreateCustomer />}
               />
+              <Route
+                path="manager/customers/:id/edit"
+                element={<CreateCustomer />}
+              />
               <Route path="manager/customers/list" element={<CustomerList />} />
               <Route
                 path="manager/customers/:id"
                 element={<CustomerDetail />}
               />
+
+              {/* Test Drive Management */}
               <Route
-                path="manager/customers/:id/edit"
-                element={<EditCustomer />}
+                path="manager/testdrives"
+                element={<TestDriveManagement />}
+              />
+              <Route
+                path="manager/testdrives/create"
+                element={<CreateTestDrive />}
+              />
+              <Route
+                path="manager/testdrives/edit/:id"
+                element={<EditTestDrive />}
+              />
+
+              {/* Feedback Management */}
+              <Route
+                path="manager/feedback"
+                element={<FeedbackManagement />}
+              />
+              <Route
+                path="manager/feedback/new"
+                element={<CreateFeedback />}
+              />
+              <Route
+                path="manager/feedback/statistics"
+                element={<FeedbackStatistics />}
+              />
+              <Route
+                path="manager/feedback/:id"
+                element={<FeedbackDetail />}
               />
 
               {/* Quotation Management */}
 
-              <Route path="manager/quotes/create" element={<QuotationCreatePage />} />
+              <Route
+                path="manager/quotes/create"
+                element={<QuotationCreatePage />}
+              />
 
-              <Route path="manager/list/quotations" element={<QuotationListPage />} />
+              <Route
+                path="manager/list/quotations"
+                element={<QuotationListPage />}
+              />
 
               {/* Inventory Management */}
               <Route
@@ -476,7 +628,25 @@ export default function AppRoutes() {
                 element={<DealerProductCatalogPage />}
               />
 
-              {/* Order Management */}
+              {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
+
+              <Route
+                path="manager/settings/staff/*"
+                element={<UserManagement />}
+              />
+
+              <Route
+                path="manager/vehicles/all"
+                element={<DealerProductCatalogPage />}
+              />
+
+              {/* Promotions */}
+              <Route path="manager/promotions/*" element={<MainPromotion />} />
+
+              {/* System */}
+              <Route path="manager/system/users" element={<UserManagement />} />
+
+              {/* Đặt xe từ hãng và xem trạng thái đơn hàng */}
               <Route
                 path="manager/inventory/order"
                 element={<B2BOrderForm />}
@@ -491,32 +661,111 @@ export default function AppRoutes() {
               <Route path="manager/list/quotations" element={<QuotationListPage />} />
 
               {/* System Management */}
-              <Route 
-                path="manager/settings/staff*" 
-                element={<UserManagement />} 
+              <Route
+                path="manager/settings/staff/*"
+                element={<UserManagement />}
               />
               <Route path="manager/system/users" element={<UserManagement />} />
+
+              {/* Payment Management (Dealer Manager) */}
+              <Route
+                path="manager/payments/invoices"
+                element={<DealerInvoicesPage />}
+              />
+              <Route
+                path="manager/payments/invoices/:invoiceId/pay"
+                element={<PayInvoicePage />}
+              />
+              <Route
+                path="manager/payments/invoices/:invoiceId"
+                element={<DealerPaymentPage />}
+              />
+              <Route
+                path="manager/payments/orders/:orderId"
+                element={<CustomerPaymentPage />}
+              />
             </Route>
 
             {/* --- DEALER STAFF ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
               {/* Customer Management */}
-              <Route path="staff/customers/create" element={<CreateCustomer />} />
+              <Route
+                path="staff/customers/create"
+                element={<CreateCustomer />}
+              />
+              <Route
+                path="staff/customers/:id/edit"
+                element={<CreateCustomer />}
+              />
               <Route path="staff/customers/list" element={<CustomerList />} />
               <Route path="staff/customers/:id" element={<CustomerDetail />} />
-              <Route path="staff/customers/:id/edit" element={<EditCustomer />} />
+
+              {/* Test Drive Management */}
+              <Route
+                path="staff/testdrives"
+                element={<TestDriveManagement />}
+              />
+              <Route
+                path="staff/testdrives/create"
+                element={<CreateTestDrive />}
+              />
+              <Route
+                path="staff/testdrives/edit/:id"
+                element={<EditTestDrive />}
+              />
+
+              {/* Feedback Management */}
+              <Route
+                path="staff/feedback"
+                element={<FeedbackManagement />}
+              />
+              <Route
+                path="staff/feedback/new"
+                element={<CreateFeedback />}
+              />
+              <Route
+                path="staff/feedback/statistics"
+                element={<FeedbackStatistics />}
+              />
+              <Route
+                path="staff/feedback/:id"
+                element={<FeedbackDetail />}
+              />
 
               {/* Quotation Management */}
-              <Route path="staff/quotations" element={<QuotationCreatePage />} />
-              <Route path="staff/list/quotations" element={<QuotationListPage />} />
+              <Route
+                path="staff/quotations"
+                element={<QuotationCreatePage />}
+              />
 
-              {/* Inventory Management */}
-              <Route path="staff/inventory/stock" element={<DealerInventoryStockPage />} />
-              <Route path="staff/vehicles/all" element={<DealerProductCatalogPage />} />
+              <Route
+                path="staff/list/quotations"
+                element={<QuotationListPage />}
+              />
+
+              {/* Danh mục xe & báo cáo */}
+              {/* Xe có sẵn trong kho đại lí */}
+              <Route
+                path="staff/inventory/stock"
+                element={<DealerInventoryStockPage />}
+              />
+              {/* Tất cả phiên bảng (hãng) */}
+              <Route
+                path="staff/vehicles/all"
+                element={<DealerProductCatalogPage />}
+              />
 
               {/* Promotions */}
-              <Route path="staff/promotions" element={<CustomerPromotionView />} />
+              <Route
+                path="staff/promotions"
+                element={<CustomerPromotionView />}
+              />
 
+              {/* Payment Management (Dealer Staff) */}
+              <Route
+                path="staff/payments/orders/:orderId"
+                element={<CustomerPaymentPage />}
+              />
             </Route>
           </Route>
         </Route>

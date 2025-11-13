@@ -65,19 +65,18 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
       if (sortConfig.key === 'status') {
         const statusPriority = {
           'DRAFT': 1,    // Cao nhất
-          'NEAR': 2,     // Thêm NEAR vào priority
-          'ACTIVE': 3,
-          'INACTIVE': 4,
-          'EXPIRED': 5   // Thấp nhất
+          'ACTIVE': 2,
+          'INACTIVE': 3,
+          'EXPIRED': 4   // Thấp nhất
         };
 
-        const aPriority = statusPriority[a.status] || 6;
-        const bPriority = statusPriority[b.status] || 6;
+        const aPriority = statusPriority[a.status] || 5;
+        const bPriority = statusPriority[b.status] || 5;
 
         if (aPriority !== bPriority) {
           return sortConfig.direction === 'asc' 
-            ? aPriority - bPriority  // DRAFT -> NEAR -> ACTIVE -> INACTIVE -> EXPIRED
-            : bPriority - aPriority; // EXPIRED -> INACTIVE -> ACTIVE -> NEAR -> DRAFT
+            ? aPriority - bPriority  // DRAFT -> ACTIVE -> INACTIVE -> EXPIRED
+            : bPriority - aPriority; // EXPIRED -> INACTIVE -> ACTIVE -> DRAFT
         }
       }
 
@@ -206,11 +205,6 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
         color: 'bg-yellow-100 text-yellow-800 border-yellow-200', 
         text: 'Chờ xác thực',
         icon: '⏳'
-      },
-      NEAR: { 
-        color: 'bg-blue-100 text-blue-800 border-blue-200', 
-        text: 'Sắp diễn ra',
-        icon: '📅'
       },
       ACTIVE: { 
         color: 'bg-green-100 text-green-800 border-green-200', 
@@ -378,8 +372,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                         <tr 
                           key={promotion.promotionId} 
                           className={`hover:bg-gray-50 transition-colors ${
-                            promotion.status === 'DRAFT' ? 'bg-yellow-50 border-l-4 border-l-yellow-400' : 
-                            promotion.status === 'NEAR' ? 'bg-blue-50 border-l-4 border-l-blue-400' : ''
+                            promotion.status === 'DRAFT' ? 'bg-yellow-50 border-l-4 border-l-yellow-400' : ''
                           }`}
                         >
                           <td className="px-6 py-4">
@@ -395,11 +388,6 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                                   {promotion.status === 'DRAFT' && (
                                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                       Cần duyệt
-                                    </span>
-                                  )}
-                                  {promotion.status === 'NEAR' && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      Sắp diễn ra
                                     </span>
                                   )}
                                 </div>
@@ -523,11 +511,6 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                         <span className="text-yellow-600 font-medium">
                           {sortedAndFilteredPromotions.filter(p => p.status === 'DRAFT').length} chờ duyệt
                         </span>
-                        {sortedAndFilteredPromotions.filter(p => p.status === 'NEAR').length > 0 && (
-                          <span className="ml-2 text-blue-600">
-                            {sortedAndFilteredPromotions.filter(p => p.status === 'NEAR').length} sắp diễn ra
-                          </span>
-                        )}
                         {sortedAndFilteredPromotions.filter(p => p.status === 'ACTIVE').length > 0 && (
                           <span className="ml-2 text-green-600">
                             {sortedAndFilteredPromotions.filter(p => p.status === 'ACTIVE').length} đang hoạt động

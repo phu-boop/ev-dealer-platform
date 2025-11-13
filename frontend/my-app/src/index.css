@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import 'antd/dist/reset.css';
 /* src/index.css */
 @tailwind base;
 @tailwind components;
@@ -102,104 +103,6 @@
 /* Đảm bảo toast hiển thị trên cùng mọi thứ */
 .Toastify__toast-container {
   z-index: 9999 !important;
-}
-/* Thêm vào file CSS chính của bạn */
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-scaleIn {
-  animation: scaleIn 0.3s ease-out forwards;
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* Custom scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-scaleIn {
-  animation: scaleIn 0.3s ease-out forwards;
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* Custom scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
 }
 
 
@@ -760,4 +663,75 @@
 .no-scrollbar {
   -ms-overflow-style: none; /* IE & Edge */
   scrollbar-width: none;    /* Firefox */
+}
+
+/* Toast Notification Styles - Simple & Clean */
+.Toastify__toast-container {
+  z-index: 9999 !important;
+}
+
+.Toastify__toast {
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+  padding: 16px 20px !important;
+  min-height: 64px !important;
+  border-left: 4px solid !important;
+}
+
+.Toastify__toast--success {
+  background: #ffffff !important;
+  border-left-color: #10b981 !important;
+  color: #1f2937 !important;
+}
+
+.Toastify__toast--error {
+  background: #ffffff !important;
+  border-left-color: #ef4444 !important;
+  color: #1f2937 !important;
+}
+
+.Toastify__toast--warning {
+  background: #ffffff !important;
+  border-left-color: #f59e0b !important;
+  color: #1f2937 !important;
+}
+
+.Toastify__toast--info {
+  background: #ffffff !important;
+  border-left-color: #3b82f6 !important;
+  color: #1f2937 !important;
+}
+
+.Toastify__toast-body {
+  color: #1f2937 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  padding: 0 !important;
+}
+
+.Toastify__close-button {
+  color: #6b7280 !important;
+  opacity: 0.6 !important;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1 !important;
+  color: #1f2937 !important;
+}
+
+.Toastify__progress-bar--success {
+  background: #10b981 !important;
+}
+
+.Toastify__progress-bar--error {
+  background: #ef4444 !important;
+}
+
+.Toastify__progress-bar--warning {
+  background: #f59e0b !important;
+}
+
+.Toastify__progress-bar--info {
+  background: #3b82f6 !important;
 }
