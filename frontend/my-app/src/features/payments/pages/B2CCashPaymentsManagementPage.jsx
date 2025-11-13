@@ -297,52 +297,63 @@ const B2CCashPaymentsManagementPage = () => {
 
       {/* Confirm Modal */}
       {showConfirmModal && selectedTransaction && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Xác Nhận Duyệt Thanh Toán</h3>
-            <div className="space-y-4 mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Mã đơn hàng:</p>
-                <p className="text-sm font-medium text-gray-900">#{selectedTransaction.orderId?.substring(0, 8) || '-'}</p>
+        <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 transform transition-all flex flex-col" style={{ maxHeight: '90vh' }}>
+            <div className="p-6 flex-shrink-0 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">Xác Nhận Duyệt Thanh Toán</h3>
+            </div>
+            <div className="p-6 flex-1 overflow-y-auto space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-xs text-gray-500 mb-1">Mã đơn hàng</p>
+                  <p className="text-sm font-semibold text-gray-900">#{selectedTransaction.orderId?.substring(0, 8) || '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-xs text-gray-500 mb-1">Số tiền</p>
+                  <p className="text-sm font-semibold text-green-600">{formatCurrency(selectedTransaction.amount)}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Số tiền:</p>
-                <p className="text-sm font-medium text-gray-900">{formatCurrency(selectedTransaction.amount)}</p>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-gray-500 mb-1">Phương thức thanh toán</p>
+                <p className="text-sm font-medium text-gray-900">{selectedTransaction.paymentMethodName || 'Tiền mặt'}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Phương thức:</p>
-                <p className="text-sm font-medium text-gray-900">{selectedTransaction.paymentMethodName || '-'}</p>
-              </div>
+              {selectedTransaction.notes && (
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <p className="text-xs text-blue-600 mb-1 font-medium">Ghi chú từ người yêu cầu</p>
+                  <p className="text-sm text-gray-900">{selectedTransaction.notes}</p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ghi chú (tùy chọn)
+                  Ghi chú duyệt (tùy chọn)
                 </label>
                 <textarea
                   value={confirmNotes}
                   onChange={(e) => setConfirmNotes(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Nhập ghi chú (nếu có)"
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  placeholder="Nhập ghi chú duyệt thanh toán (nếu có)"
                 />
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
+            <div className="p-6 flex-shrink-0 border-t border-gray-200 bg-gray-50 flex gap-3 justify-end rounded-b-xl">
               <button
                 onClick={() => {
                   setShowConfirmModal(false);
                   setSelectedTransaction(null);
                   setConfirmNotes('');
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-white transition-colors font-medium"
                 disabled={confirming}
               >
                 Hủy
               </button>
               <button
                 onClick={handleConfirmPayment}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center gap-2"
                 disabled={confirming}
               >
+                <CheckCircleIcon className="h-5 w-5" />
                 {confirming ? 'Đang xử lý...' : 'Duyệt Thanh Toán'}
               </button>
             </div>

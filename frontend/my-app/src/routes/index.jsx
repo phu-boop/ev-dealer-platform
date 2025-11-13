@@ -371,6 +371,7 @@ import B2COrdersListPage from "../features/payments/pages/B2COrdersListPage.jsx"
 import B2COrderDetailPage from "../features/payments/pages/B2COrderDetailPage.jsx";
 import PayB2COrderPage from "../features/payments/pages/PayB2COrderPage.jsx";
 import B2CCashPaymentsManagementPage from "../features/payments/pages/B2CCashPaymentsManagementPage.jsx";
+import B2CDebtManagementPage from "../features/payments/pages/B2CDebtManagementPage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
 
 export default function AppRoutes() {
@@ -676,6 +677,10 @@ export default function AppRoutes() {
               <Route
                 path="manager/payments/b2c-cash-payments"
                 element={<B2CCashPaymentsManagementPage />}
+              />
+              <Route
+                path="manager/payments/b2c-debt"
+                element={<B2CDebtManagementPage />}
               />
               <Route
                 path="manager/payments/b2c-orders/:orderId"

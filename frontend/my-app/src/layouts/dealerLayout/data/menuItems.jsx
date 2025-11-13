@@ -15,6 +15,7 @@ import {
   FiCreditCard,
   FiPieChart,
   FiTrendingUp,
+  FiTrendingDown,
   FiBarChart2,
   FiSettings,
   FiUserPlus,
@@ -180,14 +181,14 @@ export const dealerManagerMenuItems = [
         path: "/dealer/manager/payments/invoices",
       },
       {
-        icon: FiCreditCard,
-        label: "Thanh Toán & Trả Góp",
-        path: "/dealer/manager/payments/methods",
-      },
-      {
         icon: FiDollarSign,
         label: "Yêu Cầu Thanh Toán Tiền Mặt (B2C)",
         path: "/dealer/manager/payments/b2c-cash-payments",
+      },
+      {
+        icon: FiTrendingDown,
+        label: "Công Nợ B2C",
+        path: "/dealer/manager/payments/b2c-debt",
       },
     ],
   },
