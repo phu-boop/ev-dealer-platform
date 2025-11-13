@@ -521,12 +521,9 @@ export default function AppRoutes() {
                 path="staff/orders/:orderId/create-invoice"
                 element={<CreateInvoiceFromOrderPage />}
               />
-              
+
               {/* Debt Management (EVM Staff) */}
-              <Route
-                path="staff/debt"
-                element={<DealerDebtManagementPage />}
-              />
+              <Route path="staff/debt" element={<DealerDebtManagementPage />} />
               <Route
                 path="staff/debt/:dealerId/invoices"
                 element={<DealerInvoicesListPage />}
@@ -535,7 +532,7 @@ export default function AppRoutes() {
                 path="staff/debt/invoices/:invoiceId"
                 element={<DealerInvoiceDetailsPage />}
               />
-              
+
               {/* Cash Payments Management (EVM Staff) */}
               <Route
                 path="staff/payments/cash-payments"
@@ -554,6 +551,8 @@ export default function AppRoutes() {
           }
         >
           <Route path="dealer" element={<DealerLayout />}>
+            {/* Sales Module */}
+            <Route path="*" element={<SalesRoutes />} />
             <Route index element={<DashboardForDealer />} />
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
@@ -592,22 +591,13 @@ export default function AppRoutes() {
               />
 
               {/* Feedback Management */}
-              <Route
-                path="manager/feedback"
-                element={<FeedbackManagement />}
-              />
-              <Route
-                path="manager/feedback/new"
-                element={<CreateFeedback />}
-              />
+              <Route path="manager/feedback" element={<FeedbackManagement />} />
+              <Route path="manager/feedback/new" element={<CreateFeedback />} />
               <Route
                 path="manager/feedback/statistics"
                 element={<FeedbackStatistics />}
               />
-              <Route
-                path="manager/feedback/:id"
-                element={<FeedbackDetail />}
-              />
+              <Route path="manager/feedback/:id" element={<FeedbackDetail />} />
 
               {/* Quotation Management */}
 
@@ -638,6 +628,11 @@ export default function AppRoutes() {
                 element={<UserManagement />}
               />
 
+              <Route
+                path="manager/vehicles/all"
+                element={<DealerProductCatalogPage />}
+              />
+
               {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
 
@@ -653,6 +648,16 @@ export default function AppRoutes() {
 
               {/* Promotions */}
               <Route path="manager/promotions/*" element={<MainPromotion />} />
+
+              {/* Quotation Management */}
+              <Route
+                path="manager/quotations"
+                element={<QuotationCreatePage />}
+              />
+              <Route
+                path="manager/list/quotations"
+                element={<QuotationListPage />}
+              />
 
               {/* System Management */}
               <Route
@@ -721,22 +726,13 @@ export default function AppRoutes() {
               />
 
               {/* Feedback Management */}
-              <Route
-                path="staff/feedback"
-                element={<FeedbackManagement />}
-              />
-              <Route
-                path="staff/feedback/new"
-                element={<CreateFeedback />}
-              />
+              <Route path="staff/feedback" element={<FeedbackManagement />} />
+              <Route path="staff/feedback/new" element={<CreateFeedback />} />
               <Route
                 path="staff/feedback/statistics"
                 element={<FeedbackStatistics />}
               />
-              <Route
-                path="staff/feedback/:id"
-                element={<FeedbackDetail />}
-              />
+              <Route path="staff/feedback/:id" element={<FeedbackDetail />} />
 
               {/* Quotation Management */}
               <Route
@@ -766,9 +762,6 @@ export default function AppRoutes() {
                 path="staff/promotions"
                 element={<CustomerPromotionView />}
               />
-
-              {/* Sales Module */}
-              <Route path="staff/*" element={<SalesRoutes />} />
 
               {/* Payment Management (Dealer Staff) */}
               <Route

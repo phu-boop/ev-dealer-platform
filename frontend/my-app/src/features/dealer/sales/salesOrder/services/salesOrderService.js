@@ -49,7 +49,22 @@ export const salesOrderB2CApi = {
    * @returns {Promise} Promise trả về sales order đã duyệt
    */
   approve: (orderId, managerId) => 
-    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/approve?managerId=${managerId}`)
+    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/approve?managerId=${managerId}`),
+  /**
+   * Thêm hoặc recalculating order items
+   * @param {string} orderId - ID của sales order
+   * @returns {Promise} ApiRespond<SalesOrderB2CResponse>
+   */
+  addOrderItemsToSalesOrder: (orderId) =>
+    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/order-items`),
+   /**
+   * Chuyển trạng thái đơn hàng sang EDITED
+   * @param {string} orderId - ID của sales order
+   * @param {string} staffId - ID nhân viên thao tác
+   * @returns {Promise} ApiRespond<SalesOrderB2CResponse>
+   */
+  markAsEdited: (orderId, staffId) =>
+    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/mark-edited?staffId=${staffId}`)
 };
 
 export const salesOrderService = {
@@ -87,5 +102,35 @@ export const salesOrderService = {
   updateOrderStatus: async (orderId, status, reason = '') => {
     const response = await salesOrderB2CApi.updateStatus(orderId, status);
     return response.data?.data;
-  }
+  },
+  
+   /**
+   * Thêm hoặc recalculating order items
+   * @param {string} orderId - ID của sales order
+   * @returns {Promise} ApiRespond<SalesOrderB2CResponse>
+   */
+  recalcOrderItems: async (orderId) => {
+    const response = await salesOrderB2CApi.addOrderItemsToSalesOrder(orderId);
+    return response.data.data;
+  },
+    /**
+   * Chuyển trạng thái đơn hàng sang EDITED
+   * @param {string} orderId - ID của sales order
+   * @param {string} staffId - ID nhân viên thao tác
+   * @returns {Promise} ApiRespond<SalesOrderB2CResponse>
+   */
+  markOrderAsEdited: async (orderId, staffId) => {
+    const response = await salesOrderB2CApi.markAsEdited(orderId, staffId);
+    return response.data?.data;
+  },
+  /**
+   * Gửi đơn hàng đi duyệt
+   * @param {string} orderId - ID của sales order
+   * @returns {Promise} Promise trả về sales order đã gửi duyệt
+   */
+  sendForApproval: async (orderId,dealerId) => {
+    console.log(dealerId);
+    const response = await salesOrderB2CApi.markAsEdited(orderId, dealerId);
+    return response.data?.data;
+  },
 };

@@ -46,6 +46,22 @@ export const deleteQuotation = async (quotationId) => {
   }
 };
 
+
+/**
+ * Lấy modelId từ SalesOrderB2C (thông qua orderId)
+ * @param {string} orderId - UUID của SalesOrderB2C
+ * @returns {Promise<number>} - Trả về modelId
+ */
+export const getModelIdBySalesOrderId = async (orderId) => {
+  try {
+    const response = await apiConstSaleService.get(`/api/v1/sales-orders/b2c/${orderId}/model-id`);
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi lấy modelId theo SalesOrderB2C ID ${orderId}:`, error);
+    throw error;
+  }
+};
+
 // --- Các hàm lấy dữ liệu từ Session Storage ---
 export const getCurrentDealerId = () => {
   return sessionStorage.getItem("dealerId");

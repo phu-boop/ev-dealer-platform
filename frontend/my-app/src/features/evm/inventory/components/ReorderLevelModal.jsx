@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FiX } from "react-icons/fi";
 import { updateCentralReorderLevel } from "../services/inventoryService";
+import Swal from "sweetalert2";
 
 const ReorderLevelModal = ({ isOpen, onClose, onSuccess, variantId }) => {
   const [reorderLevel, setReorderLevel] = useState("");
@@ -16,7 +17,11 @@ const ReorderLevelModal = ({ isOpen, onClose, onSuccess, variantId }) => {
         variantId,
         reorderLevel: Number(reorderLevel),
       });
-      alert("Cập nhật ngưỡng tồn kho thành công!");
+      await Swal.fire({
+        icon: "success",
+        title: "Thành công!",
+        text: "Cập nhật ngưỡng tồn kho thành công.",
+      });
       onSuccess();
       onClose();
     } catch (err) {

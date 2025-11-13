@@ -7,6 +7,7 @@ import com.ev.sales_service.dto.request.QuotationSendRequest;
 import com.ev.sales_service.dto.response.CustomerResponseRequest;
 import com.ev.sales_service.dto.response.QuotationResponse;
 import com.ev.sales_service.dto.response.SalesOrderB2CResponse;
+import com.ev.sales_service.enums.QuotationStatus;
 import com.ev.sales_service.service.Interface.QuotationService;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import jakarta.validation.Valid;
@@ -87,43 +88,53 @@ public class QuotationController {
         return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully", responses));
     }
 
-//    @GetMapping("/search")
-//    public ResponseEntity<ApiRespond<Page<QuotationResponse>>> getQuotationsWithPagination(
-//            @Valid QuotationFilterRequest filterRequest,
-//            @PageableDefault(size = 20, sort = "quotationDate", direction = Sort.Direction.DESC) Pageable pageable) {
-//        Page<QuotationResponse> responses = quotationService.getQuotationsWithPagination(filterRequest, pageable);
-//        return ResponseEntity.ok(ApiRespond.success("Quotations fetched with pagination successfully", responses));
-//    }
+    @DeleteMapping("/{quotationId}")
+    public ResponseEntity<ApiRespond<String>> deleteQuotation(
+            @PathVariable UUID quotationId) {
+        log.info("Deleting quotation: {}", quotationId);
+        quotationService.deleteQuotation(quotationId);
+        return ResponseEntity.ok(ApiRespond.success("Quotation deleted successfully", "Deleted"));
+    }
 
-//    @GetMapping("/{quotationId}/available-promotions")
-//    public ResponseEntity<ApiRespond<List<PromotionResponse>>> getAvailablePromotions(
-//            @PathVariable UUID quotationId) {
-//        List<PromotionResponse> responses = quotationService.getAvailablePromotionsForQuotation(quotationId);
-//        return ResponseEntity.ok(ApiRespond.success("Available promotions fetched successfully", responses));
-//    }
     @GetMapping("/staff/{staffId}")
     public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotationsByStaff(
-            @PathVariable String staffId) {
+            @PathVariable String staffId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String customer,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) String search) {
+
         UUID staffIdUuid = UUID.fromString(staffId);
-        log.info("Fetching quotations for staff: {}", staffIdUuid);
-        List<QuotationResponse> responses = quotationService.getQuotationsByStaff(staffIdUuid);
+        log.info(
+                "Fetching quotations for staff: {} with filters - status: {}, customer: {}, dateFrom: {}, dateTo: {}, search: {}",
+                staffIdUuid, status, customer, dateFrom, dateTo, search);
+
+        QuotationFilterRequest filterRequest = quotationService.buildFilterRequestForStaff(
+                staffIdUuid, status, customer, dateFrom, dateTo, search);
+
+        List<QuotationResponse> responses = quotationService.getQuotationsByFilters(filterRequest);
         return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for staff", responses));
     }
 
     @GetMapping("/dealer/{dealerId}")
-public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotationsByDealer(
-        @PathVariable UUID dealerId) {
-    log.info("Fetching quotations for dealer: {}", dealerId);
-    List<QuotationResponse> responses = quotationService.getQuotationsByDealer(dealerId);
-    return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for dealer", responses));
-}
-@DeleteMapping("/{quotationId}")
-public ResponseEntity<ApiRespond<String>> deleteQuotation(
-        @PathVariable UUID quotationId) {
-    log.info("Deleting quotation: {}", quotationId);
-    quotationService.deleteQuotation(quotationId);
-    return ResponseEntity.ok(ApiRespond.success("Quotation deleted successfully", "Deleted"));
-}
+    public ResponseEntity<ApiRespond<List<QuotationResponse>>> getQuotationsByDealer(
+            @PathVariable UUID dealerId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String customer,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) String search) {
 
+        log.info(
+                "Fetching quotations for dealer: {} with filters - status: {}, customer: {}, dateFrom: {}, dateTo: {}, search: {}",
+                dealerId, status, customer, dateFrom, dateTo, search);
+
+        QuotationFilterRequest filterRequest = quotationService.buildFilterRequestForDealer(
+                dealerId, status, customer, dateFrom, dateTo, search);
+
+        List<QuotationResponse> responses = quotationService.getQuotationsByFilters(filterRequest);
+        return ResponseEntity.ok(ApiRespond.success("Quotations fetched successfully for dealer", responses));
+    }
 
 }

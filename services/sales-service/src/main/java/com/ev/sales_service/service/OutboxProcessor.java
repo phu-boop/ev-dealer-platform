@@ -88,8 +88,8 @@ public class OutboxProcessor {
             case "OrderIssueReported": 
                 return TOPIC_ORDER_ISSUE_REPORTED;
             
-            // --- NGHIỆP VỤ PROMOTION (ĐÃ THÊM) ---
-            // !!! QUAN TRỌNG: Hãy thay "PromotionEventType" bằng tên eventType chính xác của bạn !!!
+            // --- NGHIỆP VỤ PROMOTION  ---
+            
             case "PromotionEventType": 
                 return TOPIC;
             

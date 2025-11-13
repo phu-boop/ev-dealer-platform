@@ -51,7 +51,7 @@ export const dealerManagerMenuItems = [
       },
       {
         icon: FiTag,
-        label: "Toàn Bộ Mẫu Xe",
+        label: "Tất cả Phiên bản",
         path: "/dealer/manager/vehicles/all",
       },
       // {
@@ -91,22 +91,22 @@ export const dealerManagerMenuItems = [
       {
         icon: FiClipboard,
         label: "Đơn Hàng Mới",
-        path: "/dealer/manager/orders/create",
+        path: "/dealer/manager/list/quotations",
       },
       {
         icon: FiList,
         label: "Danh Sách Đơn Hàng",
-        path: "/dealer/manager/orders",
+        path: "/dealer/orders",
       },
       {
         icon: FiFileText,
         label: "Hợp Đồng Mua Bán",
-        path: "/dealer/manager/contracts",
+        path: "/dealer/contracts",
       },
       {
         icon: FiTruck,
         label: "Theo Dõi Giao Xe",
-        path: "/dealer/manager/delivery",
+        path: "/dealer/delivery",
       },
     ],
   },
@@ -250,11 +250,11 @@ export const dealerStaffMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/staff/vehicles/available",
+        path: "/dealer/staff/inventory/stock",
       },
       {
         icon: FiTag,
-        label: "Toàn Bộ Mẫu Xe",
+        label: "Tất cả Phiên bản",
         path: "/dealer/staff/vehicles/all",
       },
       {
@@ -282,29 +282,24 @@ export const dealerStaffMenuItems = [
         path: "/dealer/staff/quotations",
       },
       {
-        icon: FiFileText,
+        icon: FiClipboard,
         label: "Đanh sách báo giá",
         path: "/dealer/staff/list/quotations",
       },
       {
-        icon: FiClipboard,
-        label: "Đơn Hàng Mới",
-        path: "/dealer/staff/orders",
-      },
-      {
         icon: FiList,
         label: "Danh Sách Đơn Hàng",
-        path: "/dealer/staff/orders",
+        path: "/dealer/orders",
       },
       {
         icon: FiFileText,
         label: "Hợp Đồng Mua Bán",
-        path: "/dealer/staff/contracts",
+        path: "/dealer/contracts",
       },
       {
         icon: FiTruck,
         label: "Theo Dõi Giao Xe",
-        path: "/dealer/staff/delivery",
+        path: "/dealer/delivery",
       },
     ],
   },

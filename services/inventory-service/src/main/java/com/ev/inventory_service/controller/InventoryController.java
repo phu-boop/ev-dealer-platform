@@ -6,6 +6,7 @@ import com.ev.common_lib.dto.inventory.InventoryComparisonDto;
 import com.ev.common_lib.dto.inventory.DetailedInventoryRequest;
 import com.ev.common_lib.dto.inventory.VinValidationResultDto;
 import com.ev.common_lib.dto.respond.ApiRespond;
+
 import com.ev.inventory_service.dto.request.TransactionRequestDto;
 import com.ev.inventory_service.dto.request.UpdateReorderLevelRequest;
 import com.ev.inventory_service.dto.response.InventoryStatusDto;
@@ -265,7 +266,7 @@ public class InventoryController {
      * (Lưu ý: API này được gọi bởi vai trò DEALER, không phải EVM_STAFF)
      */
     @PutMapping("/dealer-stock/reorder-level")
-    @PreAuthorize("hasRole('DEALER_MANAGER')") // Giả định vai trò của Đại lý
+    @PreAuthorize("hasAnyRole('DEALER_MANAGER')")
     public ResponseEntity<ApiRespond<Void>> updateDealerReorderLevel(
             @Valid @RequestBody UpdateReorderLevelRequest request,
             @RequestHeader("X-User-ProfileId") UUID dealerId) {

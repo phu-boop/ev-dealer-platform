@@ -8,11 +8,18 @@ import java.util.UUID;
 
 public interface OrderTrackingService {
     OrderTrackingResponse createTrackingRecord(OrderTrackingRequest request);
+
     OrderTrackingResponse updateTrackingRecord(UUID trackId, OrderTrackingRequest request);
+
     void deleteTrackingRecord(UUID trackId);
+
     OrderTrackingResponse getTrackingRecordById(UUID trackId);
+
     List<OrderTrackingResponse> getTrackingHistoryByOrderId(UUID orderId);
+
     OrderTrackingResponse getCurrentStatus(UUID orderId);
+
     List<OrderTrackingResponse> getTrackingByStatus(String status);
+
     OrderTrackingResponse addTrackingNote(UUID orderId, String notes, UUID updatedBy);
 }
