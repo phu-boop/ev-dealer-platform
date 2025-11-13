@@ -19,6 +19,7 @@ import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.entity.Outbox;
 import com.ev.sales_service.entity.Notification;
 import com.ev.sales_service.enums.OrderStatusB2B;
+import com.ev.sales_service.enums.PaymentStatus;
 
 // import com.ev.sales_service.repository.QuotationRepository; 
 import com.ev.sales_service.enums.SaleOderType;
@@ -843,6 +844,26 @@ public class SalesOrderServiceB2BImpl implements SalesOrderServiceB2B {
             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE); 
         }
         return response.getBody().getData();
+    }
+
+    @Override
+    @Transactional
+    public void updatePaymentStatus(UUID orderId, PaymentStatus paymentStatus) {
+        log.info("Updating payment status for order {} to {}", orderId, paymentStatus);
+        
+        SalesOrder order = findOrderByIdOrThrow(orderId);
+        
+        // Validate order type phải là B2B
+        if (order.getTypeOder() != SaleOderType.B2B) {
+            log.error("Order {} is not B2B type, cannot update payment status", orderId);
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        
+        // Update payment status
+        order.setPaymentStatus(paymentStatus);
+        salesOrderRepositoryB2B.save(order);
+        
+        log.info("Payment status updated successfully for order {} to {}", orderId, paymentStatus);
     }
 
 }

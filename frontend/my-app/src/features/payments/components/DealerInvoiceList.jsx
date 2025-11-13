@@ -2,7 +2,7 @@
 import React from 'react';
 import DealerInvoiceCard from './DealerInvoiceCard';
 
-const DealerInvoiceList = ({ invoices, loading, filters, pagination, onFilterChange, onViewInvoice, onRefresh }) => {
+const DealerInvoiceList = ({ invoices, loading, filters, pagination, onFilterChange, onViewInvoice, onPayInvoice, onRefresh }) => {
   if (loading && invoices.length === 0) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -26,6 +26,7 @@ const DealerInvoiceList = ({ invoices, loading, filters, pagination, onFilterCha
           key={invoice.dealerInvoiceId}
           invoice={invoice}
           onView={() => onViewInvoice(invoice.dealerInvoiceId)}
+          onPay={onPayInvoice}
         />
       ))}
 

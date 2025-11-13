@@ -39,8 +39,20 @@ const DealerPaymentPage = () => {
   const handlePayInvoice = async (paymentData) => {
     try {
       setLoading(true);
-      await paymentService.payDealerInvoice(invoiceId, paymentData);
-      toast.success('Thanh toán đã được gửi. Chờ xác nhận từ EVM Staff.');
+      const response = await paymentService.payDealerInvoice(invoiceId, paymentData);
+      
+      // Check payment method type to show appropriate message
+      const paymentMethods = await paymentService.getActiveB2BMethods();
+      const methods = paymentMethods.data?.data || paymentMethods.data || [];
+      const selectedMethod = methods.find(m => m.methodId === paymentData.paymentMethodId);
+      const isCash = selectedMethod?.methodType === 'MANUAL';
+      
+      if (isCash) {
+        toast.success('Yêu cầu thanh toán đã được gửi. Vui lòng chờ EVM staff duyệt.');
+      } else {
+        toast.success('Thanh toán thành công!');
+      }
+      
       setShowPaymentForm(false);
       loadInvoice();
     } catch (error) {

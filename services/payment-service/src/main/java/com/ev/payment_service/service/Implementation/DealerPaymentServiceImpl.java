@@ -12,6 +12,7 @@ import com.ev.payment_service.entity.DealerDebtRecord;
 import com.ev.payment_service.entity.DealerInvoice;
 import com.ev.payment_service.entity.DealerTransaction;
 import com.ev.payment_service.entity.PaymentMethod;
+import com.ev.payment_service.enums.PaymentMethodType;
 import com.ev.payment_service.enums.PaymentScope;
 import com.ev.payment_service.mapper.DealerPaymentMapper;
 import com.ev.payment_service.repository.DealerDebtRecordRepository;
@@ -37,6 +38,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -178,7 +180,18 @@ public class DealerPaymentServiceImpl implements IDealerPaymentService {
         log.info("DealerDebtRecord updated - DealerId: {}, TotalOwed increased by: {}", 
                 savedInvoice.getDealerId(), savedInvoice.getTotalAmount());
 
-        // 9. Map to response
+        // 9. Update payment status của order trong Sales Service thành UNPAID
+        try {
+            updateOrderPaymentStatus(request.getOrderId(), "UNPAID");
+            log.info("Order payment status updated to UNPAID - OrderId: {}", request.getOrderId());
+        } catch (Exception e) {
+            log.error("Failed to update order payment status - OrderId: {}, Error: {}", 
+                    request.getOrderId(), e.getMessage(), e);
+            // Không throw exception để không rollback invoice creation
+            // Payment status có thể được cập nhật sau
+        }
+
+        // 10. Map to response
         DealerInvoiceResponse response = dealerPaymentMapper.toInvoiceResponse(savedInvoice);
         response.setTransactions(List.of()); // Chưa có transactions
         return response;
@@ -272,21 +285,59 @@ public class DealerPaymentServiceImpl implements IDealerPaymentService {
                 ? request.getPaidDate() 
                 : LocalDateTime.now();
 
+        // Xác định status dựa trên payment method type
+        // Nếu là GATEWAY (VNPAY): tự động confirm ngay
+        // Nếu là MANUAL (tiền mặt): chờ duyệt
+        String transactionStatus;
+        if (paymentMethod.getMethodType() == PaymentMethodType.GATEWAY) {
+            transactionStatus = "SUCCESS"; // Tự động confirm cho VNPAY
+            log.info("Payment method is GATEWAY - Auto confirming transaction for InvoiceId: {}", invoiceId);
+        } else {
+            transactionStatus = "PENDING_CONFIRMATION"; // Chờ duyệt cho tiền mặt
+            log.info("Payment method is MANUAL - Transaction pending confirmation for InvoiceId: {}", invoiceId);
+        }
+
         DealerTransaction transaction = DealerTransaction.builder()
                 .dealerInvoice(invoice)
                 .amount(request.getAmount())
                 .transactionDate(transactionDate)
                 .paymentMethod(paymentMethod)
                 .transactionCode(request.getTransactionCode())
-                .status("PENDING_CONFIRMATION")
+                .status(transactionStatus)
                 .notes(request.getNotes())
                 .build();
 
         DealerTransaction savedTransaction = dealerTransactionRepository.save(transaction);
-        log.info("DealerTransaction created - TransactionId: {}, InvoiceId: {}, Amount: {}", 
-                savedTransaction.getDealerTransactionId(), invoiceId, request.getAmount());
+        log.info("DealerTransaction created - TransactionId: {}, InvoiceId: {}, Amount: {}, Status: {}", 
+                savedTransaction.getDealerTransactionId(), invoiceId, request.getAmount(), transactionStatus);
 
-        // 6. Map to response
+        // 6. Nếu là GATEWAY (VNPAY), tự động cập nhật invoice và debt record
+        if ("SUCCESS".equals(transactionStatus)) {
+            // Auto confirm logic (giống như confirmDealerTransaction nhưng không cần staffId)
+            BigDecimal newAmountPaid = invoice.getAmountPaid().add(savedTransaction.getAmount());
+            invoice.setAmountPaid(newAmountPaid);
+
+            // Update invoice status
+            if (newAmountPaid.compareTo(invoice.getTotalAmount()) >= 0) {
+                invoice.setStatus("PAID");
+                log.info("Invoice fully paid - InvoiceId: {}", invoice.getDealerInvoiceId());
+            } else if (newAmountPaid.compareTo(BigDecimal.ZERO) > 0) {
+                if (invoice.getDueDate().isBefore(LocalDate.now())) {
+                    invoice.setStatus("OVERDUE");
+                } else {
+                    invoice.setStatus("PARTIALLY_PAID");
+                }
+            }
+
+            dealerInvoiceRepository.save(invoice);
+
+            // Update DealerDebtRecord
+            updateDealerDebtRecord(invoice.getDealerId(), BigDecimal.ZERO, savedTransaction.getAmount());
+            log.info("DealerDebtRecord updated - DealerId: {}, TotalPaid increased by: {}", 
+                    invoice.getDealerId(), savedTransaction.getAmount());
+        }
+
+        // 7. Map to response
         return dealerPaymentMapper.toTransactionResponse(savedTransaction);
     }
 
@@ -413,6 +464,27 @@ public class DealerPaymentServiceImpl implements IDealerPaymentService {
         return debtPage.map(dealerPaymentMapper::toDebtSummaryResponse);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasInvoiceForOrder(UUID orderId) {
+        log.info("Checking if order has invoice - OrderId: {}", orderId);
+        
+        Optional<DealerInvoice> invoice = dealerInvoiceRepository.findByOrderId(orderId.toString());
+        boolean hasInvoice = invoice.isPresent();
+        
+        log.info("Order {} has invoice: {}", orderId, hasInvoice);
+        return hasInvoice;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<DealerTransactionResponse> getPendingCashPayments(Pageable pageable) {
+        log.info("Getting pending cash payments");
+
+        Page<DealerTransaction> transactionPage = dealerTransactionRepository.findPendingManualTransactions(pageable);
+        return transactionPage.map(dealerPaymentMapper::toTransactionResponse);
+    }
+
     /**
      * Helper method: Update DealerDebtRecord
      * @param dealerId ID của đại lý
@@ -437,6 +509,27 @@ public class DealerPaymentServiceImpl implements IDealerPaymentService {
 
         // currentBalance sẽ tự động tính lại bởi @PreUpdate
         dealerDebtRecordRepository.save(debtRecord);
+    }
+
+    /**
+     * Helper method: Update payment status của order trong Sales Service
+     * @param orderId Order ID từ sales_db
+     * @param paymentStatus Payment status (UNPAID, PARTIALLY_PAID, PAID, NONE)
+     */
+    private void updateOrderPaymentStatus(UUID orderId, String paymentStatus) {
+        String url = salesServiceUrl + "/sales-orders/" + orderId + "/payment-status?status=" + paymentStatus;
+        log.info("Calling Sales Service to update payment status - URL: {}, OrderId: {}, Status: {}", 
+                url, orderId, paymentStatus);
+
+        try {
+            restTemplate.put(url, null);
+            log.info("Successfully updated payment status in Sales Service for orderId: {}, status: {}", 
+                    orderId, paymentStatus);
+        } catch (RestClientException e) {
+            log.error("Failed to update payment status in Sales Service - OrderId: {}, Status: {}, Error: {}", 
+                    orderId, paymentStatus, e.getMessage(), e);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
     }
 }
 

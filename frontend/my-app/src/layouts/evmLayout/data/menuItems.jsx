@@ -289,6 +289,30 @@ export const evmStaffMenuItems = [
     ],
   },
 
+  // Quản lý thanh toán
+  {
+    icon: FiDollarSign,
+    label: "Quản Lý Thanh Toán",
+    path: "/evm/staff/payments",
+    submenu: [
+      {
+        icon: FiShoppingCart,
+        label: "Quản Lý Đơn Hàng B2B",
+        path: "/evm/staff/orders",
+      },
+      {
+        icon: FiCreditCard,
+        label: "Công Nợ Đại Lý",
+        path: "/evm/staff/debt",
+      },
+      {
+        icon: FiDollarSign,
+        label: "Đại Lý Thanh Toán Tiền Mặt",
+        path: "/evm/staff/payments/cash-payments",
+      },
+    ],
+  },
+
   // Báo cáo & phân tích
   {
     icon: FiBarChart2,

@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { EyeIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
-const DealerInvoiceCard = ({ invoice, onView }) => {
+const DealerInvoiceCard = ({ invoice, onView, onPay }) => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -90,7 +90,7 @@ const DealerInvoiceCard = ({ invoice, onView }) => {
         </button>
         {invoice.status !== 'PAID' && invoice.remainingAmount > 0 && (
           <button
-            onClick={onView}
+            onClick={() => onPay && onPay(invoice.dealerInvoiceId)}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             <CurrencyDollarIcon className="h-5 w-5" />

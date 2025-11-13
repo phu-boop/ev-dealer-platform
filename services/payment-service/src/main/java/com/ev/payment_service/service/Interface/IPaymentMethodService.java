@@ -31,4 +31,9 @@ public interface IPaymentMethodService {
      * (Internal) Lấy PTTT theo ID
      */
     PaymentMethodResponse getPaymentMethodById(UUID methodId);
+
+    /**
+     * (DEALER_MANAGER) Lấy các PTTT đang hoạt động cho luồng B2B (scope B2B hoặc ALL)
+     */
+    List<PaymentMethodResponse> getActiveB2BMethods();
 }

@@ -6,6 +6,7 @@ import com.ev.sales_service.dto.request.ReportIssueRequest;
 import com.ev.sales_service.dto.request.ResolveDisputeRequest;
 import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.enums.OrderStatusB2B;
+import com.ev.sales_service.enums.PaymentStatus;
 import java.util.UUID;
 import java.util.List;
 import java.time.LocalDate;
@@ -84,4 +85,10 @@ public interface SalesOrderServiceB2B {
      * Lấy chi tiết đơn hàng B2B bằng ID
      */
     SalesOrder getB2BOrderDetailsById(UUID orderId);
+
+    /**
+     * Cập nhật trạng thái thanh toán của đơn hàng
+     * Được gọi từ Payment Service sau khi tạo hóa đơn
+     */
+    void updatePaymentStatus(UUID orderId, PaymentStatus paymentStatus);
 }
