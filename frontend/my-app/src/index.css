@@ -103,3 +103,14 @@
 .Toastify__toast-container {
   z-index: 9999 !important;
 }
+
+/* Ẩn thanh cuộn cho Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ẩn thanh cuộn cho IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

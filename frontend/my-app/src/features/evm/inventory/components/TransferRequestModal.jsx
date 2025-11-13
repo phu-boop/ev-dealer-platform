@@ -93,7 +93,7 @@ const TransferRequestModal = ({ isOpen, onClose, onSuccess, variantId }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 backdrop-blur-lg bg-opacity-50 z-50 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
         <form onSubmit={handleSubmit}>
           <div className="p-6 border-b flex justify-between items-center">
