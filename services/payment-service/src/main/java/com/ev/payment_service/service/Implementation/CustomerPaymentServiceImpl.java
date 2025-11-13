@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -553,6 +555,27 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         }
     }
 
+    /**
+     * Update payment status trong Sales Service (works for both B2B and B2C)
+     * Endpoint: PUT /api/v1/sales-orders/{orderId}/payment-status?status={status}
+     */
+    private void updateOrderPaymentStatusInSalesService(UUID orderId, String paymentStatus) {
+        log.info("Updating order payment status in sales-service - OrderId: {}, PaymentStatus: {}", orderId, paymentStatus);
+        
+        try {
+            String url = salesServiceUrl + "/api/v1/sales-orders/" + orderId + "/payment-status?status=" + paymentStatus;
+            log.info("Attempting to update order payment status: {}", url);
+            restTemplate.put(url, null);
+            log.info("Successfully updated order payment status in sales-service for orderId: {}, PaymentStatus: {}", 
+                    orderId, paymentStatus);
+        } catch (RestClientException e) {
+            log.error("Failed to update order payment status in sales-service - OrderId: {}, PaymentStatus: {}, Error: {}", 
+                    orderId, paymentStatus, e.getMessage());
+            // Log error nhưng không throw exception vì payment đã thành công
+            // Payment status update là optional, không ảnh hưởng đến payment flow
+        }
+    }
+
     private PaymentRecord createNewPaymentRecord(SalesOrderData orderData) {
         BigDecimal totalAmount = orderData.getTotalAmount() != null ? orderData.getTotalAmount() : BigDecimal.ZERO;
         BigDecimal amountPaid = BigDecimal.ZERO;
@@ -575,8 +598,8 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
 
     @Override
     @Transactional
-    public TransactionResponse confirmManualPayment(UUID transactionId, String userEmail, UUID userProfileId) {
-        log.info("Confirming manual payment - TransactionId: {}, UserEmail: {}", transactionId, userEmail);
+    public TransactionResponse confirmManualPayment(UUID transactionId, String userEmail, UUID userProfileId, String notes) {
+        log.info("Confirming manual payment - TransactionId: {}, UserEmail: {}, Notes: {}", transactionId, userEmail, notes);
 
         // 1. Tìm giao dịch
         Transaction transaction = transactionRepository.findById(transactionId)
@@ -611,6 +634,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
 
         // 5. Cập nhật Transaction
         transaction.setStatus("SUCCESS");
+        // Cập nhật notes nếu có (ghi đè notes cũ nếu có notes mới từ Dealer Manager)
+        if (notes != null && !notes.isBlank()) {
+            transaction.setNotes(notes);
+            log.info("Transaction notes updated - TransactionId: {}, Notes: {}", transactionId, notes);
+        }
         Transaction savedTransaction = transactionRepository.save(transaction);
         log.info("Transaction updated to SUCCESS - TransactionId: {}", transactionId);
 
@@ -636,14 +664,21 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         log.info("PaymentRecord saved - RecordId: {}, AmountPaid: {}, RemainingAmount: {}", 
                 savedRecord.getRecordId(), savedRecord.getAmountPaid(), savedRecord.getRemainingAmount());
 
-        // 7. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật sales-service
-        // Chỉ cập nhật khi thanh toán đầy đủ (sử dụng savedRecord để lấy status chính xác)
+        // 7. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật payment status trong sales-service
+        // Cập nhật payment status dựa trên status của PaymentRecord
+        String paymentStatus;
         if ("PAID".equals(savedRecord.getStatus())) {
+            paymentStatus = "PAID";
+            // Also update order status if fully paid
             updateOrderStatusInSalesService(savedRecord.getOrderId(), "CONFIRMED");
+        } else if ("PARTIALLY_PAID".equals(savedRecord.getStatus())) {
+            paymentStatus = "PARTIALLY_PAID";
         } else {
-            log.info("Payment not fully paid yet, skipping sales-service status update - OrderId: {}, RemainingAmount: {}",
-                    savedRecord.getOrderId(), savedRecord.getRemainingAmount());
+            paymentStatus = "UNPAID";
         }
+        
+        // Update payment status in sales-service (works for both B2B and B2C)
+        updateOrderPaymentStatusInSalesService(savedRecord.getOrderId(), paymentStatus);
 
         return transactionMapper.toResponse(savedTransaction);
     }
@@ -688,5 +723,13 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         
         log.info("Total debt for customer {}: {} (from {} records)", customerId, totalDebt, records.size());
         return totalDebt;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getPendingCashPaymentsB2C(Pageable pageable) {
+        log.info("Fetching pending cash payments for B2C orders");
+        Page<Transaction> transactions = transactionRepository.findPendingManualTransactions(pageable);
+        return transactions.map(transactionMapper::toResponse);
     }
 }

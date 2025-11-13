@@ -14,7 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Vẫn giữ để @PreAuthorize hoạt động
+@EnableMethodSecurity(prePostEnabled = true) // Vẫn giữ để @PreAuthorize hoạt động
 public class SecurityConfig {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
