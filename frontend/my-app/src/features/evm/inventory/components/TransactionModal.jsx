@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
+import Swal from "sweetalert2";
 import { executeTransaction } from "../services/inventoryService";
 import { useAuthContext } from "../../../../features/auth/AuthProvider";
 
@@ -20,6 +21,32 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, variantId }) => {
     }
   }, [isOpen]);
 
+  const showSuccessAlert = (message) => {
+    Swal.fire({
+      icon: "success",
+      title: "Thành công!",
+      text: message,
+      timer: 2000, // Tự động đóng sau 2 giây
+      timerProgressBar: true,
+      showConfirmButton: true,
+      willClose: () => {
+        onSuccess();
+        onClose();
+      },
+    });
+  };
+
+  const showErrorAlert = (message) => {
+    Swal.fire({
+      icon: "error",
+      title: "Thao tác thất bại",
+      text: message,
+      showConfirmButton: true, // Cho phép đóng sớm
+      confirmButtonText: "Đóng",
+      confirmButtonColor: "#dc2626",
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -30,6 +57,7 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, variantId }) => {
         .split("\n")
         .map((v) => v.trim())
         .filter((v) => v.length > 0);
+
       if (vinList.length === 0) {
         setError("Vui lòng nhập ít nhất một số VIN.");
         setIsLoading(false);
@@ -39,20 +67,22 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, variantId }) => {
       const payload = {
         transactionType: "RESTOCK",
         variantId,
-        quantity: vinList.length, // Số lượng được tính từ danh sách VIN
-        vins: vinList, // Gửi mảng VINs
+        quantity: vinList.length,
+        vins: vinList,
         notes,
         staffId: email,
       };
 
       await executeTransaction(payload);
-      alert("Nhập kho thành công!");
 
-      onSuccess();
-      onClose();
+      // Hiển thị thông báo thành công và tự động đóng
+      showSuccessAlert(`Đã nhập kho thành công ${vinList.length} xe!`);
     } catch (err) {
       const apiErrorMessage = err.response?.data?.message || err.message;
-      setError(apiErrorMessage || "Thao tác thất bại.");
+      const errorMsg = apiErrorMessage || "Thao tác thất bại.";
+
+      // Hiển thị thông báo lỗi và tự động đóng sau 3 giây
+      showErrorAlert(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +108,7 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, variantId }) => {
               type="button"
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-full"
+              disabled={isLoading}
             >
               <FiX />
             </button>
@@ -85,7 +116,7 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, variantId }) => {
 
           {/* Body Form */}
           <div className="p-6 space-y-4">
-            {/* Chỉ còn ô nhập VIN */}
+            {/* Ô nhập VIN */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Danh sách số VIN (mỗi VIN một dòng)*
@@ -95,17 +126,24 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, variantId }) => {
                 onChange={(e) => setVinsInput(e.target.value)}
                 placeholder="VIN001...&#10;VIN002...&#10;VIN003..."
                 required
-                className="p-2 border rounded-lg w-full h-32 font-mono"
+                disabled={isLoading}
+                className="p-2 border rounded-lg w-full h-32 font-mono disabled:bg-gray-100 disabled:cursor-not-allowed"
               ></textarea>
             </div>
 
-            <textarea
-              name="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ghi chú (tùy chọn)"
-              className="p-2 border rounded-lg w-full h-24"
-            ></textarea>
+            {/* Ô ghi chú */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ghi chú (tùy chọn)
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ghi chú (tùy chọn)"
+                disabled={isLoading}
+                className="p-2 border rounded-lg w-full h-24 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              ></textarea>
+            </div>
 
             {error && (
               <p className="text-red-500 text-sm text-center">{error}</p>
@@ -118,14 +156,14 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, variantId }) => {
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 text-white rounded-lg disabled:bg-gray-400 bg-blue-600 hover:bg-blue-700"
+              className="px-4 py-2 text-white rounded-lg disabled:bg-gray-400 bg-blue-600 hover:bg-blue-700 disabled:cursor-not-allowed"
             >
               {isLoading ? "Đang xử lý..." : "Xác nhận nhập kho"}
             </button>
