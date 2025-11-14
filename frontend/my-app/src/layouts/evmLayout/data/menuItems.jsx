@@ -200,7 +200,7 @@ export const adminMenuItems = [
 
 export const evmStaffMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Dashboard", path: "/evm/staff" },
+  { icon: FiHome, label: "Dashboard", path: "/evm/staff/dashboard" },
 
   // Quản lý sản phẩm
   {

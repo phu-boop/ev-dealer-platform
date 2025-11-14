@@ -302,6 +302,7 @@ import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.j
 import DealerDashboardPage from "../features/dealer/dashboard/pages/DashboardPage.jsx";
 import StaffDashboardPage from "../features/dealer/staff/dashboard/pages/StaffDashboardPage.jsx";
 import AdminDashboardPage from "../features/admin/dashboard/pages/AdminDashboardPage.jsx";
+import EvmStaffDashboardPage from "../features/evm/dashboard/pages/EvmStaffDashboardPage.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
@@ -478,6 +479,7 @@ export default function AppRoutes() {
             {/* Staff only */}
             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
               <Route path="staff" element={<Dashboard />} />
+              <Route path="staff/dashboard" element={<EvmStaffDashboardPage />} />
               {/* --------------------------------QUẢN LÝ SẢN PHẨM-------------------------------------------------- */}
               {/* Quản lý danh mục xe */}
               <Route
