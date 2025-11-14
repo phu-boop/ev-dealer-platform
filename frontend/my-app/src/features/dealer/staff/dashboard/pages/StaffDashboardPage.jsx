@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import PersonalStatistics from "../components/PersonalStatistics";
 import MyOrders from "../components/MyOrders";
 import RevenueChart from "../../../dashboard/components/RevenueChart";
+import PersonalOrdersChart from "../components/PersonalOrdersChart";
+import PersonalPerformanceChart from "../components/PersonalPerformanceChart";
+import PersonalOrderStatusChart from "../components/PersonalOrderStatusChart";
+import PersonalTopCustomersChart from "../components/PersonalTopCustomersChart";
 import CongratulationsCard from "../../../dashboard/components/CongratulationsCard";
 import QuickActionsStaff from "../components/QuickActionsStaff";
 import { fetchStaffDashboardData } from "../services/staffDashboardService";
@@ -128,6 +132,25 @@ const StaffDashboardPage = () => {
 
         {/* My Orders */}
         <MyOrders orders={dashboardData.orders} />
+
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Personal Order Status Chart */}
+          <PersonalOrderStatusChart orders={dashboardData.orders} />
+          
+          {/* Personal Top Customers Chart */}
+          <PersonalTopCustomersChart orders={dashboardData.orders} />
+        </div>
+
+        {/* Personal Orders Chart */}
+        <div className="mb-6">
+          <PersonalOrdersChart orders={dashboardData.orders} />
+        </div>
+
+        {/* Personal Performance Chart */}
+        <div className="mb-6">
+          <PersonalPerformanceChart orders={dashboardData.orders} />
+        </div>
 
         {/* Revenue Chart */}
         <RevenueChart orders={dashboardData.orders} />
