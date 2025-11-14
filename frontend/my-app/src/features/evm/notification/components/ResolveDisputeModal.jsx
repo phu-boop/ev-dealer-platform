@@ -40,7 +40,7 @@ const ResolveDisputeModal = ({ orderId, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-32 z-50">
+    <div className="fixed inset-0 backdrop-blur-lg bg-opacity-50 flex justify-center items-start pt-32 z-50">
       {/* ========================== */}
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
         <h2 className="text-xl font-semibold mb-4">

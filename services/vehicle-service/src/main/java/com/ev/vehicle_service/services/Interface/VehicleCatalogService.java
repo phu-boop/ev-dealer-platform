@@ -7,6 +7,8 @@ import com.ev.vehicle_service.dto.request.CreateModelRequest;
 import com.ev.vehicle_service.dto.request.CreateVariantRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
 import com.ev.vehicle_service.dto.request.UpdateModelRequest;
+import com.ev.vehicle_service.dto.request.CreateFeatureRequest;
+import com.ev.vehicle_service.dto.request.UpdateFeatureRequest;
 import com.ev.vehicle_service.dto.request.FeatureRequest;
 import com.ev.vehicle_service.dto.response.ModelDetailDto;
 import com.ev.vehicle_service.dto.response.ModelSummaryDto;
@@ -34,12 +36,14 @@ public interface VehicleCatalogService {
 
     VariantDetailDto getVariantDetails(Long variantId);
 
-    VehicleModel createModelWithVariants(CreateModelRequest request); // Tạo 1 mẫu xe mới (có thể thêm 1 vài phiên bản đi kèm theo)
+    VehicleModel createModelWithVariants(CreateModelRequest request); // Tạo 1 mẫu xe mới (có thể thêm 1 vài phiên bản
+                                                                      // đi kèm theo)
 
-    VehicleVariant createVariant(Long modelId, CreateVariantRequest request, String createdByEmail); // Tạo phiên bản xe mới
+    VehicleVariant createVariant(Long modelId, CreateVariantRequest request, String createdByEmail); // Tạo phiên bản xe
+                                                                                                     // mới
 
     VehicleModel updateModel(Long modelId, UpdateModelRequest request, String updatedByEmail);
-    
+
     VehicleVariant updateVariant(Long variantId, UpdateVariantRequest request, String updatedByEmail);
 
     void deactivateModel(Long modelId, String updatedByEmail);
@@ -50,10 +54,30 @@ public interface VehicleCatalogService {
 
     // --- Methods for Features ---
     List<VehicleFeature> getAllFeatures();
-    
+
+    // Gán tính năng cho variant
     VehicleVariant assignFeatureToVariant(Long variantId, FeatureRequest request, String updatedByEmail);
-    
+
+    // Gỡ tính năng cho variant
     void unassignFeatureFromVariant(Long variantId, Long featureId, String updatedByEmail);
+
+    /**
+     * Tạo một tính năng mới (chưa gán cho variant nào).
+     */
+    VehicleFeature createFeature(CreateFeatureRequest request, String createdByEmail);
+
+    /**
+     * Cập nhật thông tin của một tính năng.
+     */
+    VehicleFeature updateFeature(Long featureId, UpdateFeatureRequest request, String updatedByEmail);
+
+    /**
+     * Xóa một tính năng khỏi hệ thống.
+     * (chỉ nên xóa nếu chưa được gán).
+     */
+    void deleteFeature(Long featureId, String deletedByEmail);
+
+    // ---------------------------
 
     List<VariantDetailDto> getVariantDetailsByIds(List<Long> variantIds);
 
@@ -70,6 +94,7 @@ public interface VehicleCatalogService {
 
     /**
      * Triển khai logic cho API phân trang/tìm kiếm
+     * 
      * @param status (MỚI) Lọc theo trạng thái tồn kho
      */
     Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Pageable pageable);

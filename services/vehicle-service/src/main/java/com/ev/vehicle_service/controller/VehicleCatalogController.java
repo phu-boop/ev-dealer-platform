@@ -9,6 +9,8 @@ import com.ev.vehicle_service.dto.request.UpdateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
 import com.ev.vehicle_service.dto.request.FeatureRequest;
 import com.ev.vehicle_service.dto.request.CreateVariantRequest;
+import com.ev.vehicle_service.dto.request.CreateFeatureRequest;
+import com.ev.vehicle_service.dto.request.UpdateFeatureRequest;
 // import com.ev.vehicle_service.dto.response.FeatureDto;
 import com.ev.vehicle_service.dto.response.ModelDetailDto;
 import com.ev.vehicle_service.dto.response.ModelSummaryDto;
@@ -33,14 +35,14 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/vehicle-catalog") 
+@RequestMapping("/vehicle-catalog")
 public class VehicleCatalogController {
 
     @Autowired
-    private VehicleCatalogService vehicleCatalogService; 
+    private VehicleCatalogService vehicleCatalogService;
 
     // ==========================================================
-    //                    ENDPOINTS FOR MODELS
+    // ENDPOINTS FOR MODELS
     // ==========================================================
 
     /**
@@ -65,7 +67,8 @@ public class VehicleCatalogController {
      * Tạo một mẫu xe mới kèm theo các phiên bản ban đầu.
      */
     @PostMapping("/models")
-    public ResponseEntity<ApiRespond<ModelDetailDto>> createModelWithVariants(@Valid @RequestBody CreateModelRequest request) {
+    public ResponseEntity<ApiRespond<ModelDetailDto>> createModelWithVariants(
+            @Valid @RequestBody CreateModelRequest request) {
         VehicleModel createdModel = vehicleCatalogService.createModelWithVariants(request);
         ModelDetailDto responseDto = vehicleCatalogService.getModelDetails(createdModel.getModelId());
         return new ResponseEntity<>(ApiRespond.success("Model created successfully", responseDto), HttpStatus.CREATED);
@@ -83,7 +86,7 @@ public class VehicleCatalogController {
         ModelDetailDto updatedDto = vehicleCatalogService.getModelDetails(modelId);
         return ResponseEntity.ok(ApiRespond.success("Model updated successfully", updatedDto));
     }
-    
+
     /**
      * Ngừng sản xuất một mẫu xe (deactivate tất cả các phiên bản của nó).
      */
@@ -95,9 +98,8 @@ public class VehicleCatalogController {
         return ResponseEntity.ok(ApiRespond.success("Model and all its variants have been discontinued", null));
     }
 
-
     // ==========================================================
-    //                   ENDPOINTS FOR VARIANTS
+    // ENDPOINTS FOR VARIANTS
     // ==========================================================
 
     /**
@@ -108,15 +110,17 @@ public class VehicleCatalogController {
             @PathVariable Long modelId,
             @Valid @RequestBody CreateVariantRequest request,
             @RequestHeader("X-User-Email") String email) {
-        
+
         // Gọi service để tạo variant
         VehicleVariant createdVariant = vehicleCatalogService.createVariant(modelId, request, email);
-        
+
         // Lấy chi tiết DTO của variant vừa tạo để trả về
         VariantDetailDto responseDto = vehicleCatalogService.getVariantDetails(createdVariant.getVariantId());
-        
-        return new ResponseEntity<>(ApiRespond.success("Variant created successfully", responseDto), HttpStatus.CREATED);
+
+        return new ResponseEntity<>(ApiRespond.success("Variant created successfully", responseDto),
+                HttpStatus.CREATED);
     }
+
     /**
      * Lấy tất cả các phiên bản (variants) thuộc về một mẫu xe cụ thể.
      */
@@ -132,13 +136,12 @@ public class VehicleCatalogController {
      */
     @GetMapping("/variants/search")
     public ResponseEntity<ApiRespond<List<Long>>> searchVariants(
-        @RequestParam(required = false) String keyword, 
-        @RequestParam(required = false) String color,
-        @RequestParam(required = false) String versionName) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String versionName) {
         List<Long> variantIds = vehicleCatalogService.searchVariantIdsByCriteria(keyword, color, versionName);
         return ResponseEntity.ok(ApiRespond.success("Found variant IDs matching keyword", variantIds));
     }
-
 
     /**
      * Lấy chi tiết một phiên bản xe cụ thể.
@@ -148,7 +151,7 @@ public class VehicleCatalogController {
         VariantDetailDto variantDto = vehicleCatalogService.getVariantDetails(variantId);
         return ResponseEntity.ok(ApiRespond.success("Fetched variant details successfully", variantDto));
     }
-    
+
     /**
      * Cập nhật thông tin của một phiên bản xe cụ thể.
      */
@@ -161,7 +164,7 @@ public class VehicleCatalogController {
         VariantDetailDto updatedDto = vehicleCatalogService.getVariantDetails(variantId);
         return ResponseEntity.ok(ApiRespond.success("Variant updated successfully", updatedDto));
     }
-    
+
     /**
      * Ngừng sản xuất một phiên bản xe cụ thể.
      */
@@ -177,7 +180,8 @@ public class VehicleCatalogController {
      * Lấy chi tiết của nhiều phiên bản xe dựa trên danh sách ID.
      */
     @PostMapping("/variants/details-by-ids")
-    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getVariantDetailsByIds(@RequestBody List<Long> variantIds) {
+    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getVariantDetailsByIds(
+            @RequestBody List<Long> variantIds) {
         List<VariantDetailDto> variants = vehicleCatalogService.getVariantDetailsByIds(variantIds);
         return ResponseEntity.ok(ApiRespond.success("Fetched variant details successfully", variants));
     }
@@ -189,22 +193,25 @@ public class VehicleCatalogController {
     @PostMapping("/compare")
     // THÊM CHÚ THÍCH @PreAuthorize NÀY:
     @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF','DEALER_MANAGER', 'DEALER_STAFF') or " +
-                  "( (hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')) and " +
-                  "  #dealerId.toString() == authentication.details['profileId'] )")
+            "( (hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')) and " +
+            "  #dealerId.toString() == authentication.details['profileId'] )")
     public ResponseEntity<ApiRespond<List<ComparisonDto>>> getComparisonDetails(
             @RequestBody List<Long> variantIds,
             @RequestHeader("X-User-ProfileId") UUID dealerId,
             @RequestHeader(value = "X-User-Email", required = false) String email,
             @RequestHeader(value = "X-User-Role", required = false) String role,
-            @RequestHeader(value = "X-User-Id", required = false) String userId
-    ) {
+            @RequestHeader(value = "X-User-Id", required = false) String userId) {
         // Tạo HttpHeaders để chuyển tiếp các header xác thực đến inventory-service
         HttpHeaders headers = new HttpHeaders();
-        if (email != null) headers.set("X-User-Email", email);
-        if (role != null) headers.set("X-User-Role", role);
-        if (userId != null) headers.set("X-User-Id", userId);
-        if (dealerId != null) headers.set("X-User-ProfileId", dealerId.toString());
-        
+        if (email != null)
+            headers.set("X-User-Email", email);
+        if (role != null)
+            headers.set("X-User-Role", role);
+        if (userId != null)
+            headers.set("X-User-Id", userId);
+        if (dealerId != null)
+            headers.set("X-User-ProfileId", dealerId.toString());
+
         List<ComparisonDto> results = vehicleCatalogService.getComparisonData(variantIds, dealerId, headers);
         return ResponseEntity.ok(ApiRespond.success("Fetched comparison data successfully", results));
     }
@@ -215,9 +222,9 @@ public class VehicleCatalogController {
     @GetMapping("/variants/paginated")
     public ResponseEntity<ApiRespond<Page<VariantDetailDto>>> getAllVariantsPaginated(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String status, 
+            @RequestParam(required = false) String status,
             @PageableDefault(size = 10, sort = "variantId") Pageable pageable) {
-        
+
         // Truyền 'status' xuống service
         Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, status, pageable);
         return ResponseEntity.ok(ApiRespond.success("Fetched paginated variants successfully", results));
@@ -244,7 +251,7 @@ public class VehicleCatalogController {
     }
 
     // ==========================================================
-    //          ENDPOINTS FOR FEATURES
+    // ENDPOINTS FOR FEATURES
     // ==========================================================
 
     /**
@@ -278,8 +285,50 @@ public class VehicleCatalogController {
             @PathVariable Long variantId,
             @PathVariable Long featureId,
             @RequestHeader("X-User-Email") String email) {
-        
+
         vehicleCatalogService.unassignFeatureFromVariant(variantId, featureId, email);
         return ResponseEntity.ok(ApiRespond.success("Feature unassigned successfully", null));
+    }
+
+    /**
+     * Tạo một tính năng mới trong thư viện (dành cho Admin).
+     */
+    @PostMapping("/features")
+    @PreAuthorize("hasAnyRole('ADMIN')") // Bảo mật
+    public ResponseEntity<ApiRespond<VehicleFeature>> createFeature(
+            @Valid @RequestBody CreateFeatureRequest request,
+            @RequestHeader("X-User-Email") String email) {
+
+        VehicleFeature createdFeature = vehicleCatalogService.createFeature(request, email);
+        return new ResponseEntity<>(
+                ApiRespond.success("Feature created successfully", createdFeature),
+                HttpStatus.CREATED);
+    }
+
+    /**
+     * Cập nhật thông tin một tính năng trong thư viện (dành cho Admin).
+     */
+    @PutMapping("/features/{featureId}")
+    @PreAuthorize("hasAnyRole('ADMIN')") // Bảo mật
+    public ResponseEntity<ApiRespond<VehicleFeature>> updateFeature(
+            @PathVariable Long featureId,
+            @Valid @RequestBody UpdateFeatureRequest request,
+            @RequestHeader("X-User-Email") String email) {
+
+        VehicleFeature updatedFeature = vehicleCatalogService.updateFeature(featureId, request, email);
+        return ResponseEntity.ok(ApiRespond.success("Feature updated successfully", updatedFeature));
+    }
+
+    /**
+     * Xóa một tính năng khỏi thư viện (dành cho Admin).
+     */
+    @DeleteMapping("/features/{featureId}")
+    @PreAuthorize("hasAnyRole('ADMIN')") // Bảo mật
+    public ResponseEntity<ApiRespond<Void>> deleteFeature(
+            @PathVariable Long featureId,
+            @RequestHeader("X-User-Email") String email) {
+
+        vehicleCatalogService.deleteFeature(featureId, email);
+        return ResponseEntity.ok(ApiRespond.success("Feature deleted successfully", null));
     }
 }

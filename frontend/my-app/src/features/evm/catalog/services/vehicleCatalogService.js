@@ -154,3 +154,33 @@ export const unassignFeatureFromVariant = (variantId, featureId) => {
     `/vehicle-catalog/variants/${variantId}/features/${featureId}`
   );
 };
+
+/**
+ * Tạo một định nghĩa tính năng mới (trong thư viện).
+ * @param {object} featureData { featureName, description, category, featureType }
+ */
+export const createFeature = (featureData) => {
+  return apiConstVehicleService.post("/vehicle-catalog/features", featureData);
+};
+
+/**
+ * Cập nhật một định nghĩa tính năng.
+ * @param {number|string} featureId ID của tính năng.
+ * @param {object} featureData Dữ liệu cập nhật.
+ */
+export const updateFeature = (featureId, featureData) => {
+  return apiConstVehicleService.put(
+    `/vehicle-catalog/features/${featureId}`,
+    featureData
+  );
+};
+
+/**
+ * Xóa một định nghĩa tính năng khỏi thư viện.
+ * @param {number|string} featureId ID của tính năng.
+ */
+export const deleteFeature = (featureId) => {
+  return apiConstVehicleService.delete(
+    `/vehicle-catalog/features/${featureId}`
+  );
+};

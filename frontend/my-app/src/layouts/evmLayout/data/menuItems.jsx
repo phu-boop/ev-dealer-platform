@@ -59,6 +59,11 @@ export const adminMenuItems = [
         path: "/evm/admin/products/variants",
       },
       {
+        icon: FiSliders,
+        label: "Quản Lý Tính Năng",
+        path: "/evm/admin/products/features",
+      },
+      {
         icon: FiCreditCard,
         label: "(DONE)Khuyến Mãi",
         path: "/evm/admin/products/promotions",
