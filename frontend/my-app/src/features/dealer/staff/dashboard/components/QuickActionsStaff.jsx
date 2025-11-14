@@ -7,22 +7,18 @@ import {
   FiUsers,
   FiArchive,
   FiDollarSign,
-  FiPieChart,
-  FiSettings,
   FiList,
   FiNavigation,
   FiClipboard,
   FiTruck,
-  FiCalendar,
-  FiTrendingDown,
   FiCreditCard,
 } from "react-icons/fi";
 
 /**
- * Quick Actions Component
- * Các nút hành động nhanh để chuyển đến các trang quan trọng
+ * Quick Actions Component cho DEALER_STAFF
+ * Các nút hành động nhanh để chuyển đến các trang quan trọng cho nhân viên
  */
-const QuickActions = () => {
+const QuickActionsStaff = () => {
   const navigate = useNavigate();
 
   const actions = [
@@ -30,7 +26,7 @@ const QuickActions = () => {
     {
       icon: FiFileText,
       label: "Tạo Báo Giá",
-      path: "/dealer/manager/quotes/create",
+      path: "/dealer/staff/quotes/create",
       color: "from-blue-500 to-cyan-500",
       bgColor: "bg-blue-50",
       description: "Tạo báo giá mới cho khách hàng",
@@ -38,18 +34,18 @@ const QuickActions = () => {
     {
       icon: FiList,
       label: "Quản Lý Báo Giá",
-      path: "/dealer/manager/quotations",
+      path: "/dealer/staff/quotations",
       color: "from-purple-500 to-indigo-500",
       bgColor: "bg-purple-50",
-      description: "Xem và quản lý tất cả báo giá",
+      description: "Xem và quản lý báo giá của tôi",
     },
     {
       icon: FiClipboard,
-      label: "Đơn Hàng Mới",
-      path: "/dealer/manager/list/quotations",
+      label: "Danh Sách Báo Giá",
+      path: "/dealer/staff/list/quotations",
       color: "from-violet-500 to-purple-500",
       bgColor: "bg-violet-50",
-      description: "Xem đơn hàng mới cần xử lý",
+      description: "Xem tất cả báo giá",
     },
     {
       icon: FiShoppingCart,
@@ -57,7 +53,7 @@ const QuickActions = () => {
       path: "/dealer/orders",
       color: "from-green-500 to-emerald-500",
       bgColor: "bg-green-50",
-      description: "Xem tất cả đơn hàng",
+      description: "Xem đơn hàng của tôi",
     },
     {
       icon: FiFileText,
@@ -80,7 +76,7 @@ const QuickActions = () => {
     {
       icon: FiUserPlus,
       label: "Thêm Khách Hàng",
-      path: "/dealer/manager/customers/create",
+      path: "/dealer/staff/customers/create",
       color: "from-orange-500 to-amber-500",
       bgColor: "bg-orange-50",
       description: "Thêm khách hàng mới",
@@ -88,25 +84,17 @@ const QuickActions = () => {
     {
       icon: FiUsers,
       label: "Hồ Sơ Khách Hàng",
-      path: "/dealer/manager/customers/list",
+      path: "/dealer/staff/customers/list",
       color: "from-pink-500 to-rose-500",
       bgColor: "bg-pink-50",
-      description: "Quản lý hồ sơ khách hàng",
-    },
-    {
-      icon: FiCalendar,
-      label: "Lịch Hẹn Lái Thử",
-      path: "/dealer/manager/testdrives",
-      color: "from-rose-500 to-pink-500",
-      bgColor: "bg-rose-50",
-      description: "Quản lý lịch hẹn lái thử",
+      description: "Xem hồ sơ khách hàng",
     },
     
     // Nhóm: Kho & Sản phẩm
     {
       icon: FiArchive,
       label: "Xe Trong Kho",
-      path: "/dealer/manager/inventory/stock",
+      path: "/dealer/staff/inventory/stock",
       color: "from-indigo-500 to-blue-500",
       bgColor: "bg-indigo-50",
       description: "Xem xe có sẵn trong kho",
@@ -114,54 +102,28 @@ const QuickActions = () => {
     {
       icon: FiNavigation,
       label: "Đặt Xe Từ Hãng",
-      path: "/dealer/manager/inventory/order",
+      path: "/dealer/staff/inventory/order",
       color: "from-cyan-500 to-blue-500",
       bgColor: "bg-cyan-50",
       description: "Đặt hàng xe từ hãng",
     },
     
-    // Nhóm: Thanh toán & Tài chính
+    // Nhóm: Thanh toán
     {
-      icon: FiDollarSign,
-      label: "Hóa Đơn",
-      path: "/dealer/manager/payments/invoices",
-      color: "from-yellow-500 to-orange-500",
-      bgColor: "bg-yellow-50",
-      description: "Xem hóa đơn thanh toán",
+      icon: FiShoppingCart,
+      label: "Đơn Hàng B2C",
+      path: "/dealer/staff/payments/b2c-orders",
+      color: "from-amber-500 to-yellow-500",
+      bgColor: "bg-amber-50",
+      description: "Quản lý đơn hàng B2C",
     },
     {
       icon: FiCreditCard,
-      label: "Thanh Toán B2C",
-      path: "/dealer/manager/payments/b2c-cash-payments",
-      color: "from-amber-500 to-yellow-500",
-      bgColor: "bg-amber-50",
-      description: "Yêu cầu thanh toán tiền mặt B2C",
-    },
-    {
-      icon: FiTrendingDown,
-      label: "Công Nợ B2C",
-      path: "/dealer/manager/payments/b2c-debt",
-      color: "from-orange-500 to-red-500",
-      bgColor: "bg-orange-50",
-      description: "Xem công nợ B2C",
-    },
-    
-    // Nhóm: Báo cáo & Quản lý
-    {
-      icon: FiPieChart,
-      label: "Báo Cáo",
-      path: "/dealer/manager/reports",
-      color: "from-red-500 to-pink-500",
-      bgColor: "bg-red-50",
-      description: "Xem báo cáo doanh số",
-    },
-    {
-      icon: FiSettings,
-      label: "Quản Lý Nhân Viên",
-      path: "/dealer/manager/settings/staff",
-      color: "from-gray-500 to-slate-500",
-      bgColor: "bg-gray-50",
-      description: "Quản lý nhân viên đại lý",
+      label: "Xem Khuyến Mãi",
+      path: "/dealer/staff/promotions",
+      color: "from-yellow-500 to-orange-500",
+      bgColor: "bg-yellow-50",
+      description: "Xem các chương trình khuyến mãi",
     },
   ];
 
@@ -176,7 +138,7 @@ const QuickActions = () => {
         <p className="text-gray-600">Truy cập nhanh các chức năng quan trọng</p>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
         {actions.map((action, index) => {
           const Icon = action.icon;
           return (
@@ -224,5 +186,5 @@ const QuickActions = () => {
   );
 };
 
-export default QuickActions;
+export default QuickActionsStaff;
 

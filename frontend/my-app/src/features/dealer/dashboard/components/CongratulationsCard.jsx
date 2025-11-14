@@ -1,31 +1,33 @@
 import React from "react";
-import { FiAward, FiTrendingUp } from "react-icons/fi";
+import { FiAward } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 /**
  * Congratulations Card Component
- * Hiển thị lời chào mừng và thống kê tăng trưởng
+ * Hiển thị lời chào mừng và avatar
  */
 const CongratulationsCard = ({ 
-  userName, 
-  growthPercentage,
-  salesToday 
+  userName
 }) => {
   const navigate = useNavigate();
 
-  // Lấy tên đầu tiên nếu có fullName, hoặc dùng name
-  const displayName = userName?.split(' ')[0] || userName || "Quản lý";
+  // Lấy tên đầy đủ hoặc tên đầu tiên
+  const displayName = userName || "Bạn";
 
-  // Tính toán thông điệp chào mừng
-  const getGreetingMessage = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) {
-      return "Chào buổi sáng";
-    } else if (hour < 18) {
-      return "Chào buổi chiều";
-    } else {
-      return "Chào buổi tối";
+  // Lấy avatar từ sessionStorage
+  const avatarUrl = sessionStorage.getItem("avatarUrl");
+  const hasValidAvatar = avatarUrl && avatarUrl !== "null" && avatarUrl !== "";
+
+  // Lấy chữ cái đầu để hiển thị nếu không có avatar
+  const getInitials = () => {
+    if (userName) {
+      const names = userName.split(' ');
+      if (names.length > 1) {
+        return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+      }
+      return userName.charAt(0).toUpperCase();
     }
+    return "U";
   };
 
   const handleViewBadges = () => {
@@ -45,13 +47,9 @@ const CongratulationsCard = ({
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">🎉</span>
             <h2 className="text-2xl font-bold text-gray-900">
-              {getGreetingMessage()}, {displayName}!
+              Chào {displayName}, chào mừng bạn trở lại!
             </h2>
           </div>
-          
-          <p className="text-lg text-gray-700 mb-1">
-            Bạn đã đạt được <span className="font-bold text-purple-600">{growthPercentage}%</span> doanh số hôm nay.
-          </p>
           
           <p className="text-sm text-gray-600 mb-4">
             Kiểm tra huy hiệu mới của bạn trong hồ sơ.
@@ -66,16 +64,22 @@ const CongratulationsCard = ({
           </button>
         </div>
 
-        {/* Right illustration */}
+        {/* Right Avatar */}
         <div className="relative w-full md:w-64 h-48 md:h-48 flex items-center justify-center">
           <div className="relative">
-            {/* Illustration placeholder - có thể thay bằng SVG hoặc image */}
-            <div className="w-48 h-48 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl shadow-xl flex items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-300">
-              <div className="text-center text-white">
-                <FiTrendingUp className="w-16 h-16 mx-auto mb-2" />
-                <div className="text-3xl font-bold">{growthPercentage}%</div>
-                <div className="text-sm opacity-90">Tăng trưởng</div>
-              </div>
+            {/* Avatar với gradient background */}
+            <div className="w-48 h-48 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl shadow-xl flex items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-300 overflow-hidden">
+              {hasValidAvatar ? (
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="w-full h-full object-cover rounded-2xl"
+                />
+              ) : (
+                <div className="text-center text-white">
+                  <div className="text-6xl font-bold">{getInitials()}</div>
+                </div>
+              )}
             </div>
             
             {/* Decorative elements */}

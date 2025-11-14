@@ -35,7 +35,7 @@ import {
 
 export const adminMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Dashboard", path: "/evm/admin" },
+  { icon: FiHome, label: "Dashboard", path: "/evm/admin/dashboard" },
 
   // Quản lý sản phẩm
   {

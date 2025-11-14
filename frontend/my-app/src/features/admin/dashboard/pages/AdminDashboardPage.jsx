@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
-import SalesOverview from "../components/SalesOverview";
-import RevenueChart from "../components/RevenueChart";
-import CongratulationsCard from "../components/CongratulationsCard";
-import QuickActions from "../components/QuickActions";
-import { fetchDashboardData } from "../services/dashboardService";
+import SystemOverview from "../components/SystemOverview";
+import QuickActionsAdmin from "../components/QuickActionsAdmin";
+import RevenueChartSection from "../components/RevenueChartSection";
+import DealersStatusChart from "../components/DealersStatusChart";
+import OrdersChart from "../components/OrdersChart";
+import TopDealersChart from "../components/TopDealersChart";
+import CongratulationsCard from "../../../dealer/dashboard/components/CongratulationsCard";
+import { fetchAdminDashboardData } from "../services/adminDashboardService";
 import { useAuthContext } from "../../../auth/AuthProvider";
 import { FiRefreshCw, FiSearch } from "react-icons/fi";
 
 /**
- * Dashboard Page cho DEALER_MANAGER
+ * Admin Dashboard Page
  */
-const DashboardPage = () => {
+const AdminDashboardPage = () => {
   const { fullName, name } = useAuthContext();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,57 +29,25 @@ const DashboardPage = () => {
       setLoading(true);
       setError(null);
 
-      const dealerId = sessionStorage.getItem("dealerId") || sessionStorage.getItem("profileId");
-      
-      console.log("🔑 Dashboard Loading:", {
-        dealerId,
-        dateRange,
-        sessionStorage: {
-          dealerId: sessionStorage.getItem("dealerId"),
-          profileId: sessionStorage.getItem("profileId"),
-          memberId: sessionStorage.getItem("memberId")
-        }
-      });
-      
-      if (!dealerId) {
-        throw new Error("Không tìm thấy thông tin đại lý");
-      }
+      console.log("🔑 Admin Dashboard Loading:", { dateRange });
 
-      const data = await fetchDashboardData(dealerId, dateRange);
+      const data = await fetchAdminDashboardData(dateRange);
       
-      console.log("✅ Dashboard Data Received:", {
-        ordersCount: data.orders?.length || 0,
-        quotationsCount: data.quotations?.length || 0,
-        ordersSample: data.orders?.slice(0, 2),
-        dateRange: data.dateRange,
-        fullData: data
+      console.log("✅ Admin Dashboard Data Received:", {
+        dealersCount: data.dealers?.length || 0,
+        customersCount: data.customers?.length || 0,
+        ordersB2BCount: data.ordersB2B?.length || 0,
+        totalRevenue: data.totalRevenue,
+        dateRange: data.dateRange
       });
       
-      // Đảm bảo orders và quotations luôn là mảng
-      const safeData = {
-        ...data,
-        orders: data.orders || [],
-        quotations: data.quotations || [],
-        prevOrders: data.prevOrders || [],
-        prevQuotations: data.prevQuotations || []
-      };
-      
-      console.log("✅ Safe Data Set:", {
-        ordersCount: safeData.orders.length,
-        quotationsCount: safeData.quotations.length
-      });
-      
-      setDashboardData(safeData);
+      setDashboardData(data);
     } catch (err) {
-      console.error("Error loading dashboard data:", err);
+      console.error("Error loading admin dashboard data:", err);
       setError(err.message || "Không thể tải dữ liệu dashboard");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDateRangeChange = (newDateRange) => {
-    setDateRange(newDateRange);
   };
 
   if (loading) {
@@ -118,21 +89,7 @@ const DashboardPage = () => {
     );
   }
 
-  // Đảm bảo orders và quotations luôn là mảng
-  const safeOrders = Array.isArray(dashboardData.orders) ? dashboardData.orders : [];
-  const safeQuotations = Array.isArray(dashboardData.quotations) ? dashboardData.quotations : [];
-  const safePrevOrders = Array.isArray(dashboardData.prevOrders) ? dashboardData.prevOrders : [];
-  const safePrevQuotations = Array.isArray(dashboardData.prevQuotations) ? dashboardData.prevQuotations : [];
-
-  console.log("📊 DashboardPage Render:", {
-    hasDashboardData: !!dashboardData,
-    ordersCount: safeOrders.length,
-    quotationsCount: safeQuotations.length,
-    ordersType: typeof dashboardData.orders,
-    ordersIsArray: Array.isArray(dashboardData.orders)
-  });
-
-  const userName = fullName || name || "Quản lý";
+  const userName = fullName || name || "Admin";
 
   return (
     <div className="p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
@@ -142,7 +99,7 @@ const DashboardPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Bảng Điều Khiển</h1>
             <p className="text-gray-600">
-              Tổng quan doanh số và hoạt động của đại lý
+              Tổng quan hệ thống và quản lý
             </p>
           </div>
           
@@ -158,27 +115,42 @@ const DashboardPage = () => {
         </div>
 
         {/* Congratulations Card */}
-        <CongratulationsCard
-          userName={userName}
-        />
+        <CongratulationsCard userName={userName} />
 
         {/* Quick Actions */}
-        <QuickActions />
+        <QuickActionsAdmin />
 
-        {/* Sales Overview */}
-        <SalesOverview
-          orders={safeOrders}
-          quotations={safeQuotations}
-          prevOrders={safePrevOrders}
-          prevQuotations={safePrevQuotations}
+        {/* System Overview */}
+        <SystemOverview
+          totalRevenue={dashboardData.totalRevenue}
+          dealersByStatus={dashboardData.dealersByStatus}
+          totalOrdersB2B={dashboardData.ordersB2B?.length || 0}
+          totalCustomers={dashboardData.customers?.length || 0}
         />
 
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Dealers Status Chart */}
+          <DealersStatusChart dealersByStatus={dashboardData.dealersByStatus} />
+          
+          {/* Top Dealers Chart */}
+          <TopDealersChart 
+            orders={dashboardData.allOrders} 
+            dealers={dashboardData.dealers}
+          />
+        </div>
+
+        {/* Orders Chart */}
+        <div className="mb-6">
+          <OrdersChart orders={dashboardData.allOrders} />
+        </div>
+
         {/* Revenue Chart */}
-        <RevenueChart orders={safeOrders} />
+        <RevenueChartSection orders={dashboardData.allOrders} />
       </div>
     </div>
   );
 };
 
-export default DashboardPage;
+export default AdminDashboardPage;
 

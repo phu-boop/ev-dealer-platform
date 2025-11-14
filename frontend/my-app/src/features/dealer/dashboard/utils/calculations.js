@@ -14,27 +14,79 @@ export const formatCurrency = (amount) => {
 };
 
 /**
+ * Helper function để lấy status string từ order (có thể là string hoặc object)
+ */
+const getOrderStatus = (order) => {
+  // B2B orders: orderStatus
+  let b2bStatus = order.orderStatus;
+  if (b2bStatus && typeof b2bStatus === 'object') {
+    b2bStatus = b2bStatus.name || b2bStatus.toString();
+  }
+  if (b2bStatus) {
+    b2bStatus = String(b2bStatus).toUpperCase().trim();
+  }
+  
+  // B2C orders: orderStatusB2C hoặc order_status_b2c
+  let b2cStatus = order.orderStatusB2C || order.order_status_b2c;
+  if (b2cStatus && typeof b2cStatus === 'object') {
+    b2cStatus = b2cStatus.name || b2cStatus.toString();
+  }
+  if (b2cStatus) {
+    b2cStatus = String(b2cStatus).toUpperCase().trim();
+  }
+  
+  return { b2bStatus, b2cStatus };
+};
+
+/**
  * Tính tổng doanh thu từ danh sách orders
  * Bao gồm cả B2B và B2C
  */
 export const calculateTotalRevenue = (orders) => {
-  return orders
-    .filter(order => {
-      // B2B orders: orderStatus
-      const isB2BValid = order.orderStatus === "CONFIRMED" || 
-                         order.orderStatus === "DELIVERED";
-      
-      // B2C orders: orderStatusB2C hoặc order_status_b2c
-      const b2cStatus = order.orderStatusB2C || order.order_status_b2c;
-      const isB2CValid = b2cStatus === "CONFIRMED" || 
-                         b2cStatus === "DELIVERED" ||
-                         b2cStatus === "APPROVED";
-      
-      return isB2BValid || isB2CValid;
-    })
-    .reduce((total, order) => {
-      return total + (order.totalAmount || 0);
-    }, 0);
+  if (!orders || orders.length === 0) {
+    console.log("💰 calculateTotalRevenue: No orders provided");
+    return 0;
+  }
+  
+  console.log("💰 calculateTotalRevenue: Processing", orders.length, "orders");
+  
+  const validOrders = orders.filter(order => {
+    const { b2bStatus, b2cStatus } = getOrderStatus(order);
+    
+    // B2B orders: orderStatus
+    const isB2BValid = b2bStatus === "CONFIRMED" || 
+                       b2bStatus === "DELIVERED";
+    
+    // B2C orders: orderStatusB2C hoặc order_status_b2c
+    const isB2CValid = b2cStatus === "CONFIRMED" || 
+                       b2cStatus === "DELIVERED" ||
+                       b2cStatus === "APPROVED";
+    
+    const isValid = isB2BValid || isB2CValid;
+    
+    if (!isValid) {
+      console.log("❌ Order filtered out:", {
+        orderId: order.orderId || order.id,
+        b2bStatus,
+        b2cStatus,
+        isB2BValid,
+        isB2CValid
+      });
+    }
+    
+    return isValid;
+  });
+  
+  console.log("💰 Valid orders for revenue:", validOrders.length, "out of", orders.length);
+  
+  const total = validOrders.reduce((total, order) => {
+    const amount = parseFloat(order.totalAmount) || 0;
+    return total + amount;
+  }, 0);
+  
+  console.log("💰 Total Revenue Calculated:", total);
+  
+  return total;
 };
 
 /**
@@ -55,15 +107,34 @@ export const countOrdersByStatus = (orders) => {
     EDITED: 0,
   };
 
+  if (!orders || orders.length === 0) {
+    return statusCounts;
+  }
+
   orders.forEach(order => {
-    // B2B orders: orderStatus
-    // B2C orders: orderStatusB2C hoặc order_status_b2c
-    const status = order.orderStatus || order.orderStatusB2C || order.order_status_b2c;
+    const { b2bStatus, b2cStatus } = getOrderStatus(order);
     
-    if (status && statusCounts.hasOwnProperty(status)) {
-      statusCounts[status]++;
-    } else if (status) {
-      // Nếu status không khớp, thêm vào PENDING
+    // Ưu tiên B2C status, nếu không có thì dùng B2B status
+    let status = b2cStatus || b2bStatus;
+    
+    // Nếu status là object, lấy name
+    if (status && typeof status === 'object') {
+      status = status.name || status.toString();
+    }
+    
+    // Convert sang string và uppercase
+    if (status) {
+      status = String(status).toUpperCase().trim();
+      
+      if (statusCounts.hasOwnProperty(status)) {
+        statusCounts[status]++;
+      } else {
+        // Nếu status không khớp, log để debug
+        console.warn("Unknown order status:", status, "Order:", order.orderId || order.id);
+        statusCounts.PENDING++;
+      }
+    } else {
+      // Nếu không có status, thêm vào PENDING
       statusCounts.PENDING++;
     }
   });

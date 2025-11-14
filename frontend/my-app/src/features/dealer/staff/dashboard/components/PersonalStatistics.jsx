@@ -1,81 +1,48 @@
 import React from "react";
-import StatCard from "./StatCard";
+import StatCard from "../../../dashboard/components/StatCard";
 import {
   formatCurrency,
   calculateTotalRevenue,
   countOrdersByStatus,
   countQuotationsByStatus,
-  calculateConversionRate,
   calculatePercentageChange,
-} from "../utils/calculations";
+} from "../../../dashboard/utils/calculations";
 import {
   FiDollarSign,
   FiShoppingCart,
   FiFileText,
-  FiTrendingUp,
 } from "react-icons/fi";
 
 /**
- * Sales Overview Component
- * Hiển thị tổng quan doanh số
+ * Personal Statistics Component
+ * Hiển thị thống kê cá nhân của staff
  */
-const SalesOverview = ({ 
+const PersonalStatistics = ({ 
   orders = [], 
   quotations = [], 
   prevOrders = [], 
   prevQuotations = [] 
 }) => {
-  // Đảm bảo luôn là mảng
-  const safeOrders = Array.isArray(orders) ? orders : [];
-  const safeQuotations = Array.isArray(quotations) ? quotations : [];
-  const safePrevOrders = Array.isArray(prevOrders) ? prevOrders : [];
-  const safePrevQuotations = Array.isArray(prevQuotations) ? prevQuotations : [];
-  
-  console.log("📈 SalesOverview - Input Data:", {
-    orders: orders,
-    ordersType: typeof orders,
-    ordersIsArray: Array.isArray(orders),
-    ordersCount: safeOrders.length,
-    quotationsCount: safeQuotations.length,
-    prevOrdersCount: safePrevOrders.length,
-    prevQuotationsCount: safePrevQuotations.length,
-    ordersSample: safeOrders.slice(0, 2)
-  });
-  
-  // Tính toán doanh thu
-  const currentRevenue = calculateTotalRevenue(safeOrders);
-  const prevRevenue = calculateTotalRevenue(safePrevOrders);
+  // Tính toán doanh số cá nhân
+  const currentRevenue = calculateTotalRevenue(orders);
+  const prevRevenue = calculateTotalRevenue(prevOrders);
   const revenueChange = calculatePercentageChange(currentRevenue, prevRevenue);
-  
-  console.log("📈 SalesOverview - Calculated:", {
-    currentRevenue,
-    prevRevenue,
-    revenueChange
-  });
 
   // Đếm orders theo trạng thái
-  const orderStatusCounts = countOrdersByStatus(safeOrders);
-  const totalOrders = safeOrders.length;
-  const prevTotalOrders = safePrevOrders.length;
+  const orderStatusCounts = countOrdersByStatus(orders);
+  const totalOrders = orders.length;
+  const prevTotalOrders = prevOrders.length;
   const ordersChange = calculatePercentageChange(totalOrders, prevTotalOrders);
 
   // Đếm quotations theo trạng thái
-  const quotationStatusCounts = countQuotationsByStatus(safeQuotations);
-  const totalQuotations = safeQuotations.length;
-  const prevTotalQuotations = safePrevQuotations.length;
+  const quotationStatusCounts = countQuotationsByStatus(quotations);
+  const totalQuotations = quotations.length;
+  const prevTotalQuotations = prevQuotations.length;
   const quotationsChange = calculatePercentageChange(totalQuotations, prevTotalQuotations);
-
-  // Tính conversion rate
-  const conversionRate = calculateConversionRate(safeQuotations, safeOrders);
-  const prevConversionRate = calculateConversionRate(safePrevQuotations, safePrevOrders);
-  const conversionChange = calculatePercentageChange(
-    parseFloat(conversionRate),
-    parseFloat(prevConversionRate)
-  );
 
   const statCards = [
     {
-      title: "Tổng Doanh Thu",
+      title: "Doanh Số Cá Nhân",
       value: formatCurrency(currentRevenue),
       subtitle: "Tháng này",
       trend: "so với tháng trước",
@@ -84,7 +51,7 @@ const SalesOverview = ({
       color: "green",
     },
     {
-      title: "Tổng Số Đơn Hàng",
+      title: "Số Đơn Hàng Của Tôi",
       value: totalOrders,
       subtitle: `${orderStatusCounts.CONFIRMED} đã xác nhận, ${orderStatusCounts.DELIVERED} đã giao`,
       trend: "so với tháng trước",
@@ -101,24 +68,15 @@ const SalesOverview = ({
       icon: FiFileText,
       color: "purple",
     },
-    {
-      title: "Tỷ Lệ Chốt Đơn",
-      value: `${conversionRate}%`,
-      subtitle: "Quotation → Order",
-      trend: "so với tháng trước",
-      trendValue: conversionChange,
-      icon: FiTrendingUp,
-      color: "orange",
-    },
   ];
 
   return (
     <div className="mb-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Tổng Quan Doanh Số</h2>
-        <p className="text-gray-600">Thống kê chi tiết về doanh số và đơn hàng</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Thống Kê Cá Nhân</h2>
+        <p className="text-gray-600">Thống kê về doanh số và hoạt động của bạn</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {statCards.map((card, index) => (
           <StatCard key={index} {...card} />
         ))}
@@ -126,7 +84,7 @@ const SalesOverview = ({
 
       {/* Chi tiết Orders theo trạng thái */}
       <div className="mt-6 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Đơn Hàng Theo Trạng Thái</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Đơn Hàng Của Tôi Theo Trạng Thái</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <p className="text-2xl font-bold text-blue-600">{orderStatusCounts.PENDING}</p>
@@ -149,33 +107,11 @@ const SalesOverview = ({
             <p className="text-sm text-gray-600 mt-1">Đã hủy</p>
           </div>
         </div>
-        {(orderStatusCounts.IN_PRODUCTION > 0 || orderStatusCounts.IN_TRANSIT > 0 || orderStatusCounts.EDITED > 0) && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-            {orderStatusCounts.IN_PRODUCTION > 0 && (
-              <div className="text-center p-4 bg-indigo-50 rounded-lg">
-                <p className="text-2xl font-bold text-indigo-600">{orderStatusCounts.IN_PRODUCTION}</p>
-                <p className="text-sm text-gray-600 mt-1">Đang sản xuất</p>
-              </div>
-            )}
-            {orderStatusCounts.IN_TRANSIT > 0 && (
-              <div className="text-center p-4 bg-cyan-50 rounded-lg">
-                <p className="text-2xl font-bold text-cyan-600">{orderStatusCounts.IN_TRANSIT}</p>
-                <p className="text-sm text-gray-600 mt-1">Đang vận chuyển</p>
-              </div>
-            )}
-            {orderStatusCounts.EDITED > 0 && (
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <p className="text-2xl font-bold text-orange-600">{orderStatusCounts.EDITED}</p>
-                <p className="text-sm text-gray-600 mt-1">Đã chỉnh sửa</p>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Chi tiết Quotations theo trạng thái */}
       <div className="mt-6 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Báo Giá Theo Trạng Thái</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Báo Giá Đã Tạo Theo Trạng Thái</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <p className="text-2xl font-bold text-gray-600">{quotationStatusCounts.DRAFT}</p>
@@ -199,5 +135,5 @@ const SalesOverview = ({
   );
 };
 
-export default SalesOverview;
+export default PersonalStatistics;
 

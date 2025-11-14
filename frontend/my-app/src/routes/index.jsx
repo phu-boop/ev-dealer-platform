@@ -300,6 +300,8 @@ import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 import DealerDashboardPage from "../features/dealer/dashboard/pages/DashboardPage.jsx";
+import StaffDashboardPage from "../features/dealer/staff/dashboard/pages/StaffDashboardPage.jsx";
+import AdminDashboardPage from "../features/admin/dashboard/pages/AdminDashboardPage.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
@@ -413,6 +415,7 @@ export default function AppRoutes() {
 
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route path="admin/dashboard" element={<AdminDashboardPage />} />
               <Route
                 path="admin/products/promotions/*"
                 element={<AdminPromotionManager />}
@@ -558,6 +561,9 @@ export default function AppRoutes() {
             <Route path="dashboard" element={<DealerDashboardPage />} />
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
+            
+            {/* Staff Dashboard */}
+            <Route path="staff/dashboard" element={<StaffDashboardPage />} />
 
             {/* --- DEALER MANAGER ONLY ROUTES --- */}
             <Route

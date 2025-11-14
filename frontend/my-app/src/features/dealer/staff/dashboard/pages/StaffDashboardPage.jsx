@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
-import SalesOverview from "../components/SalesOverview";
-import RevenueChart from "../components/RevenueChart";
-import CongratulationsCard from "../components/CongratulationsCard";
-import QuickActions from "../components/QuickActions";
-import { fetchDashboardData } from "../services/dashboardService";
-import { useAuthContext } from "../../../auth/AuthProvider";
+import PersonalStatistics from "../components/PersonalStatistics";
+import MyOrders from "../components/MyOrders";
+import RevenueChart from "../../../dashboard/components/RevenueChart";
+import CongratulationsCard from "../../../dashboard/components/CongratulationsCard";
+import QuickActionsStaff from "../components/QuickActionsStaff";
+import { fetchStaffDashboardData } from "../services/staffDashboardService";
+import { useAuthContext } from "../../../../auth/AuthProvider";
 import { FiRefreshCw, FiSearch } from "react-icons/fi";
 
 /**
- * Dashboard Page cho DEALER_MANAGER
+ * Staff Dashboard Page cho DEALER_STAFF
  */
-const DashboardPage = () => {
+const StaffDashboardPage = () => {
   const { fullName, name } = useAuthContext();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,49 +27,22 @@ const DashboardPage = () => {
       setLoading(true);
       setError(null);
 
+      // Lấy staffId và dealerId từ sessionStorage
+      const staffId = sessionStorage.getItem("profileId") || sessionStorage.getItem("memberId");
       const dealerId = sessionStorage.getItem("dealerId") || sessionStorage.getItem("profileId");
       
-      console.log("🔑 Dashboard Loading:", {
-        dealerId,
-        dateRange,
-        sessionStorage: {
-          dealerId: sessionStorage.getItem("dealerId"),
-          profileId: sessionStorage.getItem("profileId"),
-          memberId: sessionStorage.getItem("memberId")
-        }
-      });
-      
+      if (!staffId) {
+        throw new Error("Không tìm thấy thông tin nhân viên");
+      }
+
       if (!dealerId) {
         throw new Error("Không tìm thấy thông tin đại lý");
       }
 
-      const data = await fetchDashboardData(dealerId, dateRange);
-      
-      console.log("✅ Dashboard Data Received:", {
-        ordersCount: data.orders?.length || 0,
-        quotationsCount: data.quotations?.length || 0,
-        ordersSample: data.orders?.slice(0, 2),
-        dateRange: data.dateRange,
-        fullData: data
-      });
-      
-      // Đảm bảo orders và quotations luôn là mảng
-      const safeData = {
-        ...data,
-        orders: data.orders || [],
-        quotations: data.quotations || [],
-        prevOrders: data.prevOrders || [],
-        prevQuotations: data.prevQuotations || []
-      };
-      
-      console.log("✅ Safe Data Set:", {
-        ordersCount: safeData.orders.length,
-        quotationsCount: safeData.quotations.length
-      });
-      
-      setDashboardData(safeData);
+      const data = await fetchStaffDashboardData(staffId, dealerId, dateRange);
+      setDashboardData(data);
     } catch (err) {
-      console.error("Error loading dashboard data:", err);
+      console.error("Error loading staff dashboard data:", err);
       setError(err.message || "Không thể tải dữ liệu dashboard");
     } finally {
       setLoading(false);
@@ -108,31 +82,10 @@ const DashboardPage = () => {
   }
 
   if (!dashboardData) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="text-center">
-          <FiRefreshCw className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Đang tải dữ liệu...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
-  // Đảm bảo orders và quotations luôn là mảng
-  const safeOrders = Array.isArray(dashboardData.orders) ? dashboardData.orders : [];
-  const safeQuotations = Array.isArray(dashboardData.quotations) ? dashboardData.quotations : [];
-  const safePrevOrders = Array.isArray(dashboardData.prevOrders) ? dashboardData.prevOrders : [];
-  const safePrevQuotations = Array.isArray(dashboardData.prevQuotations) ? dashboardData.prevQuotations : [];
-
-  console.log("📊 DashboardPage Render:", {
-    hasDashboardData: !!dashboardData,
-    ordersCount: safeOrders.length,
-    quotationsCount: safeQuotations.length,
-    ordersType: typeof dashboardData.orders,
-    ordersIsArray: Array.isArray(dashboardData.orders)
-  });
-
-  const userName = fullName || name || "Quản lý";
+  const userName = fullName || name || "Nhân viên";
 
   return (
     <div className="p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
@@ -142,7 +95,7 @@ const DashboardPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Bảng Điều Khiển</h1>
             <p className="text-gray-600">
-              Tổng quan doanh số và hoạt động của đại lý
+              Tổng quan hoạt động và đơn hàng của bạn
             </p>
           </div>
           
@@ -163,22 +116,25 @@ const DashboardPage = () => {
         />
 
         {/* Quick Actions */}
-        <QuickActions />
+        <QuickActionsStaff />
 
-        {/* Sales Overview */}
-        <SalesOverview
-          orders={safeOrders}
-          quotations={safeQuotations}
-          prevOrders={safePrevOrders}
-          prevQuotations={safePrevQuotations}
+        {/* Personal Statistics */}
+        <PersonalStatistics
+          orders={dashboardData.orders}
+          quotations={dashboardData.quotations}
+          prevOrders={dashboardData.prevOrders}
+          prevQuotations={dashboardData.prevQuotations}
         />
 
+        {/* My Orders */}
+        <MyOrders orders={dashboardData.orders} />
+
         {/* Revenue Chart */}
-        <RevenueChart orders={safeOrders} />
+        <RevenueChart orders={dashboardData.orders} />
       </div>
     </div>
   );
 };
 
-export default DashboardPage;
+export default StaffDashboardPage;
 

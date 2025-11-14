@@ -3,30 +3,59 @@
  */
 
 /**
+ * Helper function để lấy status string từ order (có thể là string hoặc object)
+ * Duplicate từ calculations.js để tránh circular dependency
+ */
+const getOrderStatusForChart = (order) => {
+  // B2B orders: orderStatus
+  let b2bStatus = order.orderStatus;
+  if (b2bStatus && typeof b2bStatus === 'object') {
+    b2bStatus = b2bStatus.name || b2bStatus.toString();
+  }
+  
+  // B2C orders: orderStatusB2C hoặc order_status_b2c
+  let b2cStatus = order.orderStatusB2C || order.order_status_b2c;
+  if (b2cStatus && typeof b2cStatus === 'object') {
+    b2cStatus = b2cStatus.name || b2cStatus.toString();
+  }
+  
+  return { b2bStatus, b2cStatus };
+};
+
+/**
  * Tính doanh thu theo ngày
  */
 export const calculateDailyRevenue = (orders) => {
   const dailyRevenue = {};
   
+  if (!orders || orders.length === 0) {
+    return [];
+  }
+  
   orders.forEach(order => {
+    const { b2bStatus, b2cStatus } = getOrderStatusForChart(order);
+    
     // B2B orders: orderStatus
-    const isB2BValid = order.orderStatus === "CONFIRMED" || 
-                       order.orderStatus === "DELIVERED";
+    const isB2BValid = b2bStatus === "CONFIRMED" || 
+                       b2bStatus === "DELIVERED";
     
     // B2C orders: orderStatusB2C hoặc order_status_b2c
-    const b2cStatus = order.orderStatusB2C || order.order_status_b2c;
     const isB2CValid = b2cStatus === "CONFIRMED" || 
                        b2cStatus === "DELIVERED" ||
                        b2cStatus === "APPROVED";
     
     if (isB2BValid || isB2CValid) {
+      if (!order.orderDate) return;
+      
       const date = new Date(order.orderDate);
+      if (isNaN(date.getTime())) return;
+      
       const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
       
       if (!dailyRevenue[dateKey]) {
         dailyRevenue[dateKey] = 0;
       }
-      dailyRevenue[dateKey] += order.totalAmount || 0;
+      dailyRevenue[dateKey] += parseFloat(order.totalAmount) || 0;
     }
   });
 
@@ -46,25 +75,34 @@ export const calculateDailyRevenue = (orders) => {
 export const calculateWeeklyRevenue = (orders) => {
   const weeklyRevenue = {};
   
+  if (!orders || orders.length === 0) {
+    return [];
+  }
+  
   orders.forEach(order => {
+    const { b2bStatus, b2cStatus } = getOrderStatusForChart(order);
+    
     // B2B orders: orderStatus
-    const isB2BValid = order.orderStatus === "CONFIRMED" || 
-                       order.orderStatus === "DELIVERED";
+    const isB2BValid = b2bStatus === "CONFIRMED" || 
+                       b2bStatus === "DELIVERED";
     
     // B2C orders: orderStatusB2C hoặc order_status_b2c
-    const b2cStatus = order.orderStatusB2C || order.order_status_b2c;
     const isB2CValid = b2cStatus === "CONFIRMED" || 
                        b2cStatus === "DELIVERED" ||
                        b2cStatus === "APPROVED";
     
     if (isB2BValid || isB2CValid) {
+      if (!order.orderDate) return;
+      
       const date = new Date(order.orderDate);
+      if (isNaN(date.getTime())) return;
+      
       const weekKey = getWeekKey(date);
       
       if (!weeklyRevenue[weekKey]) {
         weeklyRevenue[weekKey] = 0;
       }
-      weeklyRevenue[weekKey] += order.totalAmount || 0;
+      weeklyRevenue[weekKey] += parseFloat(order.totalAmount) || 0;
     }
   });
 
@@ -84,25 +122,34 @@ export const calculateWeeklyRevenue = (orders) => {
 export const calculateMonthlyRevenue = (orders) => {
   const monthlyRevenue = {};
   
+  if (!orders || orders.length === 0) {
+    return [];
+  }
+  
   orders.forEach(order => {
+    const { b2bStatus, b2cStatus } = getOrderStatusForChart(order);
+    
     // B2B orders: orderStatus
-    const isB2BValid = order.orderStatus === "CONFIRMED" || 
-                       order.orderStatus === "DELIVERED";
+    const isB2BValid = b2bStatus === "CONFIRMED" || 
+                       b2bStatus === "DELIVERED";
     
     // B2C orders: orderStatusB2C hoặc order_status_b2c
-    const b2cStatus = order.orderStatusB2C || order.order_status_b2c;
     const isB2CValid = b2cStatus === "CONFIRMED" || 
                        b2cStatus === "DELIVERED" ||
                        b2cStatus === "APPROVED";
     
     if (isB2BValid || isB2CValid) {
+      if (!order.orderDate) return;
+      
       const date = new Date(order.orderDate);
+      if (isNaN(date.getTime())) return;
+      
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
       if (!monthlyRevenue[monthKey]) {
         monthlyRevenue[monthKey] = 0;
       }
-      monthlyRevenue[monthKey] += order.totalAmount || 0;
+      monthlyRevenue[monthKey] += parseFloat(order.totalAmount) || 0;
     }
   });
 
