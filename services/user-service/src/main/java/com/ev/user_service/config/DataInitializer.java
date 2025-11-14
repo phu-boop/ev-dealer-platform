@@ -68,76 +68,6 @@ public class DataInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
             if (roleRepository.findByName(RoleName.ADMIN.getName()).isEmpty()) {
-                // DEALER STAFF role
-                if (roleRepository.findByName(RoleName.DEALER_STAFF.getName()).isEmpty()) {
-                    Set<Permission> permissions = new HashSet<>();
-
-                    permissions.add(createPermission(PermissionName.VIEW_VEHICLES));
-                    permissions.add(createPermission(PermissionName.COMPARE_VEHICLES));
-                    permissions.add(createPermission(PermissionName.CREATE_QUOTATION));
-                    permissions.add(createPermission(PermissionName.CREATE_ORDER));
-                    permissions.add(createPermission(PermissionName.CREATE_CONTRACT));
-                    permissions.add(createPermission(PermissionName.MANAGE_OWN_CUSTOMERS));
-                    permissions.add(createPermission(PermissionName.CREATE_APPOINTMENT));
-                    permissions.add(createPermission(PermissionName.CREATE_FEEDBACK));
-                    permissions.add(createPermission(PermissionName.PROCESS_PAYMENT));
-
-                    permissionRepository.saveAll(permissions);
-                    Role role = new Role();
-                    role.setName(RoleName.DEALER_STAFF.getName());
-                    role.setPermissions(permissions);
-                    roleRepository.save(role);
-                }
-
-                // DEALER MANAGER role
-                if (roleRepository.findByName(RoleName.DEALER_MANAGER.getName()).isEmpty()) {
-                    Set<Permission> permissions = new HashSet<>();
-
-                    // Tất cả quyền của DEALER_STAFF
-                    permissions.add(createPermission(PermissionName.VIEW_VEHICLES));
-                    permissions.add(createPermission(PermissionName.COMPARE_VEHICLES));
-                    permissions.add(createPermission(PermissionName.CREATE_QUOTATION));
-                    permissions.add(createPermission(PermissionName.CREATE_ORDER));
-                    permissions.add(createPermission(PermissionName.CREATE_CONTRACT));
-                    permissions.add(createPermission(PermissionName.MANAGE_OWN_CUSTOMERS));
-                    permissions.add(createPermission(PermissionName.CREATE_APPOINTMENT));
-                    permissions.add(createPermission(PermissionName.CREATE_FEEDBACK));
-                    permissions.add(createPermission(PermissionName.PROCESS_PAYMENT));
-
-                    // Quyền riêng của MANAGER
-                    permissions.add(createPermission(PermissionName.VIEW_ALL_DEALER_ORDERS));
-                    permissions.add(createPermission(PermissionName.APPROVE_ORDERS));
-                    permissions.add(createPermission(PermissionName.VIEW_DEALER_REPORTS));
-                    permissions.add(createPermission(PermissionName.MANAGE_DEALER_STAFF));
-                    permissions.add(createPermission(PermissionName.VIEW_DEALER_INVENTORY));
-                    permissions.add(createPermission(PermissionName.REQUEST_STOCK));
-
-                    permissionRepository.saveAll(permissions);
-                    Role role = new Role();
-                    role.setName(RoleName.DEALER_MANAGER.getName());
-                    role.setPermissions(permissions);
-                    roleRepository.save(role);
-                }
-
-                // EVM STAFF role
-                if (roleRepository.findByName(RoleName.EVM_STAFF.getName()).isEmpty()) {
-                    Set<Permission> permissions = new HashSet<>();
-
-                    permissions.add(createPermission(PermissionName.MANAGE_VEHICLES));
-                    permissions.add(createPermission(PermissionName.MANAGE_PRICING));
-                    permissions.add(createPermission(PermissionName.MANAGE_PROMOTIONS));
-                    permissions.add(createPermission(PermissionName.VIEW_CENTRAL_INVENTORY));
-                    permissions.add(createPermission(PermissionName.ALLOCATE_VEHICLES));
-                    permissions.add(createPermission(PermissionName.MANAGE_DEALERS));
-                    permissions.add(createPermission(PermissionName.VIEW_SYSTEM_REPORTS));
-
-                    permissionRepository.saveAll(permissions);
-                    Role role = new Role();
-                    role.setName(RoleName.EVM_STAFF.getName());
-                    role.setPermissions(permissions);
-                    roleRepository.save(role);
-                }
-
                 // ADMIN role
                 if (roleRepository.findByName(RoleName.ADMIN.getName()).isEmpty()) {
                     Set<Permission> permissions = new HashSet<>();
@@ -159,7 +89,7 @@ public class DataInitializer implements ApplicationRunner {
             // Init default users for EVM system
             Set<Role> roles = new HashSet<>();
 
-// ========== ADMIN ==========
+            // ========== ADMIN ==========
             Role adminRole = roleRepository.findByName(RoleName.ADMIN.getRoleName())
                     .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
             roles.clear();
@@ -171,46 +101,6 @@ public class DataInitializer implements ApplicationRunner {
             admin.setStatus(UserStatus.ACTIVE);
             userRepository.save(admin);
             adminProfileService.SaveAdminProfile(admin, "SUPER_ADMIN", "Toàn quyền hệ thống", "GLOBAL");
-
-// ========== DEALER_MANAGER ==========
-            Role dealerManagerRole = roleRepository.findByName(RoleName.DEALER_MANAGER.getRoleName())
-                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
-            roles.clear();
-            roles.add(dealerManagerRole);
-            User managerDealer = new User();
-            managerDealer.setEmail("ManagerDealer@gmail.com");
-            managerDealer.setPassword(passwordEncoder.encode("123123123"));
-            managerDealer.setRoles(new HashSet<>(roles));
-            managerDealer.setStatus(UserStatus.ACTIVE);
-            userRepository.save(managerDealer);
-            dealerManagerProfileService.SaveDealerManagerProfile(managerDealer, UUID.randomUUID(),null,null,null);
-
-// ========== DEALER_STAFF ==========
-            Role dealerStaffRole = roleRepository.findByName(RoleName.DEALER_STAFF.getRoleName())
-                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
-            roles.clear();
-            roles.add(dealerStaffRole);
-            User staffDealer = new User();
-            staffDealer.setEmail("StafffDealer@gmail.com");
-            staffDealer.setPassword(passwordEncoder.encode("123123123"));
-            staffDealer.setRoles(new HashSet<>(roles));
-            staffDealer.setStatus(UserStatus.ACTIVE);
-            userRepository.save(staffDealer);
-            dealerStaffProfileService.SaveDealerStaffProfile(staffDealer,UUID.randomUUID(),null,null,null,null,null);
-
-// ========== EVM_STAFF ==========
-            Role evmStaffRole = roleRepository.findByName(RoleName.EVM_STAFF.getRoleName())
-                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
-            roles.clear();
-            roles.add(evmStaffRole);
-            User staffEvm = new User();
-            staffEvm.setEmail("StafffEVM@gmail.com");
-            staffEvm.setPassword(passwordEncoder.encode("123123123"));
-            staffEvm.setRoles(new HashSet<>(roles));
-            staffEvm.setStatus(UserStatus.ACTIVE);
-            userRepository.save(staffEvm);
-            evmStaffProfileService.SaveEvmStaffProfile(staffEvm,null,null);
-
         }
     }
 }
