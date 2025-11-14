@@ -1,6 +1,7 @@
 package com.ev.user_service.dto.request;
 
 import com.ev.user_service.validation.group.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import com.ev.user_service.enums.Gender;
@@ -22,9 +23,9 @@ public class UserRequest {
 
     @NotBlank(groups = {OnCreate.class, OnCreateDealerManager.class, OnCreateDealerStaff.class, OnCreateEvmStaff.class})
     @PasswordConstraint(
-        minLength = 8, hasUppercase = true, hasLowercase = true,
-        hasNumber = true, hasSpecialChar = true,
-        message = "PASSWORD_INVALID_FORMAT"
+            minLength = 8, hasUppercase = true, hasLowercase = true,
+            hasNumber = true, hasSpecialChar = true,
+            message = "PASSWORD_INVALID_FORMAT"
     )
     private String password;
 
@@ -48,36 +49,39 @@ public class UserRequest {
 
     @NotNull(groups = {OnCreateDealerStaff.class, OnCreateDealerManager.class})
     private UUID dealerId;
-
-    // --- All ---
-
-    @NotBlank(groups = {OnCreateDealerManager.class, OnCreateDealerStaff.class, OnCreateEvmStaff.class})
+    // ----- COMMON -----
+    @NotBlank(message = "DEPARTMENT_MUST_NOT_BE_BLANK")
     private String department;
 
     // ----- DEALER MANAGER -----
-
-    @NotBlank(groups = {OnCreateDealerManager.class})
+    @NotBlank(message = "MANAGEMENT_LEVEL_MUST_NOT_BE_BLANK")
     private String managementLevel;
 
-    @NotNull(groups = {OnCreateDealerManager.class})
+    // Số tiền: chỉ cho phép số, tối đa 13 chữ số nguyên và 2 chữ số thập phân
+    @NotNull(message = "APPROVAL_LIMIT_IS_REQUIRED")
+    @Digits(integer = 13, fraction = 2, message = "APPROVAL_LIMIT_INVALID_FORMAT")
     private BigDecimal approvalLimit;
 
     // ----- DEALER STAFF -----
-
-    @NotBlank(groups = {OnCreateDealerStaff.class})
+    @NotBlank(message = "POSITION_MUST_NOT_BE_BLANK")
     private String position;
 
-    @NotNull(groups = {OnCreateDealerStaff.class})
+    // Validate định dạng ngày yyyy-MM-dd
+    @NotNull(message = "HIRE_DATE_IS_REQUIRED")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate hireDate;
 
-    @NotNull(groups = {OnCreateDealerStaff.class})
+    // Validate lương: số hợp lệ, tối đa 13 chữ số nguyên + 2 thập phân
+    @NotNull(message = "SALARY_IS_REQUIRED")
+    @Digits(integer = 13, fraction = 2, message = "SALARY_INVALID_FORMAT")
     private BigDecimal salary;
 
-    @NotNull(groups = {OnCreateDealerStaff.class})
+    // Validate % hoa hồng, tối đa 3 chữ số nguyên + 2 thập phân
+    @NotNull(message = "COMMISSION_RATE_IS_REQUIRED")
+    @Digits(integer = 3, fraction = 2, message = "COMMISSION_RATE_INVALID_FORMAT")
     private BigDecimal commissionRate;
 
     // ----- EVM STAFF -----
-
-    @NotBlank(groups = {OnCreateEvmStaff.class})
+    @NotBlank(message = "SPECIALIZATION_MUST_NOT_BE_BLANK")
     private String specialization;
 }

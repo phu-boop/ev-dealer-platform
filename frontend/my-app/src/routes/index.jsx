@@ -439,12 +439,6 @@ export default function AppRoutes() {
                 element={<VariantManager />}
               />
 
-              {/* Giá Sỉ & Chiết Khấu */}
-              <Route
-                path="admin/products/promotions"
-                element={<MainPromotion />}
-              />
-
               {/* Quản lý phân phối & kho */}
               <Route
                 path="admin/distribution/inventory/central"
