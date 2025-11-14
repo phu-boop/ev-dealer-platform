@@ -299,6 +299,7 @@ import SecuritySettings from "../features/profile/components/SecuritySettings.js
 import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
+import DealerDashboardPage from "../features/dealer/dashboard/pages/DashboardPage.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
@@ -554,6 +555,7 @@ export default function AppRoutes() {
             {/* Sales Module */}
             <Route path="*" element={<SalesRoutes />} />
             <Route index element={<DashboardForDealer />} />
+            <Route path="dashboard" element={<DealerDashboardPage />} />
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
 

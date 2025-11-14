@@ -1,6 +1,5 @@
 package com.ev.user_service.config;
 
-import com.ev.user_service.entity.EvmStaffProfile;
 import com.ev.user_service.enums.UserStatus;
 import com.ev.user_service.service.AdminProfileService;
 import com.ev.user_service.service.DealerManagerProfileService;
@@ -21,6 +20,8 @@ import com.ev.user_service.repository.PermissionRepository;
 import com.ev.user_service.repository.RoleRepository;
 import com.ev.user_service.repository.UserRepository;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -66,41 +67,159 @@ public class DataInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        // ========== INITIALIZE ROLES ==========
+        initializeAdminRole();
+        initializeDealerManagerRole();
+        initializeDealerStaffRole();
+
+        // ========== INITIALIZE USERS ==========
         if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
-            if (roleRepository.findByName(RoleName.ADMIN.getName()).isEmpty()) {
-                // ADMIN role
-                if (roleRepository.findByName(RoleName.ADMIN.getName()).isEmpty()) {
-                    Set<Permission> permissions = new HashSet<>();
-
-                    // Chỉ các quyền đặc biệt của ADMIN
-                    permissions.add(createPermission(PermissionName.FULL_SYSTEM_ACCESS));
-                    permissions.add(createPermission(PermissionName.MANAGE_USERS));
-                    permissions.add(createPermission(PermissionName.VIEW_AI_REPORTS));
-                    permissions.add(createPermission(PermissionName.SYSTEM_CONFIG));
-
-                    permissionRepository.saveAll(permissions);
-                    Role role = new Role();
-                    role.setName(RoleName.ADMIN.getName());
-                    role.setPermissions(permissions);
-                    roleRepository.save(role);
-                }
-
-            }
-            // Init default users for EVM system
-            Set<Role> roles = new HashSet<>();
-
-            // ========== ADMIN ==========
-            Role adminRole = roleRepository.findByName(RoleName.ADMIN.getRoleName())
-                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
-            roles.clear();
-            roles.add(adminRole);
-            User admin = new User();
-            admin.setEmail("admin@gmail.com");
-            admin.setPassword(passwordEncoder.encode("123123123"));
-            admin.setRoles(new HashSet<>(roles));
-            admin.setStatus(UserStatus.ACTIVE);
-            userRepository.save(admin);
-            adminProfileService.SaveAdminProfile(admin, "SUPER_ADMIN", "Toàn quyền hệ thống", "GLOBAL");
+            initializeAdminUser();
         }
+        
+        if (userRepository.findByEmail("TrongManager@gmail.com").isEmpty()) {
+            initializeDealerManagerUser();
+        }
+        
+        if (userRepository.findByEmail("TrongStaff@gmail.com").isEmpty()) {
+            initializeDealerStaffUser();
+        }
+    }
+
+    private void initializeAdminRole() {
+        if (roleRepository.findFirstByName(RoleName.ADMIN.getName()).isEmpty()) {
+            Set<Permission> permissions = new HashSet<>();
+
+            // Chỉ các quyền đặc biệt của ADMIN
+            permissions.add(createPermission(PermissionName.FULL_SYSTEM_ACCESS));
+            permissions.add(createPermission(PermissionName.MANAGE_USERS));
+            permissions.add(createPermission(PermissionName.VIEW_AI_REPORTS));
+            permissions.add(createPermission(PermissionName.SYSTEM_CONFIG));
+
+            permissionRepository.saveAll(permissions);
+            Role role = new Role();
+            role.setName(RoleName.ADMIN.getName());
+            role.setPermissions(permissions);
+            roleRepository.save(role);
+        }
+    }
+
+    private void initializeDealerManagerRole() {
+        if (roleRepository.findFirstByName(RoleName.DEALER_MANAGER.getName()).isEmpty()) {
+            Set<Permission> permissions = new HashSet<>();
+
+            // Quyền của DEALER_MANAGER
+            permissions.add(createPermission(PermissionName.VIEW_VEHICLES));
+            permissions.add(createPermission(PermissionName.MANAGE_VEHICLES));
+            permissions.add(createPermission(PermissionName.MANAGE_PRICING));
+            permissions.add(createPermission(PermissionName.CREATE_QUOTATION));
+            permissions.add(createPermission(PermissionName.CREATE_ORDER));
+            permissions.add(createPermission(PermissionName.CREATE_CONTRACT));
+            permissions.add(createPermission(PermissionName.APPROVE_ORDERS));
+            permissions.add(createPermission(PermissionName.VIEW_ALL_DEALER_ORDERS));
+            permissions.add(createPermission(PermissionName.MANAGE_OWN_CUSTOMERS));
+            permissions.add(createPermission(PermissionName.VIEW_ALL_DEALER_CUSTOMERS));
+            permissions.add(createPermission(PermissionName.CREATE_APPOINTMENT));
+            permissions.add(createPermission(PermissionName.VIEW_DEALER_INVENTORY));
+            permissions.add(createPermission(PermissionName.REQUEST_STOCK));
+            permissions.add(createPermission(PermissionName.PROCESS_PAYMENT));
+            permissions.add(createPermission(PermissionName.VIEW_DEALER_REPORTS));
+            permissions.add(createPermission(PermissionName.MANAGE_DEALER_STAFF));
+            permissions.add(createPermission(PermissionName.MANAGE_PROMOTIONS));
+
+            permissionRepository.saveAll(permissions);
+            Role role = new Role();
+            role.setName(RoleName.DEALER_MANAGER.getName());
+            role.setPermissions(permissions);
+            roleRepository.save(role);
+        }
+    }
+
+    private void initializeDealerStaffRole() {
+        if (roleRepository.findFirstByName(RoleName.DEALER_STAFF.getName()).isEmpty()) {
+            Set<Permission> permissions = new HashSet<>();
+
+            // Quyền của DEALER_STAFF
+            permissions.add(createPermission(PermissionName.VIEW_VEHICLES));
+            permissions.add(createPermission(PermissionName.CREATE_QUOTATION));
+            permissions.add(createPermission(PermissionName.CREATE_ORDER));
+            permissions.add(createPermission(PermissionName.MANAGE_OWN_CUSTOMERS));
+            permissions.add(createPermission(PermissionName.CREATE_APPOINTMENT));
+            permissions.add(createPermission(PermissionName.CREATE_FEEDBACK));
+            permissions.add(createPermission(PermissionName.VIEW_DEALER_INVENTORY));
+            permissions.add(createPermission(PermissionName.PROCESS_PAYMENT));
+            permissions.add(createPermission(PermissionName.VIEW_DEALER_REPORTS));
+
+            permissionRepository.saveAll(permissions);
+            Role role = new Role();
+            role.setName(RoleName.DEALER_STAFF.getName());
+            role.setPermissions(permissions);
+            roleRepository.save(role);
+        }
+    }
+
+    private void initializeAdminUser() {
+        Set<Role> roles = new HashSet<>();
+        Role adminRole = roleRepository.findFirstByName(RoleName.ADMIN.getRoleName())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        roles.add(adminRole);
+        
+        User admin = new User();
+        admin.setEmail("admin@gmail.com");
+        admin.setPassword(passwordEncoder.encode("123123123"));
+        admin.setRoles(new HashSet<>(roles));
+        admin.setStatus(UserStatus.ACTIVE);
+        userRepository.save(admin);
+        adminProfileService.SaveAdminProfile(admin, "SUPER_ADMIN", "Toàn quyền hệ thống", "GLOBAL");
+    }
+
+    private void initializeDealerManagerUser() {
+        UUID dealerId = UUID.fromString("3ec76f92-7d44-49f4-ada1-b47d4f55b418");
+        
+        Set<Role> roles = new HashSet<>();
+        Role dealerManagerRole = roleRepository.findFirstByName(RoleName.DEALER_MANAGER.getRoleName())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        roles.add(dealerManagerRole);
+        
+        User dealerManager = new User();
+        dealerManager.setEmail("TrongManager@gmail.com");
+        dealerManager.setPassword(passwordEncoder.encode("123123123"));
+        dealerManager.setRoles(new HashSet<>(roles));
+        dealerManager.setStatus(UserStatus.ACTIVE);
+        userRepository.save(dealerManager);
+        
+        dealerManagerProfileService.SaveDealerManagerProfile(
+            dealerManager,
+            dealerId,
+            "MANAGER",
+            new BigDecimal("1000000000"), // approvalLimit
+            "Quản lý"
+        );
+    }
+
+    private void initializeDealerStaffUser() {
+        UUID dealerId = UUID.fromString("3ec76f92-7d44-49f4-ada1-b47d4f55b418");
+        
+        Set<Role> roles = new HashSet<>();
+        Role dealerStaffRole = roleRepository.findFirstByName(RoleName.DEALER_STAFF.getRoleName())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        roles.add(dealerStaffRole);
+        
+        User dealerStaff = new User();
+        dealerStaff.setEmail("TrongStaff@gmail.com");
+        dealerStaff.setPassword(passwordEncoder.encode("123123123"));
+        dealerStaff.setRoles(new HashSet<>(roles));
+        dealerStaff.setStatus(UserStatus.ACTIVE);
+        userRepository.save(dealerStaff);
+        
+        dealerStaffProfileService.SaveDealerStaffProfile(
+            dealerStaff,
+            dealerId,
+            "Nhân viên bán hàng",
+            "Bán hàng",
+            LocalDate.now(), // hireDate
+            new BigDecimal("10000000"), // salary
+            new BigDecimal("2.5") // commissionRate
+        );
     }
 }
