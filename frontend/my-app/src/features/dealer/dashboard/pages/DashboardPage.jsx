@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import SalesOverview from "../components/SalesOverview";
 import RevenueChart from "../components/RevenueChart";
+import OrdersChart from "../components/OrdersChart";
+import OrderStatusChart from "../components/OrderStatusChart";
+import TopCustomersChart from "../components/TopCustomersChart";
+import ConversionChart from "../components/ConversionChart";
 import CongratulationsCard from "../components/CongratulationsCard";
 import QuickActions from "../components/QuickActions";
 import { fetchDashboardData } from "../services/dashboardService";
@@ -172,6 +176,25 @@ const DashboardPage = () => {
           prevOrders={safePrevOrders}
           prevQuotations={safePrevQuotations}
         />
+
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Order Status Chart */}
+          <OrderStatusChart orders={safeOrders} />
+          
+          {/* Top Customers Chart */}
+          <TopCustomersChart orders={safeOrders} />
+        </div>
+
+        {/* Orders Chart */}
+        <div className="mb-6">
+          <OrdersChart orders={safeOrders} />
+        </div>
+
+        {/* Conversion Chart */}
+        <div className="mb-6">
+          <ConversionChart orders={safeOrders} quotations={safeQuotations} />
+        </div>
 
         {/* Revenue Chart */}
         <RevenueChart orders={safeOrders} />

@@ -173,28 +173,6 @@ const SalesOverview = ({
         )}
       </div>
 
-      {/* Chi tiết Quotations theo trạng thái */}
-      <div className="mt-6 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Báo Giá Theo Trạng Thái</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className="text-2xl font-bold text-gray-600">{quotationStatusCounts.DRAFT}</p>
-            <p className="text-sm text-gray-600 mt-1">Nháp</p>
-          </div>
-          <div className="text-center p-4 bg-yellow-50 rounded-lg">
-            <p className="text-2xl font-bold text-yellow-600">{quotationStatusCounts.SENT}</p>
-            <p className="text-sm text-gray-600 mt-1">Đã gửi</p>
-          </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <p className="text-2xl font-bold text-green-600">{quotationStatusCounts.ACCEPTED}</p>
-            <p className="text-sm text-gray-600 mt-1">Đã chấp nhận</p>
-          </div>
-          <div className="text-center p-4 bg-red-50 rounded-lg">
-            <p className="text-2xl font-bold text-red-600">{quotationStatusCounts.REJECTED}</p>
-            <p className="text-sm text-gray-600 mt-1">Đã từ chối</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
