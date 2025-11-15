@@ -127,18 +127,7 @@ export default function Login() {
                 </thead>
                 <tbody>
                     <tr>
-                    <td>ManagerDealer@gmail.com</td>
-                    <td>123123123</td>
-                    </tr>
-                    <tr>
-                    <td>StafffDealer@gmail.com</td>
-                    <td>123123123</td>
-                    </tr>
-                    <tr>
-                    <td>StafffEVM@gmail.com</td>
-                    <td>123123123</td>
-                    </tr>
-                    <tr>
+                    
                     <td>admin@gmail.com</td>
                     <td>123123123</td>
                     </tr>

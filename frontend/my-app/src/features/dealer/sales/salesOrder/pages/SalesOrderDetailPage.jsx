@@ -260,7 +260,7 @@ const SalesOrderDetailPage = () => {
       message.warning('Không có quyền tạo hợp đồng trong trạng thái hiện tại');
       return;
     }
-    navigate(`/dealer/orders/${orderId}/contract/create`);
+    navigate(`/dealer/contracts/${contract.contractId}/edit`);
   };
 
   const handleSign = async (contractId, digitalSignature) => {
