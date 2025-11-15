@@ -20,6 +20,10 @@ import SecuritySettings from "../features/profile/components/SecuritySettings.js
 import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
+import DealerDashboardPage from "../features/dealer/dashboard/pages/DashboardPage.jsx";
+import StaffDashboardPage from "../features/dealer/staff/dashboard/pages/StaffDashboardPage.jsx";
+import AdminDashboardPage from "../features/admin/dashboard/pages/AdminDashboardPage.jsx";
+import EvmStaffDashboardPage from "../features/evm/dashboard/pages/EvmStaffDashboardPage.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
@@ -46,6 +50,8 @@ import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.
 import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
+import FeatureManagementPage from "../features/evm/catalog/pages/FeatureManagementPage.jsx";
+import DistributionHistoryPage from "../features/evm/inventory/pages/DistributionHistoryPage.jsx";
 
 // Thông báo (Socket)
 import StaffNotificationPage from "../features/evm/notification/pages/StaffNotificationPage.jsx";
@@ -133,6 +139,7 @@ export default function AppRoutes() {
 
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route path="admin/dashboard" element={<AdminDashboardPage />} />
               <Route
                 path="admin/products/promotions/*"
                 element={<AdminPromotionManager />}
@@ -160,10 +167,28 @@ export default function AppRoutes() {
                 element={<VariantManager />}
               />
 
+              {/* Quản lý tính năng của xe */}
+              <Route
+                path="admin/products/features"
+                element={<FeatureManagementPage />}
+              />
+
+              {/* Giá Sỉ & Chiết Khấu */}
+              <Route
+                path="admin/products/promotions"
+                element={<MainPromotion />}
+              />
+
               {/* Quản lý phân phối & kho */}
               <Route
                 path="admin/distribution/inventory/central"
                 element={<InventoryCentral />}
+              />
+
+              {/* Lịch sử phân phối B2B */}
+              <Route
+                path="admin/distribution/history"
+                element={<DistributionHistoryPage />}
               />
 
               {/* Báo cáo */}
@@ -189,6 +214,10 @@ export default function AppRoutes() {
             {/* Staff only */}
             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
               <Route path="staff" element={<Dashboard />} />
+              <Route
+                path="staff/dashboard"
+                element={<EvmStaffDashboardPage />}
+              />
               {/* --------------------------------QUẢN LÝ SẢN PHẨM-------------------------------------------------- */}
               {/* Quản lý danh mục xe */}
               <Route
@@ -269,8 +298,12 @@ export default function AppRoutes() {
             {/* Sales Module */}
             <Route path="*" element={<SalesRoutes />} />
             <Route index element={<DashboardForDealer />} />
+            <Route path="dashboard" element={<DealerDashboardPage />} />
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
+
+            {/* Staff Dashboard */}
+            <Route path="staff/dashboard" element={<StaffDashboardPage />} />
 
             {/* --- DEALER MANAGER ONLY ROUTES --- */}
             <Route

@@ -35,7 +35,7 @@ import {
 
 export const adminMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Dashboard", path: "/evm/admin" },
+  { icon: FiHome, label: "Dashboard", path: "/evm/admin/dashboard" },
 
   // Quản lý sản phẩm
   {
@@ -57,6 +57,11 @@ export const adminMenuItems = [
         icon: FiTag,
         label: "Phiên Bản & Màu Sắc",
         path: "/evm/admin/products/variants",
+      },
+      {
+        icon: FiSliders,
+        label: "Quản Lý Tính Năng",
+        path: "/evm/admin/products/features",
       },
       {
         icon: FiCreditCard,
@@ -200,7 +205,7 @@ export const adminMenuItems = [
 
 export const evmStaffMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Dashboard", path: "/evm/staff" },
+  { icon: FiHome, label: "Dashboard", path: "/evm/staff/dashboard" },
 
   // Quản lý sản phẩm
   {

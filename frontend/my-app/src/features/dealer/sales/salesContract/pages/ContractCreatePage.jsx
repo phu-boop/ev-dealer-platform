@@ -44,27 +44,27 @@ const ContractCreatePage = () => {
   return (
     <PageContainer
       header={{
-        title: 'Tạo hợp đồng bán hàng',
+        title: "Tạo hợp đồng bán hàng",
         breadcrumb: {
           render: () => (
             <div className="flex items-center gap-2 text-sm">
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate('/dealer')}
+                onClick={() => navigate("/dealer/staff")}
               >
                 Bán hàng
               </span>
               <span>/</span>
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate('/dealer/orders')}
+                onClick={() => navigate("/dealer/staff/orders")}
               >
                 Đơn hàng
               </span>
               <span>/</span>
               <span
                 className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => navigate(`/dealer/orders/${orderId}`)}
+                onClick={() => navigate(`/dealer/staff/orders/${orderId}`)}
               >
                 Đơn hàng #{orderId}
               </span>

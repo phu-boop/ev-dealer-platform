@@ -18,7 +18,8 @@ public enum ErrorCode {
     MISSING_REQUIRED_FIELD("2005", "Thiếu trường bắt buộc", HttpStatus.BAD_REQUEST),
     INVALID_EMAIL_FORMAT("2006", "Định dạng email không hợp lệ", HttpStatus.BAD_REQUEST),
     PASSWORD_TOO_SHORT("2007", "Mật khẩu phải có ít nhất 8 ký tự", HttpStatus.BAD_REQUEST),
-    PASSWORD_INVALID_FORMAT("2008", "Mật khẩu phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt", HttpStatus.BAD_REQUEST),
+    PASSWORD_INVALID_FORMAT("2008", "Mật khẩu phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+            HttpStatus.BAD_REQUEST),
     AGE_TOO_YOUNG("2009", "Người dùng phải từ 18 tuổi trở lên", HttpStatus.BAD_REQUEST),
     PHONE_INVALID_FORMAT("2010", "Số điện thoại phải từ 10 đến 12 chữ số", HttpStatus.BAD_REQUEST),
     TOO_MANY_REQUESTS("2011", "Thực hiện quá nhiều yêu cầu trong thời gian ngắn", HttpStatus.TOO_MANY_REQUESTS),
@@ -190,6 +191,8 @@ public enum ErrorCode {
     VEHICLE_VARIANT_SKU_ALREADY_EXISTS("7005", "Phiên bản xe với mã SKU này đã tồn tại", HttpStatus.CONFLICT),
 
     VARIANT_FEATURE_NOT_FOUND("7006", "Không tìm thấy tính năng của phiên bản xe", HttpStatus.NOT_FOUND),
+    FEATURE_ALREADY_EXISTS("7007", "Tính năng với tên này đã tồn tại", HttpStatus.CONFLICT),
+    FEATURE_IS_ASSIGNED("7008", "Không thể xóa. Tính năng đang được gán cho phiên bản", HttpStatus.BAD_REQUEST),
 
     // ===== 8xxx - Lỗi kho hàng =====
     INVENTORY_NOT_FOUND("8001", "Không tìm thấy dữ liệu tồn kho cho phiên bản này", HttpStatus.NOT_FOUND),

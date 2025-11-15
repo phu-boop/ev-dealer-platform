@@ -1,6 +1,6 @@
 // Hiển thị thông tin chi tiết của xe, bao gồm cả các phiên bản (variants) và thông số kỹ thuật một cách rõ ràng.
 import React from "react";
-import { FiX, FiInfo, FiLayers, FiTag } from "react-icons/fi";
+import { FiX, FiInfo, FiLayers, FiTag, FiPlus } from "react-icons/fi";
 
 const ModelDetailsModal = ({ isOpen, onClose, model }) => {
   if (!isOpen || !model) return null;

@@ -239,7 +239,7 @@ export const dealerManagerMenuItems = [
 
 export const dealerStaffMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Bảng Điều Khiển", path: "/staff/dashboard" },
+  { icon: FiHome, label: "Bảng Điều Khiển", path: "/dealer/staff/dashboard" },
 
   // Danh mục xe & báo giá
   {

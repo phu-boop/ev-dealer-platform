@@ -15,7 +15,7 @@ import {
   getAvailableVins,
 } from "../services/inventoryService";
 import { getAllVariantsPaginated } from "../../catalog/services/vehicleCatalogService";
-
+import Pagination from "./Pagination";
 import TransactionModal from "./TransactionModal"; // Modal Nhập kho (RESTOCK)
 import TransferRequestModal from "./TransferRequestModal"; // Modal Tạo Yêu Cầu Điều Chuyển
 import ReorderLevelModal from "./ReorderLevelModal"; // Modal Sửa Ngưỡng
@@ -451,7 +451,11 @@ const InventoryStatusTab = () => {
         />
       )}
 
-      {/* <Pagination currentPage={page} totalPages={inventoryWithDetails.totalPages} onPageChange={setPage} /> */}
+      <Pagination
+        currentPage={page}
+        totalPages={mergedData.totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

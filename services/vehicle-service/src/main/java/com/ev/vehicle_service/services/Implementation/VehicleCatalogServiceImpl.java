@@ -17,6 +17,8 @@ import com.ev.vehicle_service.dto.request.UpdateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
 import com.ev.vehicle_service.dto.request.CreateVariantRequest;
 import com.ev.vehicle_service.dto.request.FeatureRequest;
+import com.ev.vehicle_service.dto.request.CreateFeatureRequest;
+import com.ev.vehicle_service.dto.request.UpdateFeatureRequest;
 import com.ev.vehicle_service.dto.response.ModelDetailDto;
 import com.ev.vehicle_service.dto.response.ModelSummaryDto;
 
@@ -56,9 +58,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.context.request.RequestContextHolder; 
+import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import jakarta.servlet.http.HttpServletRequest; 
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -86,12 +88,12 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     private final VariantFeatureRepository variantFeatureRepository;
     private final PriceHistoryRepository priceHistoryRepository;
     private final VehicleVariantHistoryRepository variantHistoryRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate; 
-    private final ObjectMapper objectMapper; 
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     private final RestTemplate restTemplate;
 
-    @Value("${app.services.inventory.url}") 
+    @Value("${app.services.inventory.url}")
     private String inventoryServiceUrl;
 
     @Override
@@ -104,7 +106,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     @Override
     public ModelDetailDto getModelDetails(Long modelId) {
         VehicleModel model = modelRepository.findModelWithDetailsById(modelId)
-            .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
         return mapToModelDetailDto(model);
     }
 
@@ -122,23 +124,23 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newModel.setBrand(request.getBrand());
         newModel.setStatus(request.getStatus() != null ? request.getStatus() : VehicleStatus.COMING_SOON);
         // --- XỬ LÝ DỮ LIỆU HYBRID ---
-        // 1. Gán các thông số cốt lõi
+        // Gán các thông số cốt lõi
         newModel.setBaseRangeKm(request.getBaseRangeKm());
         newModel.setBaseMotorPower(request.getBaseMotorPower());
         newModel.setBaseBatteryCapacity(request.getBaseBatteryCapacity());
         newModel.setThumbnailUrl(request.getThumbnailUrl());
         newModel.setCreatedBy(request.getCreatedBy());
 
-        // 2. Chuyển đổi Map thông số mở rộng thành chuỗi JSON
+        // Chuyển đổi Map thông số mở rộng thành chuỗi JSON
         try {
             if (request.getExtendedSpecs() != null && !request.getExtendedSpecs().isEmpty()) {
                 String jsonString = objectMapper.writeValueAsString(request.getExtendedSpecs());
                 newModel.setExtendedSpecsJson(jsonString);
             }
         } catch (Exception e) {
-            throw new AppException(ErrorCode.INVALID_JSON_FORMAT); 
+            throw new AppException(ErrorCode.INVALID_JSON_FORMAT);
         }
-        
+
         VehicleModel savedModel = modelRepository.save(newModel);
 
         request.getVariants().forEach(variantRequest -> {
@@ -152,7 +154,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             newVariant.setVehicleModel(savedModel);
 
             // Trạng thái Vehicle nếu để trống thì dùng giá trị mặc định là IN_PRODUCTION.
-            VehicleStatus status = (variantRequest.getStatus() != null) ? variantRequest.getStatus() : VehicleStatus.IN_PRODUCTION;
+            VehicleStatus status = (variantRequest.getStatus() != null) ? variantRequest.getStatus()
+                    : VehicleStatus.IN_PRODUCTION;
             newVariant.setStatus(status);
             VehicleVariant savedVariant = variantRepository.save(newVariant);
 
@@ -167,7 +170,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
                     variantFeature.setVehicleFeature(feature);
                     variantFeature.setStandard(featureRequest.isStandard());
                     variantFeature.setAdditionalCost(featureRequest.getAdditionalCost());
-                    
+
                     variantFeatureRepository.save(variantFeature);
                 });
             }
@@ -189,7 +192,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newVariant.setPrice(request.getPrice());
         newVariant.setSkuCode(request.getSkuCode());
         newVariant.setImageUrl(request.getImageUrl());
-        
+
         // Thiết lập mối quan hệ với mẫu xe cha
         newVariant.setVehicleModel(parentModel);
 
@@ -210,13 +213,13 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         model.setUpdatedBy(updatedByEmail);
         model.setThumbnailUrl(request.getThumbnailUrl());
         // --- XỬ LÝ DỮ LIỆU HYBRID ---
-        // 1. Cập nhật các thông số cốt lõi
+        // Cập nhật các thông số cốt lõi
         model.setBaseRangeKm(request.getBaseRangeKm());
         model.setBaseMotorPower(request.getBaseMotorPower());
         model.setBaseBatteryCapacity(request.getBaseBatteryCapacity());
         model.setBaseChargingTime(request.getBaseChargingTime());
-        
-        // 2. Cập nhật chuỗi JSON từ Map thông số mở rộng
+
+        // Cập nhật chuỗi JSON từ Map thông số mở rộng
         try {
             if (request.getExtendedSpecs() != null) {
                 String jsonString = objectMapper.writeValueAsString(request.getExtendedSpecs());
@@ -234,28 +237,29 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     @Override
     @Transactional
     public VehicleVariant updateVariant(Long variantId, UpdateVariantRequest request, String updatedByEmail) {
-        // 1. Tìm variant hiện có
+        // Tìm variant hiện có
         VehicleVariant variant = findVariantById(variantId);
 
-        // KIỂM TRA VÀ LƯU LỊCH SỬ GIÁ 
-        // So sánh giá cũ với giá mới từ request (chỉ lưu lịch sử nếu giá thực sự thay đổi)
+        // KIỂM TRA VÀ LƯU LỊCH SỬ GIÁ
+        // So sánh giá cũ với giá mới từ request (chỉ lưu lịch sử nếu giá thực sự thay
+        // đổi)
         if (request.getPrice() != null && variant.getPrice().compareTo(request.getPrice()) != 0) {
-            
+
             // Tạo một đối tượng PriceHistory mới
             PriceHistory history = new PriceHistory();
             history.setVehicleVariant(variant);
             history.setOldPrice(variant.getPrice()); // Lấy giá cũ từ variant
             history.setNewPrice(request.getPrice()); // Lấy giá mới từ request
             history.setChangeDate(LocalDateTime.now());
-            history.setChangedBy(updatedByEmail); 
-            history.setReason(request.getReason()); 
-            
+            history.setChangedBy(updatedByEmail);
+            history.setReason(request.getReason());
+
             // Lưu lại lịch sử
             priceHistoryRepository.save(history);
         }
-        
-        saveVariantHistory(variant, EVMAction.UPDATE, updatedByEmail); 
-        // 2. Cập nhật thông tin cho variant 
+
+        saveVariantHistory(variant, EVMAction.UPDATE, updatedByEmail);
+        // Cập nhật thông tin cho variant
 
         variant.setVersionName(request.getVersionName());
         variant.setColor(request.getColor());
@@ -264,11 +268,16 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         variant.setImageUrl(request.getImageUrl());
 
         // Dùng if để kiểm tra null, tránh ghi đè giá trị nếu frontend không gửi lên
-        if (request.getWholesalePrice() != null) variant.setWholesalePrice(request.getWholesalePrice());
-        if (request.getBatteryCapacity() != null) variant.setBatteryCapacity(request.getBatteryCapacity());
-        if (request.getChargingTime() != null) variant.setChargingTime(request.getChargingTime());
-        if (request.getRangeKm() != null) variant.setRangeKm(request.getRangeKm());
-        if (request.getMotorPower() != null) variant.setMotorPower(request.getMotorPower());
+        if (request.getWholesalePrice() != null)
+            variant.setWholesalePrice(request.getWholesalePrice());
+        if (request.getBatteryCapacity() != null)
+            variant.setBatteryCapacity(request.getBatteryCapacity());
+        if (request.getChargingTime() != null)
+            variant.setChargingTime(request.getChargingTime());
+        if (request.getRangeKm() != null)
+            variant.setRangeKm(request.getRangeKm());
+        if (request.getMotorPower() != null)
+            variant.setMotorPower(request.getMotorPower());
 
         VehicleVariant savedVariant = variantRepository.save(variant);
 
@@ -282,9 +291,9 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             event.setNewPrice(savedVariant.getPrice());
             event.setStatus(savedVariant.getStatus().name());
             event.setImageUrl(savedVariant.getImageUrl());
-            
+
             kafkaTemplate.send("product_events", event);
-            
+
         } catch (Exception e) {
             System.err.println("WARN: Failed to send product update event to Kafka. " + e.getMessage());
         }
@@ -300,7 +309,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         model.setStatus(VehicleStatus.DISCONTINUED);
         model.setUpdatedBy(updatedByEmail);
         modelRepository.save(model);
-        
+
         model.getVariants().forEach(variant -> {
             saveVariantHistory(variant, EVMAction.DELETE, updatedByEmail); // Cập nhật lại lịch sử chỉnh sửa
             variant.setStatus(VehicleStatus.DISCONTINUED); // Cập nhật lại trạng thái
@@ -340,60 +349,14 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     @Override
-    public List<VehicleFeature> getAllFeatures() {
-        return featureRepository.findAll();
-    }
-
-    @Override
-    @Transactional
-    public VehicleVariant assignFeatureToVariant(Long variantId, FeatureRequest request, String updatedByEmail) {
-        // 1. Tìm variant và feature
-        VehicleVariant variant = findVariantById(variantId);
-        VehicleFeature feature = featureRepository.findById(request.getFeatureId())
-            .orElseThrow(() -> new AppException(ErrorCode.FEATURE_NOT_FOUND));
-
-        // 2. Tạo đối tượng quan hệ VariantFeature
-        VariantFeature variantFeature = new VariantFeature();
-        variantFeature.setId(new VariantFeatureId(variantId, request.getFeatureId()));
-        variantFeature.setVehicleVariant(variant);
-        variantFeature.setVehicleFeature(feature);
-        variantFeature.setStandard(request.isStandard());
-        variantFeature.setAdditionalCost(request.getAdditionalCost());
-        
-        // 3. Lưu lại quan hệ
-        variantFeatureRepository.save(variantFeature);
-        
-        saveVariantHistory(variant, EVMAction.UPDATE, updatedByEmail); // Ghi lại lịch sử
-        return variant;
-    }
-
-    @Override
-    @Transactional
-    public void unassignFeatureFromVariant(Long variantId, Long featureId, String updatedByEmail) {
-        // 1. Tìm variant để ghi lịch sử
-        VehicleVariant variant = findVariantById(variantId);
-
-        // 2. Tạo ID tổng hợp để xóa
-        VariantFeatureId id = new VariantFeatureId(variantId, featureId);
-        if (!variantFeatureRepository.existsById(id)) {
-            throw new AppException(ErrorCode.VARIANT_FEATURE_NOT_FOUND);
-        }
-
-        // 3. Xóa quan hệ
-        variantFeatureRepository.deleteById(id);
-        
-        saveVariantHistory(variant, EVMAction.UPDATE, updatedByEmail); // Ghi lại lịch sử
-    }
-
-    @Override
     public List<VariantDetailDto> getVariantDetailsByIds(List<Long> variantIds) {
         if (variantIds == null || variantIds.isEmpty()) {
             return new ArrayList<>(); // Trả về danh sách rỗng nếu không có ID nào
         }
-        
+
         // Dùng findAllById để lấy tất cả trong một câu lệnh SQL
         List<VehicleVariant> variants = variantRepository.findAllById(variantIds);
-        
+
         // Map kết quả sang DTO
         return variants.stream()
                 .map(this::mapToVariantDetailDto)
@@ -405,10 +368,10 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
      */
     @Override
     public Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Pageable pageable) {
-        
+
         Specification<VehicleVariant> searchSpec = VehicleVariantSpecification.hasKeyword(search);
         Specification<VehicleVariant> statusSpec = null;
-        
+
         if (status != null && !status.isBlank()) {
             List<Long> inventoryIds = getVariantIdsFromInventory(status);
             statusSpec = VehicleVariantSpecification.hasVariantIdIn(inventoryIds);
@@ -417,29 +380,29 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         Specification<VehicleVariant> finalSpec = Specification.allOf(searchSpec, statusSpec);
 
         Page<VehicleVariant> variantPage = variantRepository.findAll(finalSpec, pageable);
-        
+
         return variantPage.map(this::mapToVariantDetailDto);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ComparisonDto> getComparisonData(List<Long> variantIds, UUID dealerId, HttpHeaders headers) {
-        
-        // BƯỚC 1: Lấy thông tin chi tiết sản phẩm (Thông số, giá...)
+
+        // Lấy thông tin chi tiết sản phẩm (Thông số, giá...)
         // Lấy từ database của chính service này (vehicle-service).
         List<VariantDetailDto> vehicleDetails = variantRepository.findAllWithDetailsByIds(variantIds).stream()
                 .map(this::mapToVariantDetailDto)
                 .collect(Collectors.toList());
 
-        // BƯỚC 2: Gọi API sang Inventory-Service để lấy thông tin tồn kho
+        // Gọi API sang Inventory-Service để lấy thông tin tồn kho
         String inventoryUrl = inventoryServiceUrl + "/inventory/status-by-ids-detailed";
-        
+
         // Tạo request body chứa cả 2 thông tin
         Map<String, Object> requestBody = Map.of(
-            "variantIds", variantIds,
-            "dealerId", dealerId.toString() // Gửi dealerId để service kho biết
+                "variantIds", variantIds,
+                "dealerId", dealerId.toString() // Gửi dealerId để service kho biết
         );
-        
+
         // Chuyển tiếp các header xác thực từ request gốc
         HttpHeaders forwardHeaders = new HttpHeaders();
         if (headers != null) {
@@ -447,7 +410,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         }
         // Đảm bảo có Content-Type header
         forwardHeaders.set("Content-Type", "application/json");
-        
+
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, forwardHeaders);
 
         ResponseEntity<ApiRespond<List<InventoryComparisonDto>>> inventoryResponse;
@@ -455,48 +418,143 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             log.debug("Calling inventory-service at: {}", inventoryUrl);
             log.debug("Request headers: {}", forwardHeaders);
             inventoryResponse = restTemplate.exchange(
-                inventoryUrl,
-                HttpMethod.POST,
-                requestEntity,
-                // Dùng ParameterizedTypeReference để xử lý kiểu Generic (List<...>)
-                new ParameterizedTypeReference<ApiRespond<List<InventoryComparisonDto>>>() {}
-            );
+                    inventoryUrl,
+                    HttpMethod.POST,
+                    requestEntity,
+                    // Dùng ParameterizedTypeReference để xử lý kiểu Generic (List<...>)
+                    new ParameterizedTypeReference<ApiRespond<List<InventoryComparisonDto>>>() {
+                    });
         } catch (Exception e) {
             // Xử lý lỗi nếu không gọi được service kho
             log.error("Error calling inventory-service at {}: {}", inventoryUrl, e.getMessage(), e);
             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
-        
+
         if (inventoryResponse.getBody() == null || inventoryResponse.getBody().getData() == null) {
             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
-        
+
         List<InventoryComparisonDto> inventoryStatusList = inventoryResponse.getBody().getData();
-        
+
         // Tạo Map để tra cứu nhanh <VariantId, ThongTinKho>
         Map<Long, InventoryComparisonDto> inventoryMap = inventoryStatusList.stream()
                 .collect(Collectors.toMap(InventoryComparisonDto::getVariantId, status -> status));
 
         // BƯỚC 3: Gộp (Merge) hai luồng dữ liệu
         return vehicleDetails.stream()
-            .map(detail -> {
-                // Lấy thông tin kho từ Map, nếu không có thì tạo đối tượng rỗng
-                InventoryComparisonDto inventoryInfo = inventoryMap.getOrDefault(detail.getVariantId(), new InventoryComparisonDto());
-                return new ComparisonDto(detail, inventoryInfo); // Gộp lại
-            })
-            .collect(Collectors.toList());
+                .map(detail -> {
+                    // Lấy thông tin kho từ Map, nếu không có thì tạo đối tượng rỗng
+                    InventoryComparisonDto inventoryInfo = inventoryMap.getOrDefault(detail.getVariantId(),
+                            new InventoryComparisonDto());
+                    return new ComparisonDto(detail, inventoryInfo); // Gộp lại
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<VariantDetailDto> getAllVariantsForBackfill() {
         // Gọi thẳng repository để lấy tất cả, không phân trang
-        List<VehicleVariant> variants = variantRepository.findAll(); 
+        List<VehicleVariant> variants = variantRepository.findAll();
 
         // Map sang DTO
         return variants.stream()
-            .map(this::mapToVariantDetailDto)
-            .collect(Collectors.toList());
+                .map(this::mapToVariantDetailDto)
+                .collect(Collectors.toList());
+    }
+
+    // ==========================================================
+    // TRIỂN KHAI CHO QUẢN LÝ FEATURES
+    // ==========================================================
+
+    @Override
+    public List<VehicleFeature> getAllFeatures() {
+        return featureRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public VehicleVariant assignFeatureToVariant(Long variantId, FeatureRequest request, String updatedByEmail) {
+        // Tìm variant và feature
+        VehicleVariant variant = findVariantById(variantId);
+        VehicleFeature feature = featureRepository.findById(request.getFeatureId())
+                .orElseThrow(() -> new AppException(ErrorCode.FEATURE_NOT_FOUND));
+
+        // Tạo đối tượng quan hệ VariantFeature
+        VariantFeature variantFeature = new VariantFeature();
+        variantFeature.setId(new VariantFeatureId(variantId, request.getFeatureId()));
+        variantFeature.setVehicleVariant(variant);
+        variantFeature.setVehicleFeature(feature);
+        variantFeature.setStandard(request.isStandard());
+        variantFeature.setAdditionalCost(request.getAdditionalCost());
+
+        // Lưu lại quan hệ
+        variantFeatureRepository.save(variantFeature);
+
+        saveVariantHistory(variant, EVMAction.UPDATE, updatedByEmail); // Ghi lại lịch sử
+        return variant;
+    }
+
+    @Override
+    @Transactional
+    public void unassignFeatureFromVariant(Long variantId, Long featureId, String updatedByEmail) {
+        // Tìm variant để ghi lịch sử
+        VehicleVariant variant = findVariantById(variantId);
+
+        // Tạo ID tổng hợp để xóa
+        VariantFeatureId id = new VariantFeatureId(variantId, featureId);
+        if (!variantFeatureRepository.existsById(id)) {
+            throw new AppException(ErrorCode.VARIANT_FEATURE_NOT_FOUND);
+        }
+
+        // Xóa quan hệ
+        variantFeatureRepository.deleteById(id);
+
+        saveVariantHistory(variant, EVMAction.UPDATE, updatedByEmail); // Ghi lại lịch sử
+    }
+
+    @Override
+    @Transactional
+    public VehicleFeature createFeature(CreateFeatureRequest request, String createdByEmail) {
+        if (featureRepository.findByFeatureName(request.getFeatureName()).isPresent()) {
+            throw new AppException(ErrorCode.FEATURE_ALREADY_EXISTS);
+        }
+
+        VehicleFeature newFeature = new VehicleFeature();
+        newFeature.setFeatureName(request.getFeatureName());
+        newFeature.setDescription(request.getDescription());
+        newFeature.setCategory(request.getCategory());
+        newFeature.setFeatureType(request.getFeatureType());
+
+        return featureRepository.save(newFeature);
+    }
+
+    @Override
+    @Transactional
+    public VehicleFeature updateFeature(Long featureId, UpdateFeatureRequest request, String updatedByEmail) {
+        VehicleFeature feature = featureRepository.findById(featureId)
+                .orElseThrow(() -> new AppException(ErrorCode.FEATURE_NOT_FOUND));
+
+        feature.setFeatureName(request.getFeatureName());
+        feature.setDescription(request.getDescription());
+        feature.setCategory(request.getCategory());
+        feature.setFeatureType(request.getFeatureType());
+
+        return featureRepository.save(feature);
+    }
+
+    @Override
+    @Transactional
+    public void deleteFeature(Long featureId, String deletedByEmail) {
+        VehicleFeature feature = featureRepository.findById(featureId)
+                .orElseThrow(() -> new AppException(ErrorCode.FEATURE_NOT_FOUND));
+
+        boolean isAssigned = variantFeatureRepository.existsByVehicleFeature_FeatureId(featureId);
+        if (isAssigned) {
+            throw new AppException(ErrorCode.FEATURE_IS_ASSIGNED);
+        }
+
+        featureRepository.delete(feature);
     }
 
     // --- Helper Methods ---
@@ -529,20 +587,20 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setThumbnailUrl(model.getThumbnailUrl());
 
         // --- XỬ LÝ DỮ LIỆU HYBRID ---
-        // 1. Cập nhật các thông số cốt lõi
+        // Cập nhật các thông số cốt lõi
         dto.setBaseRangeKm(model.getBaseRangeKm());
         dto.setBaseMotorPower(model.getBaseMotorPower());
         dto.setBaseBatteryCapacity(model.getBaseBatteryCapacity());
         dto.setBaseChargingTime(model.getBaseChargingTime());
-        
-        // 2. Cập nhật chuỗi JSON từ Map thông số mở rộng
+
+        // Cập nhật chuỗi JSON từ Map thông số mở rộng
         try {
             if (model.getExtendedSpecsJson() != null && !model.getExtendedSpecsJson().isEmpty()) {
                 // Chuyển chuỗi JSON thành Map<String, Object>
                 Map<String, Object> extendedSpecs = objectMapper.readValue(
-                    model.getExtendedSpecsJson(), 
-                    new TypeReference<>() {}
-                );
+                        model.getExtendedSpecsJson(),
+                        new TypeReference<>() {
+                        });
                 dto.setExtendedSpecs(extendedSpecs);
             }
         } catch (Exception e) {
@@ -556,11 +614,11 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     private VariantDetailDto mapToVariantDetailDto(VehicleVariant variant) {
-        // 1. Lấy đối tượng Model cha để sử dụng cho việc kế thừa
+        // Lấy đối tượng Model cha để sử dụng cho việc kế thừa
         VehicleModel model = variant.getVehicleModel();
         VariantDetailDto dto = new VariantDetailDto();
 
-        // 2. Map các thông tin cơ bản, không cần logic kế thừa
+        // Map các thông tin cơ bản, không cần logic kế thừa
         dto.setVariantId(variant.getVariantId());
         dto.setVersionName(variant.getVersionName());
         dto.setModelId(model.getModelId());
@@ -570,37 +628,33 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setImageUrl(variant.getImageUrl());
         dto.setStatus(variant.getStatus());
         dto.setWholesalePrice(variant.getWholesalePrice()); // Giá sỉ là của riêng variant, không kế thừa
-        
+
         dto.setModelName(model.getModelName());
         dto.setBrand(model.getBrand());
-        // 3. ÁP DỤNG LOGIC KẾ THỪA VÀ GÁN MỘT LẦN DUY NHẤT
+        // ÁP DỤNG LOGIC KẾ THỪA VÀ GÁN MỘT LẦN DUY NHẤT
         // Xử lý Range: Ưu tiên variant, nếu không có thì lấy của model
         dto.setRangeKm(
-            (variant.getRangeKm() != null) ? variant.getRangeKm() : model.getBaseRangeKm()
-        );
-            
+                (variant.getRangeKm() != null) ? variant.getRangeKm() : model.getBaseRangeKm());
+
         // Xử lý Motor Power
         dto.setMotorPower(
-            (variant.getMotorPower() != null) ? variant.getMotorPower() : model.getBaseMotorPower()
-        );
-    
+                (variant.getMotorPower() != null) ? variant.getMotorPower() : model.getBaseMotorPower());
+
         // Xử lý Battery Capacity
         dto.setBatteryCapacity(
-            (variant.getBatteryCapacity() != null) ? variant.getBatteryCapacity() : model.getBaseBatteryCapacity()
-        );
-    
+                (variant.getBatteryCapacity() != null) ? variant.getBatteryCapacity() : model.getBaseBatteryCapacity());
+
         // Xử lý Charging Time
         dto.setChargingTime(
-            (variant.getChargingTime() != null) ? variant.getChargingTime() : model.getBaseChargingTime()
-        );
-        
-        // 4. Map các tính năng (features), logic này giữ nguyên
+                (variant.getChargingTime() != null) ? variant.getChargingTime() : model.getBaseChargingTime());
+
+        // Map các tính năng (features), logic này giữ nguyên
         if (variant.getFeatures() != null) {
             dto.setFeatures(variant.getFeatures().stream()
                     .map(this::mapToFeatureDto)
                     .collect(Collectors.toList()));
         }
-        
+
         return dto;
     }
 
@@ -620,14 +674,14 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         history.setVariantId(variant.getVariantId());
         history.setAction(action);
         history.setChangedBy(changedByEmail);
-        history.setActionDate(LocalDateTime.now()); 
-    
+        history.setActionDate(LocalDateTime.now());
+
         // Snapshot dữ liệu
         history.setVersionName(variant.getVersionName());
         history.setColor(variant.getColor());
         history.setPrice(variant.getPrice());
         history.setStatus(variant.getStatus());
-        
+
         variantHistoryRepository.save(history);
     }
 
@@ -654,45 +708,47 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
      */
     private List<Long> getVariantIdsFromInventory(String status) {
         String inventoryUrl = inventoryServiceUrl + "/inventory/variants/ids-by-status?status=" + status;
-        
+
         // Tạo HttpHeaders
         HttpHeaders headers = new HttpHeaders();
-        
+
         // Lấy request hiện tại
         try {
-            HttpServletRequest currentRequest = 
-                ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-            
+            HttpServletRequest currentRequest = ((ServletRequestAttributes) RequestContextHolder
+                    .currentRequestAttributes()).getRequest();
+
             // Sao chép các header cần thiết (Email, Role, v.v.)
             String email = currentRequest.getHeader("X-User-Email");
             String role = currentRequest.getHeader("X-User-Role");
-            
-            if (email != null) headers.set("X-User-Email", email);
-            if (role != null) headers.set("X-User-Role", role);
+
+            if (email != null)
+                headers.set("X-User-Email", email);
+            if (role != null)
+                headers.set("X-User-Role", role);
 
         } catch (Exception e) {
             log.warn("Không thể lấy HttpServletRequest để chuyển tiếp header: {}", e.getMessage());
-            
+
         }
 
-        // 4. Gói headers vào HttpEntity
+        // Gói headers vào HttpEntity
         HttpEntity<String> requestEntity = new HttpEntity<>(headers);
-        
+
         try {
             ResponseEntity<ApiRespond<List<Long>>> response = restTemplate.exchange(
-                inventoryUrl,
-                HttpMethod.GET,
-                requestEntity, 
-                new ParameterizedTypeReference<ApiRespond<List<Long>>>() {}
-            );
-            
+                    inventoryUrl,
+                    HttpMethod.GET,
+                    requestEntity,
+                    new ParameterizedTypeReference<ApiRespond<List<Long>>>() {
+                    });
+
             if (response.getBody() != null && response.getBody().getData() != null) {
                 return response.getBody().getData();
             }
         } catch (Exception e) {
             log.error("Không thể lấy ID từ inventory-service: {}", e.getMessage());
         }
-        
+
         return Collections.emptyList();
     }
 
