@@ -37,9 +37,11 @@ const InventoryReportTable = ({ data }) => {
 
   // Hàm định dạng số
   const formatNumber = (num) => {
-    if (num === null || num === undefined || num === Infinity) {
-      return "N/A";
+    // Kiểm tra xem num có phải là một số không
+    if (typeof num !== "number" || isNaN(num)) {
+      return "N/A"; // Hoặc '0.00', hoặc '---' tùy bạn
     }
+    // Nếu là số, an toàn để gọi toFixed()
     return num.toFixed(2);
   };
 
