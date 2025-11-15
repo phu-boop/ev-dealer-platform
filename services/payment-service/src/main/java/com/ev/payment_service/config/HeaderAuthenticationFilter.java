@@ -31,7 +31,12 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 
         // Log ngay từ đầu để đảm bảo filter được gọi
         log.info("[HeaderAuthFilter] ===== FILTER CALLED ===== Request: {} {}", requestMethod, requestPath);
-
+        // BỎ QUA favicon.ico
+        if ("/favicon.ico".equals(requestPath)) {
+            log.debug("[HeaderAuthFilter] Skipping /favicon.ico request");
+            filterChain.doFilter(request, response);
+            return;
+        }
         // 1. Đọc các header tin cậy từ Gateway
         String email = request.getHeader("X-User-Email");
         String role = request.getHeader("X-User-Role"); // Ví dụ: "ADMIN" hoặc "EVM_STAFF"
