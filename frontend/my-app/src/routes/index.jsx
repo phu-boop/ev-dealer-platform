@@ -1,5 +1,3 @@
-
-
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
@@ -101,7 +99,7 @@ import PayB2COrderPage from "../features/payments/pages/PayB2COrderPage.jsx";
 import B2CCashPaymentsManagementPage from "../features/payments/pages/B2CCashPaymentsManagementPage.jsx";
 import B2CDebtManagementPage from "../features/payments/pages/B2CDebtManagementPage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
-import PaymentResultPage from "../features/payments/pages/PaymentResultPage.jsx"
+import PaymentResultPage from "../features/payments/pages/PaymentResultPage.jsx";
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -537,7 +535,10 @@ export default function AppRoutes() {
                 path="staff/payments/orders/:orderId"
                 element={<CustomerPaymentPage />}
               />
-              <Route path="staff/payment/result" element={<PaymentResultPage />} />    
+              <Route
+                path="staff/payment/result"
+                element={<PaymentResultPage />}
+              />
             </Route>
           </Route>
         </Route>
