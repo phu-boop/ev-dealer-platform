@@ -349,6 +349,7 @@ import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPag
 import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
 import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
 import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
+import AvailableVehicleCatalogPage from "../features/dealer/sales/availableVehicle/pages/AvailableVehicleCatalogPage.jsx";
 
 // Manage Dealer
 import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
@@ -647,6 +648,10 @@ export default function AppRoutes() {
                 path="manager/vehicles/all"
                 element={<DealerProductCatalogPage />}
               />
+              <Route
+                path="manager/inventory/available"
+                element={<AvailableVehicleCatalogPage />}
+              />
 
               {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
 
@@ -782,6 +787,10 @@ export default function AppRoutes() {
               <Route
                 path="staff/vehicles/all"
                 element={<DealerProductCatalogPage />}
+              />
+              <Route
+                path="staff/inventory/available"
+                element={<AvailableVehicleCatalogPage />}
               />
 
               {/* Promotions */}
