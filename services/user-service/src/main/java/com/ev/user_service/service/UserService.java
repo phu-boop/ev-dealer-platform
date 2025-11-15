@@ -183,11 +183,11 @@ public class UserService {
         roles.add(userRole);
         user.setRoles(roles);
         user.setStatus(UserStatus.ACTIVE);
-        userRepository.save(user);
         // check dealer id
         if (dealerManagerProfileRepository.existsByDealerId(userRequest.getDealerId())) {
             throw new AppException(ErrorCode.DEALER_MANAGER_ALREADY_EXISTS);
         }
+        userRepository.save(user);
         dealerManagerProfileService.SaveDealerManagerProfile(user, userRequest
                 .getDealerId(), userRequest.getManagementLevel(), userRequest.getApprovalLimit(), userRequest.getDepartment());
         return userMapper.usertoUserRespond(user);

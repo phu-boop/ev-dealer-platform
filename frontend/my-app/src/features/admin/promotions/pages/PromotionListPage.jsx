@@ -434,6 +434,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                               </button>
                               
                               {promotion.status === 'DRAFT' && (
+  console.log('Render nút Duyệt cho', promotion.promotionName),
                                 <button
                                   onClick={() => handleApprove(promotion.promotionId)}
                                   disabled={actionLoading === promotion.promotionId}

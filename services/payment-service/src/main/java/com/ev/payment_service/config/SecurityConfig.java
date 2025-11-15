@@ -1,5 +1,6 @@
 package com.ev.payment_service.config;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +29,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, HeaderAuthenticationFilter headerAuthenticationFilter) throws Exception {
         log.info("[SecurityConfig] Configuring SecurityFilterChain with HeaderAuthenticationFilter");
-        
+
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -42,9 +43,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // API public vẫn là permitAll
                         .requestMatchers(HttpMethod.GET, "/api/v1/payments/methods/active-public").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/payments/customer/debug-me").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/payments/customer/debug-me",
+                                "/favicon.ico").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/payment/**").permitAll()
+                        .requestMatchers("/payment/return").permitAll()
 
-                        // Mọi request khác đều cần "xác thực" (đã được filter của chúng ta xử lý)
+                        // Bỏ qua favicon cho tất cả method
+                        .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated()
                 );
 

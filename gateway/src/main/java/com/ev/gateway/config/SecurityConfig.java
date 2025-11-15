@@ -22,48 +22,51 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Thêm cấu hình CORS
                 .authorizeExchange(exchanges -> exchanges
-                // ===== Cho phép public routes =====
-                .pathMatchers(
-                        "/", 
-                        "/error", 
-                        "/swagger-ui/**", 
-                        "/v3/api-docs/**",
-                        
-                        // user-service
-                        "/auth/**", 
-                        "/users/**",
-                        
-                        // customer-service
-                        "/customers/**",
-                        
-                        // dealer-service
-                        "/dealers/**",
-                        
-                        // inventory-service
-                        "/inventory/**",
-                        
-                        // payment-service
-                        "/payments/**",
+                        // ===== Cho phép public routes =====
+                        .pathMatchers(
+                                "/",
+                                "/error",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+
+                                // user-service
+                                "/auth/**",
+                                "/users/**",
+
+                                // customer-service
+                                "/customers/**",
+
+                                // dealer-service
+                                "/dealers/**",
+
+                                // inventory-service
+                                "/inventory/**",
+
+                                // payment-service
+                                "/payments/**",
+                                "/favicon.ico",
 
 
-                        // "/sales/**"
-                        "/sales/**",
+                                // "/sales/**"
+                                "/sales/**",
 
-                        // vehicle-service
-                        "/vehicles/**",
+                                // vehicle-service
+                                "/vehicles/**",
 
-                        // reporting-service
-                        "/reporting/**",
-                        
-                        // sendmail
-                        "/sendmail/customer-response/**",
+                                // reporting-service
+                                "/reporting/**",
 
-                        "/ws/**"
-                    ).permitAll()
-                    
-                    // ===== Các route khác cần JWT =====
-                    .anyExchange().authenticated()
+                                // sendmail
+                                "/sendmail/customer-response/**",
+
+                                "/ws/**"
+                        ).permitAll()
+
+                        // ===== Các route khác cần JWT =====
+                        .anyExchange().authenticated()
                 )
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 // Không tạo session
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .build();
