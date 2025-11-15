@@ -31,7 +31,12 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             "/auth",
             "/users",
             "/sendmail",
-            "/ws"
+            "/ws",
+            "/payments/payment/return",
+            "/payments/payment/ipn",
+            "/payments/payment/pay-url",
+            "/favicon.ico"
+
     );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {
@@ -48,8 +53,9 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        // Ngoại lệ: Bỏ qua xác thực hoàn toàn
-        if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
+
+         // Path được bỏ qua xác thực
+        if (EXCLUDED_PATHS.stream().anyMatch(path::contains)) {
             log.debug("[JwtGlobalFilter] Path excluded from authentication: {}", path);
             return chain.filter(exchange);
         }
@@ -74,13 +80,14 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             Long userId = jwtUtil.extractUserId(token);
             String profileId = jwtUtil.extractProfileId(token);
 
+
             // Log debug cho payment service
             if (path.startsWith("/payments")) {
-                log.debug("[JwtGlobalFilter] [PAYMENT_SERVICE] Authentication successful - Path: {} | Email: {} | Role: {} | UserId: {} | ProfileId: {}", 
+                log.debug("[JwtGlobalFilter] [PAYMENT_SERVICE] Authentication successful - Path: {} | Email: {} | Role: {} | UserId: {} | ProfileId: {}",
                         path, email, role, userId, profileId);
             }
-            
-            log.info("[JwtGlobalFilter] Extracted from JWT - Path: {} | Email: {} | Role: {} | UserId: {} | ProfileId: {}", 
+
+            log.info("[JwtGlobalFilter] Extracted from JWT - Path: {} | Email: {} | Role: {} | UserId: {} | ProfileId: {}",
                     path, email, role, userId, profileId);
 
             if (!jwtUtil.isTokenValid(token, email)) {
@@ -94,13 +101,15 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
                         headers.add("X-User-Role", role);
                         headers.add("X-User-Id", String.valueOf(userId));
                         headers.add("X-User-ProfileId", profileId);
-                        
+                        headers.add("X-Forwarded-For", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+
+
                         // Log debug cho payment service
                         if (path.startsWith("/payments")) {
-                            log.debug("[JwtGlobalFilter] [PAYMENT_SERVICE] Added headers to request - X-User-Email: {}, X-User-Role: {}, X-User-Id: {}, X-User-ProfileId: {}", 
+                            log.debug("[JwtGlobalFilter] [PAYMENT_SERVICE] Added headers to request - X-User-Email: {}, X-User-Role: {}, X-User-Id: {}, X-User-ProfileId: {}",
                                     email, role, userId, profileId);
                         } else {
-                            log.debug("[JwtGlobalFilter] Added headers - X-User-Email: {}, X-User-Role: {}, X-User-ProfileId: {}", 
+                            log.debug("[JwtGlobalFilter] Added headers - X-User-Email: {}, X-User-Role: {}, X-User-ProfileId: {}",
                                     email, role, profileId);
                         }
                     }))
