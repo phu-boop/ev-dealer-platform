@@ -1,6 +1,5 @@
 package com.ev.dealer_service.entity;
 
-
 import com.ev.dealer_service.enums.DealerStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

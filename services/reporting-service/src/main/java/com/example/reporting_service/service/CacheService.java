@@ -49,7 +49,7 @@ public class CacheService {
         log.warn("Cache Miss cho Dealer ID: {}. Đang gọi API...", dealerId);
         try {
             // Giả sử dealer-service có API trả về DTO này
-            String url = dealerServiceUrl + "/api/v1/dealers/info/" + dealerId; 
+            String url = dealerServiceUrl + "/api/dealers/" + dealerId;
             DealerInfoEvent dealerInfo = restTemplate.getForObject(url, DealerInfoEvent.class);
 
             if (dealerInfo != null) {
@@ -82,9 +82,9 @@ public class CacheService {
             String url = vehicleServiceUrl + "/vehicle-catalog/variants/" + variantId;
             // API này trả về ApiRespond<VariantDetailDto>
             ResponseEntity<ApiRespond<VariantDetailDto>> response = restTemplate.exchange(
-                url, HttpMethod.GET, null, new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {}
-            );
-            
+                    url, HttpMethod.GET, null, new ParameterizedTypeReference<ApiRespond<VariantDetailDto>>() {
+                    });
+
             VariantDetailDto vehicleInfo = response.getBody().getData();
 
             if (vehicleInfo != null) {
