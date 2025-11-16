@@ -51,6 +51,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -97,8 +99,10 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     private String inventoryServiceUrl;
 
     @Override
-    public List<ModelSummaryDto> getAllModels() {
-        return modelRepository.findAllWithVariants().stream()
+    public List<ModelSummaryDto> getAllModels(Sort sort) {
+        Sort sortToUse = (sort != null && sort.isSorted()) ? sort : Sort.by(Direction.ASC, "modelName");
+
+        return modelRepository.findAll(sortToUse).stream()
                 .map(this::mapToModelSummaryDto)
                 .collect(Collectors.toList());
     }
@@ -367,7 +371,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
      * Triển khai logic cho API phân trang/tìm kiếm (Có cả status)
      */
     @Override
-    public Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Pageable pageable) {
+    public Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Double minPrice,
+            Double maxPrice, Pageable pageable) {
 
         Specification<VehicleVariant> searchSpec = VehicleVariantSpecification.hasKeyword(search);
         Specification<VehicleVariant> statusSpec = null;
@@ -377,10 +382,23 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             statusSpec = VehicleVariantSpecification.hasVariantIdIn(inventoryIds);
         }
 
-        Specification<VehicleVariant> finalSpec = Specification.allOf(searchSpec, statusSpec);
+        Specification<VehicleVariant> priceSpecMin = null;
+        if (minPrice != null) {
+            priceSpecMin = VehicleVariantSpecification.isPriceGreaterThanOrEqual(minPrice);
+        }
+
+        Specification<VehicleVariant> priceSpecMax = null;
+        if (maxPrice != null) {
+            priceSpecMax = VehicleVariantSpecification.isPriceLessThanOrEqual(maxPrice);
+        }
+
+        Specification<VehicleVariant> finalSpec = Specification.allOf(
+                searchSpec,
+                statusSpec,
+                priceSpecMin,
+                priceSpecMax);
 
         Page<VehicleVariant> variantPage = variantRepository.findAll(finalSpec, pageable);
-
         return variantPage.map(this::mapToVariantDetailDto);
     }
 
@@ -687,7 +705,9 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
 
     @Override
     public List<VariantDetailDto> getVariantsByModelId(Long modelId) {
-        VehicleModel model = findModelById(modelId); // Tự động ném AppException nếu không tìm thấy
+        if (!modelRepository.existsById(modelId)) {
+            throw new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND);
+        }
 
         List<VehicleVariant> variants = variantRepository.findByVehicleModel_ModelId(modelId);
 

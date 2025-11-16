@@ -17,6 +17,7 @@ import com.ev.vehicle_service.model.VehicleVariant;
 import com.ev.vehicle_service.model.VehicleFeature;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 
@@ -25,7 +26,7 @@ import java.util.UUID;
 
 public interface VehicleCatalogService {
 
-    List<ModelSummaryDto> getAllModels();
+    List<ModelSummaryDto> getAllModels(Sort sort);
 
     /**
      * Lấy TẤT CẢ ID của các phiên bản (không phân trang)
@@ -94,8 +95,12 @@ public interface VehicleCatalogService {
 
     /**
      * Triển khai logic cho API phân trang/tìm kiếm
-     * 
-     * @param status (MỚI) Lọc theo trạng thái tồn kho
+     *
+     * @param search   (MỚI) Từ khóa tìm kiếm
+     * @param status   (MỚI) Lọc theo trạng thái tồn kho
+     * @param minPrice (MỚI) Lọc theo giá tối thiểu
+     * @param maxPrice (MỚI) Lọc theo giá tối đa
      */
-    Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Pageable pageable);
+    Page<VariantDetailDto> getAllVariantsPaginated(String search, String status, Double minPrice, Double maxPrice,
+            Pageable pageable);
 }

@@ -30,8 +30,13 @@ const B2BOrderForm = () => {
     const fetchVariants = async () => {
       setIsLoadingVariants(true);
       try {
+        const params = {
+          page: 0,
+          size: 200, // Tăng size để lấy được nhiều xe hơn cho dropdown
+          sort: "vehicleModel.modelName,asc,versionName,asc", // Sắp xếp theo Tên Model, rồi Tên Phiên bản
+        };
         // Gọi API lấy tất cả các phiên bản xe
-        const response = await getAllVariantsPaginated({ page: 0, size: 100 }); // Lấy 100 xe đầu
+        const response = await getAllVariantsPaginated(params);
         setAllVariants(response.data.data.content || []);
       } catch (err) {
         console.error("Failed to fetch variants:", err);

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuthContext } from "../../../auth/AuthProvider";
-import { FiEye, FiLoader } from "react-icons/fi";
+import { FiEye, FiLoader, FiFilter } from "react-icons/fi";
 import {
   getAllVariantsPaginated,
   getComparisonDetails,
@@ -11,8 +11,18 @@ import ProductCard from "../../../../components/common/ProductCard";
 import CompareTray from "../../../../components/common/CompareTray";
 import CompareModal from "../../../../components/common/CompareModal";
 
-const fetchVariantsFromAPI = async (page) => {
-  const response = await getAllVariantsPaginated({ page: page, size: 10 });
+const fetchVariantsFromAPI = async (page, params) => {
+  const apiParams = {
+    ...params, // Sẽ chứa: sort, minPrice, maxPrice
+    page: page,
+    size: 10,
+  };
+
+  // Xóa các giá trị rỗng để không gửi lên backend
+  if (!apiParams.minPrice) delete apiParams.minPrice;
+  if (!apiParams.maxPrice) delete apiParams.maxPrice;
+
+  const response = await getAllVariantsPaginated(apiParams);
   return response.data.data;
 };
 
@@ -34,22 +44,48 @@ const DealerProductCatalogPage = () => {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(true);
 
-  // Load danh sách xe
-  useEffect(() => {
-    const loadData = async () => {
+  // State cho sắp xếp và lọc giá
+  const [sort, setSort] = useState("vehicleModel.modelName,asc"); // Sắp xếp mặc định
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
+  const loadData = useCallback(
+    async (loadPage, isFilterChange = false) => {
       setIsLoading(true);
       try {
-        const pageData = await fetchVariantsFromAPI(page);
-        setVariants((prevVariants) => [...prevVariants, ...pageData.content]);
+        const params = { sort, minPrice, maxPrice };
+        const pageData = await fetchVariantsFromAPI(loadPage, params);
+
+        if (isFilterChange) {
+          // Nếu là do đổi bộ lọc, ta phải *thay thế* danh sách cũ
+          setVariants(pageData.content);
+        } else {
+          // Nếu là "Xem thêm" (loadPage > 0), ta *nối* vào danh sách
+          setVariants((prevVariants) => [...prevVariants, ...pageData.content]);
+        }
+
         setHasNextPage(!pageData.last);
       } catch (error) {
         console.error("Failed to fetch variants:", error);
       } finally {
         setIsLoading(false);
       }
-    };
-    loadData();
-  }, [page]); // Vẫn giữ [page]
+    },
+    [page, sort, minPrice, maxPrice]
+  );
+
+  // useEffect để xử lý "load more"
+  useEffect(() => {
+    // Chỉ chạy khi page > 0 (nghĩa là bấm "Xem thêm")
+    if (page > 0) {
+      loadData(page, false);
+    }
+  }, [page]);
+
+  // useEffect để xử lý khi filter thay đổi
+  useEffect(() => {
+    loadData(0, true);
+  }, [sort, minPrice, maxPrice]);
 
   // Xử lý thêm/bớt xe khỏi khay so sánh
   const handleToggleCompare = (variant) => {
@@ -129,10 +165,78 @@ const DealerProductCatalogPage = () => {
     setPage((prevPage) => prevPage + 1);
   };
 
+  const handleSortChange = (e) => {
+    setSort(e.target.value);
+    setPage(0);
+    setHasNextPage(true);
+  };
+
+  const handleApplyPriceFilter = () => {
+    setPage(0);
+    setHasNextPage(true);
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-3xl font-bold mb-6">Danh mục Sản phẩm</h1>
-      {isLoading && variants.length === 0 ? (
+
+      {/* THÊM: Thanh Lọc và Sắp xếp */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-wrap gap-4 items-end">
+        <FiFilter className="text-2xl text-gray-600" />
+
+        {/* Sắp xếp */}
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-sm font-medium text-gray-700">
+            Sắp xếp
+          </label>
+          <select
+            value={sort}
+            onChange={handleSortChange}
+            className="p-2 border rounded-lg w-full"
+          >
+            <option value="vehicleModel.modelName,asc">Tên A-Z</option>
+            <option value="vehicleModel.modelName,desc">Tên Z-A</option>
+            <option value="price,asc">Giá: Thấp đến Cao</option>
+            <option value="price,desc">Giá: Cao đến Thấp</option>
+          </select>
+        </div>
+
+        {/* Lọc giá */}
+        <div className="flex-1 min-w-[150px]">
+          <label className="block text-sm font-medium text-gray-700">
+            Giá từ
+          </label>
+          <input
+            type="number"
+            placeholder="VD: 50000"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="p-2 border rounded-lg w-full"
+          />
+        </div>
+        <div className="flex-1 min-w-[150px]">
+          <label className="block text-sm font-medium text-gray-700">
+            Đến giá
+          </label>
+          <input
+            type="number"
+            placeholder="VD: 100000"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="p-2 border rounded-lg w-full"
+          />
+        </div>
+
+        {/* Nút Áp dụng (chỉ cần reset page) */}
+        <button
+          onClick={handleApplyPriceFilter}
+          className="p-2 bg-blue-600 text-white rounded-lg"
+        >
+          Áp dụng
+        </button>
+      </div>
+
+      {isLoading && page === 0 ? (
         <p>Đang tải danh sách xe...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

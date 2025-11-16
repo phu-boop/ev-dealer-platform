@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpHeaders;
@@ -49,8 +50,9 @@ public class VehicleCatalogController {
      * Lấy danh sách tóm tắt tất cả các mẫu xe.
      */
     @GetMapping("/models")
-    public ResponseEntity<ApiRespond<List<ModelSummaryDto>>> getAllModels() {
-        List<ModelSummaryDto> allModels = vehicleCatalogService.getAllModels();
+    public ResponseEntity<ApiRespond<List<ModelSummaryDto>>> getAllModels(
+            @RequestParam(required = false) Sort sort) {
+        List<ModelSummaryDto> allModels = vehicleCatalogService.getAllModels(sort);
         return ResponseEntity.ok(ApiRespond.success("Fetched all models successfully", allModels));
     }
 
@@ -223,15 +225,20 @@ public class VehicleCatalogController {
     public ResponseEntity<ApiRespond<Page<VariantDetailDto>>> getAllVariantsPaginated(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
+
+            // Lọc theo khoảng giá
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
             @PageableDefault(size = 10, sort = "variantId") Pageable pageable) {
 
         // Truyền 'status' xuống service
-        Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, status, pageable);
+        Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, status, minPrice,
+                maxPrice, pageable);
         return ResponseEntity.ok(ApiRespond.success("Fetched paginated variants successfully", results));
     }
 
     /**
-     * API MỚI: Lấy TẤT CẢ các phiên bản (không phân trang).
+     * Lấy TẤT CẢ các phiên bản (không phân trang).
      * Phục vụ riêng cho việc backfill cache của reporting-service.
      */
     @GetMapping("/variants/all-for-backfill")
