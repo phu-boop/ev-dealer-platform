@@ -115,6 +115,8 @@ export default function AppRoutes() {
           <Route path="reset-password" element={<ResetPassword />} />
           {/* Public Payment Routes */}
           <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
+          {/* VNPAY */}
+          <Route path="payment/result" element={<PaymentResultPage />} />
         </Route>
 
         {/* ================================================================== */}
@@ -534,10 +536,6 @@ export default function AppRoutes() {
               <Route
                 path="staff/payments/orders/:orderId"
                 element={<CustomerPaymentPage />}
-              />
-              <Route
-                path="staff/payment/result"
-                element={<PaymentResultPage />}
               />
             </Route>
           </Route>
