@@ -4,17 +4,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { getSalesSummary } from "../services/reportingService";
 import SalesReportTable from "../components/SalesReportTable";
 
-// --- IMPORT ANT DESIGN ---
-import { Card, Row, Col, Typography, Space } from "antd";
+// --- IMPORT ANT DESIGN (ĐÃ THÊM SELECT VÀ OPTION) ---
+import { Card, Row, Col, Typography, Space, Select } from "antd";
 const { Title } = Typography;
+const { Option } = Select; // Import Option cho Select
 
 // === STYLE NỘI TUYẾN (CŨ, VẪN DÙNG TẠM) ===
-const selectStyle = {
-  padding: "8px 12px",
-  fontSize: "14px",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-};
+// --- ĐÃ XÓA selectStyle ---
 
 const errorBoxStyle = {
   padding: "20px",
@@ -78,7 +74,7 @@ const TableSkeleton = () => {
   );
   return (
     <table style={{ width: "100%", borderCollapse: "collapse" }}>
-      {/* ... (phần a) ... */}
+       {/* ... (phần code skeleton của bạn) ... */}
     </table>
   );
 };
@@ -111,14 +107,25 @@ const SalesReportPage = () => {
     fetchReport();
   }, [fetchReport]);
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
+  // --- HÀM CŨ BỊ XÓA ---
+  // const handleFilterChange = (e) => { ... };
+
+  // --- HÀM MỚI CHO AntD Select ---
+  const handleRegionChange = (value) => {
+    // 'value' sẽ là undefined nếu người dùng bấm 'x' (allowClear)
     setFilters((prevFilters) => ({
       ...prevFilters,
-      [name]: value,
+      region: value || "", // Gán về chuỗi rỗng
     }));
   };
 
+  const handleModelChange = (value) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      modelId: value || "", // Gán về chuỗi rỗng
+    }));
+  };
+  
   // --- LOGIC RENDER CŨ (VẪN GIỮ NGUYÊN) ---
   const renderContent = () => {
     if (loading) {
@@ -141,10 +148,8 @@ const SalesReportPage = () => {
   };
 
   return (
-    // --- KHUNG TRANG ĐÃ ĐƯỢC NÂNG CẤP BẰNG AntD ---
     <Card style={{ margin: "24px", backgroundColor: "#f9fbfd" }}>
       
-      {/* 1. Header dùng Row/Col của AntD */}
       <Row
         justify="space-between"
         align="middle"
@@ -156,41 +161,41 @@ const SalesReportPage = () => {
           </Title>
         </Col>
 
-        {/* 2. Bộ lọc VẪN DÙNG <select> THÔ (sẽ nâng cấp ở commit sau) */}
+        {/* --- KHU VỰC BỘ LỌC ĐÃ ĐƯỢC NÂNG CẤP --- */}
         <Col>
-          <Space> {/* Space là component mới để tạo khoảng cách */}
-            <select
-              name="region"
-              value={filters.region}
-              onChange={handleFilterChange}
-              style={selectStyle}
+          <Space>
+            <Select
+              placeholder="Chọn khu vực"
+              value={filters.region || null} // Dùng null để placeholder hiển thị
+              style={{ width: 200 }}
+              onChange={handleRegionChange}
+              allowClear // Thêm nút 'x' để xóa
             >
-              <option value="">Tất cả Khu vực</option>
-              <option value="Miền Bắc">Miền Bắc</option>
-              <option value="Miền Trung">Miền Trung</option>
-              <option value="Miền Nam">Miền Nam</option>
-            </select>
+              <Option value="Miền Bắc">Miền Bắc</Option>
+              <Option value="Miền Trung">Miền Trung</Option>
+              <Option value="Miền Nam">Miền Nam</Option>
+              {/* TODO: Load từ API */}
+            </Select>
 
-            <select
-              name="modelId"
-              value={filters.modelId}
-              onChange={handleFilterChange}
-              style={selectStyle}
+            <Select
+              placeholder="Chọn mẫu xe"
+              value={filters.modelId || null} // Dùng null để placeholder hiển thị
+              style={{ width: 200 }}
+              onChange={handleModelChange}
+              allowClear // Thêm nút 'x' để xóa
             >
-              <option value="">Tất cả Mẫu xe</option>
-              <option value="1">VF 3</option>
-              <option value="2">VF 5</option>
-              <option value="3">VF e34</option>
-            </select>
+              <Option value="1">VF 3</Option>
+              <Option value="2">VF 5</Option>
+              <Option value="3">VF e34</Option>
+              {/* TODO: Load từ API */}
+            </Select>
           </Space>
         </Col>
       </Row>
 
-      {/* 3. Nội dung render VẪN DÙNG LOGIC CŨ (sẽ nâng cấp ở commit sau) */}
       <div className="report-content">{renderContent()}</div>
 
     </Card>
-    // --- KẾT THÚC KHUNG TRANG NÂNG CẤP ---
   );
 };
 
