@@ -5,6 +5,7 @@ import { AuthProvider } from "../features/auth/AuthProvider";
 import EvmLayout from "../layouts/evmLayout/EvmLayout.jsx";
 import UserLayout from "../layouts/UserLayout";
 import DealerLayout from "../layouts/dealerLayout/DealerLayout.jsx";
+import AuthLayout from "../layouts/AuthLayout";
 
 // pages
 import Home from "../pages/Home";
@@ -110,11 +111,15 @@ export default function AppRoutes() {
 
         <Route path="/" element={<UserLayout />}>
           <Route index element={<Home />} />
+          {/* Public Payment Routes */}
+          <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
+        </Route>
+
+        {/* --- Layout cho trang xác thực FULL-SCREEN --- */}
+        <Route element={<AuthLayout />}>
           <Route path="login" element={<Login />} />
           <Route path="oauth-success" element={<OAuthSuccess />} />
           <Route path="reset-password" element={<ResetPassword />} />
-          {/* Public Payment Routes */}
-          <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
         </Route>
 
         {/* ================================================================== */}
