@@ -47,7 +47,7 @@ export const dealerManagerMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/manager/inventory/stock",
+        path: "/dealer/manager/inventory/available",
       },
       {
         icon: FiTag,
@@ -250,7 +250,7 @@ export const dealerStaffMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/staff/inventory/stock",
+        path: "/dealer/staff/inventory/available",
       },
       {
         icon: FiTag,

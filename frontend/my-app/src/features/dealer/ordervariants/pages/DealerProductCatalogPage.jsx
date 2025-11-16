@@ -11,7 +11,6 @@ import ProductCard from "../../../../components/common/ProductCard";
 import CompareTray from "../../../../components/common/CompareTray";
 import CompareModal from "../../../../components/common/CompareModal";
 
-// (Đây là dữ liệu giả, bạn sẽ thay bằng API call thật)
 const fetchVariantsFromAPI = async (page) => {
   const response = await getAllVariantsPaginated({ page: page, size: 10 });
   return response.data.data;
