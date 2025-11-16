@@ -258,7 +258,7 @@ public class SalesContractServiceImpl implements SalesContractService {
     }
 
     @Override
-    public List<SalesContractResponse> searchContracts(Long customerId, ContractStatus status) {
+    public List<SalesContractResponse> searchContracts(UUID customerId, ContractStatus status) {
         // Example logic, tùy repository bạn có thể implement thêm JPQL/Criteria
         List<SalesContract> contracts = salesContractRepository.searchContracts(customerId, status);
         return contracts.stream().map(this::mapToResponse).collect(Collectors.toList());

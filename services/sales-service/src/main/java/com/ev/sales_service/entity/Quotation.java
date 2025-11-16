@@ -24,8 +24,8 @@ public class Quotation {
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id", nullable = false)
-    private Long customerId;
+    @Column(name = "customer_id", nullable = false, columnDefinition = "BINARY(16)")
+    private UUID customerId;
 
     @Column(name = "model_id", nullable = false)
     private Long modelId;

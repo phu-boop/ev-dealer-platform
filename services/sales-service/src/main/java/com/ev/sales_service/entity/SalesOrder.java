@@ -31,8 +31,8 @@ public class SalesOrder {
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id")
-    private Long customerId;
+    @Column(name = "customer_id", columnDefinition = "BINARY(16)")
+    private UUID customerId;
 
     @Column(name = "staff_id", columnDefinition = "BINARY(16)")
     private UUID staffId;
