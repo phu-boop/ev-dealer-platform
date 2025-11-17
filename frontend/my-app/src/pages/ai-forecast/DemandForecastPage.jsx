@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+} from '../../components/ui/card';
+import Button from '../../components/ui/Button';
 import {
   LineChart,
   Line,
@@ -19,10 +20,11 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { TrendingUp, TrendingDown, Minus, Activity, Package, AlertCircle } from 'lucide-react';
-import forecastService from '@/services/ai/forecastService';
+import { TrendingUp, TrendingDown, Minus, Activity, Package, AlertCircle, ArrowLeft, Calendar } from 'lucide-react';
+import forecastService from '../../services/ai/forecastService';
 
 export default function DemandForecastPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [forecastData, setForecastData] = useState(null);
   const [formData, setFormData] = useState({
@@ -74,8 +76,32 @@ export default function DemandForecastPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">📊 Dự Báo Nhu Cầu</h1>
+          <p className="text-sm text-muted-foreground mt-1">Tạo dự báo nhu cầu cho sản phẩm và khu vực</p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/evm/admin/reports/forecast')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Dashboard
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/evm/admin/reports/forecast/production')}
+            className="flex items-center gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            Kế Hoạch SX
+          </Button>
+        </div>
+      </div>
+
       <div>
-        <h1 className="text-3xl font-bold">📊 Dự Báo Nhu Cầu (Demand Forecasting)</h1>
         <p className="text-muted-foreground mt-2">
           Dự báo nhu cầu sử dụng AI/ML để lập kế hoạch sản xuất và phân phối
         </p>

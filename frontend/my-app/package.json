@@ -34,6 +34,7 @@
     "react-loading-skeleton": "^3.5.0",
     "react-router-dom": "^7.8.1",
     "react-toastify": "^11.0.5",
+    "recharts": "^3.4.1",
     "sockjs-client": "^1.6.1",
     "sweetalert2": "^11.22.4",
     "tailwindcss": "^4.1.12"

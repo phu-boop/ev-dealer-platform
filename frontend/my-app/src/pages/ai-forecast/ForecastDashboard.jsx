@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '../../components/ui/card';
 import {
   LineChart,
   Line,
@@ -20,12 +21,13 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { TrendingUp, TrendingDown, Package, DollarSign, ShoppingCart, AlertTriangle } from 'lucide-react';
-import forecastService from '@/services/ai/forecastService';
+import { TrendingUp, TrendingDown, Package, DollarSign, ShoppingCart, AlertTriangle, BarChart3, Calendar } from 'lucide-react';
+import forecastService from '../../services/ai/forecastService';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function ForecastDashboard() {
+  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [daysBack, setDaysBack] = useState(30);
@@ -76,16 +78,46 @@ export default function ForecastDashboard() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">🤖 AI Dự Báo & Phân Tích</h1>
-        <select
-          value={daysBack}
-          onChange={(e) => setDaysBack(Number(e.target.value))}
-          className="px-4 py-2 border rounded-lg"
+        <div>
+          <h1 className="text-3xl font-bold">🤖 AI Dự Báo & Phân Tích</h1>
+          <p className="text-sm text-muted-foreground mt-1">Theo dõi hiệu suất bán hàng và tồn kho theo thời gian thực</p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <select
+            value={daysBack}
+            onChange={(e) => setDaysBack(Number(e.target.value))}
+            className="px-4 py-2 border rounded-lg"
+          >
+            <option value={7}>7 ngày qua</option>
+            <option value={30}>30 ngày qua</option>
+            <option value={90}>90 ngày qua</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Quick Action Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button
+          onClick={() => navigate('/evm/admin/reports/forecast/demand')}
+          className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors"
         >
-          <option value={7}>7 ngày qua</option>
-          <option value={30}>30 ngày qua</option>
-          <option value={90}>90 ngày qua</option>
-        </select>
+          <BarChart3 className="h-8 w-8 text-blue-600" />
+          <div className="text-left">
+            <h3 className="font-semibold text-blue-900">Dự Báo Nhu Cầu</h3>
+            <p className="text-sm text-blue-700">Tạo dự báo cho sản phẩm & khu vực</p>
+          </div>
+        </button>
+        
+        <button
+          onClick={() => navigate('/evm/admin/reports/forecast/production')}
+          className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors"
+        >
+          <Calendar className="h-8 w-8 text-green-600" />
+          <div className="text-left">
+            <h3 className="font-semibold text-green-900">Kế Hoạch Sản Xuất</h3>
+            <p className="text-sm text-green-700">Lập kế hoạch dựa trên dự báo</p>
+          </div>
+        </button>
       </div>
 
       {/* KPI Cards */}

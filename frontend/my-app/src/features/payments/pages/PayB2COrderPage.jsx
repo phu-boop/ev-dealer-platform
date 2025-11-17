@@ -5,7 +5,6 @@ import { salesOrderB2CApi } from '../../dealer/sales/salesOrder/services/salesOr
 import paymentService from '../services/paymentService';
 import PaymentForm from '../components/PaymentForm';
 import PaymentHistory from '../components/PaymentHistory';
-import VNPayPaymentForm from '../components/VNPayPaymentForm';
 import { toast } from 'react-toastify';
 import { ArrowLeftIcon, CreditCardIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 
@@ -265,11 +264,26 @@ const handleVNPayPayment = async (amount) => {
           {/* Payment Forms */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             {activePaymentMethod === 'vnpay' ? (
-              <VNPayPaymentForm
-                remainingAmount={remainingAmount}
-                onSubmit={handleVNPayPayment}
-                formatCurrency={formatCurrency}
-              />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Thanh Toán VNPAY</h3>
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800 mb-2">
+                      <strong>Số tiền cần thanh toán:</strong> {formatCurrency(remainingAmount)}
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      Bạn sẽ được chuyển đến cổng thanh toán VNPAY để hoàn tất giao dịch.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleVNPayPayment}
+                    disabled={submitting || remainingAmount <= 0}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? 'Đang xử lý...' : 'Thanh Toán VNPAY'}
+                  </button>
+                </div>
+              </div>
             ) : (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông Tin Thanh Toán</h3>

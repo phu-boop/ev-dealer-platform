@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Factory, AlertTriangle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
-import forecastService from '@/services/ai/forecastService';
+} from '../../components/ui/card';
+import Button from '../../components/ui/Button';
+import { Factory, AlertTriangle, CheckCircle, Clock, TrendingUp, ArrowLeft, BarChart3 } from 'lucide-react';
+import forecastService from '../../services/ai/forecastService';
 
 export default function ProductionPlanPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [plans, setPlans] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
@@ -134,11 +136,31 @@ export default function ProductionPlanPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">🏭 Kế Hoạch Sản Xuất (Production Planning)</h1>
-        <p className="text-muted-foreground mt-2">
-          Lập kế hoạch sản xuất dựa trên dự báo nhu cầu từ AI
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">🏭 Kế Hoạch Sản Xuất</h1>
+          <p className="text-muted-foreground mt-2">
+            Lập kế hoạch sản xuất dựa trên dự báo nhu cầu từ AI
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/evm/admin/reports/forecast')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Dashboard
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/evm/admin/reports/forecast/demand')}
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Dự Báo
+          </Button>
+        </div>
       </div>
 
       {/* Controls */}
