@@ -1,6 +1,8 @@
 package com.ev.payment_service.service.Interface;
 
 import java.util.UUID;
+import com.ev.payment_service.dto.request.VnpayInitiateRequest; // Thêm
+import java.util.Map; // Thêm
 
 /**
  * VNPAY Payment Gateway Service Interface
@@ -8,13 +10,18 @@ import java.util.UUID;
 public interface IVnpayService {
 
     /**
-     * Tạo payment URL từ VNPAY
-     * @param transactionId Transaction ID
-     * @param amount Số tiền thanh toán (VND)
-     * @param orderId Order ID (để hiển thị trên VNPAY)
-     * @return Payment URL từ VNPAY
+     * HÀM MỚI: Khởi tạo thanh toán B2C, tạo PaymentRecord và Transaction
      */
-    String createPaymentUrl(UUID transactionId, Long amount, UUID orderId);
+    String initiateB2CPayment(VnpayInitiateRequest request, String ipAddr);
+
+//    /**
+//     * Tạo payment URL từ VNPAY
+//     * @param transactionId Transaction ID
+//     * @param amount Số tiền thanh toán (VND)
+//     * @param orderId Order ID (để hiển thị trên VNPAY)
+//     * @return Payment URL từ VNPAY
+//     */
+//    String createPaymentUrl(UUID transactionId, Long amount, UUID orderId);
 
     /**
      * Validate và xử lý VNPAY IPN callback
@@ -30,6 +37,7 @@ public interface IVnpayService {
      * @return true nếu checksum hợp lệ
      */
     boolean validateChecksum(java.util.Map<String, String> vnpParams, String vnpSecureHash);
+    boolean verifyVnpayHash(Map<String, String> params);
 }
 
 

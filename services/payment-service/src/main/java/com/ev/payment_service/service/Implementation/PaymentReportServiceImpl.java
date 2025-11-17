@@ -102,14 +102,14 @@ public class PaymentReportServiceImpl implements IPaymentReportService {
                 .filter(record -> record.getCustomerId() != null)
                 .collect(Collectors.toList());
 
-        // Group by customerId
-        Map<Long, List<PaymentRecord>> recordsByCustomer = paymentRecords.stream()
+        // 1. Sửa kiểu dữ liệu của Map từ Long sang UUID
+        Map<UUID, List<PaymentRecord>> recordsByCustomer = paymentRecords.stream()
                 .collect(Collectors.groupingBy(PaymentRecord::getCustomerId));
 
-        // Tính toán công nợ cho mỗi customer
         List<CustomerDebtSummaryResponse> debtList = new ArrayList<>();
-        for (Map.Entry<Long, List<PaymentRecord>> entry : recordsByCustomer.entrySet()) {
-            Long customerId = entry.getKey();
+        // 2. Sửa kiểu dữ liệu của vòng lặp từ Long sang UUID
+        for (Map.Entry<UUID, List<PaymentRecord>> entry : recordsByCustomer.entrySet()) {
+            UUID customerId = entry.getKey(); // Sửa từ Long
             List<PaymentRecord> customerRecords = entry.getValue();
 
             BigDecimal totalDebt = customerRecords.stream()

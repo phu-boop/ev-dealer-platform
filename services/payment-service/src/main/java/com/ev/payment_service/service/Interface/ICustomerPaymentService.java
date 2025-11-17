@@ -23,7 +23,7 @@ public interface ICustomerPaymentService {
      * @param customerId ID của khách hàng
      * @return Tổng công nợ (remainingAmount từ tất cả PaymentRecord của khách hàng)
      */
-    BigDecimal getCustomerTotalDebt(Long customerId);
+    BigDecimal getCustomerTotalDebt(UUID customerId);
 
     /**
      * Lấy danh sách thanh toán tiền mặt chờ duyệt (B2C orders) - Dealer Manager

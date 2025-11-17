@@ -12,7 +12,7 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, UU
     Optional<PaymentRecord> findByOrderId(UUID orderId);
 
     // Tìm tất cả sổ thanh toán của một khách hàng
-    List<PaymentRecord> findByCustomerId(Long customerId);
+    List<PaymentRecord> findByCustomerId(UUID customerId);
 
     // Tìm các sổ thanh toán theo trạng thái (ví dụ: PENDING, OVERDUE)
     List<PaymentRecord> findByStatus(String status);
