@@ -1,5 +1,3 @@
-
-
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
@@ -70,6 +68,7 @@ import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPag
 import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
 import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
 import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
+import AvailableVehicleCatalogPage from "../features/dealer/sales/availableVehicle/pages/AvailableVehicleCatalogPage.jsx";
 
 // Manage Dealer
 import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
@@ -105,6 +104,7 @@ import PayB2COrderPage from "../features/payments/pages/PayB2COrderPage.jsx";
 import B2CCashPaymentsManagementPage from "../features/payments/pages/B2CCashPaymentsManagementPage.jsx";
 import B2CDebtManagementPage from "../features/payments/pages/B2CDebtManagementPage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
+import PaymentResultPage from "../features/payments/pages/PaymentResultPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -378,6 +378,10 @@ export default function AppRoutes() {
                 path="manager/vehicles/all"
                 element={<DealerProductCatalogPage />}
               />
+              <Route
+                path="manager/inventory/available"
+                element={<AvailableVehicleCatalogPage />}
+              />
 
               {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
 
@@ -514,6 +518,10 @@ export default function AppRoutes() {
                 path="staff/vehicles/all"
                 element={<DealerProductCatalogPage />}
               />
+              <Route
+                path="staff/inventory/available"
+                element={<AvailableVehicleCatalogPage />}
+              />
 
               {/* Promotions */}
               <Route
@@ -537,6 +545,10 @@ export default function AppRoutes() {
               <Route
                 path="staff/payments/orders/:orderId"
                 element={<CustomerPaymentPage />}
+              />
+              <Route
+                path="staff/payment/result"
+                element={<PaymentResultPage />}
               />
             </Route>
           </Route>
