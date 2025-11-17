@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
-    
+
     // Tìm thông báo theo nhóm đối tượng, sắp xếp mới nhất lên đầu
     Page<Notification> findByAudienceOrderByCreatedAtDesc(NotificationAudience audience, Pageable pageable);
 
@@ -34,14 +34,24 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     List<Notification> findAllByAudienceOrderByCreatedAtDesc(NotificationAudience audience);
 
-    Optional<Notification> findByLink(String link);
+    // Dùng để xóa TẤT CẢ khiếu nại khi giải quyết
+    List<Notification> findAllByLink(String link);
 
-    /**
-     * Tìm tất cả thông báo của một nhóm, 
-     * NHƯNG LOẠI TRỪ ra các loại (type) đã được xử lý bởi logic Tác vụ.
-     */
-    List<Notification> findAllByAudienceAndTypeNotInOrderByCreatedAtDesc(
-        NotificationAudience audience, 
-        List<String> typesToExclude
-    );
+    // Dùng để kiểm tra trùng lặp khi tạo khiếu nại
+    Optional<Notification> findByLinkAndType(String link, String type);
+
+    // /**
+    // * Tìm tất cả thông báo của một nhóm,
+    // * NHƯNG LOẠI TRỪ ra các loại (type) đã được xử lý bởi logic Tác vụ.
+    // */
+    // List<Notification> findAllByAudienceAndTypeNotInOrderByCreatedAtDesc(
+    // NotificationAudience audience,
+    // List<String> typesToExclude);
+
+    // Tìm tất cả thông báo của một nhóm (DÙNG CHO getStaffNotifications (API GET)
+    Page<Notification> findAllByAudience(NotificationAudience audience, Pageable pageable);
+
+    // Tìm tất cả thông báo của một nhóm (Dùng cho deleteAllStaffNotifications (API
+    // DELETE))
+    List<Notification> findAllByAudience(NotificationAudience audience);
 }

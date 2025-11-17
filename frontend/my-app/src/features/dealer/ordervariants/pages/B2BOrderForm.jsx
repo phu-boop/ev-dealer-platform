@@ -33,7 +33,7 @@ const B2BOrderForm = () => {
         const params = {
           page: 0,
           size: 200, // Tăng size để lấy được nhiều xe hơn cho dropdown
-          sort: "vehicleModel.modelName,asc,versionName,asc", // Sắp xếp theo Tên Model, rồi Tên Phiên bản
+          sort: ["vehicleModel.modelName,asc", "versionName,asc"],
         };
         // Gọi API lấy tất cả các phiên bản xe
         const response = await getAllVariantsPaginated(params);

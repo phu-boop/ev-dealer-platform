@@ -4,19 +4,21 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.sales_service.dto.response.NotificationDto;
-import com.ev.sales_service.entity.Notification; 
-import com.ev.sales_service.entity.OrderTracking;
+import com.ev.sales_service.entity.Notification;
+// import com.ev.sales_service.entity.OrderTracking;
 import com.ev.sales_service.enums.NotificationAudience;
 import com.ev.sales_service.enums.OrderStatusB2B;
-import com.ev.sales_service.enums.SaleOderType;
-import com.ev.sales_service.repository.SalesOrderRepositoryB2B; 
-import com.ev.sales_service.entity.SalesOrder; 
+// import com.ev.sales_service.enums.SaleOderType;
+import com.ev.sales_service.repository.SalesOrderRepositoryB2B;
+import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.mapper.NotificationMapper; // (Cần tạo file mapper này)
 import com.ev.sales_service.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
+// import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,10 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
-import java.util.List; 
-import java.util.stream.Stream; 
-import java.util.stream.Collectors; 
-import java.time.LocalDateTime; 
+import java.util.List;
+import java.util.ArrayList;
+// import java.util.stream.Stream;
+// import java.util.stream.Collectors;
+// import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/notifications")
@@ -46,55 +49,76 @@ public class NotificationController {
     public ResponseEntity<ApiRespond<Page<NotificationDto>>> getStaffNotifications(
             @PageableDefault(size = 10) Pageable pageable) {
 
-        // BƯỚC 1: Lấy các thông báo "TÁC VỤ" (PENDING, DISPUTED)
-        List<SalesOrder> pendingOrders = salesOrderRepositoryB2B.findAllByTypeOderAndOrderStatus(
-            SaleOderType.B2B, OrderStatusB2B.PENDING
-        );
-        List<SalesOrder> disputedOrders = salesOrderRepositoryB2B.findAllByTypeOderAndOrderStatus(
-            SaleOderType.B2B, OrderStatusB2B.DISPUTED
-        );
+        // TẠO SẮP XẾP:
+        // - isRead=ASC (false - chưa đọc - lên đầu)
+        // - createdAt=DESC (mới nhất lên đầu)
+        Sort sort = Sort.by(
+                Sort.Order.asc("isRead"),
+                Sort.Order.desc("createdAt"));
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort);
 
-        Stream<NotificationDto> pendingDtos = pendingOrders.stream()
-            .map(this::convertPendingOrderToNotificationDto);
-        Stream<NotificationDto> disputedDtos = disputedOrders.stream()
-            .map(this::convertDisputedOrderToNotificationDto);
-        
-        // SỬA 2: Đổi tên hàm để lấy List thay vì Page
-        List<String> taskTypesToExclude = List.of("ORDER_PLACED", "ORDER_DISPUTED");
-        
-        List<NotificationDto> otherNotifications = notificationRepository
-            .findAllByAudienceAndTypeNotInOrderByCreatedAtDesc(NotificationAudience.STAFF, taskTypesToExclude) 
-            .stream()
-            .map(notificationMapper::toDto)
-            .collect(Collectors.toList());
+        Page<Notification> notificationPage = notificationRepository
+                .findAllByAudience(NotificationAudience.STAFF, sortedPageable);
 
-        // BƯỚC 3: Gộp tất cả lại
-        List<NotificationDto> allDtos = Stream.concat(
-            Stream.concat(pendingDtos, disputedDtos),
-            otherNotifications.stream()
-        )
-        .sorted((n1, n2) -> {
-            // SỬA LẠI LOGIC SẮP XẾP ĐỂ DÙNG 'unread'
-            if (n1.isUnread() && !n2.isUnread()) return -1;
-            if (!n1.isUnread() && n2.isUnread()) return 1;
-            
-            // Sắp xếp theo createdAt (vẫn tồn tại trong DTO)
-            if (n1.getCreatedAt() == null || n2.getCreatedAt() == null) return 0;
-            return n2.getCreatedAt().compareTo(n1.getCreatedAt());
-        })
-        .collect(Collectors.toList());
-
-        // BƯỚC 4: Áp dụng phân trang thủ công
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), allDtos.size());
-        
-        Page<NotificationDto> dtoPage = new PageImpl<>(
-            allDtos.subList(start, end), 
-            pageable, 
-            allDtos.size()
-        );
+        // CHUYỂN ĐỔI SANG DTO
+        Page<NotificationDto> dtoPage = notificationPage.map(notificationMapper::toDto);
 
         return ResponseEntity.ok(ApiRespond.success("Lấy thông báo thành công", dtoPage));
+    }
+
+    /**
+     * API xóa tất cả thông báo STAFF,
+     * nhưng bỏ qua các thông báo khiếu nại đang hoạt động (active).
+     */
+    @DeleteMapping("/staff/all")
+    @Transactional
+    public ResponseEntity<ApiRespond<String>> deleteAllStaffNotifications() {
+
+        // 1. Lấy TẤT CẢ thông báo của Staff
+        List<Notification> allStaffNotifications = notificationRepository.findAllByAudience(NotificationAudience.STAFF);
+
+        // 2. Tách thành 2 nhóm: "đang khiếu nại" và "có thể xóa"
+        List<Notification> notificationsToDelete = new ArrayList<>();
+        List<Notification> activeDisputes = new ArrayList<>();
+
+        for (Notification n : allStaffNotifications) {
+            if ("ORDER_DISPUTED".equals(n.getType())) {
+                // Kiểm tra xem đơn hàng CÓ THỰC SỰ đang DISPUTED không
+                UUID orderId = extractOrderIdFromLink(n.getLink()); // Dùng hàm helper
+                if (orderId != null) {
+                    Optional<SalesOrder> orderOpt = salesOrderRepositoryB2B.findById(orderId);
+
+                    if (orderOpt.isPresent() && OrderStatusB2B.DISPUTED.equals(orderOpt.get().getOrderStatus())) {
+                        // ĐÂY LÀ KHIẾU NẠI ĐANG HOẠT ĐỘNG -> KHÔNG XÓA
+                        activeDisputes.add(n);
+                    } else {
+                        // Đơn hàng đã giải quyết, hoặc không tìm thấy -> cho phép xóa
+                        notificationsToDelete.add(n);
+                    }
+                } else {
+                    notificationsToDelete.add(n); // Link hỏng? Cho phép xóa
+                }
+            } else {
+                // Không phải DISPUTED (ví dụ ORDER_PLACED), cho phép xóa
+                notificationsToDelete.add(n);
+            }
+        }
+
+        // 3. Thực hiện xóa
+        if (!notificationsToDelete.isEmpty()) {
+            notificationRepository.deleteAllInBatch(notificationsToDelete); // Dùng deleteAllInBatch cho hiệu quả
+        }
+
+        // 4. Trả về thông báo
+        String message = String.format("Đã xóa %d thông báo.", notificationsToDelete.size());
+        if (!activeDisputes.isEmpty()) {
+            message += String.format(" %d thông báo khiếu nại đang hoạt động đã được giữ lại.", activeDisputes.size());
+        }
+
+        return ResponseEntity.ok(ApiRespond.success("Xử lý hoàn tất", message));
     }
 
     // API đếm số thông báo chưa đọc
@@ -104,7 +128,6 @@ public class NotificationController {
         return ResponseEntity.ok(ApiRespond.success("OK", Map.of("unreadCount", count)));
     }
 
-
     // API đánh dấu 1 thông báo là đã đọc
     @PutMapping("/{id}/read")
     public ResponseEntity<ApiRespond<NotificationDto>> markAsRead(@PathVariable UUID id) {
@@ -112,7 +135,7 @@ public class NotificationController {
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
 
         // (Kiểm tra xem user có quyền đọc noti này không nếu cần)
-        
+
         notification.setRead(true);
         Notification savedNotification = notificationRepository.save(notification);
 
@@ -123,7 +146,7 @@ public class NotificationController {
     @PutMapping("/staff/read-all")
     public ResponseEntity<ApiRespond<String>> markAllAsRead() {
         int updatedCount = notificationRepository.markAllAsReadByAudience(NotificationAudience.STAFF);
-        
+
         // Tách riêng message và data
         String message = "Đánh dấu tất cả đã đọc thành công";
         String data = "Đã cập nhật " + updatedCount + " thông báo";
@@ -149,13 +172,13 @@ public class NotificationController {
         if ("ORDER_DISPUTED".equals(notification.getType())) {
             // Cố gắng lấy Order ID từ link (ví dụ: /evm/b2b-orders/...)
             UUID orderId = extractOrderIdFromLink(notification.getLink());
-            
+
             if (orderId != null) {
                 // Tìm đơn hàng tương ứng
                 Optional<SalesOrder> orderOpt = salesOrderRepositoryB2B.findById(orderId);
                 if (orderOpt.isPresent()) {
                     SalesOrder order = orderOpt.get();
-                    
+
                     // 4. CHẶN XÓA NẾU ĐƠN HÀNG VẪN ĐANG BỊ KHIẾU NẠI
                     if (OrderStatusB2B.DISPUTED.equals(order.getOrderStatus())) {
                         throw new AppException(ErrorCode.BAD_REQUEST);
@@ -183,44 +206,5 @@ public class NotificationController {
             // (Ghi log lỗi nếu cần)
             return null;
         }
-    }
-    
-    private NotificationDto convertPendingOrderToNotificationDto(SalesOrder order) {
-        return NotificationDto.builder()
-            .id(order.getOrderId().toString())
-            .type("ORDER_PLACED")
-            .message("Đơn hàng B2B mới từ Đại lý. Mã ĐH: " + order.getOrderId().toString().substring(0, 8))
-            .link("/evm/b2b-orders/" + order.getOrderId().toString())
-            .unread(true) // Tác vụ luôn là chưa đọc
-            .audience(NotificationAudience.STAFF)
-            .createdAt(order.getOrderDate()) // <-- Dùng cho sắp xếp
-            .time(notificationMapper.toRelativeTime(order.getOrderDate())) // <-- Dùng cho hiển thị
-            .build();
-    }
-    
-    private NotificationDto convertDisputedOrderToNotificationDto(SalesOrder order) {
-        String reason = order.getOrderTrackings().stream()
-            .filter(t -> "ĐÃ BÁO CÁO SỰ CỐ".equals(t.getStatus()))
-            .map(OrderTracking::getNotes)
-            .findFirst()
-            .orElse("Không rõ lý do");
-
-        LocalDateTime disputedAt = order.getOrderTrackings().stream() // Lấy thời gian khiếu nại
-            .filter(t -> "ĐÃ BÁO CÁO SỰ CỐ".equals(t.getStatus()))
-            .map(OrderTracking::getUpdateDate)
-            .findFirst()
-            .orElse(order.getOrderDate())
-        ;
-
-        return NotificationDto.builder()
-            .id(order.getOrderId().toString())
-            .type("ORDER_DISPUTED")
-            .message("Khiếu nại đơn hàng. Mã ĐH: " + order.getOrderId().toString().substring(0, 8) + ". Lý do: " + reason)
-            .link("/evm/b2b-orders/" + order.getOrderId().toString())
-            .unread(true) // Tác vụ luôn là chưa đọc
-            .audience(NotificationAudience.STAFF)
-            .createdAt(disputedAt) // <-- Dùng cho sắp xếp
-            .time(notificationMapper.toRelativeTime(disputedAt)) // <-- Dùng cho hiển thị
-            .build();
     }
 }
