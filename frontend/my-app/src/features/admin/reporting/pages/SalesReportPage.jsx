@@ -1,13 +1,13 @@
-// File: SalesReportPage.jsx (Nâng cấp BƯỚC 4.10: Sửa lỗi typo totalUnitsSold)
+// File: SalesReportPage.jsx (Nâng cấp BƯỚC 5.1: Sửa lỗi mất biểu đồ)
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getSalesSummary } from "../services/reportingService";
 import SalesReportTable from "../components/SalesReportTable";
 
 // --- Import Ant Design (Layout) ---
-import { Card, Row, Col, Typography, Space, Select } from "antd";
+import { Card, Row, Col, Typography, Space, Select, Button } from "antd"; // Thêm Button
 
-// === Import THƯ VIỆN CHART.JS MỚI ===
+// === Import THƯ VIỆN CHART.JS ===
 import { Doughnut, Bar } from 'react-chartjs-2'; 
 import {
   Chart as ChartJS,
@@ -19,6 +19,9 @@ import {
   LinearScale,   
   BarElement,    
 } from 'chart.js';
+
+// === Import THƯ VIỆN EXCEL ===
+import * as XLSX from 'xlsx';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -34,16 +37,51 @@ ChartJS.register(
   BarElement     
 );
 
-// === STYLE NỘI TUYẾN (CŨ, VẪN DÙNG) ===
-const errorBoxStyle = { /* ... (Giữ nguyên code style của bạn) ... */ };
-const retryButtonStyle = { /* ... (Giữ nguyên) ... */ };
-// === KẾT THÚC STYLE ===
-
-// === COMPONENT SKELETON (VẪN GIỮ NGUYÊN) ===
-const TableSkeleton = () => { /* ... (Giữ nguyên code Skeleton của bạn) ... */ };
-// === KẾT THÚC SKELETON ===
-
-// --- CẤU HÌNH (OPTIONS) MẶC ĐỊNH CHO BIỂU ĐỒ ---
+// === STYLE, SKELETON, OPTIONS (Giữ nguyên) ===
+const errorBoxStyle = {
+  border: "1px solid #ffccc7",
+  backgroundColor: "#fff2f0",
+  padding: "16px",
+  borderRadius: "8px",
+  color: "#d4380d",
+  textAlign: "center",
+};
+const retryButtonStyle = {
+  marginLeft: "8px",
+  padding: "5px 10px",
+  border: "1px solid #d4380d",
+  background: "transparent",
+  color: "#d4380d",
+  borderRadius: "4px",
+  cursor: "pointer",
+};
+const TableSkeleton = () => (
+  <div style={{ padding: "20px" }}>
+    <div
+      style={{
+        height: "40px",
+        backgroundColor: "#f0f0f0",
+        marginBottom: "10px",
+        borderRadius: "4px",
+      }}
+    ></div>
+    <div
+      style={{
+        height: "40px",
+        backgroundColor: "#f0f0f0",
+        marginBottom: "10px",
+        borderRadius: "4px",
+      }}
+    ></div>
+    <div
+      style={{
+        height: "40px",
+        backgroundColor: "#f0f0f0",
+        borderRadius: "4px",
+      }}
+    ></div>
+  </div>
+);
 const doughnutChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
@@ -53,7 +91,6 @@ const doughnutChartOptions = {
     },
   },
 };
-
 const baseBarChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
@@ -63,6 +100,7 @@ const baseBarChartOptions = {
     },
   },
 };
+// === KẾT THÚC ===
 
 
 // --- COMPONENT CHÍNH ---
@@ -82,7 +120,6 @@ const SalesReportPage = () => {
     setError(null);
     try {
       const response = await getSalesSummary(filters);
-      // Giả sử getSalesSummary trả về { data: [...] }
       setReportData(response.data); 
     } catch (err) {
       setError("Không thể tải báo cáo doanh số. Vui lòng thử lại.");
@@ -96,28 +133,28 @@ const SalesReportPage = () => {
     fetchReport();
   }, [fetchReport]);
 
-  const handleRegionChange = (value) => { /* ... (Giữ nguyên code cũ) ... */ };
-  const handleModelChange = (value) => { /* ... (Giữ nguyên code cũ) ... */ };
+  // (Tôi giả định bạn vẫn còn 2 hàm này, nếu không hãy copy lại từ code cũ nhé)
+  const handleRegionChange = (value) => {
+    setFilters(prev => ({ ...prev, region: value }));
+  };
+  const handleModelChange = (value) => {
+    setFilters(prev => ({ ...prev, modelId: value }));
+  };
 
-  // === LOGIC MỚI 1: Biểu đồ Doanh thu theo Khu vực (Đã SỬA) ===
+  // === LOGIC BIỂU ĐỒ (Giữ nguyên) ===
   const chartDataByRegion = useMemo(() => {
     if (reportData.length === 0) return { labels: [], datasets: [] };
-
     const summary = reportData.reduce((acc, item) => {
       const region = item.region || 'Chưa xác định';
-      // SỬA Ở ĐÂY: Dùng Number() để ép kiểu
       const revenue = Number(item.totalRevenue) || 0;
-
       if (!acc[region]) {
         acc[region] = 0;
       }
       acc[region] += revenue;
       return acc;
     }, {});
-
     const labels = Object.keys(summary);
     const data = Object.values(summary);
-
     return {
       labels: labels,
       datasets: [
@@ -128,7 +165,6 @@ const SalesReportPage = () => {
             'rgba(255, 99, 132, 0.7)',
             'rgba(54, 162, 235, 0.7)',
             'rgba(255, 206, 86, 0.7)',
-            'rgba(75, 192, 192, 0.7)',
           ],
           borderWidth: 1,
         },
@@ -136,28 +172,19 @@ const SalesReportPage = () => {
     };
   }, [reportData]);
 
-  // === LOGIC MỚI 2: Biểu đồ Số lượng theo Mẫu xe (ĐÃ SỬA) ===
   const chartDataByModel = useMemo(() => {
     if (reportData.length === 0) return { labels: [], datasets: [] };
-
     const summary = reportData.reduce((acc, item) => {
       const model = item.modelName || 'Chưa xác định';
-      
-      // === SỬA LỖI TẠI ĐÂY ===
-      // Thêm chữ 's' vào 'totalUnitsSold'
-      const quantity = Number(item.totalUnitsSold) || 0;
-      // === KẾT THÚC SỬA LỖI ===
-
+      const quantity = Number(item.totalUnitsSold) || 0; // Đã sửa 's'
       if (!acc[model]) {
         acc[model] = 0;
       }
       acc[model] += quantity;
       return acc;
     }, {});
-
     const labels = Object.keys(summary);
     const data = Object.values(summary);
-
     return {
       labels: labels,
       datasets: [
@@ -172,34 +199,63 @@ const SalesReportPage = () => {
     };
   }, [reportData]);
 
-
-  // === CẤU HÌNH OPTIONS (Giữ nguyên như Bước 4.6) ===
   const dynamicBarChartOptions = useMemo(() => {
     const barDataValues = chartDataByModel.datasets[0]?.data || [];
     const maxQuantity = barDataValues.length > 0 ? Math.max(...barDataValues) : 0;
-
+    // Làm tròn thang đo lên 20, 25...
+    const newMax = maxQuantity > 0 ? (Math.ceil(maxQuantity / 5) * 5) + 5 : 10;
+    
     return {
       ...baseBarChartOptions, 
       scales: {
         y: {
           beginAtZero: true,
-          max: maxQuantity > 0 ? maxQuantity + 2 : 10,
-          ticks: {
-            stepSize: maxQuantity > 10 ? 2 : 1
-          }
+          max: newMax,
         }
       }
     };
   }, [chartDataByModel]);
-  // === KẾT THÚC CẬP NHẬT ===
+  // === KẾT THÚC LOGIC BIỂU ĐỒ ===
+
+  // === LOGIC MỚI: XUẤT EXCEL ===
+  const handleExportExcel = () => {
+    if (reportData.length === 0) {
+      alert("Không có dữ liệu để xuất!");
+      return;
+    }
+    const dataForExport = reportData.map(item => ({
+      'Khu vực': item.region,
+      'Tên Đại lý': item.dealershipName,
+      'Mẫu xe': item.modelName,
+      'Phiên bản': item.variantName,
+      'Số lượng bán': Number(item.totalUnitsSold),
+      'Tổng doanh thu (VND)': Number(item.totalRevenue),
+      'Ngày bán cuối': new Date(item.lastSaleAt)
+    }));
+    const ws = XLSX.utils.json_to_sheet(dataForExport);
+    ws['!cols'] = [
+      { wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 15 },
+      { wch: 15 }, { wch: 20 }, { wch: 15 }
+    ];
+    dataForExport.forEach((row, index) => {
+      const cellIndex = index + 2; 
+      const revenueCell = `F${cellIndex}`;
+      ws[revenueCell] = { ...ws[revenueCell], t: 'n', z: '#,##0 "₫"' }; 
+      const dateCell = `G${cellIndex}`;
+      ws[dateCell] = { ...ws[dateCell], t: 'd', z: 'dd/mm/yyyy' };
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'BaoCaoDoanhSo');
+    XLSX.writeFile(wb, 'BaoCaoDoanhSo.xlsx');
+  };
+  // === KẾT THÚC LOGIC MỚI ===
 
 
   // --- RENDER ---
-  // (Phần JSX giữ nguyên, không cần thay đổi)
   return (
     <Card style={{ margin: "24px", backgroundColor: "#f9fbfd" }}>
       
-      {/* 1. KHU VỰC TIÊU ĐỀ VÀ BỘ LỌC (Giữ nguyên) */}
+      {/* 1. KHU VỰC TIÊU ĐỀ (ĐÃ THÊM NÚT XUẤT EXCEL) */}
       <Row
         justify="space-between"
         align="middle"
@@ -212,12 +268,42 @@ const SalesReportPage = () => {
         </Col>
         <Col>
           <Space>
-            {/* ... Bộ lọc ... */}
+            {/* --- ĐÃ KHÔI PHỤC BỘ LỌC --- */}
+            <Select
+              placeholder="Chọn khu vực"
+              style={{ width: 200 }}
+              onChange={handleRegionChange}
+              allowClear
+            >
+              <Option value="Miền Bắc">Miền Bắc</Option>
+              <Option value="Miền Trung">Miền Trung</Option>
+              <Option value="Miền Nam">Miền Nam</Option>
+            </Select>
+            <Select
+              placeholder="Chọn mẫu xe"
+              style={{ width: 200 }}
+              onChange={handleModelChange}
+              allowClear
+            >
+              {/* (Bạn có thể load động cái này sau) */}
+              <Option value="VF 3">VF 3</Option>
+              <Option value="VF 8">VF 8</Option>
+              <Option value="VF 9">VF 9</Option>
+            </Select>
+            
+            {/* THÊM NÚT MỚI TẠI ĐÂY */}
+            <Button 
+              type="primary" 
+              onClick={handleExportExcel}
+              disabled={loading || reportData.length === 0}
+            >
+              Xuất Excel
+            </Button>
           </Space>
         </Col>
       </Row>
 
-      {/* 2. KHU VỰC MỚI: TỔNG QUAN BIỂU ĐỒ */}
+      {/* 2. KHU VỰC BIỂU ĐỒ (ĐÃ KHÔI PHỤC) */}
       <Title level={5} style={{ marginTop: '16px' }}>Tổng quan</Title>
       <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
         
@@ -250,14 +336,16 @@ const SalesReportPage = () => {
         </Col>
       </Row>
 
-      {/* 3. KHU VỰC CŨ: BÁO CÁO CHI TIẾT (BẢNG) */}
+      {/* 3. KHU VỰC BÁO CÁO CHI TIẾT (BẢNG) (ĐÃ KHÔI PHỤC) */}
       <Title level={5}>Báo cáo Chi tiết</Title>
       <div className="report-content">
-        {/* Logic render cũ (Giữ nguyên) */}
         {loading && <TableSkeleton />}
         {error && (
           <div style={errorBoxStyle}>
-            {/* ... (Code báo lỗi cũ) ... */}
+             <p>{error}</p>
+             <button style={retryButtonStyle} onClick={fetchReport}>
+               🔄 Thử lại
+             </button>
           </div>
         )}
         {!loading && !error && reportData.length === 0 && (
