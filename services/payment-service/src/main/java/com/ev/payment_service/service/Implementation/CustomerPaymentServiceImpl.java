@@ -617,16 +617,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             throw new AppException(ErrorCode.INVALID_STATE);
         }
 
-        // 3. Kiểm tra phương thức thanh toán phải là MANUAL
-        if (transaction.getPaymentMethod() == null || 
-            transaction.getPaymentMethod().getMethodType() != com.ev.payment_service.enums.PaymentMethodType.MANUAL) {
-            log.error("Transaction payment method is not MANUAL - TransactionId: {}, MethodType: {}", 
-                    transactionId, 
-                    transaction.getPaymentMethod() != null ? transaction.getPaymentMethod().getMethodType() : "NULL");
-            throw new AppException(ErrorCode.INVALID_STATE);
-        }
-
-        // 4. Kiểm tra PaymentRecord không được đã thanh toán đầy đủ
+        // 3. Kiểm tra PaymentRecord không được đã thanh toán đầy đủ
         PaymentRecord record = transaction.getPaymentRecord();
         if ("PAID".equals(record.getStatus())) {
             log.error("PaymentRecord is already PAID - RecordId: {}, OrderId: {}", 
@@ -634,7 +625,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             throw new AppException(ErrorCode.INVALID_STATE);
         }
 
-        // 5. Cập nhật Transaction
+        // 4. Cập nhật Transaction
         transaction.setStatus("SUCCESS");
         // Cập nhật notes nếu có (ghi đè notes cũ nếu có notes mới từ Dealer Manager)
         if (notes != null && !notes.isBlank()) {
@@ -644,7 +635,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         Transaction savedTransaction = transactionRepository.save(transaction);
         log.info("Transaction updated to SUCCESS - TransactionId: {}", transactionId);
 
-        // 6. Cập nhật PaymentRecord
+        // 5. Cập nhật PaymentRecord
         BigDecimal newAmountPaid = record.getAmountPaid().add(transaction.getAmount());
         record.setAmountPaid(newAmountPaid);
 
@@ -666,7 +657,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         log.info("PaymentRecord saved - RecordId: {}, AmountPaid: {}, RemainingAmount: {}", 
                 savedRecord.getRecordId(), savedRecord.getAmountPaid(), savedRecord.getRemainingAmount());
 
-        // 7. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật payment status trong sales-service
+        // 6. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật payment status trong sales-service
         // Cập nhật payment status dựa trên status của PaymentRecord
         String paymentStatus;
         if ("PAID".equals(savedRecord.getStatus())) {

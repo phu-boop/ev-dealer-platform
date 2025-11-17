@@ -182,7 +182,7 @@ export const dealerManagerMenuItems = [
       },
       {
         icon: FiDollarSign,
-        label: "Yêu Cầu Thanh Toán Tiền Mặt (B2C)",
+        label: "Yêu Cầu Thanh Toán (B2C)",
         path: "/dealer/manager/payments/b2c-cash-payments",
       },
       {
