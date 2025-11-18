@@ -312,7 +312,7 @@ export const evmStaffMenuItems = [
       },
       {
         icon: FiDollarSign,
-        label: "Đại Lý Thanh Toán Tiền Mặt",
+        label: "Đại Lý Thanh Toán Hóa Đơn",
         path: "/evm/staff/payments/cash-payments",
       },
     ],
