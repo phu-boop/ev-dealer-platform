@@ -1,4 +1,4 @@
-// File: InventoryReportPage.jsx (COMMIT ĐỢT 1: Setup + 2 Biểu đồ Tồn kho)
+// File: InventoryReportPage.jsx (COMMIT ĐỢT 2: Thêm Bán 30 ngày & TB Bán/Ngày)
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getInventoryVelocity } from "../services/reportingService";
@@ -34,7 +34,6 @@ const commonOptions = {
   maintainAspectRatio: false,
   plugins: { legend: { position: 'top' } },
 };
-// Config cho biểu đồ cột (có trục Y)
 const barOptions = {
   ...commonOptions,
   scales: { y: { beginAtZero: true } }
@@ -53,11 +52,7 @@ const InventoryReportPage = () => {
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Filter API (Chỉ dùng Region để gọi API nếu cần)
   const [apiFilters, setApiFilters] = useState({ region: "", modelId: "" });
-  
-  // Filter Local (Mẫu xe - để lọc hiển thị)
   const [selectedModel, setSelectedModel] = useState(null);
 
   // --- CALL API ---
@@ -66,7 +61,6 @@ const InventoryReportPage = () => {
     setError(null);
     try {
       const response = await getInventoryVelocity(apiFilters);
-      // Kiểm tra cấu trúc trả về (response.data hay response trực tiếp)
       const data = Array.isArray(response) ? response : (response.data || []);
       setReportData(data);
     } catch (err) {
@@ -81,18 +75,16 @@ const InventoryReportPage = () => {
     fetchReport();
   }, [fetchReport]);
 
-  // --- LOCAL FILTER & DYNAMIC OPTIONS ---
+  // --- LOCAL FILTER ---
   const handleRegionChange = (val) => setApiFilters(prev => ({ ...prev, region: val }));
   const handleModelFilterLocal = (val) => setSelectedModel(val);
 
-  // Lấy danh sách mẫu xe duy nhất từ data (Dynamic Filter)
   const uniqueModels = useMemo(() => {
     if (!reportData) return [];
     const models = reportData.map(item => item.modelName).filter(Boolean);
     return [...new Set(models)];
   }, [reportData]);
 
-  // Dữ liệu hiển thị (đã lọc theo mẫu xe chọn)
   const displayData = useMemo(() => {
     if (!selectedModel) return reportData;
     return reportData.filter(item => item.modelName === selectedModel);
@@ -100,14 +92,13 @@ const InventoryReportPage = () => {
 
 
   // ==========================================================================
-  // LOGIC BIỂU ĐỒ (ĐỢT 1: 2 BIỂU ĐỒ ĐẦU TIÊN)
+  // LOGIC BIỂU ĐỒ
   // ==========================================================================
 
-  // 1. Khu vực (Tỷ lệ tồn kho theo vùng) - Doughnut
+  // 1. Khu vực (Tỷ lệ tồn kho) - Doughnut
   const chartStockByRegion = useMemo(() => {
     const summary = displayData.reduce((acc, item) => {
       const region = item.region || 'Khác';
-      // Cộng dồn số lượng tồn kho (currentStock)
       acc[region] = (acc[region] || 0) + (Number(item.currentStock) || 0);
       return acc;
     }, {});
@@ -121,16 +112,14 @@ const InventoryReportPage = () => {
     };
   }, [displayData]);
 
-  // 2. Mẫu xe (Số lượng tồn theo mẫu) - Bar
+  // 2. Mẫu xe (Số lượng tồn kho) - Bar
   const chartStockByModel = useMemo(() => {
     const summary = displayData.reduce((acc, item) => {
       const model = item.modelName || 'Khác';
-      // Cộng dồn số lượng tồn kho (currentStock)
       acc[model] = (acc[model] || 0) + (Number(item.currentStock) || 0);
       return acc;
     }, {});
     
-    // Tính toán max để làm đẹp thang đo
     const values = Object.values(summary);
     const maxVal = values.length > 0 ? Math.max(...values) : 0;
     const niceMax = maxVal > 0 ? (Math.ceil(maxVal / 5) * 5) + 5 : 10;
@@ -141,7 +130,68 @@ const InventoryReportPage = () => {
         datasets: [{
           label: 'Tồn kho hiện tại',
           data: values,
-          backgroundColor: '#36A2EB',
+          backgroundColor: '#36A2EB', // Màu xanh dương
+        }]
+      },
+      options: {
+        ...barOptions,
+        scales: { y: { beginAtZero: true, max: niceMax } }
+      }
+    };
+  }, [displayData]);
+
+  // === MỚI === 3. Bán (30 ngày) theo Mẫu xe - Bar
+  const chartSales30Days = useMemo(() => {
+    const summary = displayData.reduce((acc, item) => {
+      const model = item.modelName || 'Khác';
+      // Cộng dồn salesLast30Days
+      acc[model] = (acc[model] || 0) + (Number(item.salesLast30Days) || 0);
+      return acc;
+    }, {});
+    
+    const values = Object.values(summary);
+    const maxVal = values.length > 0 ? Math.max(...values) : 0;
+    const niceMax = maxVal > 0 ? (Math.ceil(maxVal / 5) * 5) + 5 : 10;
+
+    return {
+      data: {
+        labels: Object.keys(summary),
+        datasets: [{
+          label: 'Đã bán (30 ngày)',
+          data: values,
+          backgroundColor: '#4BC0C0', // Màu xanh ngọc
+        }]
+      },
+      options: {
+        ...barOptions,
+        scales: { y: { beginAtZero: true, max: niceMax } }
+      }
+    };
+  }, [displayData]);
+
+  // === MỚI === 4. TB Bán/Ngày theo Mẫu xe - Bar
+  const chartAvgDailySales = useMemo(() => {
+    const summary = displayData.reduce((acc, item) => {
+      const model = item.modelName || 'Khác';
+      // Cộng dồn averageDailySales
+      acc[model] = (acc[model] || 0) + (Number(item.averageDailySales) || 0);
+      return acc;
+    }, {});
+    
+    // Lưu ý: TB bán/ngày thường là số lẻ (0.47), ta làm tròn 2 số thập phân
+    const values = Object.values(summary).map(v => Number(v.toFixed(2)));
+    
+    // Thang đo cho số nhỏ (ví dụ 0.5) thì max nên là 2 hoặc 5
+    const maxVal = values.length > 0 ? Math.max(...values) : 0;
+    const niceMax = maxVal > 0 ? Math.ceil(maxVal) + 1 : 2; 
+
+    return {
+      data: {
+        labels: Object.keys(summary),
+        datasets: [{
+          label: 'TB Bán/Ngày',
+          data: values,
+          backgroundColor: '#FF9F40', // Màu cam
         }]
       },
       options: {
@@ -173,22 +223,33 @@ const InventoryReportPage = () => {
         </Col>
       </Row>
 
-      {/* DASHBOARD CHART AREA (ĐỢT 1) */}
+      {/* HÀNG 1 (CŨ): Tồn kho */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-        {/* Biểu đồ 1: Tồn kho theo Khu vực */}
         <Col xs={24} md={8}>
           <Card title="Tỷ lệ Tồn kho (Khu vực)">
+             <div style={{ height: 250 }}><Doughnut data={chartStockByRegion} options={commonOptions} /></div>
+          </Card>
+        </Col>
+        <Col xs={24} md={16}>
+          <Card title="Số lượng Tồn kho (Theo Mẫu xe)">
+             <div style={{ height: 250 }}><Bar data={chartStockByModel.data} options={chartStockByModel.options} /></div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* HÀNG 2 (MỚI): Bán hàng & Tốc độ bán */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+        <Col xs={24} md={12}>
+          <Card title="Đã bán trong 30 ngày qua">
              <div style={{ height: 250 }}>
-               <Doughnut data={chartStockByRegion} options={commonOptions} />
+               <Bar data={chartSales30Days.data} options={chartSales30Days.options} />
              </div>
           </Card>
         </Col>
-
-        {/* Biểu đồ 2: Tồn kho theo Mẫu xe */}
-        <Col xs={24} md={16}>
-          <Card title="Số lượng Tồn kho (Theo Mẫu xe)">
+        <Col xs={24} md={12}>
+          <Card title="Tốc độ bán trung bình (Xe/Ngày)">
              <div style={{ height: 250 }}>
-               <Bar data={chartStockByModel.data} options={chartStockByModel.options} />
+               <Bar data={chartAvgDailySales.data} options={chartAvgDailySales.options} />
              </div>
           </Card>
         </Col>
