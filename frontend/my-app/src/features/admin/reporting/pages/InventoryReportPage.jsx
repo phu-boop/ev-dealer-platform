@@ -1,11 +1,11 @@
-// File: InventoryReportPage.jsx (COMMIT ĐỢT 2: Thêm Bán 30 ngày & TB Bán/Ngày)
+// File: InventoryReportPage.jsx (COMMIT ĐỢT 3: Days of Supply & Low Stock Alert)
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getInventoryVelocity } from "../services/reportingService";
 import InventoryReportTable from "../components/InventoryReportTable";
 
 // --- Import Ant Design ---
-import { Card, Row, Col, Typography, Space, Select } from "antd";
+import { Card, Row, Col, Typography, Space, Select } from "antd"; // Chưa thêm Button Excel
 
 // --- Import Chart.js ---
 import { Bar, Doughnut } from 'react-chartjs-2';
@@ -37,6 +37,16 @@ const commonOptions = {
 const barOptions = {
   ...commonOptions,
   scales: { y: { beginAtZero: true } }
+};
+// Config cho biểu đồ ngang (Horizontal Bar) - Dùng cho Cảnh báo
+const horizontalBarOptions = {
+  ...commonOptions,
+  indexAxis: 'y', // Xoay ngang
+  scales: { x: { beginAtZero: true } },
+  plugins: {
+    legend: { display: false }, // Ẩn chú thích cho gọn
+    title: { display: true, text: 'Các mẫu xe còn dưới 10 chiếc' }
+  }
 };
 
 // --- SKELETON & STYLES ---
@@ -95,7 +105,7 @@ const InventoryReportPage = () => {
   // LOGIC BIỂU ĐỒ
   // ==========================================================================
 
-  // 1. Khu vực (Tỷ lệ tồn kho) - Doughnut
+  // 1. Khu vực (Tỷ lệ tồn kho)
   const chartStockByRegion = useMemo(() => {
     const summary = displayData.reduce((acc, item) => {
       const region = item.region || 'Khác';
@@ -112,14 +122,13 @@ const InventoryReportPage = () => {
     };
   }, [displayData]);
 
-  // 2. Mẫu xe (Số lượng tồn kho) - Bar
+  // 2. Mẫu xe (Số lượng tồn kho)
   const chartStockByModel = useMemo(() => {
     const summary = displayData.reduce((acc, item) => {
       const model = item.modelName || 'Khác';
       acc[model] = (acc[model] || 0) + (Number(item.currentStock) || 0);
       return acc;
     }, {});
-    
     const values = Object.values(summary);
     const maxVal = values.length > 0 ? Math.max(...values) : 0;
     const niceMax = maxVal > 0 ? (Math.ceil(maxVal / 5) * 5) + 5 : 10;
@@ -130,25 +139,20 @@ const InventoryReportPage = () => {
         datasets: [{
           label: 'Tồn kho hiện tại',
           data: values,
-          backgroundColor: '#36A2EB', // Màu xanh dương
+          backgroundColor: '#36A2EB',
         }]
       },
-      options: {
-        ...barOptions,
-        scales: { y: { beginAtZero: true, max: niceMax } }
-      }
+      options: { ...barOptions, scales: { y: { beginAtZero: true, max: niceMax } } }
     };
   }, [displayData]);
 
-  // === MỚI === 3. Bán (30 ngày) theo Mẫu xe - Bar
+  // 3. Bán (30 ngày)
   const chartSales30Days = useMemo(() => {
     const summary = displayData.reduce((acc, item) => {
       const model = item.modelName || 'Khác';
-      // Cộng dồn salesLast30Days
       acc[model] = (acc[model] || 0) + (Number(item.salesLast30Days) || 0);
       return acc;
     }, {});
-    
     const values = Object.values(summary);
     const maxVal = values.length > 0 ? Math.max(...values) : 0;
     const niceMax = maxVal > 0 ? (Math.ceil(maxVal / 5) * 5) + 5 : 10;
@@ -159,29 +163,21 @@ const InventoryReportPage = () => {
         datasets: [{
           label: 'Đã bán (30 ngày)',
           data: values,
-          backgroundColor: '#4BC0C0', // Màu xanh ngọc
+          backgroundColor: '#4BC0C0',
         }]
       },
-      options: {
-        ...barOptions,
-        scales: { y: { beginAtZero: true, max: niceMax } }
-      }
+      options: { ...barOptions, scales: { y: { beginAtZero: true, max: niceMax } } }
     };
   }, [displayData]);
 
-  // === MỚI === 4. TB Bán/Ngày theo Mẫu xe - Bar
+  // 4. TB Bán/Ngày
   const chartAvgDailySales = useMemo(() => {
     const summary = displayData.reduce((acc, item) => {
       const model = item.modelName || 'Khác';
-      // Cộng dồn averageDailySales
       acc[model] = (acc[model] || 0) + (Number(item.averageDailySales) || 0);
       return acc;
     }, {});
-    
-    // Lưu ý: TB bán/ngày thường là số lẻ (0.47), ta làm tròn 2 số thập phân
     const values = Object.values(summary).map(v => Number(v.toFixed(2)));
-    
-    // Thang đo cho số nhỏ (ví dụ 0.5) thì max nên là 2 hoặc 5
     const maxVal = values.length > 0 ? Math.max(...values) : 0;
     const niceMax = maxVal > 0 ? Math.ceil(maxVal) + 1 : 2; 
 
@@ -191,13 +187,71 @@ const InventoryReportPage = () => {
         datasets: [{
           label: 'TB Bán/Ngày',
           data: values,
-          backgroundColor: '#FF9F40', // Màu cam
+          backgroundColor: '#FF9F40',
         }]
       },
-      options: {
-        ...barOptions,
-        scales: { y: { beginAtZero: true, max: niceMax } }
-      }
+      options: { ...barOptions, scales: { y: { beginAtZero: true, max: niceMax } } }
+    };
+  }, [displayData]);
+
+  // === MỚI === 5. Ngày hàng còn lại (Days of Supply)
+  const chartDaysOfSupply = useMemo(() => {
+     const modelStats = displayData.reduce((acc, item) => {
+        const model = item.modelName || 'Khác';
+        if (!acc[model]) acc[model] = { stock: 0, daily: 0 };
+        acc[model].stock += (Number(item.currentStock) || 0);
+        acc[model].daily += (Number(item.averageDailySales) || 0);
+        return acc;
+     }, {});
+
+     const labels = Object.keys(modelStats);
+     const data = labels.map(model => {
+        const { stock, daily } = modelStats[model];
+        if (daily === 0) return 0;
+        return Number((stock / daily).toFixed(1));
+     });
+     
+     const maxVal = data.length > 0 ? Math.max(...data) : 0;
+     const niceMax = maxVal > 0 ? (Math.ceil(maxVal / 10) * 10) + 10 : 100;
+
+     return {
+        data: {
+          labels,
+          datasets: [{
+            label: 'Ngày hàng còn lại (Dự kiến)',
+            data: data,
+            backgroundColor: '#9966FF', // Màu tím
+          }]
+        },
+        options: { ...barOptions, scales: { y: { beginAtZero: true, max: niceMax } } }
+     };
+  }, [displayData]);
+
+  // === MỚI === 6. Cảnh báo Tồn kho thấp (Low Stock Alert)
+  const chartLowStock = useMemo(() => {
+    // Chỉ lấy những xe có tồn kho < 10
+    const lowStockThreshold = 10;
+    
+    const summary = displayData.reduce((acc, item) => {
+      const model = item.modelName || 'Khác';
+      acc[model] = (acc[model] || 0) + (Number(item.currentStock) || 0);
+      return acc;
+    }, {});
+
+    // Lọc ra các xe dưới ngưỡng
+    const lowStockModels = Object.keys(summary).filter(key => summary[key] < lowStockThreshold);
+    const lowStockValues = lowStockModels.map(key => summary[key]);
+
+    return {
+      data: {
+        labels: lowStockModels,
+        datasets: [{
+          label: 'Số lượng tồn (Thấp)',
+          data: lowStockValues,
+          backgroundColor: '#FF6384', // Màu đỏ cảnh báo
+        }]
+      },
+      options: horizontalBarOptions
     };
   }, [displayData]);
 
@@ -223,7 +277,7 @@ const InventoryReportPage = () => {
         </Col>
       </Row>
 
-      {/* HÀNG 1 (CŨ): Tồn kho */}
+      {/* HÀNG 1 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={24} md={8}>
           <Card title="Tỷ lệ Tồn kho (Khu vực)">
@@ -237,19 +291,36 @@ const InventoryReportPage = () => {
         </Col>
       </Row>
 
-      {/* HÀNG 2 (MỚI): Bán hàng & Tốc độ bán */}
+      {/* HÀNG 2 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={24} md={12}>
           <Card title="Đã bán trong 30 ngày qua">
-             <div style={{ height: 250 }}>
-               <Bar data={chartSales30Days.data} options={chartSales30Days.options} />
-             </div>
+             <div style={{ height: 250 }}><Bar data={chartSales30Days.data} options={chartSales30Days.options} /></div>
           </Card>
         </Col>
         <Col xs={24} md={12}>
           <Card title="Tốc độ bán trung bình (Xe/Ngày)">
+             <div style={{ height: 250 }}><Bar data={chartAvgDailySales.data} options={chartAvgDailySales.options} /></div>
+          </Card>
+        </Col>
+      </Row>
+
+       {/* HÀNG 3 (MỚI) - Ngày hàng còn lại & Cảnh báo */}
+       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+        <Col xs={24} md={12}>
+          <Card title="📉 Dự báo ngày hàng còn lại (Days of Supply)">
+             <div style={{ height: 250 }}><Bar data={chartDaysOfSupply.data} options={chartDaysOfSupply.options} /></div>
+          </Card>
+        </Col>
+        <Col xs={24} md={12}>
+          <Card title="⚠️ Cảnh báo sắp hết hàng (Dưới 10 xe)">
              <div style={{ height: 250 }}>
-               <Bar data={chartAvgDailySales.data} options={chartAvgDailySales.options} />
+               {chartLowStock.data.labels.length > 0 ? 
+                 <Bar data={chartLowStock.data} options={chartLowStock.options} /> :
+                 <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100%', color:'green'}}>
+                    Không có xe nào dưới mức cảnh báo!
+                 </div>
+               }
              </div>
           </Card>
         </Col>
