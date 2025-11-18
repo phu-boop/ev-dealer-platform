@@ -1,9 +1,13 @@
-// File: SalesReportPage.jsx (Nâng cấp BƯỚC 5.2: Dynamic Select & Local Filter)
+// File: SalesReportPage.jsx (Nâng cấp BƯỚC 5.1: Sửa lỗi mất biểu đồ)
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getSalesSummary } from "../services/reportingService";
 import SalesReportTable from "../components/SalesReportTable";
-import { Card, Row, Col, Typography, Space, Select, Button } from "antd";
+
+// --- Import Ant Design (Layout) ---
+import { Card, Row, Col, Typography, Space, Select, Button } from "antd"; // Thêm Button
+
+// === Import THƯ VIỆN CHART.JS ===
 import { Doughnut, Bar } from 'react-chartjs-2'; 
 import {
   Chart as ChartJS,
@@ -15,11 +19,14 @@ import {
   LinearScale,   
   BarElement,    
 } from 'chart.js';
+
+// === Import THƯ VIỆN EXCEL ===
 import * as XLSX from 'xlsx';
 
 const { Title } = Typography;
 const { Option } = Select;
 
+// === Đăng ký các thành phần Chart.js ===
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -30,34 +37,89 @@ ChartJS.register(
   BarElement     
 );
 
-// ... (Giữ nguyên style, skeleton, options mặc định) ...
-const errorBoxStyle = { border: "1px solid #ffccc7", backgroundColor: "#fff2f0", padding: "16px", borderRadius: "8px", color: "#d4380d", textAlign: "center" };
-const retryButtonStyle = { marginLeft: "8px", padding: "5px 10px", border: "1px solid #d4380d", background: "transparent", color: "#d4380d", borderRadius: "4px", cursor: "pointer" };
-const TableSkeleton = () => ( <div style={{ padding: "20px" }}> <div style={{ height: "40px", backgroundColor: "#f0f0f0", marginBottom: "10px", borderRadius: "4px" }}></div> <div style={{ height: "40px", backgroundColor: "#f0f0f0", marginBottom: "10px", borderRadius: "4px" }}></div> </div> );
-const doughnutChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } };
-const baseBarChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } };
+// === STYLE, SKELETON, OPTIONS (Giữ nguyên) ===
+const errorBoxStyle = {
+  border: "1px solid #ffccc7",
+  backgroundColor: "#fff2f0",
+  padding: "16px",
+  borderRadius: "8px",
+  color: "#d4380d",
+  textAlign: "center",
+};
+const retryButtonStyle = {
+  marginLeft: "8px",
+  padding: "5px 10px",
+  border: "1px solid #d4380d",
+  background: "transparent",
+  color: "#d4380d",
+  borderRadius: "4px",
+  cursor: "pointer",
+};
+const TableSkeleton = () => (
+  <div style={{ padding: "20px" }}>
+    <div
+      style={{
+        height: "40px",
+        backgroundColor: "#f0f0f0",
+        marginBottom: "10px",
+        borderRadius: "4px",
+      }}
+    ></div>
+    <div
+      style={{
+        height: "40px",
+        backgroundColor: "#f0f0f0",
+        marginBottom: "10px",
+        borderRadius: "4px",
+      }}
+    ></div>
+    <div
+      style={{
+        height: "40px",
+        backgroundColor: "#f0f0f0",
+        borderRadius: "4px",
+      }}
+    ></div>
+  </div>
+);
+const doughnutChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top',
+    },
+  },
+};
+const baseBarChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top',
+    },
+  },
+};
+// === KẾT THÚC ===
 
 
 // --- COMPONENT CHÍNH ---
 const SalesReportPage = () => {
-  const [reportData, setReportData] = useState([]); // Dữ liệu gốc từ API
+  // --- STATE CŨ (Giữ nguyên) ---
+  const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // State cho bộ lọc API (chỉ dùng cho Region nếu cần)
-  const [apiFilters, setApiFilters] = useState({
+  const [filters, setFilters] = useState({
     region: "",
-    // modelId: "", // Tạm bỏ modelId ra khỏi API filter để lọc local
+    modelId: "",
   });
 
-  // State cho bộ lọc Local (Mẫu xe)
-  const [selectedModel, setSelectedModel] = useState(null);
-
+  // --- LOGIC CŨ (Giữ nguyên) ---
   const fetchReport = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getSalesSummary(apiFilters);
+      const response = await getSalesSummary(filters);
       setReportData(response.data); 
     } catch (err) {
       setError("Không thể tải báo cáo doanh số. Vui lòng thử lại.");
@@ -65,100 +127,103 @@ const SalesReportPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [apiFilters]); // Chỉ gọi lại khi apiFilters thay đổi
+  }, [filters]);
 
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
 
+  // (Tôi giả định bạn vẫn còn 2 hàm này, nếu không hãy copy lại từ code cũ nhé)
   const handleRegionChange = (value) => {
-    setApiFilters(prev => ({ ...prev, region: value }));
+    setFilters(prev => ({ ...prev, region: value }));
+  };
+  const handleModelChange = (value) => {
+    setFilters(prev => ({ ...prev, modelId: value }));
   };
 
-  // Hàm xử lý khi chọn Mẫu xe (Lọc local)
-  const handleModelFilterLocal = (value) => {
-    setSelectedModel(value);
-  };
-
-  // === LOGIC MỚI 1: Lấy danh sách Mẫu xe ĐỘNG (Unique) ===
-  // Tự động tìm tất cả các mẫu xe có trong dữ liệu để đổ vào ô Select
-  const uniqueModels = useMemo(() => {
-    if (!reportData) return [];
-    const models = reportData.map(item => item.modelName).filter(Boolean);
-    // Dùng Set để loại bỏ trùng lặp
-    return [...new Set(models)];
-  }, [reportData]);
-
-  // === LOGIC MỚI 2: Dữ liệu hiển thị (đã lọc) ===
-  // Nếu có selectedModel, ta chỉ hiển thị các dòng khớp với model đó
-  const displayData = useMemo(() => {
-    if (!selectedModel) return reportData; // Nếu không chọn gì, hiển thị hết
-    return reportData.filter(item => item.modelName === selectedModel);
-  }, [reportData, selectedModel]);
-
-
-  // === LOGIC BIỂU ĐỒ (Dùng displayData thay vì reportData) ===
+  // === LOGIC BIỂU ĐỒ (Giữ nguyên) ===
   const chartDataByRegion = useMemo(() => {
-    if (displayData.length === 0) return { labels: [], datasets: [] };
-    const summary = displayData.reduce((acc, item) => {
+    if (reportData.length === 0) return { labels: [], datasets: [] };
+    const summary = reportData.reduce((acc, item) => {
       const region = item.region || 'Chưa xác định';
       const revenue = Number(item.totalRevenue) || 0;
-      if (!acc[region]) acc[region] = 0;
+      if (!acc[region]) {
+        acc[region] = 0;
+      }
       acc[region] += revenue;
       return acc;
     }, {});
+    const labels = Object.keys(summary);
+    const data = Object.values(summary);
     return {
-      labels: Object.keys(summary),
-      datasets: [{
-        label: 'Doanh thu',
-        data: Object.values(summary),
-        backgroundColor: ['rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)'],
-        borderWidth: 1,
-      }],
+      labels: labels,
+      datasets: [
+        {
+          label: 'Doanh thu',
+          data: data,
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+          ],
+          borderWidth: 1,
+        },
+      ],
     };
-  }, [displayData]); // <-- Phụ thuộc displayData
+  }, [reportData]);
 
   const chartDataByModel = useMemo(() => {
-    if (displayData.length === 0) return { labels: [], datasets: [] };
-    const summary = displayData.reduce((acc, item) => {
+    if (reportData.length === 0) return { labels: [], datasets: [] };
+    const summary = reportData.reduce((acc, item) => {
       const model = item.modelName || 'Chưa xác định';
-      const quantity = Number(item.totalUnitsSold) || 0;
-      if (!acc[model]) acc[model] = 0;
+      const quantity = Number(item.totalUnitsSold) || 0; // Đã sửa 's'
+      if (!acc[model]) {
+        acc[model] = 0;
+      }
       acc[model] += quantity;
       return acc;
     }, {});
+    const labels = Object.keys(summary);
+    const data = Object.values(summary);
     return {
-      labels: Object.keys(summary),
-      datasets: [{
-        label: 'Số lượng bán',
-        data: Object.values(summary),
-        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
-      }],
+      labels: labels,
+      datasets: [
+        {
+          label: 'Số lượng bán',
+          data: data,
+          backgroundColor: 'rgba(54, 162, 235, 0.7)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1,
+        },
+      ],
     };
-  }, [displayData]); // <-- Phụ thuộc displayData
+  }, [reportData]);
 
   const dynamicBarChartOptions = useMemo(() => {
     const barDataValues = chartDataByModel.datasets[0]?.data || [];
     const maxQuantity = barDataValues.length > 0 ? Math.max(...barDataValues) : 0;
+    // Làm tròn thang đo lên 20, 25...
     const newMax = maxQuantity > 0 ? (Math.ceil(maxQuantity / 5) * 5) + 5 : 10;
     
     return {
       ...baseBarChartOptions, 
       scales: {
-        y: { beginAtZero: true, max: newMax }
+        y: {
+          beginAtZero: true,
+          max: newMax,
+        }
       }
     };
   }, [chartDataByModel]);
+  // === KẾT THÚC LOGIC BIỂU ĐỒ ===
 
-  // === LOGIC XUẤT EXCEL (Dùng displayData) ===
+  // === LOGIC MỚI: XUẤT EXCEL ===
   const handleExportExcel = () => {
-    if (displayData.length === 0) {
+    if (reportData.length === 0) {
       alert("Không có dữ liệu để xuất!");
       return;
     }
-    const dataForExport = displayData.map(item => ({
+    const dataForExport = reportData.map(item => ({
       'Khu vực': item.region,
       'Tên Đại lý': item.dealershipName,
       'Mẫu xe': item.modelName,
@@ -168,7 +233,10 @@ const SalesReportPage = () => {
       'Ngày bán cuối': new Date(item.lastSaleAt)
     }));
     const ws = XLSX.utils.json_to_sheet(dataForExport);
-    ws['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }];
+    ws['!cols'] = [
+      { wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 15 },
+      { wch: 15 }, { wch: 20 }, { wch: 15 }
+    ];
     dataForExport.forEach((row, index) => {
       const cellIndex = index + 2; 
       const revenueCell = `F${cellIndex}`;
@@ -180,10 +248,19 @@ const SalesReportPage = () => {
     XLSX.utils.book_append_sheet(wb, ws, 'BaoCaoDoanhSo');
     XLSX.writeFile(wb, 'BaoCaoDoanhSo.xlsx');
   };
+  // === KẾT THÚC LOGIC MỚI ===
 
+
+  // --- RENDER ---
   return (
     <Card style={{ margin: "24px", backgroundColor: "#f9fbfd" }}>
-      <Row justify="space-between" align="middle" style={{ marginBottom: "20px" }}>
+      
+      {/* 1. KHU VỰC TIÊU ĐỀ (ĐÃ THÊM NÚT XUẤT EXCEL) */}
+      <Row
+        justify="space-between"
+        align="middle"
+        style={{ marginBottom: "20px" }}
+      >
         <Col>
           <Title level={4} style={{ margin: 0, color: "#333" }}>
             💰 Báo cáo Doanh số theo Khu vực & Đại lý
@@ -191,6 +268,7 @@ const SalesReportPage = () => {
         </Col>
         <Col>
           <Space>
+            {/* --- ĐÃ KHÔI PHỤC BỘ LỌC --- */}
             <Select
               placeholder="Chọn khu vực"
               style={{ width: 200 }}
@@ -201,25 +279,23 @@ const SalesReportPage = () => {
               <Option value="Miền Trung">Miền Trung</Option>
               <Option value="Miền Nam">Miền Nam</Option>
             </Select>
-
-            {/* --- SELECT MẪU XE ĐỘNG (Dynamic) --- */}
             <Select
               placeholder="Chọn mẫu xe"
               style={{ width: 200 }}
-              onChange={handleModelFilterLocal} // Dùng hàm lọc local
+              onChange={handleModelChange}
               allowClear
-              value={selectedModel}
             >
-              {/* Tự động tạo Option từ uniqueModels */}
-              {uniqueModels.map(model => (
-                <Option key={model} value={model}>{model}</Option>
-              ))}
+              {/* (Bạn có thể load động cái này sau) */}
+              <Option value="VF 3">VF 3</Option>
+              <Option value="VF 8">VF 8</Option>
+              <Option value="VF 9">VF 9</Option>
             </Select>
             
+            {/* THÊM NÚT MỚI TẠI ĐÂY */}
             <Button 
               type="primary" 
               onClick={handleExportExcel}
-              disabled={loading || displayData.length === 0}
+              disabled={loading || reportData.length === 0}
             >
               Xuất Excel
             </Button>
@@ -227,8 +303,11 @@ const SalesReportPage = () => {
         </Col>
       </Row>
 
+      {/* 2. KHU VỰC BIỂU ĐỒ (ĐÃ KHÔI PHỤC) */}
       <Title level={5} style={{ marginTop: '16px' }}>Tổng quan</Title>
       <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
+        
+        {/* Biểu đồ 1: Doanh thu theo Khu vực */}
         <Col xs={24} md={12}>
           <Card>
             <Title level={5}>Doanh thu theo Khu vực</Title>
@@ -238,11 +317,11 @@ const SalesReportPage = () => {
               {!loading && !error && chartDataByRegion.labels.length > 0 && (
                 <Doughnut data={chartDataByRegion} options={doughnutChartOptions} />
               )}
-              {!loading && !error && chartDataByRegion.labels.length === 0 && <p>Chưa có dữ liệu.</p>}
             </div>
           </Card>
         </Col>
 
+        {/* Biểu đồ 2: Số lượng bán theo Mẫu xe */}
         <Col xs={24} md={12}>
           <Card>
             <Title level={5}>Số lượng bán theo Mẫu xe</Title>
@@ -252,12 +331,12 @@ const SalesReportPage = () => {
               {!loading && !error && chartDataByModel.labels.length > 0 && (
                 <Bar data={chartDataByModel} options={dynamicBarChartOptions} />
               )}
-               {!loading && !error && chartDataByModel.labels.length === 0 && <p>Chưa có dữ liệu.</p>}
             </div>
           </Card>
         </Col>
       </Row>
 
+      {/* 3. KHU VỰC BÁO CÁO CHI TIẾT (BẢNG) (ĐÃ KHÔI PHỤC) */}
       <Title level={5}>Báo cáo Chi tiết</Title>
       <div className="report-content">
         {loading && <TableSkeleton />}
@@ -269,14 +348,14 @@ const SalesReportPage = () => {
              </button>
           </div>
         )}
-        {/* Dùng displayData cho bảng */}
-        {!loading && !error && displayData.length === 0 && (
+        {!loading && !error && reportData.length === 0 && (
           <p>Không có dữ liệu nào khớp với bộ lọc.</p>
         )}
-        {!loading && !error && displayData.length > 0 && (
-          <SalesReportTable data={displayData} />
+        {!loading && !error && reportData.length > 0 && (
+          <SalesReportTable data={reportData} />
         )}
       </div>
+
     </Card>
   );
 };

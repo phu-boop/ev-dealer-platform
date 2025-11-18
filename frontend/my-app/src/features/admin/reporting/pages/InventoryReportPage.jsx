@@ -1,11 +1,11 @@
-// File: InventoryReportPage.jsx (COMMIT ĐỢT 3: Days of Supply & Low Stock Alert)
+// File: InventoryReportPage.jsx (COMMIT ĐỢT 4: Thêm nút Xuất Excel - Hoàn tất)
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getInventoryVelocity } from "../services/reportingService";
 import InventoryReportTable from "../components/InventoryReportTable";
 
 // --- Import Ant Design ---
-import { Card, Row, Col, Typography, Space, Select } from "antd"; // Chưa thêm Button Excel
+import { Card, Row, Col, Typography, Space, Select, Button } from "antd"; // Đã thêm Button
 
 // --- Import Chart.js ---
 import { Bar, Doughnut } from 'react-chartjs-2';
@@ -19,6 +19,9 @@ import {
   BarElement,
   Title as ChartTitle,
 } from 'chart.js';
+
+// --- Import Excel ---
+import * as XLSX from 'xlsx'; // Đã thêm thư viện Excel
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -38,13 +41,12 @@ const barOptions = {
   ...commonOptions,
   scales: { y: { beginAtZero: true } }
 };
-// Config cho biểu đồ ngang (Horizontal Bar) - Dùng cho Cảnh báo
 const horizontalBarOptions = {
   ...commonOptions,
-  indexAxis: 'y', // Xoay ngang
+  indexAxis: 'y', 
   scales: { x: { beginAtZero: true } },
   plugins: {
-    legend: { display: false }, // Ẩn chú thích cho gọn
+    legend: { display: false }, 
     title: { display: true, text: 'Các mẫu xe còn dưới 10 chiếc' }
   }
 };
@@ -105,7 +107,7 @@ const InventoryReportPage = () => {
   // LOGIC BIỂU ĐỒ
   // ==========================================================================
 
-  // 1. Khu vực (Tỷ lệ tồn kho)
+  // 1. Khu vực
   const chartStockByRegion = useMemo(() => {
     const summary = displayData.reduce((acc, item) => {
       const region = item.region || 'Khác';
@@ -122,7 +124,7 @@ const InventoryReportPage = () => {
     };
   }, [displayData]);
 
-  // 2. Mẫu xe (Số lượng tồn kho)
+  // 2. Mẫu xe
   const chartStockByModel = useMemo(() => {
     const summary = displayData.reduce((acc, item) => {
       const model = item.modelName || 'Khác';
@@ -194,7 +196,7 @@ const InventoryReportPage = () => {
     };
   }, [displayData]);
 
-  // === MỚI === 5. Ngày hàng còn lại (Days of Supply)
+  // 5. Ngày hàng còn lại
   const chartDaysOfSupply = useMemo(() => {
      const modelStats = displayData.reduce((acc, item) => {
         const model = item.modelName || 'Khác';
@@ -203,16 +205,14 @@ const InventoryReportPage = () => {
         acc[model].daily += (Number(item.averageDailySales) || 0);
         return acc;
      }, {});
-
      const labels = Object.keys(modelStats);
      const data = labels.map(model => {
         const { stock, daily } = modelStats[model];
         if (daily === 0) return 0;
         return Number((stock / daily).toFixed(1));
      });
-     
      const maxVal = data.length > 0 ? Math.max(...data) : 0;
-     const niceMax = maxVal > 0 ? (Math.ceil(maxVal / 10) * 10) + 10 : 100;
+     const niceMax = maxVal > 0 ? (Math.ceil(maxVal / 10) * 10) + 10 : 100; 
 
      return {
         data: {
@@ -220,40 +220,76 @@ const InventoryReportPage = () => {
           datasets: [{
             label: 'Ngày hàng còn lại (Dự kiến)',
             data: data,
-            backgroundColor: '#9966FF', // Màu tím
+            backgroundColor: '#9966FF',
           }]
         },
         options: { ...barOptions, scales: { y: { beginAtZero: true, max: niceMax } } }
      };
   }, [displayData]);
 
-  // === MỚI === 6. Cảnh báo Tồn kho thấp (Low Stock Alert)
+  // 6. Cảnh báo Tồn kho thấp
   const chartLowStock = useMemo(() => {
-    // Chỉ lấy những xe có tồn kho < 10
     const lowStockThreshold = 10;
-    
     const summary = displayData.reduce((acc, item) => {
       const model = item.modelName || 'Khác';
       acc[model] = (acc[model] || 0) + (Number(item.currentStock) || 0);
       return acc;
     }, {});
-
-    // Lọc ra các xe dưới ngưỡng
     const lowStockModels = Object.keys(summary).filter(key => summary[key] < lowStockThreshold);
     const lowStockValues = lowStockModels.map(key => summary[key]);
-
     return {
       data: {
         labels: lowStockModels,
         datasets: [{
           label: 'Số lượng tồn (Thấp)',
           data: lowStockValues,
-          backgroundColor: '#FF6384', // Màu đỏ cảnh báo
+          backgroundColor: '#FF6384',
         }]
       },
       options: horizontalBarOptions
     };
   }, [displayData]);
+
+
+  // === LOGIC MỚI: XUẤT EXCEL ===
+  const handleExportExcel = () => {
+    if (displayData.length === 0) {
+      alert("Không có dữ liệu để xuất!");
+      return;
+    }
+
+    // 1. Chuẩn bị dữ liệu
+    const exportData = displayData.map(item => ({
+      'Khu vực': item.region,
+      'Mẫu xe': item.modelName,
+      'Phiên bản': item.variantName,
+      'Tồn kho (Hiện tại)': Number(item.currentStock),
+      'Bán (30 ngày)': Number(item.salesLast30Days),
+      'TB Bán/Ngày': Number(item.averageDailySales).toFixed(2),
+      'Ngày hàng còn lại': item.daysOfSupply === 'Infinity' || !item.daysOfSupply 
+                           ? 'Vô hạn' 
+                           : Number(item.daysOfSupply).toFixed(1)
+    }));
+
+    // 2. Tạo Sheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+
+    // 3. Chỉnh độ rộng cột
+    ws['!cols'] = [
+      { wch: 15 }, // Khu vực
+      { wch: 15 }, // Mẫu xe
+      { wch: 15 }, // Phiên bản
+      { wch: 15 }, // Tồn kho
+      { wch: 15 }, // Bán 30 ngày
+      { wch: 15 }, // TB Bán/Ngày
+      { wch: 20 }  // Ngày còn lại
+    ];
+
+    // 4. Tạo Workbook và Tải về
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'BaoCaoTonKho');
+    XLSX.writeFile(wb, 'BaoCaoTonKho.xlsx');
+  };
 
 
   // --- RENDER ---
@@ -273,6 +309,15 @@ const InventoryReportPage = () => {
              <Select placeholder="Chọn mẫu xe" style={{ width: 150 }} onChange={handleModelFilterLocal} allowClear value={selectedModel}>
                 {uniqueModels.map(m => <Option key={m} value={m}>{m}</Option>)}
              </Select>
+             
+             {/* NÚT XUẤT EXCEL (ĐÃ THÊM) */}
+             <Button 
+               type="primary" 
+               onClick={handleExportExcel} 
+               disabled={loading || displayData.length === 0}
+             >
+               Xuất Excel
+             </Button>
           </Space>
         </Col>
       </Row>
@@ -305,7 +350,7 @@ const InventoryReportPage = () => {
         </Col>
       </Row>
 
-       {/* HÀNG 3 (MỚI) - Ngày hàng còn lại & Cảnh báo */}
+       {/* HÀNG 3 */}
        <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={24} md={12}>
           <Card title="📉 Dự báo ngày hàng còn lại (Days of Supply)">
