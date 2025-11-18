@@ -17,7 +17,7 @@ public class SalesOrderDtoB2B {
     // Từ SalesOrder
     private UUID orderId;
     private UUID dealerId;
-    private Long customerId; // Có thể null nếu là B2B order
+    private UUID customerId; // Có thể null nếu là B2B order
     private UUID staffId;
     private LocalDateTime orderDate;
     private LocalDateTime deliveryDate;

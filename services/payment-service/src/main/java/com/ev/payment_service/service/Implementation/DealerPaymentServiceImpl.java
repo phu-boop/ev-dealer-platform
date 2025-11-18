@@ -481,7 +481,7 @@ public class DealerPaymentServiceImpl implements IDealerPaymentService {
     public Page<DealerTransactionResponse> getPendingCashPayments(Pageable pageable) {
         log.info("Getting pending cash payments");
 
-        Page<DealerTransaction> transactionPage = dealerTransactionRepository.findPendingManualTransactions(pageable);
+        Page<DealerTransaction> transactionPage = dealerTransactionRepository.findPendingTransactions(pageable);
         return transactionPage.map(dealerPaymentMapper::toTransactionResponse);
     }
 

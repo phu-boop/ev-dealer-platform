@@ -98,6 +98,7 @@ import B2COrderDetailPage from "../features/payments/pages/B2COrderDetailPage.js
 import PayB2COrderPage from "../features/payments/pages/PayB2COrderPage.jsx";
 import B2CCashPaymentsManagementPage from "../features/payments/pages/B2CCashPaymentsManagementPage.jsx";
 import B2CDebtManagementPage from "../features/payments/pages/B2CDebtManagementPage.jsx";
+import DealerPaymentResultPage from "../features/payments/pages/DealerPaymentResultPage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
 import PaymentResultPage from "../features/payments/pages/PaymentResultPage.jsx";
 export default function AppRoutes() {
@@ -115,6 +116,8 @@ export default function AppRoutes() {
           <Route path="reset-password" element={<ResetPassword />} />
           {/* Public Payment Routes */}
           <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
+          {/* VNPAY */}
+          <Route path="payment/result" element={<PaymentResultPage />} />
         </Route>
 
         {/* ================================================================== */}
@@ -431,6 +434,10 @@ export default function AppRoutes() {
                 element={<DealerPaymentPage />}
               />
               <Route
+                path="manager/payments/vnpay-result"
+                element={<DealerPaymentResultPage />}
+              />
+              <Route
                 path="manager/payments/b2c-cash-payments"
                 element={<B2CCashPaymentsManagementPage />}
               />
@@ -534,10 +541,6 @@ export default function AppRoutes() {
               <Route
                 path="staff/payments/orders/:orderId"
                 element={<CustomerPaymentPage />}
-              />
-              <Route
-                path="staff/payment/result"
-                element={<PaymentResultPage />}
               />
             </Route>
           </Route>

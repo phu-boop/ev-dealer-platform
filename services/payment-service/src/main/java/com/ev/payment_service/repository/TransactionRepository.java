@@ -17,11 +17,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     // (Query lồng qua PaymentRecord)
     List<Transaction> findByPaymentRecord_OrderId(UUID orderId);
 
-    // Lấy danh sách giao dịch chờ duyệt (PENDING) với payment method type = MANUAL
+    // Lấy danh sách giao dịch chờ duyệt (PENDING) cho tất cả payment methods
     // Cho B2C orders (có customerId trong PaymentRecord)
     @Query("SELECT t FROM Transaction t " +
            "WHERE t.status = 'PENDING' " +
-           "AND t.paymentMethod.methodType = com.ev.payment_service.enums.PaymentMethodType.MANUAL " +
            "AND t.paymentRecord.customerId IS NOT NULL " +
            "ORDER BY t.transactionDate DESC")
     Page<Transaction> findPendingManualTransactions(Pageable pageable);
