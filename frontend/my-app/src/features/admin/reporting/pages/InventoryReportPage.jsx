@@ -1,239 +1,208 @@
-import React, { useState, useEffect, useCallback } from "react";
+// File: InventoryReportPage.jsx (COMMIT ĐỢT 1: Setup + 2 Biểu đồ Tồn kho)
+
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getInventoryVelocity } from "../services/reportingService";
 import InventoryReportTable from "../components/InventoryReportTable";
 
-// === STYLE NỘI TUYẾN ===
-// (Giữ style ở đây cho gọn gàng)
+// --- Import Ant Design ---
+import { Card, Row, Col, Typography, Space, Select } from "antd";
 
-const pageStyle = {
-  fontFamily: "Arial, sans-serif",
-  padding: "24px",
-  backgroundColor: "#f9fbfd",
-  minHeight: "100vh",
+// --- Import Chart.js ---
+import { Bar, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title as ChartTitle,
+} from 'chart.js';
+
+const { Title } = Typography;
+const { Option } = Select;
+
+// Đăng ký Chart.js
+ChartJS.register(
+  ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, ChartTitle
+);
+
+// --- CONFIG BIỂU ĐỒ ---
+const commonOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'top' } },
+};
+// Config cho biểu đồ cột (có trục Y)
+const barOptions = {
+  ...commonOptions,
+  scales: { y: { beginAtZero: true } }
 };
 
-const headerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "20px",
-  flexWrap: "wrap", // Để responsive
-};
-
-const titleStyle = {
-  color: "#333",
-  margin: "0",
-};
-
-const filterContainerStyle = {
-  display: "flex",
-  gap: "12px", // Khoảng cách giữa các bộ lọc
-};
-
-const selectStyle = {
-  padding: "8px 12px",
-  fontSize: "14px",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-};
-
-const errorBoxStyle = {
-  padding: "20px",
-  border: "1px solid #ffb8b8",
-  backgroundColor: "#fff0f0",
-  borderRadius: "8px",
-  textAlign: "center",
-  color: "#d8000c",
-};
-
-const retryButtonStyle = {
-  padding: "8px 16px",
-  fontSize: "14px",
-  color: "#fff",
-  backgroundColor: "#d8000c",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  marginTop: "12px",
-};
-// === KẾT THÚC STYLE ===
-
-// === COMPONENT SKELETON (CHO SINH ĐỘNG) ===
-// Một component nội bộ để làm hiệu ứng "đang tải"
-const TableSkeleton = () => {
-  // Style cho hiệu ứng nhấp nháy
-  const skeletonBase = {
-    backgroundColor: "#e0e0e0",
-    borderRadius: "4px",
-    height: "20px",
-    animation: "pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-  };
-
-  // Thêm keyframes vào document
-  // (Đây là cách "hack" để dùng keyframes mà không cần file CSS)
-  useEffect(() => {
-    const styleSheet = document.createElement("style");
-    styleSheet.type = "text/css";
-    styleSheet.innerText = `
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    return () => {
-      document.head.removeChild(styleSheet);
-    };
-  }, []);
-
-  const Row = () => (
-    <tr style={{ borderBottom: "1px solid #eee" }}>
-      <td style={{ padding: "12px 16px" }}>
-        <div style={skeletonBase}></div>
-      </td>
-      <td style={{ padding: "12px 16px" }}>
-        <div style={skeletonBase}></div>
-      </td>
-      <td style={{ padding: "12px 16px" }}>
-        <div style={skeletonBase}></div>
-      </td>
-      <td style={{ padding: "12px 16px" }}>
-        <div style={skeletonBase}></div>
-      </td>
-    </tr>
-  );
-
-  return (
-    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-      <thead>
-        <tr style={{ borderBottom: "2px solid #ddd" }}>
-          <th style={{ padding: "12px 16px" }}>
-            <div style={{ ...skeletonBase, height: "24px" }}></div>
-          </th>
-          <th style={{ padding: "12px 16px" }}>
-            <div style={{ ...skeletonBase, height: "24px" }}></div>
-          </th>
-          <th style={{ padding: "12px 16px" }}>
-            <div style={{ ...skeletonBase, height: "24px" }}></div>
-          </th>
-          <th style={{ padding: "12px 16px" }}>
-            <div style={{ ...skeletonBase, height: "24px" }}></div>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <Row />
-        <Row />
-        <Row />
-      </tbody>
-    </table>
-  );
-};
-// === KẾT THÚC SKELETON ===
+// --- SKELETON & STYLES ---
+const TableSkeleton = () => (
+  <div style={{ padding: "20px", background: "#fff" }}>
+    <div style={{ height: "40px", background: "#f0f0f0", marginBottom: "10px" }} />
+    <div style={{ height: "40px", background: "#f0f0f0", marginBottom: "10px" }} />
+  </div>
+);
+const errorBoxStyle = { padding: "20px", border: "1px solid #ffb8b8", backgroundColor: "#fff0f0", color: "#d8000c", textAlign: "center", borderRadius: "8px" };
 
 const InventoryReportPage = () => {
   const [reportData, setReportData] = useState([]);
-  const [loading, setLoading] = useState(true); // Bật loading lúc đầu
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Quản lý state cho filters (đã bỏ TODO)
-  const [filters, setFilters] = useState({
-    region: "", // "" = Tất cả
-    modelId: "", // "" = Tất cả
-  });
+  // Filter API (Chỉ dùng Region để gọi API nếu cần)
+  const [apiFilters, setApiFilters] = useState({ region: "", modelId: "" });
+  
+  // Filter Local (Mẫu xe - để lọc hiển thị)
+  const [selectedModel, setSelectedModel] = useState(null);
 
-  // Tách hàm fetch ra, dùng useCallback để tối ưu
+  // --- CALL API ---
   const fetchReport = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Giờ chúng ta truyền 'filters' vào API
-      // (Giả sử getInventoryVelocity(filters) sẽ gửi GET /reports/inventory-velocity?region=...&modelId=...)
-      const response = await getInventoryVelocity(filters);
-      setReportData(response.data);
+      const response = await getInventoryVelocity(apiFilters);
+      // Kiểm tra cấu trúc trả về (response.data hay response trực tiếp)
+      const data = Array.isArray(response) ? response : (response.data || []);
+      setReportData(data);
     } catch (err) {
-      setError("Không thể tải báo cáo. Vui lòng thử lại.");
+      setError("Không thể tải báo cáo tồn kho.");
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [filters]); // Hàm fetchReport sẽ được tạo lại nếu 'filters' thay đổi
+  }, [apiFilters]);
 
-  // useEffect sẽ chạy lần đầu
-  // và chạy lại BẤT CỨ KHI NÀO hàm 'fetchReport' (tức là 'filters') thay đổi
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
 
-  // Hàm xử lý khi người dùng thay đổi bộ lọc
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [name]: value,
-    }));
-  };
+  // --- LOCAL FILTER & DYNAMIC OPTIONS ---
+  const handleRegionChange = (val) => setApiFilters(prev => ({ ...prev, region: val }));
+  const handleModelFilterLocal = (val) => setSelectedModel(val);
 
-  // Hàm render nội dung chính
-  const renderContent = () => {
-    if (loading) {
-      return <TableSkeleton />;
-    }
+  // Lấy danh sách mẫu xe duy nhất từ data (Dynamic Filter)
+  const uniqueModels = useMemo(() => {
+    if (!reportData) return [];
+    const models = reportData.map(item => item.modelName).filter(Boolean);
+    return [...new Set(models)];
+  }, [reportData]);
 
-    if (error) {
-      return (
-        <div style={errorBoxStyle}>
-          <p>{error}</p>
-          <button style={retryButtonStyle} onClick={fetchReport}>
-            🔄 Thử lại
-          </button>
-        </div>
-      );
-    }
+  // Dữ liệu hiển thị (đã lọc theo mẫu xe chọn)
+  const displayData = useMemo(() => {
+    if (!selectedModel) return reportData;
+    return reportData.filter(item => item.modelName === selectedModel);
+  }, [reportData, selectedModel]);
 
-    if (reportData.length === 0) {
-      return <p>Không có dữ liệu nào khớp với bộ lọc.</p>;
-    }
 
-    return <InventoryReportTable data={reportData} />;
-  };
+  // ==========================================================================
+  // LOGIC BIỂU ĐỒ (ĐỢT 1: 2 BIỂU ĐỒ ĐẦU TIÊN)
+  // ==========================================================================
 
+  // 1. Khu vực (Tỷ lệ tồn kho theo vùng) - Doughnut
+  const chartStockByRegion = useMemo(() => {
+    const summary = displayData.reduce((acc, item) => {
+      const region = item.region || 'Khác';
+      // Cộng dồn số lượng tồn kho (currentStock)
+      acc[region] = (acc[region] || 0) + (Number(item.currentStock) || 0);
+      return acc;
+    }, {});
+    return {
+      labels: Object.keys(summary),
+      datasets: [{
+        label: 'Tồn kho',
+        data: Object.values(summary),
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+      }]
+    };
+  }, [displayData]);
+
+  // 2. Mẫu xe (Số lượng tồn theo mẫu) - Bar
+  const chartStockByModel = useMemo(() => {
+    const summary = displayData.reduce((acc, item) => {
+      const model = item.modelName || 'Khác';
+      // Cộng dồn số lượng tồn kho (currentStock)
+      acc[model] = (acc[model] || 0) + (Number(item.currentStock) || 0);
+      return acc;
+    }, {});
+    
+    // Tính toán max để làm đẹp thang đo
+    const values = Object.values(summary);
+    const maxVal = values.length > 0 ? Math.max(...values) : 0;
+    const niceMax = maxVal > 0 ? (Math.ceil(maxVal / 5) * 5) + 5 : 10;
+
+    return {
+      data: {
+        labels: Object.keys(summary),
+        datasets: [{
+          label: 'Tồn kho hiện tại',
+          data: values,
+          backgroundColor: '#36A2EB',
+        }]
+      },
+      options: {
+        ...barOptions,
+        scales: { y: { beginAtZero: true, max: niceMax } }
+      }
+    };
+  }, [displayData]);
+
+
+  // --- RENDER ---
   return (
-    <div style={pageStyle}>
-      <header style={headerStyle}>
-        <h2 style={titleStyle}>📊 Báo cáo Tồn kho & Tốc độ tiêu thụ</h2>
+    <div style={{ padding: "24px", background: "#f9fbfd", minHeight: "100vh" }}>
+      
+      {/* HEADER & FILTERS */}
+      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
+        <Col><Title level={4} style={{ margin: 0 }}>📊 Báo cáo Tồn kho & Tốc độ tiêu thụ</Title></Col>
+        <Col>
+          <Space>
+             <Select placeholder="Chọn khu vực" style={{ width: 150 }} onChange={handleRegionChange} allowClear>
+                <Option value="Miền Bắc">Miền Bắc</Option>
+                <Option value="Miền Trung">Miền Trung</Option>
+                <Option value="Miền Nam">Miền Nam</Option>
+             </Select>
+             <Select placeholder="Chọn mẫu xe" style={{ width: 150 }} onChange={handleModelFilterLocal} allowClear value={selectedModel}>
+                {uniqueModels.map(m => <Option key={m} value={m}>{m}</Option>)}
+             </Select>
+          </Space>
+        </Col>
+      </Row>
 
-        {/* Các ô input/select để cập nhật state 'filters' */}
-        <div style={filterContainerStyle}>
-          <select
-            name="region"
-            value={filters.region}
-            onChange={handleFilterChange}
-            style={selectStyle}
-          >
-            <option value="">Tất cả Khu vực</option>
-            {/* TODO: Nên load danh sách này từ API */}
-            <option value="Miền Bắc">Miền Bắc</option>
-            <option value="Miền Trung">Miền Trung</option>
-            <option value="Miền Nam">Miền Nam</option>
-          </select>
+      {/* DASHBOARD CHART AREA (ĐỢT 1) */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+        {/* Biểu đồ 1: Tồn kho theo Khu vực */}
+        <Col xs={24} md={8}>
+          <Card title="Tỷ lệ Tồn kho (Khu vực)">
+             <div style={{ height: 250 }}>
+               <Doughnut data={chartStockByRegion} options={commonOptions} />
+             </div>
+          </Card>
+        </Col>
 
-          <select
-            name="modelId"
-            value={filters.modelId}
-            onChange={handleFilterChange}
-            style={selectStyle}
-          >
-            <option value="">Tất cả Mẫu xe</option>
-            {/* TODO: Nên load danh sách này từ API */}
-            <option value="1">VF 3</option>
-            <option value="2">VF 5</option>
-            <option value="3">VF e34</option>
-          </select>
-        </div>
-      </header>
+        {/* Biểu đồ 2: Tồn kho theo Mẫu xe */}
+        <Col xs={24} md={16}>
+          <Card title="Số lượng Tồn kho (Theo Mẫu xe)">
+             <div style={{ height: 250 }}>
+               <Bar data={chartStockByModel.data} options={chartStockByModel.options} />
+             </div>
+          </Card>
+        </Col>
+      </Row>
 
-      <div className="report-content">{renderContent()}</div>
+      {/* TABLE DETAIL */}
+      <Title level={5}>Chi tiết Tồn kho</Title>
+      <div style={{ background: "#fff", borderRadius: 8, padding: 1 }}>
+        {loading ? <TableSkeleton /> : 
+         error ? <div style={errorBoxStyle}>{error}</div> :
+         displayData.length === 0 ? <p style={{padding: 20}}>Không có dữ liệu.</p> :
+         <InventoryReportTable data={displayData} />
+        }
+      </div>
     </div>
   );
 };
