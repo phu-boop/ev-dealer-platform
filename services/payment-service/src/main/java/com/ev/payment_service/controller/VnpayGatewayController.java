@@ -157,6 +157,13 @@ public class VnpayGatewayController {
             // Xác định kết quả thanh toán
             boolean isPaymentSuccess = "00".equals(vnpResponseCode) && "00".equals(vnpTransactionStatus);
 
+            try {
+                UUID updatedTransaction = vnpayService.processReturnResult(vnpParams);
+                log.info("VNPAY Return - Dealer transaction processed via return handler - Id: {}", updatedTransaction);
+            } catch (Exception e) {
+                log.error("VNPAY Return - Error updating dealer transaction status via return handler", e);
+            }
+
             // Convert amount từ VNPAY format (nhân 100) về định dạng bình thường
             long amount = 0;
             try {

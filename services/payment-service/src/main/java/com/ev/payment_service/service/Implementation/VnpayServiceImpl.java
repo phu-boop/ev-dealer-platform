@@ -3,8 +3,14 @@ package com.ev.payment_service.service.Implementation;
 import com.ev.payment_service.config.VnpayConfig;
 import com.ev.payment_service.entity.Transaction;
 import com.ev.payment_service.entity.PaymentRecord;
+import com.ev.payment_service.entity.DealerInvoice;
+import com.ev.payment_service.entity.DealerTransaction;
+import com.ev.payment_service.entity.DealerDebtRecord;
 import com.ev.payment_service.repository.TransactionRepository;
 import com.ev.payment_service.repository.PaymentRecordRepository;
+import com.ev.payment_service.repository.DealerInvoiceRepository;
+import com.ev.payment_service.repository.DealerTransactionRepository;
+import com.ev.payment_service.repository.DealerDebtRecordRepository;
 import com.ev.payment_service.service.Interface.IVnpayService;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
@@ -19,15 +25,18 @@ import com.ev.payment_service.service.Interface.IPaymentRecordService;
 import com.ev.payment_service.repository.PaymentMethodRepository;
 import com.ev.payment_service.entity.PaymentMethod;
 import com.ev.payment_service.dto.request.VnpayInitiateRequest;
+import com.ev.payment_service.enums.PaymentScope;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.math.RoundingMode;
+import java.util.Objects;
 
 /**
  * VNPAY Payment Gateway Service Implementation
@@ -39,7 +48,10 @@ public class VnpayServiceImpl implements IVnpayService {
 
     private final VnpayConfig vnpayConfig;
     private final TransactionRepository transactionRepository;
+    private final DealerTransactionRepository dealerTransactionRepository;
     private final PaymentRecordRepository paymentRecordRepository;
+    private final DealerInvoiceRepository dealerInvoiceRepository;
+    private final DealerDebtRecordRepository dealerDebtRecordRepository;
     private final IPaymentRecordService paymentRecordService;
     private final PaymentMethodRepository paymentMethodRepository;
 
@@ -85,6 +97,73 @@ public class VnpayServiceImpl implements IVnpayService {
 
         } catch (Exception e) {
             log.error("Error creating VNPAY payment URL - Error: {}", e.getMessage(), e);
+            throw new AppException(ErrorCode.INTERNAL_ERROR);
+        }
+    }
+
+    @Override
+    @Transactional
+    public String initiateDealerInvoicePayment(UUID invoiceId,
+                                               UUID dealerId,
+                                               BigDecimal amount,
+                                               String returnUrl,
+                                               String ipAddr) {
+        try {
+            DealerInvoice invoice = dealerInvoiceRepository.findById(invoiceId)
+                    .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+
+            if (!invoice.getDealerId().equals(dealerId)) {
+                log.error("Dealer {} tried to pay invoice {} that does not belong to them", dealerId, invoiceId);
+                throw new AppException(ErrorCode.FORBIDDEN);
+            }
+
+            BigDecimal amountPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
+            BigDecimal remaining = invoice.getTotalAmount().subtract(amountPaid);
+
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                log.error("Invalid VNPAY amount {} for invoice {}", amount, invoiceId);
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+
+            if (amount.compareTo(remaining) > 0) {
+                log.error("Attempt to pay more than remaining amount - Invoice: {}, Amount: {}, Remaining: {}", invoiceId, amount, remaining);
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+
+            PaymentMethod vnpayMethod = paymentMethodRepository.findByMethodName("VNPAY")
+                    .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+
+            if (vnpayMethod.getScope() != PaymentScope.ALL && vnpayMethod.getScope() != PaymentScope.B2B) {
+                log.error("VNPAY method is not enabled for B2B scope - MethodId: {}", vnpayMethod.getMethodId());
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+
+            DealerTransaction transaction = DealerTransaction.builder()
+                    .dealerInvoice(invoice)
+                    .paymentMethod(vnpayMethod)
+                    .amount(amount)
+                    .status("PENDING_GATEWAY")
+                    .transactionDate(LocalDateTime.now())
+                    .build();
+
+            DealerTransaction savedTransaction = dealerTransactionRepository.save(transaction);
+
+            long amountInLong = amount.setScale(0, RoundingMode.HALF_UP).longValueExact();
+
+            String paymentUrl = createPaymentUrl(
+                    savedTransaction.getDealerTransactionId().toString(),
+                    invoiceId.toString(),
+                    amountInLong,
+                    returnUrl,
+                    ipAddr
+            );
+
+            log.info("Created VNPAY transaction for dealer invoice - InvoiceId: {}, TransactionId: {}", invoiceId, savedTransaction.getDealerTransactionId());
+            return paymentUrl;
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error initiating dealer invoice payment via VNPAY - InvoiceId: {}, Error: {}", invoiceId, e.getMessage(), e);
             throw new AppException(ErrorCode.INTERNAL_ERROR);
         }
     }
@@ -212,68 +291,18 @@ public class VnpayServiceImpl implements IVnpayService {
             // Parse transaction ID
             UUID transactionId = UUID.fromString(vnpTxnRef);
 
-            // Tìm transaction
-            Transaction transaction = transactionRepository.findById(transactionId)
-                    .orElseThrow(() -> {
-                        log.error("VNPAY IPN callback - Transaction not found - TransactionId: {}", vnpTxnRef);
-                        return new AppException(ErrorCode.DATA_NOT_FOUND);
-                    });
-
-            // Kiểm tra transaction đã được xử lý chưa
-            if ("SUCCESS".equals(transaction.getStatus())) {
-                log.warn("VNPAY IPN callback - Transaction already processed - TransactionId: {}", vnpTxnRef);
-                return transactionId;
+            Optional<Transaction> paymentTransaction = transactionRepository.findById(transactionId);
+            if (paymentTransaction.isPresent()) {
+                return handleCustomerGatewayCallback(paymentTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTransactionNo);
             }
 
-            // Xử lý kết quả từ VNPAY
-            if ("00".equals(vnpResponseCode) && "00".equals(vnpTransactionStatus)) {
-                // Update transaction status
-                transaction.setStatus("SUCCESS");
-                transaction.setGatewayTransactionId(vnpTransactionNo);
-                transactionRepository.save(transaction);
-
-                log.info("VNPAY IPN callback - Payment successful - TransactionId: {}, VNPAY TransactionNo: {}",
-                        vnpTxnRef, vnpTransactionNo);
-
-                // Auto-confirm payment
-                try {
-                    PaymentRecord paymentRecord = transaction.getPaymentRecord();
-                    if (paymentRecord != null) {
-                        // Update PaymentRecord
-                        paymentRecord.setAmountPaid(
-                                paymentRecord.getAmountPaid().add(transaction.getAmount())
-                        );
-                        paymentRecord.setRemainingAmount(
-                                paymentRecord.getRemainingAmount().subtract(transaction.getAmount())
-                        );
-
-                        // Update status
-                        if (paymentRecord.getRemainingAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                            paymentRecord.setStatus("PAID");
-                        } else if (paymentRecord.getAmountPaid().compareTo(BigDecimal.ZERO) > 0) {
-                            paymentRecord.setStatus("PARTIALLY_PAID");
-                        }
-
-                        paymentRecordRepository.save(paymentRecord);
-                        log.info("VNPAY IPN callback - PaymentRecord updated - RecordId: {}, Status: {}",
-                                paymentRecord.getRecordId(), paymentRecord.getStatus());
-                    }
-                } catch (Exception e) {
-                    log.error("VNPAY IPN callback - Error updating PaymentRecord - TransactionId: {}, Error: {}",
-                            vnpTxnRef, e.getMessage(), e);
-                }
-
-                return transactionId;
-            } else {
-                // Payment failed
-                transaction.setStatus("FAILED");
-                transaction.setGatewayTransactionId(vnpTransactionNo);
-                transactionRepository.save(transaction);
-
-                log.warn("VNPAY IPN callback - Payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
-                        vnpTxnRef, vnpResponseCode, vnpTransactionStatus);
-                return null;
+            Optional<DealerTransaction> dealerTransaction = dealerTransactionRepository.findById(transactionId);
+            if (dealerTransaction.isPresent()) {
+                return handleDealerGatewayCallback(dealerTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTxnRef, vnpTransactionNo);
             }
+
+            log.error("VNPAY IPN callback - Transaction not found anywhere - TransactionId: {}", vnpTxnRef);
+            return null;
 
         } catch (Exception e) {
             log.error("Error processing VNPAY IPN callback - Error: {}", e.getMessage(), e);
@@ -282,8 +311,185 @@ public class VnpayServiceImpl implements IVnpayService {
     }
 
     @Override
+    @Transactional
+    public UUID processReturnResult(Map<String, String> vnpParams) {
+        try {
+            String vnpResponseCode = vnpParams.get("vnp_ResponseCode");
+            String vnpTransactionStatus = vnpParams.get("vnp_TransactionStatus");
+            String vnpTxnRef = vnpParams.get("vnp_TxnRef");
+            String vnpTransactionNo = vnpParams.get("vnp_TransactionNo");
+
+            if (vnpTxnRef == null) {
+                log.error("VNPAY Return callback - Missing transaction reference");
+                return null;
+            }
+
+            UUID transactionId = UUID.fromString(vnpTxnRef);
+
+            Optional<DealerTransaction> dealerTransaction = dealerTransactionRepository.findById(Objects.requireNonNull(transactionId));
+            if (dealerTransaction.isPresent()) {
+                return handleDealerReturnCallback(dealerTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTransactionNo);
+            }
+
+            log.warn("VNPAY Return callback - Dealer transaction not found for id {}", transactionId);
+            return null;
+        } catch (Exception e) {
+            log.error("Error processing VNPAY return callback - Error: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    @Override
     public boolean validateChecksum(Map<String, String> vnpParams, String vnpSecureHash) {
         return verifyVnpayHash(vnpParams);
+    }
+
+    private UUID handleCustomerGatewayCallback(Transaction transaction,
+                                               String responseCode,
+                                               String transactionStatus,
+                                               String vnpTransactionNo) {
+        UUID transactionId = transaction.getTransactionId();
+
+        if ("SUCCESS".equals(transaction.getStatus())) {
+            log.warn("VNPAY IPN callback - Customer transaction already processed - TransactionId: {}", transactionId);
+            return transactionId;
+        }
+
+        if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
+            transaction.setStatus("SUCCESS");
+            transaction.setGatewayTransactionId(vnpTransactionNo);
+            transactionRepository.save(transaction);
+
+            log.info("VNPAY IPN callback - Customer payment successful - TransactionId: {}, VNPAY TransactionNo: {}",
+                    transactionId, vnpTransactionNo);
+
+            try {
+                PaymentRecord paymentRecord = transaction.getPaymentRecord();
+                if (paymentRecord != null) {
+                    BigDecimal currentPaid = paymentRecord.getAmountPaid() != null ? paymentRecord.getAmountPaid() : BigDecimal.ZERO;
+                    BigDecimal currentRemaining = paymentRecord.getRemainingAmount() != null
+                            ? paymentRecord.getRemainingAmount()
+                            : paymentRecord.getTotalAmount().subtract(currentPaid);
+
+                    BigDecimal newPaid = currentPaid.add(transaction.getAmount());
+                    BigDecimal newRemaining = currentRemaining.subtract(transaction.getAmount());
+
+                    paymentRecord.setAmountPaid(newPaid);
+                    paymentRecord.setRemainingAmount(newRemaining);
+
+                    if (newRemaining.compareTo(BigDecimal.ZERO) <= 0) {
+                        paymentRecord.setStatus("PAID");
+                    } else if (newPaid.compareTo(BigDecimal.ZERO) > 0) {
+                        paymentRecord.setStatus("PARTIALLY_PAID");
+                    }
+
+                    paymentRecordRepository.save(paymentRecord);
+                    log.info("VNPAY IPN callback - PaymentRecord updated - RecordId: {}, Status: {}",
+                            paymentRecord.getRecordId(), paymentRecord.getStatus());
+                }
+            } catch (Exception e) {
+                log.error("VNPAY IPN callback - Error updating PaymentRecord - TransactionId: {}, Error: {}",
+                        transactionId, e.getMessage(), e);
+            }
+
+            return transactionId;
+        }
+
+        transaction.setStatus("FAILED");
+        transaction.setGatewayTransactionId(vnpTransactionNo);
+        transactionRepository.save(transaction);
+
+        log.warn("VNPAY IPN callback - Customer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
+                transactionId, responseCode, transactionStatus);
+        return null;
+    }
+
+    private UUID handleDealerGatewayCallback(DealerTransaction transaction,
+                                             String responseCode,
+                                             String transactionStatus,
+                                             String transactionRef,
+                                             String vnpTransactionNo) {
+        UUID transactionId = transaction.getDealerTransactionId();
+
+        if ("SUCCESS".equals(transaction.getStatus())) {
+            log.warn("VNPAY IPN callback - Dealer transaction already processed - TransactionId: {}", transactionId);
+            return transactionId;
+        }
+
+        if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
+            transaction.setStatus("SUCCESS");
+            transaction.setTransactionCode(vnpTransactionNo);
+            dealerTransactionRepository.save(transaction);
+
+            DealerInvoice invoice = transaction.getDealerInvoice();
+            if (invoice != null) {
+                BigDecimal currentPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
+                BigDecimal newAmountPaid = currentPaid.add(transaction.getAmount());
+                invoice.setAmountPaid(newAmountPaid);
+
+                if (newAmountPaid.compareTo(invoice.getTotalAmount()) >= 0) {
+                    invoice.setStatus("PAID");
+                } else if (newAmountPaid.compareTo(BigDecimal.ZERO) > 0) {
+                    invoice.setStatus(invoice.getDueDate().isBefore(LocalDate.now()) ? "OVERDUE" : "PARTIALLY_PAID");
+                }
+
+                dealerInvoiceRepository.save(invoice);
+                updateDealerDebtRecord(invoice.getDealerId(), transaction.getAmount());
+            }
+
+            log.info("VNPAY IPN callback - Dealer payment successful - TransactionId: {}, InvoiceId: {}",
+                    transactionId, transaction.getDealerInvoice() != null ? transaction.getDealerInvoice().getDealerInvoiceId() : null);
+            return transactionId;
+        }
+
+        transaction.setStatus("FAILED");
+        transaction.setTransactionCode(vnpTransactionNo);
+        dealerTransactionRepository.save(transaction);
+
+        log.warn("VNPAY IPN callback - Dealer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
+                transactionRef, responseCode, transactionStatus);
+        return null;
+    }
+
+    private UUID handleDealerReturnCallback(DealerTransaction transaction,
+                                            String responseCode,
+                                            String transactionStatus,
+                                            String vnpTransactionNo) {
+        UUID transactionId = transaction.getDealerTransactionId();
+
+        if ("PENDING_CONFIRMATION".equals(transaction.getStatus()) || "FAILED".equals(transaction.getStatus())) {
+            log.warn("VNPAY Return callback - Dealer transaction already processed via return - TransactionId: {}", transactionId);
+            return transactionId;
+        }
+
+        if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
+            transaction.setStatus("PENDING_CONFIRMATION");
+        } else {
+            transaction.setStatus("FAILED");
+        }
+
+        transaction.setTransactionCode(vnpTransactionNo);
+        dealerTransactionRepository.save(transaction);
+
+        log.info("VNPAY Return callback - Dealer transaction updated - TransactionId: {}, Status: {}",
+                transactionId, transaction.getStatus());
+        return transactionId;
+    }
+
+    private void updateDealerDebtRecord(UUID dealerId, BigDecimal amountToAddToPaid) {
+        if (dealerId == null || amountToAddToPaid == null || amountToAddToPaid.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        DealerDebtRecord debtRecord = dealerDebtRecordRepository.findById(dealerId)
+                .orElse(DealerDebtRecord.builder()
+                        .dealerId(dealerId)
+                        .totalOwed(BigDecimal.ZERO)
+                        .totalPaid(BigDecimal.ZERO)
+                        .build());
+
+        debtRecord.setTotalPaid(debtRecord.getTotalPaid().add(amountToAddToPaid));
+        dealerDebtRecordRepository.save(debtRecord);
     }
 
     /**
