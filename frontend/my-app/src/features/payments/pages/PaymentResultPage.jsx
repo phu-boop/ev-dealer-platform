@@ -8,7 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 // import apiConstPaymentService from "../../../services/apiConstPaymentService";
 
-const API_VNPAY_GATEWAY_URL = "http://localhost:8080/api/v1/payments/gateway";
+const API_VNPAY_GATEWAY_URL = "http://localhost:8080/payments/api/v1/payments/gateway";
 
 const PaymentResultPage = () => {
   const [searchParams] = useSearchParams();

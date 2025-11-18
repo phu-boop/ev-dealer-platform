@@ -36,7 +36,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.RoundingMode;
-import java.util.Objects;
 
 /**
  * VNPAY Payment Gateway Service Implementation
@@ -326,12 +325,17 @@ public class VnpayServiceImpl implements IVnpayService {
 
             UUID transactionId = UUID.fromString(vnpTxnRef);
 
-            Optional<DealerTransaction> dealerTransaction = dealerTransactionRepository.findById(Objects.requireNonNull(transactionId));
+            Optional<Transaction> customerTransaction = transactionRepository.findById(transactionId);
+            if (customerTransaction.isPresent()) {
+                return handleCustomerReturnCallback(customerTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTransactionNo);
+            }
+
+            Optional<DealerTransaction> dealerTransaction = dealerTransactionRepository.findById(transactionId);
             if (dealerTransaction.isPresent()) {
                 return handleDealerReturnCallback(dealerTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTransactionNo);
             }
 
-            log.warn("VNPAY Return callback - Dealer transaction not found for id {}", transactionId);
+            log.warn("VNPAY Return callback - Transaction not found for id {}", transactionId);
             return null;
         } catch (Exception e) {
             log.error("Error processing VNPAY return callback - Error: {}", e.getMessage(), e);
@@ -402,6 +406,30 @@ public class VnpayServiceImpl implements IVnpayService {
         log.warn("VNPAY IPN callback - Customer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
                 transactionId, responseCode, transactionStatus);
         return null;
+    }
+
+    private UUID handleCustomerReturnCallback(Transaction transaction,
+                                              String responseCode,
+                                              String transactionStatus,
+                                              String vnpTransactionNo) {
+        UUID transactionId = transaction.getTransactionId();
+
+        boolean isPaymentSuccess = "00".equals(responseCode) && "00".equals(transactionStatus);
+
+        if (isPaymentSuccess) {
+            if (!"PENDING".equals(transaction.getStatus())) {
+                transaction.setStatus("PENDING");
+            }
+            log.info("VNPAY Return callback - Customer payment pending confirmation - TransactionId: {}", transactionId);
+        } else {
+            transaction.setStatus("FAILED");
+            log.warn("VNPAY Return callback - Customer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
+                    transactionId, responseCode, transactionStatus);
+        }
+
+        transaction.setGatewayTransactionId(vnpTransactionNo);
+        transactionRepository.save(transaction);
+        return transactionId;
     }
 
     private UUID handleDealerGatewayCallback(DealerTransaction transaction,

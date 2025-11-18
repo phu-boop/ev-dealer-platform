@@ -136,63 +136,61 @@ public class VnpayGatewayController {
 
         log.info("VNPAY Return URL called - Params: {}", vnpParams);
 
-        try {
-            // Validate checksum sử dụng phương thức từ interface
-            boolean isValid = vnpayService.verifyVnpayHash(vnpParams);
+        // Lấy thông tin từ VNPAY
+        String vnpResponseCode = vnpParams.getOrDefault("vnp_ResponseCode", "");
+        String vnpTransactionStatus = vnpParams.getOrDefault("vnp_TransactionStatus", "");
+        String vnpTxnRef = vnpParams.getOrDefault("vnp_TxnRef", "");
+        String vnpAmount = vnpParams.getOrDefault("vnp_Amount", "0");
 
+        // Convert amount từ VNPAY format (nhân 100) về định dạng bình thường
+        long amount = 0;
+        try {
+            amount = Long.parseLong(vnpAmount) / 100;
+        } catch (Exception e) {
+            log.warn("Error parsing amount: {}", vnpAmount);
+        }
+
+        try {
+            boolean isValid = vnpayService.verifyVnpayHash(vnpParams);
             if (!isValid) {
                 log.error("VNPAY Return - Invalid checksum");
-                return ResponseEntity.ok(Map.of(
-                        "success", false,
-                        "message", "Invalid checksum"
-                ));
+                return ResponseEntity.ok(createResponse(false, vnpTxnRef, vnpResponseCode,
+                        vnpTransactionStatus, amount, "Invalid checksum"));
             }
 
-            // Lấy thông tin từ VNPAY
-            String vnpResponseCode = vnpParams.get("vnp_ResponseCode");
-            String vnpTransactionStatus = vnpParams.get("vnp_TransactionStatus");
-            String vnpTxnRef = vnpParams.get("vnp_TxnRef");
-            String vnpAmount = vnpParams.get("vnp_Amount");
-
-            // Xác định kết quả thanh toán
             boolean isPaymentSuccess = "00".equals(vnpResponseCode) && "00".equals(vnpTransactionStatus);
+            UUID updatedTransaction = vnpayService.processReturnResult(vnpParams);
+            log.info("VNPAY Return - Transaction {} updated via return handler", updatedTransaction);
 
-            try {
-                UUID updatedTransaction = vnpayService.processReturnResult(vnpParams);
-                log.info("VNPAY Return - Dealer transaction processed via return handler - Id: {}", updatedTransaction);
-            } catch (Exception e) {
-                log.error("VNPAY Return - Error updating dealer transaction status via return handler", e);
-            }
-
-            // Convert amount từ VNPAY format (nhân 100) về định dạng bình thường
-            long amount = 0;
-            try {
-                amount = Long.parseLong(vnpAmount) / 100;
-            } catch (Exception e) {
-                log.warn("Error parsing amount: {}", vnpAmount);
-            }
-
-            // Tạo response map - SỬ DỤNG HashMap THAY VÌ Map.of để có thể thêm các field null
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", isPaymentSuccess);
-            response.put("transactionId", vnpTxnRef != null ? vnpTxnRef : "");
-            response.put("responseCode", vnpResponseCode != null ? vnpResponseCode : "");
-            response.put("transactionStatus", vnpTransactionStatus != null ? vnpTransactionStatus : "");
-            response.put("amount", amount);
-            response.put("message", isPaymentSuccess ? "Thanh toán thành công" : "Thanh toán thất bại");
-
-            log.info("VNPAY Return - Payment processed - Success: {}, TransactionId: {}",
-                    isPaymentSuccess, vnpTxnRef);
-
-            return ResponseEntity.ok(response);
-
+            return ResponseEntity.ok(createResponse(
+                    isPaymentSuccess,
+                    vnpTxnRef,
+                    vnpResponseCode,
+                    vnpTransactionStatus,
+                    amount,
+                    isPaymentSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"
+            ));
         } catch (Exception e) {
             log.error("Error processing VNPAY return - Error: {}", e.getMessage(), e);
-            return ResponseEntity.ok(Map.of(
-                    "success", false,
-                    "message", "Internal error"
-            ));
+            return ResponseEntity.ok(createResponse(false, vnpTxnRef, vnpResponseCode,
+                    vnpTransactionStatus, amount, "Internal error"));
         }
+    }
+
+    private Map<String, Object> createResponse(boolean success,
+                                               String transactionId,
+                                               String responseCode,
+                                               String transactionStatus,
+                                               long amount,
+                                               String message) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+        response.put("transactionId", transactionId != null ? transactionId : "");
+        response.put("responseCode", responseCode != null ? responseCode : "");
+        response.put("transactionStatus", transactionStatus != null ? transactionStatus : "");
+        response.put("amount", amount);
+        response.put("message", message);
+        return response;
     }
 }
 
