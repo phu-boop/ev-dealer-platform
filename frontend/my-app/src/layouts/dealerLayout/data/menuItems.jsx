@@ -177,7 +177,7 @@ export const dealerManagerMenuItems = [
     submenu: [
       {
         icon: FiFileText,
-        label: "Hóa Đơn Của Tôi",
+        label: "Hóa Đơn Của Tôi (B2B)",
         path: "/dealer/manager/payments/invoices",
       },
       {
@@ -360,7 +360,7 @@ export const dealerStaffMenuItems = [
     submenu: [
       {
         icon: FiShoppingCart,
-        label: "Danh Sách Đơn Hàng B2C",
+        label: "Danh Sách Đơn Hàng (B2C)",
         path: "/dealer/staff/payments/b2c-orders",
       },
     ],
