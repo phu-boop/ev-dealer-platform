@@ -1,34 +1,42 @@
-// src/features/dealer/reporting/services/dealerReportingService.js
+// File: src/features/dealer/reporting/services/dealerReportingService.js
 
-// 1. Import đúng file service của dự án
-import apiConstReportService from "../../../../services/apiConstReportService";
+import apiConstPaymentService from "../../../../services/apiConstPaymentService";
+import apiConstSaleService from "../../../../services/apiConstSaleService";
 
-// --- CẤU HÌNH API ENDPOINT ---
-const API_URLS = {
-  // URL B2B (Hóa đơn)
-  B2B_INVOICES: "/payments/api/v1/payments/dealer/3ec76f92-7d44-49f4-ada1-b47d4f55b418/invoices",
-  
-  // URL B2C (Đơn hàng)
-  
-  B2C_ORDERS: "/sales/api/v1/sales-orders/b2c/dealer/3ec76f92-7d44-49f4-ada1-b47d4f55b418", 
+// --- HÀM LẤY ID TỰ ĐỘNG TỪ LOCAL STORAGE ---
+const getDealerId = () => {
+  try {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) return "";
+    const user = JSON.parse(userStr);
+    return user.dealerId || user.id || ""; 
+  } catch (e) {
+    return "";
+  }
 };
 
-/**
- * 1. Lấy dữ liệu báo cáo Công nợ B2B (Đại lý nợ Hãng)
- */
+const getApiUrls = () => {
+  const dealerId = getDealerId();
+  // Trả về đường dẫn chuẩn (đã bỏ prefix thừa)
+  return {
+    B2B_INVOICES: `/api/v1/payments/dealer/${dealerId}/invoices`,
+    B2C_ORDERS: `/api/v1/sales-orders/b2c/dealer/${dealerId}`,
+  };
+};
+
 export const getB2BDebtReport = async () => {
   try {
-    // SỬA: Dùng apiConstReportService thay cho axios
-    const response = await apiConstReportService.get(API_URLS.B2B_INVOICES, {
+    const urls = getApiUrls();
+    // Kiểm tra ID hợp lệ
+    if (urls.B2B_INVOICES.includes("/dealer//") || urls.B2B_INVOICES.endsWith("/")) {
+       return { summary: { totalDebt: 0, totalPaid: 0, totalRemaining: 0 }, details: [] };
+    }
+
+    const response = await apiConstPaymentService.get(urls.B2B_INVOICES, {
       params: { page: 0, size: 1000 } 
     });
 
-    // Dữ liệu nằm trong response.data.content
-    // (Lưu ý: apiConstReportService thường trả về response gốc, nên truy cập data.content là đúng)
-    // Nếu apiConstReportService đã .data rồi, thì chỉ cần response.content. Bạn cứ để code này, nếu lỗi mình sửa sau.
     const invoices = response.data?.content || [];
-
-    // Tính toán tổng hợp
     const summary = invoices.reduce(
       (acc, item) => {
         acc.totalDebt += item.totalAmount || 0;     
@@ -38,32 +46,27 @@ export const getB2BDebtReport = async () => {
       },
       { totalDebt: 0, totalPaid: 0, totalRemaining: 0 }
     );
-
     return { summary, details: invoices };
   } catch (error) {
-    console.error("Lỗi lấy báo cáo B2B:", error);
+    console.error("Lỗi B2B:", error);
     return { summary: { totalDebt: 0, totalPaid: 0, totalRemaining: 0 }, details: [] };
   }
 };
 
-/**
- * 2. Lấy dữ liệu báo cáo Công nợ B2C (Khách hàng nợ Đại lý)
- */
 export const getB2CDebtReport = async () => {
   try {
-    // SỬA: Dùng apiConstReportService thay cho axios
-    const response = await apiConstReportService.get(API_URLS.B2C_ORDERS);
+    const urls = getApiUrls();
+    if (urls.B2C_ORDERS.includes("/dealer//") || urls.B2C_ORDERS.endsWith("/")) {
+       return { summary: { totalReceivable: 0, totalCollected: 0, totalOutstanding: 0 }, details: [] };
+    }
 
-    // Dữ liệu nằm trong response.data.data
+    const response = await apiConstSaleService.get(urls.B2C_ORDERS);
     const orders = response.data?.data || [];
-
-    // Tính toán tổng hợp
     const summary = orders.reduce(
       (acc, item) => {
         const total = item.totalAmount || 0;
         const paid = item.downPayment || 0; 
         const remaining = total - paid;
-
         acc.totalReceivable += total; 
         acc.totalCollected += paid;   
         acc.totalOutstanding += remaining > 0 ? remaining : 0; 
@@ -71,10 +74,9 @@ export const getB2CDebtReport = async () => {
       },
       { totalReceivable: 0, totalCollected: 0, totalOutstanding: 0 }
     );
-
     return { summary, details: orders };
   } catch (error) {
-    console.error("Lỗi lấy báo cáo B2C:", error);
+    console.error("Lỗi B2C:", error);
     return { summary: { totalReceivable: 0, totalCollected: 0, totalOutstanding: 0 }, details: [] };
   }
 };

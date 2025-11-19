@@ -1,20 +1,16 @@
 // File: src/features/dealer/reporting/pages/DealerDebtReportPage.jsx
 
-
 import React, { useState, useEffect, useMemo } from "react";
-import { Card, Row, Col, Typography, Spin, Button, Table, Tag, Space } from "antd";
-import { FileExcelOutlined } from "@ant-design/icons";
+import { Card, Row, Col, Typography, Spin, Button, Table, Tag, Tabs, Statistic } from "antd";
+import { FileExcelOutlined, ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import { getB2BDebtReport, getB2CDebtReport } from "../services/dealerReportingService";
 
 // --- Import Chart.js ---
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-
-// --- Import Excel ---
 import * as XLSX from 'xlsx';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
 const { Title, Text } = Typography;
 
 const DealerDebtReportPage = () => {
@@ -41,22 +37,21 @@ const DealerDebtReportPage = () => {
     fetchData();
   }, []);
 
-  // --- FORMAT TIỀN TỆ ---
   const formatCurrency = (val) => 
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
 
-  // --- LOGIC BIỂU ĐỒ ---
+  // --- CONFIG BIỂU ĐỒ ---
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom' } },
-    cutout: '60%',
+    plugins: { legend: { position: 'right' } }, // Để chú thích bên phải cho gọn
+    cutout: '70%',
   };
 
   const b2bChartData = useMemo(() => {
-    const paid = b2bData?.summary.totalPaid || 0;
-    const remaining = b2bData?.summary.totalRemaining || 0;
-    if (paid === 0 && remaining === 0) return { labels: [], datasets: [{ data: [1], backgroundColor: ['#f0f0f0'] }] };
+    const paid = b2bData?.summary?.totalPaid || 0;
+    const remaining = b2bData?.summary?.totalRemaining || 0;
+    if (!paid && !remaining) return { labels: [], datasets: [{ data: [1], backgroundColor: ['#f0f0f0'] }] };
     return {
       labels: ['Đã thanh toán', 'Còn nợ'],
       datasets: [{ data: [paid, remaining], backgroundColor: ['#52c41a', '#ff4d4f'], borderWidth: 0 }],
@@ -64,42 +59,40 @@ const DealerDebtReportPage = () => {
   }, [b2bData]);
 
   const b2cChartData = useMemo(() => {
-    const collected = b2cData?.summary.totalCollected || 0;
-    const outstanding = b2cData?.summary.totalOutstanding || 0;
-    if (collected === 0 && outstanding === 0) return { labels: [], datasets: [{ data: [1], backgroundColor: ['#f0f0f0'] }] };
+    const collected = b2cData?.summary?.totalCollected || 0;
+    const outstanding = b2cData?.summary?.totalOutstanding || 0;
+    if (!collected && !outstanding) return { labels: [], datasets: [{ data: [1], backgroundColor: ['#f0f0f0'] }] };
     return {
       labels: ['Đã thu', 'Khách nợ'],
       datasets: [{ data: [collected, outstanding], backgroundColor: ['#1890ff', '#faad14'], borderWidth: 0 }],
     };
   }, [b2cData]);
 
-
-  // --- CẤU HÌNH CỘT CHO BẢNG (TABLE COLUMNS) ---
-  
-  // 1. Cột bảng B2B (Hóa đơn)
+  // --- CỘT BẢNG ---
   const b2bColumns = [
-    { title: 'Mã Hóa Đơn', dataIndex: 'dealerInvoiceId', key: 'id', render: (text) => <Text strong>{text?.substring(0, 8)}...</Text> },
-    { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'date', render: (text) => new Date(text).toLocaleDateString('vi-VN') },
+    { title: 'Mã Hóa Đơn', dataIndex: 'dealerInvoiceId', key: 'id', width: 120, render: (text) => <Text strong>{text?.substring(0, 8)}...</Text> },
+    { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'date', width: 120, render: (text) => text ? new Date(text).toLocaleDateString('vi-VN') : '-' },
     { title: 'Tổng tiền', dataIndex: 'totalAmount', key: 'total', align: 'right', render: (val) => formatCurrency(val) },
     { title: 'Đã trả', dataIndex: 'amountPaid', key: 'paid', align: 'right', render: (val) => <Text type="success">{formatCurrency(val)}</Text> },
     { title: 'Còn nợ', dataIndex: 'remainingAmount', key: 'remain', align: 'right', render: (val) => <Text type="danger" strong>{formatCurrency(val)}</Text> },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center', 
-      render: (status) => (
-        <Tag color={status === 'PAID' ? 'green' : status === 'PARTIAL' ? 'orange' : 'red'}>
-          {status === 'PAID' ? 'Đã xong' : status === 'PARTIAL' ? 'Trả 1 phần' : 'Chưa trả'}
-        </Tag>
-      ) 
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center', width: 150,
+      render: (status) => {
+        let color = 'default'; let text = status;
+        if (status === 'PAID') { color = 'success'; text = 'Đã thanh toán'; }
+        else if (status === 'PARTIAL') { color = 'warning'; text = 'Thanh toán 1 phần'; }
+        else if (status === 'UNPAID' || status === 'PENDING') { color = 'error'; text = 'Chưa thanh toán'; }
+        return <Tag color={color}>{text}</Tag>;
+      } 
     },
   ];
 
-  // 2. Cột bảng B2C (Đơn hàng)
   const b2cColumns = [
-    { title: 'Mã Đơn', dataIndex: 'orderId', key: 'id', render: (text) => <Text strong>{text?.substring(0, 8)}...</Text> },
-    { title: 'Khách hàng', dataIndex: 'customerId', key: 'customer', render: (text) => `KH-${text?.substring(0,6)}` }, // Tạm dùng ID
-    { title: 'Ngày đặt', dataIndex: 'orderDate', key: 'date', render: (text) => new Date(text).toLocaleDateString('vi-VN') },
+    { title: 'Mã Đơn', dataIndex: 'orderId', key: 'id', width: 120, render: (text) => <Text strong>{text?.substring(0, 8)}...</Text> },
+    { title: 'Khách hàng', dataIndex: 'customerId', key: 'customer', render: (text) => `KH-${text?.substring(0,6)}` },
+    { title: 'Ngày đặt', dataIndex: 'orderDate', key: 'date', width: 120, render: (text) => text ? new Date(text).toLocaleDateString('vi-VN') : '-' },
     { title: 'Tổng tiền', dataIndex: 'totalAmount', key: 'total', align: 'right', render: (val) => formatCurrency(val) },
-    { title: 'Đã cọc/trả', dataIndex: 'downPayment', key: 'paid', align: 'right', render: (val) => <Text type="success">{formatCurrency(val)}</Text> },
-    { title: 'Còn lại', key: 'remain', align: 'right', 
+    { title: 'Đã thu', dataIndex: 'downPayment', key: 'paid', align: 'right', render: (val) => <Text type="success">{formatCurrency(val)}</Text> },
+     { title: 'Còn lại', key: 'remain', align: 'right', 
       render: (_, record) => {
         const remain = (record.totalAmount || 0) - (record.downPayment || 0);
         return <Text type={remain > 0 ? "warning" : "secondary"}>{formatCurrency(remain > 0 ? remain : 0)}</Text>
@@ -107,93 +100,81 @@ const DealerDebtReportPage = () => {
     },
   ];
 
+  // --- CẤU HÌNH TABS ---
+  const tabItems = [
+    {
+      key: '1',
+      label: 'Hóa đơn nhập hàng (B2B)',
+      children: <Table dataSource={b2bData?.details || []} columns={b2bColumns} rowKey="dealerInvoiceId" pagination={{ pageSize: 10 }} />
+    },
+    {
+      key: '2',
+      label: 'Đơn hàng bán ra (B2C)',
+      children: <Table dataSource={b2cData?.details || []} columns={b2cColumns} rowKey="orderId" pagination={{ pageSize: 10 }} />
+    },
+  ];
 
-  // --- XUẤT EXCEL ---
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new();
-
-    // Sheet 1: B2B
-    const b2bExport = (b2bData?.details || []).map(item => ({
-        'Mã HĐ': item.dealerInvoiceId,
-        'Ngày tạo': new Date(item.createdAt).toLocaleDateString('vi-VN'),
-        'Tổng tiền': item.totalAmount,
-        'Đã trả': item.amountPaid,
-        'Còn nợ': item.remainingAmount,
-        'Trạng thái': item.status
-    }));
+    const b2bExport = (b2bData?.details || []).map(item => ({ 'Mã HĐ': item.dealerInvoiceId, 'Tổng': item.totalAmount, 'Còn nợ': item.remainingAmount }));
     const ws1 = XLSX.utils.json_to_sheet(b2bExport);
-    XLSX.utils.book_append_sheet(wb, ws1, "No_Voi_Hang_B2B");
-
-    // Sheet 2: B2C
-    const b2cExport = (b2cData?.details || []).map(item => ({
-        'Mã Đơn': item.orderId,
-        'Ngày đặt': new Date(item.orderDate).toLocaleDateString('vi-VN'),
-        'Tổng tiền': item.totalAmount,
-        'Đã thu': item.downPayment,
-        'Còn lại': (item.totalAmount || 0) - (item.downPayment || 0)
-    }));
+    XLSX.utils.book_append_sheet(wb, ws1, "B2B");
+    const b2cExport = (b2cData?.details || []).map(item => ({ 'Mã Đơn': item.orderId, 'Tổng': item.totalAmount, 'Đã thu': item.downPayment }));
     const ws2 = XLSX.utils.json_to_sheet(b2cExport);
-    XLSX.utils.book_append_sheet(wb, ws2, "Khach_No_B2C");
-
-    XLSX.writeFile(wb, "BaoCaoCongNo_DaiLy.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws2, "B2C");
+    XLSX.writeFile(wb, "BaoCaoCongNo.xlsx");
   };
-
 
   if (loading) return <div style={{textAlign: 'center', padding: 50}}><Spin size="large" /></div>;
 
   return (
     <div style={{ padding: "24px", background: "#f0f2f5", minHeight: "100vh" }}>
       
+      {/* HEADER */}
       <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
         <Col><Title level={3} style={{ margin: 0 }}>📊 Báo Cáo Tài Chính & Công Nợ</Title></Col>
-        <Col>
-            <Button type="primary" icon={<FileExcelOutlined />} onClick={handleExportExcel} size="large">
-                Xuất Báo Cáo Excel
-            </Button>
-        </Col>
+        <Col><Button type="primary" icon={<FileExcelOutlined />} onClick={handleExportExcel}>Xuất Excel</Button></Col>
       </Row>
 
-      <Row gutter={[24, 24]}>
-        {/* --- CỘT 1: B2B --- */}
-        <Col xs={24} xl={12}>
-          <Card title="🏢 Công Nợ Với Hãng (B2B)" bordered={false} style={{height: '100%'}}>
-            <Row justify="center" style={{marginBottom: 24}}>
-                <div style={{ height: 200, width: 200 }}>
+      {/* PHẦN 1: BIỂU ĐỒ TỔNG QUAN */}
+      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
+        {/* B2B Summary */}
+        <Col xs={24} md={12}>
+          <Card title="🏢 Tình hình công nợ với Hãng (B2B)" bordered={false}>
+            <Row align="middle">
+                <Col span={12} style={{height: 180}}>
                     <Doughnut data={b2bChartData} options={chartOptions} />
-                </div>
+                </Col>
+                <Col span={12}>
+                    <Statistic title="Tổng nợ phải trả" value={b2bData?.summary.totalRemaining} precision={0} valueStyle={{ color: '#ff4d4f' }} prefix={<ArrowDownOutlined />} suffix="₫" />
+                    <div style={{marginTop: 10}}></div>
+                    <Statistic title="Đã thanh toán" value={b2bData?.summary.totalPaid} precision={0} valueStyle={{ color: '#52c41a', fontSize: 16 }} suffix="₫" />
+                </Col>
             </Row>
-            <Title level={5}>Chi tiết hóa đơn nhập hàng:</Title>
-            <Table 
-                dataSource={b2bData?.details || []} 
-                columns={b2bColumns} 
-                rowKey="dealerInvoiceId"
-                pagination={{ pageSize: 5 }}
-                size="small"
-                scroll={{ x: 600 }}
-            />
           </Card>
         </Col>
-
-        {/* --- CỘT 2: B2C --- */}
-        <Col xs={24} xl={12}>
-          <Card title="👥 Công Nợ Khách Hàng (B2C)" bordered={false} style={{height: '100%'}}>
-             <Row justify="center" style={{marginBottom: 24}}>
-                <div style={{ height: 200, width: 200 }}>
+        {/* B2C Summary */}
+        <Col xs={24} md={12}>
+          <Card title="👥 Tình hình công nợ Khách hàng (B2C)" bordered={false}>
+             <Row align="middle">
+                <Col span={12} style={{height: 180}}>
                     <Doughnut data={b2cChartData} options={chartOptions} />
-                </div>
+                </Col>
+                <Col span={12}>
+                    <Statistic title="Khách còn nợ" value={b2cData?.summary.totalOutstanding} precision={0} valueStyle={{ color: '#faad14' }} prefix={<ArrowUpOutlined />} suffix="₫" />
+                    <div style={{marginTop: 10}}></div>
+                    <Statistic title="Đã thu tiền" value={b2cData?.summary.totalCollected} precision={0} valueStyle={{ color: '#1890ff', fontSize: 16 }} suffix="₫" />
+                </Col>
             </Row>
-            <Title level={5}>Chi tiết đơn hàng bán ra:</Title>
-            <Table 
-                dataSource={b2cData?.details || []} 
-                columns={b2cColumns} 
-                rowKey="orderId"
-                pagination={{ pageSize: 5 }}
-                size="small"
-                scroll={{ x: 600 }}
-            />
           </Card>
         </Col>
       </Row>
+
+      {/* PHẦN 2: BẢNG CHI TIẾT (Dạng Tabs) */}
+      <Card bordered={false}>
+        <Tabs defaultActiveKey="1" items={tabItems} />
+      </Card>
+
     </div>
   );
 };
