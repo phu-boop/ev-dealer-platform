@@ -124,7 +124,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     }
 
     @Override
-    public List<SalesOrderB2CResponse> getSalesOrdersByCustomer(UUID customerId) {
+    public List<SalesOrderB2CResponse> getSalesOrdersByCustomer(Long customerId) {
         List<SalesOrder> salesOrders = salesOrderRepository.findByCustomerIdAndTypeOder(customerId, SaleOderType.B2C);
         return salesOrders.stream()
                 .map(this::mapToResponse)
@@ -404,7 +404,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     }
 
 
-    private CustomerResponse getCustomerInfo(UUID customerId) {
+    private CustomerResponse getCustomerInfo(Long customerId) {
         try {
             ApiRespond<CustomerResponse> response = customerClient.getCustomerById(customerId);
             if (response != null && "1000".equals(response.getCode()) && response.getData() != null) {

@@ -73,7 +73,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         log.info("Finding or creating PaymentRecord for orderId: {}", orderId);
         PaymentRecord record = paymentRecordService.findOrCreateRecord(
                 orderData.getOrderId(),
-                orderData.getCustomerId(), // customerId giờ đã là UUID
+                orderData.getCustomerId(), // customerId giờ đã là Long
                 orderData.getTotalAmount()
         );
         
@@ -343,7 +343,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             try {
                 Object customerIdObj = salesOrderMap.get("customerId");
                 if (customerIdObj instanceof Number) {
-                    data.setCustomerId(parseCustomerIdToUUID(salesOrderMap.get("customerId")));
+                    data.setCustomerId(((Number) customerIdObj).longValue());
                     log.info("Found customerId from SalesOrder - OrderId: {}, CustomerId: {}",
                             data.getOrderId(), data.getCustomerId());
                 } else {
@@ -364,7 +364,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                 if (quotationMap.get("customerId") != null) {
                     Object customerIdObj = quotationMap.get("customerId");
                     if (customerIdObj instanceof Number) {
-                        data.setCustomerId(parseCustomerIdToUUID(quotationMap.get("customerId")));
+                        data.setCustomerId(((Number) customerIdObj).longValue());
                         log.info("Found customerId from quotation (fallback) - OrderId: {}, CustomerId: {}",
                                 data.getOrderId(), data.getCustomerId());
                     }
@@ -446,7 +446,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             try {
                 Object customerIdObj = salesOrderMap.get("customerId");
                 if (customerIdObj instanceof Number) {
-                    data.setCustomerId(parseCustomerIdToUUID(salesOrderMap.get("customerId")));
+                    data.setCustomerId(((Number) customerIdObj).longValue());
                     log.info("Found customerId from B2C order - OrderId: {}, CustomerId: {}",
                             data.getOrderId(), data.getCustomerId());
                 } else {
@@ -467,10 +467,10 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                 if (quotationMap.get("customerId") != null) {
                     Object customerIdObj = quotationMap.get("customerId");
                     if (customerIdObj instanceof Number) {
-                        data.setCustomerId(parseCustomerIdToUUID(salesOrderMap.get("customerId")));
+                        data.setCustomerId(((Number) customerIdObj).longValue());
                         log.info("Found customerId from quotation (fallback) - OrderId: {}, CustomerId: {}",
                                 data.getOrderId(), data.getCustomerId());
-        }
+                    }
                 }
             } catch (Exception e) {
                 log.warn("Failed to parse customerId from quotation - OrderId: {}, Error: {}",
@@ -688,7 +688,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
 
     @Override
     @Transactional(readOnly = true)
-    public BigDecimal getCustomerTotalDebt(UUID customerId) {
+    public BigDecimal getCustomerTotalDebt(Long customerId) {
         log.info("Calculating total debt for customer: {}", customerId);
         
         if (customerId == null) {
@@ -726,53 +726,4 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         return transactions.map(transactionMapper::toResponse);
     }
 
-    /**
-     * Helper đa năng để chuyển đổi CustomerId (có thể là Long, String) sang UUID
-     */
-    private UUID parseCustomerIdToUUID(Object customerIdObj) {
-        if (customerIdObj == null) {
-            return null;
-        }
-        // Trường hợp 1: Đã là UUID
-        if (customerIdObj instanceof UUID) {
-            return (UUID) customerIdObj;
-        }
-        // Trường hợp 2: Là String (sales-service trả về String UUID)
-        if (customerIdObj instanceof String) {
-            try {
-                // Thử parse UUID trực tiếp
-                return UUID.fromString((String) customerIdObj);
-            } catch (IllegalArgumentException e) {
-                // Có thể là số Long dạng String
-                try {
-                    long idAsLong = Long.parseLong((String) customerIdObj);
-                    log.warn("CustomerId là String nhưng lại là số Long: {}. Sẽ xử lý như Long.", customerIdObj);
-                    return convertLongToUUID(idAsLong);
-                } catch (NumberFormatException e2) {
-                    log.warn("Không thể parse CustomerId String sang UUID: {}", customerIdObj);
-                    return null;
-                }
-            }
-        }
-        // Trường hợp 3: Là Number (Long/Integer - Dữ liệu cũ từ sales-service)
-        if (customerIdObj instanceof Number) {
-            log.warn("CustomerId là Number (Long), đang chuyển đổi sang UUID: {}", customerIdObj);
-            long idAsLong = ((Number) customerIdObj).longValue();
-            return convertLongToUUID(idAsLong);
-        }
-
-        log.warn("Không nhận dạng được kiểu CustomerId: {}", customerIdObj.getClass().getName());
-        return null;
-    }
-
-    /**
-     * Hàm helper để chuyển đổi ID dạng Long (từ hệ thống cũ) sang UUID
-     * (Đây là một cách giả lập, bạn CÓ THỂ cần thay đổi logic này)
-     */
-    private UUID convertLongToUUID(long id) {
-        // Tạo một UUID dựa trên số Long.
-        // Đây là cách phổ biến để tạo UUID từ một số Long một cách nhất quán
-        // (Sử dụng 64 bit cao và 64 bit thấp)
-        return new UUID(0L, id);
-    }
 }

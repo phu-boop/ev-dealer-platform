@@ -17,7 +17,7 @@ public interface QuotationRepository extends JpaRepository<Quotation, UUID>, Jpa
 
     // Filter cơ bản
     List<Quotation> findByDealerId(UUID dealerId);
-    List<Quotation> findByCustomerId(UUID customerId);
+    List<Quotation> findByCustomerId(Long customerId);
     List<Quotation> findByStaffId(UUID staffId);
     List<Quotation> findByStatus(QuotationStatus status);
     List<Quotation> findByQuotationDateBetween(LocalDateTime start, LocalDateTime end);
@@ -31,7 +31,7 @@ public interface QuotationRepository extends JpaRepository<Quotation, UUID>, Jpa
            "(:startDate IS NULL OR q.quotationDate >= :startDate) AND " +
            "(:endDate IS NULL OR q.quotationDate <= :endDate)")
     List<Quotation> findByFilters(@Param("dealerId") UUID dealerId,
-                                 @Param("customerId") UUID customerId,
+                                 @Param("customerId") Long customerId,
                                  @Param("staffId") UUID staffId,
                                  @Param("status") QuotationStatus status,
                                  @Param("startDate") LocalDateTime startDate,

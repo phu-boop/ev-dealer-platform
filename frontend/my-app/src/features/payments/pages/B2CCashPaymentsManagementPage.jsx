@@ -157,7 +157,7 @@ const B2CCashPaymentsManagementPage = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Yêu Cầu Thanh Toán Tiền Mặt (B2C)</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Yêu Cầu Thanh Toán (B2C)</h1>
           <p className="text-gray-600 mt-1">Duyệt các yêu cầu thanh toán tiền mặt từ Dealer Staff cho đơn hàng B2C</p>
         </div>
       </div>
