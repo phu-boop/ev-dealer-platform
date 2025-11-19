@@ -45,6 +45,6 @@ public interface SalesContractRepository extends JpaRepository<SalesContract, UU
               AND (:status IS NULL OR sc.contractStatus = :status)
             """)
     List<SalesContract> searchContracts(
-            @Param("customerId") UUID customerId,
+            @Param("customerId") Long customerId,
             @Param("status") ContractStatus status);
 }

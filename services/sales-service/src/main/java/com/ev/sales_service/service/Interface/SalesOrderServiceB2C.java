@@ -18,7 +18,7 @@ public interface SalesOrderServiceB2C {
 
     List<SalesOrderB2CResponse> getSalesOrdersByDealer(UUID dealerId);
 
-    List<SalesOrderB2CResponse> getSalesOrdersByCustomer(UUID customerId);
+    List<SalesOrderB2CResponse> getSalesOrdersByCustomer(Long customerId);
 
     SalesOrderB2CResponse updateSalesOrderStatus(UUID orderId, String status);
 

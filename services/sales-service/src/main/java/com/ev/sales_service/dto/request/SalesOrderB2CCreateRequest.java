@@ -12,7 +12,7 @@ import java.util.UUID;
 public class SalesOrderB2CCreateRequest {
     // Thông tin cơ bản
     private UUID dealerId;
-    private UUID customerId;
+    private Long customerId;
     private UUID staffId;
     private Long modelId;
     private Long variantId;

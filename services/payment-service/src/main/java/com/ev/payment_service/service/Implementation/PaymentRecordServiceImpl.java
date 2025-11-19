@@ -30,7 +30,7 @@ public class PaymentRecordServiceImpl implements IPaymentRecordService {
      */
     @Override
     @Transactional
-    public PaymentRecord findOrCreateRecord(UUID orderId, UUID customerId, BigDecimal totalAmount) {
+    public PaymentRecord findOrCreateRecord(UUID orderId, Long customerId, BigDecimal totalAmount) {
 
         // 1. Thử tìm bằng OrderId
         Optional<PaymentRecord> existingRecord = paymentRecordRepository.findByOrderId(orderId);

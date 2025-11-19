@@ -18,5 +18,5 @@ public interface IPaymentRecordService {
      * @param totalAmount Tổng giá trị của đơn hàng
      * @return PaymentRecord đã tồn tại hoặc vừa được tạo mới.
      */
-    PaymentRecord findOrCreateRecord(UUID orderId, UUID customerId, BigDecimal totalAmount);
+    PaymentRecord findOrCreateRecord(UUID orderId, Long customerId, BigDecimal totalAmount);
 }

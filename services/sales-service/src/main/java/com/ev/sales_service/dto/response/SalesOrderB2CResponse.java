@@ -14,7 +14,7 @@ import java.util.List;
 public class SalesOrderB2CResponse {
     private UUID orderId;
     private UUID dealerId;
-    private UUID customerId;
+    private Long customerId;
     private UUID staffId;
     private LocalDateTime orderDate;
     private LocalDateTime deliveryDate;

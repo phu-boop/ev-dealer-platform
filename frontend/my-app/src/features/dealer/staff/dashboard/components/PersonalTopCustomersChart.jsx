@@ -37,8 +37,8 @@ const PersonalTopCustomersChart = ({ orders = [] }) => {
             customerName = order.customer.fullName || order.customer.firstName || order.customer.name;
           }
           if (!customerName) {
-            // Nếu customerId là UUID, chỉ lấy 8 ký tự đầu
-            const idStr = customerIdStr.length > 8 ? customerIdStr.substring(0, 8) : customerIdStr;
+            // customerId là Long (number), hiển thị toàn bộ hoặc rút gọn nếu quá dài
+            const idStr = customerIdStr.length > 10 ? customerIdStr.substring(0, 10) : customerIdStr;
             customerName = `Khách hàng ${idStr}`;
           }
           

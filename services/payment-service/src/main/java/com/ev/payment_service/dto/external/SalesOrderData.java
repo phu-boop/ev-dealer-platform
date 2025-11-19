@@ -6,7 +6,7 @@ import java.util.UUID;
 @Data
 public class SalesOrderData {
     private UUID orderId;
-    private UUID customerId;
+    private Long customerId;
     private BigDecimal totalAmount;
     private String orderStatusB2C;
 }

@@ -16,7 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class QuotationFilterRequest {
     private UUID dealerId;
-    private UUID customerId;
+    private Long customerId;
     private UUID staffId;
     private QuotationStatus status;
 

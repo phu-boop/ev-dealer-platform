@@ -123,7 +123,7 @@ public class SalesContractController {
     // Tìm kiếm hợp đồng (filter theo khách hàng, trạng thái hoặc số hợp đồng)
     @GetMapping("/search")
     public ResponseEntity<ApiRespond<List<SalesContractResponse>>> searchContracts(
-            @RequestParam(required = false) UUID customerId,
+            @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) ContractStatus status) {
         log.info("Searching contracts with customerId: {}, status: {}", customerId, status);
         List<SalesContractResponse> responses = salesContractService.searchContracts(customerId, status);
