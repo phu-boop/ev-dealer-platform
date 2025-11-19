@@ -201,19 +201,15 @@ export const dealerManagerMenuItems = [
     submenu: [
       {
         icon: FiTrendingUp,
-        label: "Doanh Số Theo Nhân Viên",
+        label: "Doanh số theo nhân viên bán hàng",
         path: "/dealer/manager/reports/staff",
       },
       {
         icon: FiBarChart2,
-        label: "Doanh Số Theo Mẫu Xe",
+        label: "Công nợ khách hàng và hãng xe",
         path: "/dealer/manager/reports/model",
       },
-      {
-        icon: FiGift,
-        label: "Hiệu Suất & Tỷ Lệ Chốt Đơn",
-        path: "/dealer/manager/reports/performance",
-      },
+      
     ],
   },
 
