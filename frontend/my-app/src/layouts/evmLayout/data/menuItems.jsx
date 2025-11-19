@@ -155,11 +155,7 @@ export const adminMenuItems = [
         label: "Dự Báo AI",
         path: "/evm/admin/reports/forecast",
       },
-      {
-        icon: FiMap,
-        label: "Theo Khu Vực",
-        path: "/evm/admin/reports/regional",
-      },
+      
     ],
   },
 

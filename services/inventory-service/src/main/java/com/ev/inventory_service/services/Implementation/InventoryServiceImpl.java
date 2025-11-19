@@ -1240,5 +1240,93 @@ public class InventoryServiceImpl implements InventoryService {
                 return type.name(); // Trả về tên gốc nếu chưa định nghĩa
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DealerInventoryDto> getInventorySnapshotsForAnalytics(Long variantId, UUID dealerId, int limit) {
+        try {
+            // Tìm danh sách allocation từ DB dựa trên filter
+            List<DealerAllocation> allocations;
+
+            if (dealerId != null && variantId != null) {
+                // Cả 2 điều kiện
+                DealerAllocation allocation = dealerRepo.findByVariantIdAndDealerId(variantId, dealerId)
+                        .orElse(null);
+                allocations = (allocation != null) ? List.of(allocation) : Collections.emptyList();
+            } else if (dealerId != null) {
+                // Chỉ có dealerId
+                allocations = dealerRepo.findByDealerId(dealerId);
+            } else if (variantId != null) {
+                // Chỉ có variantId
+                allocations = dealerRepo.findByVariantId(variantId);
+            } else {
+                // Không có filter nào, lấy tất cả (giới hạn bằng limit)
+                Pageable pageable = PageRequest.of(0, limit, Sort.by("lastUpdated").descending());
+                allocations = dealerRepo.findAll(pageable).getContent();
+            }
+
+            // Giới hạn số lượng kết quả
+            if (allocations.size() > limit) {
+                allocations = allocations.subList(0, limit);
+            }
+
+            // Lấy danh sách variantId để gọi Vehicle Service
+            List<Long> variantIds = allocations.stream()
+                    .map(DealerAllocation::getVariantId)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            if (variantIds.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            // Gọi Vehicle Service để lấy thông tin chi tiết variant
+            String url = vehicleCatalogUrl + "/vehicle-catalog/variants/details-by-ids";
+            
+            HttpEntity<List<Long>> requestEntity = new HttpEntity<>(variantIds);
+            
+            ResponseEntity<ApiRespond<List<VariantDetailDto>>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    new ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>>() {}
+            );
+
+            List<VariantDetailDto> variantDetails = (response.getBody() != null && response.getBody().getData() != null)
+                    ? response.getBody().getData()
+                    : Collections.emptyList();
+
+            // Map variantId -> VariantDetailDto
+            Map<Long, VariantDetailDto> variantMap = variantDetails.stream()
+                    .collect(Collectors.toMap(VariantDetailDto::getVariantId, v -> v));
+
+            // Gộp dữ liệu từ allocations và variantDetails
+            return allocations.stream()
+                    .map(allocation -> {
+                        VariantDetailDto variant = variantMap.get(allocation.getVariantId());
+                        if (variant == null) {
+                            // Nếu không tìm thấy variant, tạo DTO rỗng
+                            return DealerInventoryDto.builder()
+                                    .variantId(allocation.getVariantId())
+                                    .modelName("Unknown")
+                                    .versionName("Unknown")
+                                    .color("Unknown")
+                                    .skuCode("N/A")
+                                    .availableQuantity(allocation.getAvailableQuantity())
+                                    .allocatedQuantity(allocation.getAllocatedQuantity())
+                                    .reorderLevel(allocation.getReorderLevel())
+                                    .status(InventoryLevelStatus.OUT_OF_STOCK.name())
+                                    .build();
+                        }
+                        return DealerInventoryDto.merge(variant, allocation);
+                    })
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy inventory snapshots cho analytics: {}", e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
     // -----------
 }

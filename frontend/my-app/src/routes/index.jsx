@@ -76,6 +76,11 @@ import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx"
 import SalesReportPage from "../features/admin/reporting/pages/SalesReportPage.jsx";
 import InventoryReportPage from "../features/admin/reporting/pages/InventoryReportPage.jsx";
 
+// AI Forecast
+import ForecastDashboard from "../pages/ai-forecast/ForecastDashboard.jsx";
+import DemandForecastPage from "../pages/ai-forecast/DemandForecastPage.jsx";
+import ProductionPlanPage from "../pages/ai-forecast/ProductionPlanPage.jsx";
+
 // SYSTEM (ADMIN)
 import BackfillPage from "../features/admin/system/pages/BackfillPage.jsx";
 
@@ -101,6 +106,7 @@ import B2CDebtManagementPage from "../features/payments/pages/B2CDebtManagementP
 import DealerPaymentResultPage from "../features/payments/pages/DealerPaymentResultPage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
 import PaymentResultPage from "../features/payments/pages/PaymentResultPage.jsx";
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -199,6 +205,11 @@ export default function AppRoutes() {
                 path="admin/reports/inventory"
                 element={<InventoryReportPage />}
               />
+              
+              {/* AI Forecast & Production Planning */}
+              <Route path="admin/reports/forecast" element={<ForecastDashboard />} />
+              <Route path="admin/reports/forecast/demand" element={<DemandForecastPage />} />
+              <Route path="admin/reports/forecast/production" element={<ProductionPlanPage />} />
 
               {/* Khôi phục dữ liệu cho báo cáo */}
               <Route

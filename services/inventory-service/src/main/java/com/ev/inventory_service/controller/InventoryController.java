@@ -346,4 +346,27 @@ public class InventoryController {
         
         return ResponseEntity.ok(ApiRespond.success("Hàng đã được trả về kho (Sync)", null));
     }
+    
+    // ==========================================================
+    // ============= FOR AI SERVICE ANALYTICS ===================
+    // ==========================================================
+    
+    /**
+     * Lấy inventory snapshots cho AI forecasting
+     * API này được gọi từ AI Service để lấy dữ liệu tồn kho
+     */
+    @GetMapping("/analytics/snapshots")
+    public ResponseEntity<ApiRespond<List<DealerInventoryDto>>> getInventorySnapshots(
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) UUID dealerId,
+            @RequestParam(defaultValue = "100") int limit) {
+        
+        List<DealerInventoryDto> snapshots = inventoryService.getInventorySnapshotsForAnalytics(
+            variantId, dealerId, limit
+        );
+        
+        return ResponseEntity.ok(
+            ApiRespond.success("Inventory snapshots retrieved for AI Service", snapshots)
+        );
+    }
 }
