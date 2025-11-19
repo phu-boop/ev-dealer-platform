@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 // QuotationSendRequest.java
 @Data
@@ -18,7 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class QuotationSendRequest {
     @NotNull(message = "Customer ID is required")
-    private UUID customerId;
+    private Long customerId;
     @NotNull(message = "VALID_UNTIL_REQUIRED")
     @Future(message = "VALID_UNTIL_FUTURE")
     private LocalDateTime validUntil;

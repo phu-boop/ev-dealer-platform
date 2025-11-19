@@ -27,7 +27,7 @@ export const salesOrderB2CApi = {
 
   /**
    * Lấy sales orders theo customer
-   * @param {string} customerId - ID của customer
+   * @param {number} customerId - ID của customer (Long)
    * @returns {Promise} Promise trả về danh sách sales orders
    */
   getByCustomer: (customerId) => 

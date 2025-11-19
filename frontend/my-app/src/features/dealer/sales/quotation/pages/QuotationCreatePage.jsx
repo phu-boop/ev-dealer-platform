@@ -258,7 +258,7 @@ const QuotationCreatePage = () => {
       setErrorMessage("");
       const response = await sendQuotation(quotationId, {
         ...sendData,
-        customerId: formData.customerId,
+        customerId: parseInt(formData.customerId),
         validUntil: sendData.validUntil
           ? new Date(sendData.validUntil).toISOString()
           : null,

@@ -108,6 +108,9 @@ import DealerPaymentResultPage from "../features/payments/pages/DealerPaymentRes
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
 import PaymentResultPage from "../features/payments/pages/PaymentResultPage.jsx";
 
+// Reporting features
+import DealerDebtReportPage from "../features/dealer/reporting/pages/DealerDebtReportPage.jsx";
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -400,6 +403,12 @@ export default function AppRoutes() {
               <Route
                 path="manager/inventory/available"
                 element={<AvailableVehicleCatalogPage />}
+              />
+
+              {/* Báo cáo đại lý */}
+              <Route
+                path="manager/reports/model"
+                element={<DealerDebtReportPage />}
               />
 
               {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}

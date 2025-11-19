@@ -4,6 +4,7 @@ import com.ev.sales_service.enums.QuotationStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Quotation {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "quotation_id", columnDefinition = "BINARY(16)")
@@ -24,8 +26,8 @@ public class Quotation {
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID customerId;
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId; // Đã migrate từ UUID sang Long
 
     @Column(name = "model_id", nullable = false)
     private Long modelId;
@@ -58,9 +60,9 @@ public class Quotation {
     @Column(name = "status", length = 50)
     private QuotationStatus status;
 
-     @OneToOne(mappedBy = "quotation")
-     @EqualsAndHashCode.Exclude
-     private SalesOrder salesOrder;
+    @OneToOne(mappedBy = "quotation")
+    @EqualsAndHashCode.Exclude
+    private SalesOrder salesOrder;
 
     @ManyToMany
     @JoinTable(
@@ -69,5 +71,7 @@ public class Quotation {
         inverseJoinColumns = @JoinColumn(name = "promotion_id")
     )
     @JsonIgnore
-    private Set<Promotion> promotions;
+    @Builder.Default
+    private Set<Promotion> promotions = new java.util.HashSet<>();
 }
+

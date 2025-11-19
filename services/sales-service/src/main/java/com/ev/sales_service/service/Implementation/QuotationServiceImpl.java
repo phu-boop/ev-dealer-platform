@@ -207,7 +207,7 @@ public class QuotationServiceImpl implements QuotationService {
     }
 
     // Helper method để lấy thông tin khách hàng
-    private CustomerResponse getCustomerInfo(UUID customerId) {
+    private CustomerResponse getCustomerInfo(Long customerId) {
         try {
             ApiRespond<CustomerResponse> response = customerClient.getCustomerById(customerId);
             if (response != null && response.getCode().equals("1000") && response.getData() != null) {
@@ -439,7 +439,7 @@ public class QuotationServiceImpl implements QuotationService {
 
         if (customer != null && !customer.isEmpty()) {
             try {
-                filter.setCustomerId(UUID.fromString(customer));
+                filter.setCustomerId(Long.parseLong(customer));
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid customer ID parameter: {}", customer);
             }

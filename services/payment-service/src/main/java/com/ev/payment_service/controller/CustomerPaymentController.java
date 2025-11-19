@@ -97,7 +97,7 @@ public class CustomerPaymentController {
     @GetMapping("/{customerId}/debt")
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER')")
     public ResponseEntity<BigDecimal> getCustomerTotalDebt(
-            @PathVariable UUID customerId) {
+            @PathVariable Long customerId) {
 
         BigDecimal totalDebt = customerPaymentService.getCustomerTotalDebt(customerId);
         return ResponseEntity.ok(totalDebt);
