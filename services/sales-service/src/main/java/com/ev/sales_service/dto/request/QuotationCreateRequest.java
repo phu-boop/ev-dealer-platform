@@ -20,7 +20,7 @@ public class QuotationCreateRequest {
     private UUID dealerId;
 
     @NotNull(message = "CUSTOMER_ID_REQUIRED")
-    private Long customerId;
+    private UUID customerId;
 
     @NotNull(message = "MODEL_ID_REQUIRED")
     private Long modelId;

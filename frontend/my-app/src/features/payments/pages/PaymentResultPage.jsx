@@ -6,7 +6,9 @@ import {
   XCircleIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
-import apiConstPaymentService from "../../../services/apiConstPaymentService";
+// import apiConstPaymentService from "../../../services/apiConstPaymentService";
+
+const API_VNPAY_GATEWAY_URL = "http://localhost:8080/payments/api/v1/payments/gateway";
 
 const PaymentResultPage = () => {
   const [searchParams] = useSearchParams();
@@ -17,15 +19,54 @@ const PaymentResultPage = () => {
   useEffect(() => {
     const checkPaymentResult = async () => {
       try {
-        const response = await apiConstPaymentService.get(
-          `/payment/return?${searchParams.toString()}`
+        console.log("Checking payment result with params:", searchParams.toString());
+
+        const response = await fetch(
+            `${API_VNPAY_GATEWAY_URL}/callback/vnpay-return?${searchParams.toString()}`
         );
-        setPaymentResult(response.data);
+
+        // Kiểm tra nếu response không OK
+        if (!response.ok) {
+          // Nếu là lỗi 401, endpoint vẫn cần xác thực
+          if (response.status === 401) {
+            throw new Error("Không thể xác thực. Vui lòng đăng nhập lại.");
+          }
+
+          // Thử đọc thông báo lỗi từ response
+          try {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Lỗi server: ${response.status}`);
+          } catch {
+            // Nếu không parse được JSON, dùng message mặc định (ĐÃ SỬA: bỏ biến jsonError)
+            throw new Error(`Lỗi server: ${response.status} - ${response.statusText}`);
+          }
+        }
+
+        // Parse response JSON
+        const data = await response.json();
+        console.log("Payment result data:", data);
+
+        // Backend (VnpayGatewayController) đã trả về { success, message, ... }
+        setPaymentResult(data);
+
       } catch (error) {
         console.error("Error checking payment result:", error);
+
+        // Fallback: tự xác định kết quả từ URL parameters nếu không gọi được API
+        const vnpResponseCode = searchParams.get("vnp_ResponseCode");
+        const vnpTransactionStatus = searchParams.get("vnp_TransactionStatus");
+        const vnpAmount = searchParams.get("vnp_Amount");
+
+        const isSuccess = vnpResponseCode === "00" && vnpTransactionStatus === "00";
+        const amount = vnpAmount ? parseInt(vnpAmount) / 100 : 0;
+
         setPaymentResult({
-          success: false,
-          message: "Không thể xác minh kết quả thanh toán",
+          success: isSuccess,
+          message: isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại",
+          amount: amount,
+          transactionId: searchParams.get("vnp_TxnRef") || "",
+          responseCode: vnpResponseCode || "",
+          transactionStatus: vnpTransactionStatus || ""
         });
       } finally {
         setLoading(false);

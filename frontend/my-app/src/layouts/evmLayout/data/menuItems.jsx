@@ -155,11 +155,7 @@ export const adminMenuItems = [
         label: "Dự Báo AI",
         path: "/evm/admin/reports/forecast",
       },
-      {
-        icon: FiMap,
-        label: "Theo Khu Vực",
-        path: "/evm/admin/reports/regional",
-      },
+      
     ],
   },
 
@@ -302,17 +298,17 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiShoppingCart,
-        label: "Quản Lý Đơn Hàng B2B",
+        label: "Quản Lý Đơn Hàng (B2B)",
         path: "/evm/staff/orders",
       },
       {
         icon: FiCreditCard,
-        label: "Công Nợ Đại Lý",
+        label: "Công Nợ Đại Lý (B2B)",
         path: "/evm/staff/debt",
       },
       {
         icon: FiDollarSign,
-        label: "Đại Lý Thanh Toán Tiền Mặt",
+        label: "Đại Lý Thanh Toán Hóa Đơn (B2B)",
         path: "/evm/staff/payments/cash-payments",
       },
     ],

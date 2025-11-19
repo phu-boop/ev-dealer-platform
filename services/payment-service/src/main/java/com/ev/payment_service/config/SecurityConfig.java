@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/payments/methods/active-public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/payments/customer/debug-me",
                                 "/favicon.ico").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/payments/gateway/callback/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/payments/gateway/callback/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/payment/**").permitAll()
                         .requestMatchers("/payment/return").permitAll()
 

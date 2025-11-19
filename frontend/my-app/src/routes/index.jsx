@@ -77,6 +77,11 @@ import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx"
 import SalesReportPage from "../features/admin/reporting/pages/SalesReportPage.jsx";
 import InventoryReportPage from "../features/admin/reporting/pages/InventoryReportPage.jsx";
 
+// AI Forecast
+import ForecastDashboard from "../pages/ai-forecast/ForecastDashboard.jsx";
+import DemandForecastPage from "../pages/ai-forecast/DemandForecastPage.jsx";
+import ProductionPlanPage from "../pages/ai-forecast/ProductionPlanPage.jsx";
+
 // SYSTEM (ADMIN)
 import BackfillPage from "../features/admin/system/pages/BackfillPage.jsx";
 
@@ -99,8 +104,10 @@ import B2COrderDetailPage from "../features/payments/pages/B2COrderDetailPage.js
 import PayB2COrderPage from "../features/payments/pages/PayB2COrderPage.jsx";
 import B2CCashPaymentsManagementPage from "../features/payments/pages/B2CCashPaymentsManagementPage.jsx";
 import B2CDebtManagementPage from "../features/payments/pages/B2CDebtManagementPage.jsx";
+import DealerPaymentResultPage from "../features/payments/pages/DealerPaymentResultPage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
 import PaymentResultPage from "../features/payments/pages/PaymentResultPage.jsx";
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -120,6 +127,10 @@ export default function AppRoutes() {
           <Route path="login" element={<Login />} />
           <Route path="oauth-success" element={<OAuthSuccess />} />
           <Route path="reset-password" element={<ResetPassword />} />
+          {/* Public Payment Routes */}
+          <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
+          {/* VNPAY */}
+          <Route path="payment/result" element={<PaymentResultPage />} />
         </Route>
 
         {/* ================================================================== */}
@@ -200,6 +211,20 @@ export default function AppRoutes() {
               <Route
                 path="admin/reports/inventory"
                 element={<InventoryReportPage />}
+              />
+
+              {/* AI Forecast & Production Planning */}
+              <Route
+                path="admin/reports/forecast"
+                element={<ForecastDashboard />}
+              />
+              <Route
+                path="admin/reports/forecast/demand"
+                element={<DemandForecastPage />}
+              />
+              <Route
+                path="admin/reports/forecast/production"
+                element={<ProductionPlanPage />}
               />
 
               {/* Khôi phục dữ liệu cho báo cáo */}
@@ -436,6 +461,10 @@ export default function AppRoutes() {
                 element={<DealerPaymentPage />}
               />
               <Route
+                path="manager/payments/vnpay-result"
+                element={<DealerPaymentResultPage />}
+              />
+              <Route
                 path="manager/payments/b2c-cash-payments"
                 element={<B2CCashPaymentsManagementPage />}
               />
@@ -539,10 +568,6 @@ export default function AppRoutes() {
               <Route
                 path="staff/payments/orders/:orderId"
                 element={<CustomerPaymentPage />}
-              />
-              <Route
-                path="staff/payment/result"
-                element={<PaymentResultPage />}
               />
             </Route>
           </Route>

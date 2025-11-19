@@ -13,10 +13,9 @@ public interface DealerTransactionRepository extends JpaRepository<DealerTransac
     // Lấy tất cả giao dịch của một hóa đơn
     List<DealerTransaction> findByDealerInvoice_DealerInvoiceId(UUID dealerInvoiceId);
 
-    // Lấy danh sách giao dịch chờ duyệt (PENDING_CONFIRMATION) với payment method type = MANUAL
-    @Query("SELECT dt FROM DealerTransaction dt " +
-           "WHERE dt.status = 'PENDING_CONFIRMATION' " +
-           "AND dt.paymentMethod.methodType = com.ev.payment_service.enums.PaymentMethodType.MANUAL " +
-           "ORDER BY dt.transactionDate DESC")
-    Page<DealerTransaction> findPendingManualTransactions(Pageable pageable);
+        // Lấy tất cả giao dịch chờ duyệt (bao gồm cả tiền mặt, VNPAY, ...)
+        @Query("SELECT dt FROM DealerTransaction dt " +
+            "WHERE dt.status = 'PENDING_CONFIRMATION' " +
+            "ORDER BY dt.transactionDate DESC")
+        Page<DealerTransaction> findPendingTransactions(Pageable pageable);
 }

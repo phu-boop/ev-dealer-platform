@@ -30,6 +30,11 @@ const DealerTransactionHistory = ({ transactions }) => {
         icon: ClockIcon, 
         label: 'Chờ duyệt' 
       },
+      'PENDING_GATEWAY': {
+        color: 'bg-blue-100 text-blue-800',
+        icon: ClockIcon,
+        label: 'Chờ VNPAY'
+      },
       'FAILED': { 
         color: 'bg-red-100 text-red-800', 
         icon: XCircleIcon, 
