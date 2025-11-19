@@ -1,159 +1,176 @@
 // File: src/features/dealer/reporting/pages/DealerDebtReportPage.jsx
 
-import React, { useState, useEffect } from "react";
-import { Card, Row, Col, Typography, Statistic, Spin, Divider } from "antd";
-import { ArrowUpOutlined, ArrowDownOutlined, DollarOutlined } from "@ant-design/icons";
-
-// Import Service chúng ta vừa viết
+import React, { useState, useEffect, useMemo } from "react";
+import { Card, Row, Col, Typography, Spin, Divider, Statistic } from "antd";
 import { getB2BDebtReport, getB2CDebtReport } from "../services/dealerReportingService";
 
-const { Title } = Typography;
+// --- Import Chart.js ---
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+// Đăng ký Chart.js
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+const { Title, Text } = Typography;
 
 const DealerDebtReportPage = () => {
-  // State lưu dữ liệu
   const [b2bData, setB2bData] = useState(null);
   const [b2cData, setB2cData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Gọi API khi vào trang
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Gọi song song cả 2 API để tiết kiệm thời gian
         const [b2bRes, b2cRes] = await Promise.all([
           getB2BDebtReport(),
           getB2CDebtReport()
         ]);
-        
         setB2bData(b2bRes);
         setB2cData(b2cRes);
       } catch (error) {
-        console.error("Lỗi tải dữ liệu báo cáo:", error);
+        console.error("Lỗi tải dữ liệu:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  // Hàm render loading
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <Spin size="large" tip="Đang tổng hợp công nợ..." />
-      </div>
-    );
-  }
+  // --- LOGIC BIỂU ĐỒ 1: B2B (Nợ Hãng) ---
+  const b2bChartData = useMemo(() => {
+    const paid = b2bData?.summary.totalPaid || 0;
+    const remaining = b2bData?.summary.totalRemaining || 0;
+    
+    // Nếu chưa có dữ liệu thì hiển thị 1 vòng tròn xám
+    if (paid === 0 && remaining === 0) {
+        return {
+            labels: ['Chưa có dữ liệu'],
+            datasets: [{ data: [1], backgroundColor: ['#f0f0f0'] }]
+        };
+    }
 
-  // Hàm format tiền tệ (VND)
-  const formatCurrency = (value) => 
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    return {
+      labels: ['Đã thanh toán', 'Còn nợ (Phải trả)'],
+      datasets: [
+        {
+          data: [paid, remaining],
+          backgroundColor: [
+            '#52c41a', // Xanh lá (Đã trả - Tốt)
+            '#ff4d4f', // Đỏ (Còn nợ - Cảnh báo)
+          ],
+          borderColor: ['#ffffff', '#ffffff'],
+          borderWidth: 2,
+        },
+      ],
+    };
+  }, [b2bData]);
+
+  // --- LOGIC BIỂU ĐỒ 2: B2C (Khách Nợ) ---
+  const b2cChartData = useMemo(() => {
+    const collected = b2cData?.summary.totalCollected || 0;
+    const outstanding = b2cData?.summary.totalOutstanding || 0;
+
+    if (collected === 0 && outstanding === 0) {
+        return {
+            labels: ['Chưa có dữ liệu'],
+            datasets: [{ data: [1], backgroundColor: ['#f0f0f0'] }]
+        };
+    }
+
+    return {
+      labels: ['Đã thu tiền', 'Khách còn nợ'],
+      datasets: [
+        {
+          data: [collected, outstanding],
+          backgroundColor: [
+            '#1890ff', // Xanh dương (Đã thu)
+            '#faad14', // Vàng (Khách nợ - Cần đòi)
+          ],
+          borderColor: ['#ffffff', '#ffffff'],
+          borderWidth: 2,
+        },
+      ],
+    };
+  }, [b2cData]);
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom' },
+    },
+    cutout: '60%', // Làm rỗng ruột (Doughnut)
+  };
+
+  const formatCurrency = (val) => 
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
+
+
+  if (loading) return <div style={{textAlign: 'center', padding: 50}}><Spin size="large" /></div>;
 
   return (
     <div style={{ padding: "24px", background: "#f0f2f5", minHeight: "100vh" }}>
-      
-      <Title level={3} style={{ marginBottom: 24 }}>📊 Báo Cáo Công Nợ Đại Lý</Title>
+      <Title level={3} style={{ marginBottom: 24 }}>📊 Báo Cáo Tài Chính & Công Nợ</Title>
 
-      {/* ========================== */}
-      {/* PHẦN 1: CÔNG NỢ VỚI HÃNG (B2B) */}
-      {/* ========================== */}
-      <Card title="🏢 Công Nợ Với Hãng Xe (B2B)" bordered={false} style={{ marginBottom: 24 }}>
-        <Row gutter={[16, 16]}>
-          {/* Thẻ 1: Tổng nợ phát sinh */}
-          <Col xs={24} sm={8}>
-            <Card bordered>
-              <Statistic
-                title="Tổng giá trị nhập hàng"
-                value={b2bData?.summary.totalDebt}
-                precision={0}
-                valueStyle={{ color: '#1890ff' }}
-                prefix={<DollarOutlined />}
-                formatter={formatCurrency}
-              />
-            </Card>
-          </Col>
+      <Row gutter={[24, 24]}>
+        
+        {/* --- CỘT 1: B2B (Nợ Hãng) --- */}
+        <Col xs={24} md={12}>
+          <Card title="🏢 Công Nợ Với Hãng Xe (B2B)" bordered={false} style={{height: '100%'}}>
+            <Row align="middle" justify="center">
+                {/* Biểu đồ */}
+                <Col span={24} style={{ height: 280, marginBottom: 20 }}>
+                    <Doughnut data={b2bChartData} options={chartOptions} />
+                </Col>
+                
+                {/* Số liệu chi tiết */}
+                <Col span={24}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
+                        <Text type="secondary">Tổng nhập hàng:</Text>
+                        <Text strong>{formatCurrency(b2bData?.summary.totalDebt)}</Text>
+                    </div>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
+                        <Text style={{color: '#52c41a'}}>✔ Đã thanh toán:</Text>
+                        <Text strong style={{color: '#52c41a'}}>{formatCurrency(b2bData?.summary.totalPaid)}</Text>
+                    </div>
+                    <div style={{display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid #f0f0f0'}}>
+                        <Text style={{color: '#ff4d4f'}}>⚠ Dư nợ hiện tại:</Text>
+                        <Text strong style={{color: '#ff4d4f', fontSize: 16}}>{formatCurrency(b2bData?.summary.totalRemaining)}</Text>
+                    </div>
+                </Col>
+            </Row>
+          </Card>
+        </Col>
 
-          {/* Thẻ 2: Đã thanh toán */}
-          <Col xs={24} sm={8}>
-            <Card bordered>
-              <Statistic
-                title="Đã thanh toán cho Hãng"
-                value={b2bData?.summary.totalPaid}
-                precision={0}
-                valueStyle={{ color: '#3f8600' }} // Màu xanh lá
-                prefix={<ArrowUpOutlined />}
-                formatter={formatCurrency}
-              />
-            </Card>
-          </Col>
+        {/* --- CỘT 2: B2C (Khách Nợ) --- */}
+        <Col xs={24} md={12}>
+          <Card title="👥 Công Nợ Khách Hàng (B2C)" bordered={false} style={{height: '100%'}}>
+             <Row align="middle" justify="center">
+                {/* Biểu đồ */}
+                <Col span={24} style={{ height: 280, marginBottom: 20 }}>
+                    <Doughnut data={b2cChartData} options={chartOptions} />
+                </Col>
 
-          {/* Thẻ 3: Còn nợ (Quan trọng nhất) */}
-          <Col xs={24} sm={8}>
-            <Card bordered style={{ backgroundColor: '#fff1f0' }}> {/* Nền đỏ nhạt cảnh báo */}
-              <Statistic
-                title="Dư nợ hiện tại (Phải trả)"
-                value={b2bData?.summary.totalRemaining}
-                precision={0}
-                valueStyle={{ color: '#cf1322', fontWeight: 'bold' }} // Màu đỏ đậm
-                prefix={<ArrowDownOutlined />}
-                formatter={formatCurrency}
-              />
-            </Card>
-          </Col>
-        </Row>
-      </Card>
-
-
-      {/* ========================== */}
-      {/* PHẦN 2: CÔNG NỢ KHÁCH HÀNG (B2C) */}
-      {/* ========================== */}
-      <Card title="👥 Công Nợ Khách Hàng (B2C)" bordered={false}>
-        <Row gutter={[16, 16]}>
-           {/* Thẻ 1: Tổng phải thu */}
-           <Col xs={24} sm={8}>
-            <Card bordered>
-              <Statistic
-                title="Tổng doanh số bán xe"
-                value={b2cData?.summary.totalReceivable}
-                precision={0}
-                valueStyle={{ color: '#1890ff' }}
-                formatter={formatCurrency}
-              />
-            </Card>
-          </Col>
-
-           {/* Thẻ 2: Đã thu */}
-           <Col xs={24} sm={8}>
-            <Card bordered>
-              <Statistic
-                title="Tiền mặt thực thu"
-                value={b2cData?.summary.totalCollected}
-                precision={0}
-                valueStyle={{ color: '#3f8600' }}
-                prefix={<ArrowUpOutlined />}
-                formatter={formatCurrency}
-              />
-            </Card>
-          </Col>
-
-           {/* Thẻ 3: Khách còn nợ */}
-           <Col xs={24} sm={8}>
-            <Card bordered style={{ backgroundColor: '#fffbe6' }}> {/* Nền vàng nhạt */}
-              <Statistic
-                title="Khách hàng còn nợ"
-                value={b2cData?.summary.totalOutstanding}
-                precision={0}
-                valueStyle={{ color: '#d48806', fontWeight: 'bold' }} // Màu vàng đậm
-                prefix={<DollarOutlined />}
-                formatter={formatCurrency}
-              />
-            </Card>
-          </Col>
-        </Row>
-      </Card>
-
+                {/* Số liệu chi tiết */}
+                <Col span={24}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
+                        <Text type="secondary">Tổng doanh số:</Text>
+                        <Text strong>{formatCurrency(b2cData?.summary.totalReceivable)}</Text>
+                    </div>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
+                        <Text style={{color: '#1890ff'}}>✔ Thực thu:</Text>
+                        <Text strong style={{color: '#1890ff'}}>{formatCurrency(b2cData?.summary.totalCollected)}</Text>
+                    </div>
+                    <div style={{display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid #f0f0f0'}}>
+                        <Text style={{color: '#faad14'}}>⚠ Khách chưa trả:</Text>
+                        <Text strong style={{color: '#faad14', fontSize: 16}}>{formatCurrency(b2cData?.summary.totalOutstanding)}</Text>
+                    </div>
+                </Col>
+            </Row>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 };
