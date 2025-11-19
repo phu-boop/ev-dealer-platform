@@ -10,7 +10,8 @@ import AuthLayout from "../layouts/AuthLayout";
 // pages
 import Home from "../pages/Home";
 import Login from "../pages/Login.jsx";
-import Dashboard from "../features/dashboard/pages/Dashboard";
+// import Dashboard from "../features/dashboard/pages/Dashboard";
+// import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
 import UserManagement from "../features/dashboard/users/pages/UserManagement.jsx";
@@ -18,7 +19,6 @@ import ProfileForm from "../features/profile/components/ProfileForm.jsx";
 import SecuritySettings from "../features/profile/components/SecuritySettings.jsx";
 import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
-import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 import DealerDashboardPage from "../features/dealer/dashboard/pages/DashboardPage.jsx";
 import StaffDashboardPage from "../features/dealer/staff/dashboard/pages/StaffDashboardPage.jsx";
 import AdminDashboardPage from "../features/admin/dashboard/pages/AdminDashboardPage.jsx";
@@ -143,7 +143,7 @@ export default function AppRoutes() {
           element={<ProtectedRoute allowedRoles={["ADMIN", "EVM_STAFF"]} />}
         >
           <Route path="evm" element={<EvmLayout />}>
-            <Route index element={<Dashboard />} />
+            {/* <Route index element={<Dashboard />} /> */}
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
             <Route path="promotions/*" element={<MainPromotion />} />
@@ -157,6 +157,7 @@ export default function AppRoutes() {
 
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route index element={<AdminDashboardPage />} />
               <Route path="admin/dashboard" element={<AdminDashboardPage />} />
               <Route
                 path="admin/products/promotions/*"
@@ -245,7 +246,8 @@ export default function AppRoutes() {
 
             {/* Staff only */}
             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
-              <Route path="staff" element={<Dashboard />} />
+              {/* <Route path="staff" element={<Dashboard />} /> */}
+              <Route index element={<EvmStaffDashboardPage />} />
               <Route
                 path="staff/dashboard"
                 element={<EvmStaffDashboardPage />}
@@ -329,7 +331,7 @@ export default function AppRoutes() {
           <Route path="dealer" element={<DealerLayout />}>
             {/* Sales Module */}
             <Route path="*" element={<SalesRoutes />} />
-            <Route index element={<DashboardForDealer />} />
+            {/* <Route index element={<DashboardForDealer />} /> */}
             <Route path="dashboard" element={<DealerDashboardPage />} />
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
@@ -341,6 +343,7 @@ export default function AppRoutes() {
             <Route
               element={<ProtectedRoute allowedRoles={["DEALER_MANAGER"]} />}
             >
+              <Route index element={<DealerDashboardPage />} />
               {/* Customer Management */}
               <Route
                 path="manager/customers/create"
@@ -493,6 +496,7 @@ export default function AppRoutes() {
 
             {/* --- DEALER STAFF ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
+              <Route index element={<StaffDashboardPage />} />
               {/* Customer Management */}
               <Route
                 path="staff/customers/create"
