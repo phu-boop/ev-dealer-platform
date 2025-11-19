@@ -22,4 +22,7 @@ public interface ProductionPlanRepository extends JpaRepository<ProductionPlan, 
     @Query("SELECT pp FROM ProductionPlan pp WHERE pp.planMonth = :month " +
            "ORDER BY pp.priority DESC, pp.productionGap DESC")
     List<ProductionPlan> findPriorityPlansByMonth(@Param("month") LocalDate month);
+    
+    // Tìm existing plan theo variant và tháng
+    ProductionPlan findByVariantIdAndPlanMonth(Long variantId, LocalDate planMonth);
 }

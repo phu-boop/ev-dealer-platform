@@ -41,10 +41,16 @@ public class InventorySnapshot {
     private Integer availableQuantity;
     
     @Column(nullable = false)
-    private Integer allocatedQuantity;
+    private Integer reservedQuantity;
+    
+    @Column(nullable = false)
+    private Integer totalQuantity;
     
     @Column(nullable = false)
     private LocalDateTime snapshotDate;
+    
+    @Column(nullable = false)
+    private LocalDateTime recordedAt;
     
     // Metadata
     @Column(length = 100)

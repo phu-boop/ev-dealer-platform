@@ -45,10 +45,16 @@ export default function DemandForecastPage() {
       };
 
       const response = await forecastService.generateForecast(request);
+      
+      if (!response.data || !response.data.forecasts || response.data.forecasts.length === 0) {
+        alert('⚠️ Không có dữ liệu dự báo!\n\nNguyên nhân: Chưa có dữ liệu bán hàng/tồn kho thực tế trong hệ thống.\n\nGiải pháp:\n1. Tạo đơn hàng (Sales) từ Dealer Portal\n2. Cập nhật tồn kho (Inventory) từ EVM Portal\n3. Đợi AI Service thu thập dữ liệu qua Kafka (real-time)');
+        return;
+      }
+      
       setForecastData(response.data);
     } catch (error) {
       console.error('Error generating forecast:', error);
-      alert('Lỗi khi tạo dự báo. Vui lòng thử lại.');
+      alert('❌ Lỗi khi tạo dự báo: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -156,6 +162,7 @@ export default function DemandForecastPage() {
                 value={formData.forecastMethod}
                 onChange={(e) => setFormData({ ...formData, forecastMethod: e.target.value })}
               >
+                <option value="OPENAI">🤖 OpenAI (Khuyến nghị)</option>
                 <option value="AUTO">AUTO (Tự động)</option>
                 <option value="MOVING_AVERAGE">Moving Average</option>
                 <option value="LINEAR_REGRESSION">Linear Regression</option>

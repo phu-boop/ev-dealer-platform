@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.domain.Page; 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -56,4 +58,28 @@ public interface SalesOrderRepositoryB2B extends JpaRepository<SalesOrder, UUID>
 
     // Lấy danh sách đơn hàng B2B || B2C với trạng thái cụ thể
     List<SalesOrder> findAllByTypeOderAndOrderStatus(SaleOderType typeOder, OrderStatusB2B orderStatus);
+    
+    // ==================== FOR AI SERVICE ====================
+    /**
+     * Lấy orders theo khoảng thời gian (cho AI forecasting)
+     */
+    List<SalesOrder> findByOrderDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+    
+    /**
+     * Lấy orders theo dealer và thời gian
+     */
+    List<SalesOrder> findByDealerIdAndOrderDateBetween(UUID dealerId, LocalDateTime startDate, LocalDateTime endDate);
+    
+    /**
+     * Lấy orders theo variant ID (thông qua order items)
+     */
+    @Query(
+        "SELECT DISTINCT o FROM SalesOrder o JOIN o.orderItems oi " +
+        "WHERE oi.variantId = :variantId AND o.orderDate BETWEEN :startDate AND :endDate"
+    )
+    List<SalesOrder> findByVariantIdAndDateRange(
+        @Param("variantId") Long variantId,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate
+    );
 }

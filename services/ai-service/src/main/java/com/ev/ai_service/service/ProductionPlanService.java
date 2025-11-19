@@ -28,6 +28,7 @@ public class ProductionPlanService {
     private final DemandForecastRepository forecastRepository;
     private final InventorySnapshotRepository inventoryRepository;
     private final ProductionPlanRepository productionPlanRepository;
+    private final OpenAIService openAIService;
     
     /**
      * Tạo kế hoạch sản xuất cho tháng cụ thể
@@ -42,6 +43,13 @@ public class ProductionPlanService {
         
         List<DemandForecast> forecasts = forecastRepository
             .findTopForecastsByDateRange(monthStart, monthEnd);
+        
+        // 🚨 Kiểm tra nếu không có forecasts
+        if (forecasts.isEmpty()) {
+            log.warn("⚠️ No forecasts found for month {}. Cannot generate production plan.", planMonth);
+            log.warn("💡 Please generate forecasts first using POST /api/ai/forecast");
+            return Collections.emptyList();
+        }
         
         // Group theo variantId và tính tổng predicted demand
         var forecastsByVariant = forecasts.stream()
@@ -109,19 +117,44 @@ public class ProductionPlanService {
             priority
         );
         
-        // Lưu vào database
-        ProductionPlan plan = ProductionPlan.builder()
-            .variantId(variantId)
-            .planMonth(planMonth)
-            .recommendedProduction(productionGap)
-            .predictedDemand(predictedDemand)
-            .currentInventory(currentInventory)
-            .productionGap(productionGap)
-            .priority(priority)
-            .recommendations(recommendations)
-            .status("DRAFT")
-            .createdAt(LocalDateTime.now())
-            .build();
+        // 🔍 Kiểm tra xem đã có plan cho variant + tháng này chưa
+        ProductionPlan existingPlan = productionPlanRepository
+            .findByVariantIdAndPlanMonth(variantId, planMonth);
+        
+        ProductionPlan plan;
+        
+        if (existingPlan != null) {
+            // ♻️ UPDATE existing plan
+            log.info("Updating existing production plan for variant {} month {}", 
+                variantId, planMonth);
+            
+            existingPlan.setRecommendedProduction(productionGap);
+            existingPlan.setPredictedDemand(predictedDemand);
+            existingPlan.setCurrentInventory(currentInventory);
+            existingPlan.setProductionGap(productionGap);
+            existingPlan.setPriority(priority);
+            existingPlan.setRecommendations(recommendations);
+            existingPlan.setUpdatedAt(LocalDateTime.now());
+            
+            plan = existingPlan;
+        } else {
+            // ✨ CREATE new plan
+            log.info("Creating new production plan for variant {} month {}", 
+                variantId, planMonth);
+            
+            plan = ProductionPlan.builder()
+                .variantId(variantId)
+                .planMonth(planMonth)
+                .recommendedProduction(productionGap)
+                .predictedDemand(predictedDemand)
+                .currentInventory(currentInventory)
+                .productionGap(productionGap)
+                .priority(priority)
+                .recommendations(recommendations)
+                .status("DRAFT")
+                .createdAt(LocalDateTime.now())
+                .build();
+        }
         
         ProductionPlan saved = productionPlanRepository.save(plan);
         
@@ -144,7 +177,7 @@ public class ProductionPlanService {
     }
     
     /**
-     * Tạo recommendations
+     * Tạo recommendations - có thể sử dụng AI để tạo insights thông minh hơn
      */
     private String generateRecommendations(
         Integer demand, 
@@ -152,6 +185,7 @@ public class ProductionPlanService {
         Integer gap, 
         String priority
     ) {
+        // Tạo recommendations cơ bản
         StringBuilder sb = new StringBuilder();
         
         if (priority.equals("HIGH")) {

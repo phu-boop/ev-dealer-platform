@@ -23,6 +23,7 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, Package, DollarSign, ShoppingCart, AlertTriangle, BarChart3, Calendar } from 'lucide-react';
 import forecastService from '../../services/ai/forecastService';
+import { getSalesSummary, getInventoryVelocity } from '../../features/admin/reporting/services/reportingService';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -39,8 +40,98 @@ export default function ForecastDashboard() {
   const loadDashboard = async () => {
     try {
       setLoading(true);
-      const response = await forecastService.getDashboard(daysBack);
-      setDashboard(response.data);
+      
+      // Gọi API từ Reporting Service để lấy dữ liệu thực
+      const [salesResponse, inventoryResponse] = await Promise.all([
+        getSalesSummary({}),
+        getInventoryVelocity({})
+      ]);
+
+      console.log('Sales Response:', salesResponse);
+      console.log('Inventory Response:', inventoryResponse);
+
+      // Transform data để phù hợp với format dashboard
+      const salesData = Array.isArray(salesResponse.data) ? salesResponse.data : [];
+      const inventoryData = Array.isArray(inventoryResponse.data) ? inventoryResponse.data : [];
+
+      // Tính toán sales metrics từ sales data
+      const totalSales = salesData.reduce((sum, item) => sum + (Number(item.totalUnitsSold) || 0), 0);
+      const totalRevenue = salesData.reduce((sum, item) => sum + (Number(item.totalRevenue) || 0), 0);
+      const totalOrders = salesData.reduce((sum, item) => sum + (Number(item.orderCount) || 0), 0);
+      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+      // Tìm top selling variant
+      const topVariant = salesData.reduce((top, item) => {
+        const units = Number(item.totalUnitsSold) || 0;
+        return units > (Number(top?.totalUnitsSold) || 0) ? item : top;
+      }, null);
+
+      // Tính toán regional performance từ cả sales và inventory data
+      const regionMap = new Map();
+
+      // Add sales data by region
+      salesData.forEach(item => {
+        const region = item.region || 'Unknown';
+        if (!regionMap.has(region)) {
+          regionMap.set(region, { 
+            region, 
+            totalSales: 0, 
+            totalInventory: 0, 
+            trend: 'STABLE' 
+          });
+        }
+        const regionData = regionMap.get(region);
+        regionData.totalSales += Number(item.totalUnitsSold) || 0;
+      });
+
+      // Add inventory data by region
+      inventoryData.forEach(item => {
+        const region = item.region || 'Unknown';
+        if (!regionMap.has(region)) {
+          regionMap.set(region, { 
+            region, 
+            totalSales: 0, 
+            totalInventory: 0, 
+            trend: 'STABLE' 
+          });
+        }
+        const regionData = regionMap.get(region);
+        regionData.totalInventory += Number(item.currentStock) || 0;
+        
+        // Determine trend based on velocity
+        if (item.velocityLevel === 'FAST') {
+          regionData.trend = 'INCREASING';
+        } else if (item.velocityLevel === 'SLOW') {
+          regionData.trend = 'DECREASING';
+        }
+      });
+
+      const regionalPerformances = Array.from(regionMap.values());
+
+      // Calculate total inventory
+      const totalInventory = inventoryData.reduce((sum, item) => sum + (Number(item.currentStock) || 0), 0);
+      const lowStockVariants = inventoryData.filter(item => 
+        item.velocityLevel === 'FAST' && Number(item.currentStock) < 10
+      ).length;
+
+      const dashboardData = {
+        salesAnalytics: {
+          totalSales: totalSales,
+          totalRevenue: totalRevenue,
+          totalOrders: totalOrders,
+          averageOrderValue: averageOrderValue,
+          topSellingVariant: topVariant ? `${topVariant.modelName} - ${topVariant.variantName}` : 'N/A'
+        },
+        inventoryAnalytics: {
+          totalInventory: totalInventory,
+          lowStockVariants: lowStockVariants
+        },
+        regionalPerformances: regionalPerformances
+      };
+
+      console.log('Dashboard Data:', dashboardData);
+
+      setDashboard(dashboardData);
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {

@@ -19,6 +19,15 @@ public interface SalesHistoryRepository extends JpaRepository<SalesHistory, Long
         LocalDateTime endDate
     );
     
+    // Alias for findByVariantIdAndSaleDateBetween
+    default List<SalesHistory> findByVariantIdAndDateRange(
+        Long variantId, 
+        LocalDateTime startDate, 
+        LocalDateTime endDate
+    ) {
+        return findByVariantIdAndSaleDateBetween(variantId, startDate, endDate);
+    }
+    
     List<SalesHistory> findByDealerIdAndSaleDateBetween(
         UUID dealerId, 
         LocalDateTime startDate, 

@@ -28,6 +28,9 @@ public interface InventorySnapshotRepository extends JpaRepository<InventorySnap
     
     Optional<InventorySnapshot> findTopByVariantIdOrderBySnapshotDateDesc(Long variantId);
     
+    // Get all snapshots for a variant ordered by date desc
+    List<InventorySnapshot> findByVariantIdOrderBySnapshotDateDesc(Long variantId);
+    
     @Query("SELECT SUM(i.availableQuantity) FROM InventorySnapshot i " +
            "WHERE i.snapshotDate = (SELECT MAX(i2.snapshotDate) FROM InventorySnapshot i2)")
     Integer getCurrentTotalInventory();

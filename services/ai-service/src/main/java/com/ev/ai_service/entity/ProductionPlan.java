@@ -52,6 +52,9 @@ public class ProductionPlan {
     private LocalDateTime createdAt;
     
     @Column
+    private LocalDateTime updatedAt; // Thời điểm cập nhật
+    
+    @Column
     private LocalDateTime approvedAt;
     
     @Column(length = 50)

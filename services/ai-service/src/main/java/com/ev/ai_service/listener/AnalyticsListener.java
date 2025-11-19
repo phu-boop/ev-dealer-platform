@@ -1,5 +1,7 @@
 package com.ev.ai_service.listener;
 
+import com.ev.ai_service.client.DealerServiceClient;
+import com.ev.ai_service.client.VehicleServiceClient;
 import com.ev.ai_service.entity.InventorySnapshot;
 import com.ev.ai_service.entity.SalesHistory;
 import com.ev.ai_service.repository.InventorySnapshotRepository;
@@ -23,6 +25,8 @@ public class AnalyticsListener {
     
     private final SalesHistoryRepository salesHistoryRepository;
     private final InventorySnapshotRepository inventorySnapshotRepository;
+    private final VehicleServiceClient vehicleServiceClient;
+    private final DealerServiceClient dealerServiceClient;
 
     /**
      * Lắng nghe các sự kiện từ inventory-service.
@@ -87,20 +91,41 @@ public class AnalyticsListener {
         log.info("    - Last Updated: {}", event.getLastUpdatedAt());
 
         try {
-            // Lưu inventory snapshot
+            // Gọi REST API để lấy thông tin dealer (region)
+            String region = "Unknown";
+            DealerServiceClient.DealerInfo dealerInfo = dealerServiceClient.getDealerInfo(event.getDealerId());
+            if (dealerInfo != null && dealerInfo.getRegion() != null) {
+                region = dealerInfo.getRegion();
+                log.info("Got dealer region: {}", region);
+            }
+            
+            // Gọi REST API để lấy thông tin vehicle variant
+            String modelName = event.getModelName();
+            String variantName = event.getModelName();
+            VehicleServiceClient.VehicleVariantInfo variantInfo = vehicleServiceClient.getVariantInfo(event.getVariantId());
+            if (variantInfo != null) {
+                modelName = variantInfo.getModelName() != null ? variantInfo.getModelName() : modelName;
+                variantName = variantInfo.getVariantName() != null ? variantInfo.getVariantName() : variantName;
+                log.info("Got vehicle info: {} - {}", modelName, variantName);
+            }
+            
+            // Lưu inventory snapshot với dữ liệu đã được làm giàu
             InventorySnapshot snapshot = InventorySnapshot.builder()
                 .variantId(event.getVariantId())
                 .dealerId(event.getDealerId())
-                .region("Unknown") // TODO: Get region from dealer service
+                .region(region)
                 .availableQuantity(event.getNewAvailableQuantity())
-                .allocatedQuantity(0) // TODO: Get from event if available
+                .reservedQuantity(0)
+                .totalQuantity(event.getNewAvailableQuantity())
                 .snapshotDate(LocalDateTime.now())
-                .modelName(event.getModelName())
-                .variantName(event.getModelName())
+                .recordedAt(LocalDateTime.now())
+                .modelName(modelName)
+                .variantName(variantName)
                 .build();
             
             inventorySnapshotRepository.save(snapshot);
-            log.info("Saved inventory snapshot for variant {}", event.getVariantId());
+            log.info("Saved inventory snapshot for variant {} at dealer {} in region {}", 
+                event.getVariantId(), event.getDealerId(), region);
         } catch (Exception e) {
             log.error("Error processing dealer stock update: {}", e.getMessage(), e);
         }
