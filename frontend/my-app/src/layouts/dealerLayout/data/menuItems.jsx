@@ -177,12 +177,12 @@ export const dealerManagerMenuItems = [
     submenu: [
       {
         icon: FiFileText,
-        label: "Hóa Đơn Của Tôi",
+        label: "Hóa Đơn Của Tôi (B2B)",
         path: "/dealer/manager/payments/invoices",
       },
       {
         icon: FiDollarSign,
-        label: "Yêu Cầu Thanh Toán Tiền Mặt (B2C)",
+        label: "Yêu Cầu Thanh Toán (B2C)",
         path: "/dealer/manager/payments/b2c-cash-payments",
       },
       {
@@ -360,7 +360,7 @@ export const dealerStaffMenuItems = [
     submenu: [
       {
         icon: FiShoppingCart,
-        label: "Danh Sách Đơn Hàng B2C",
+        label: "Danh Sách Đơn Hàng (B2C)",
         path: "/dealer/staff/payments/b2c-orders",
       },
     ],

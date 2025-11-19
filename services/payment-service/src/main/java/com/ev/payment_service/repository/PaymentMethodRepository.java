@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query; // << Chú ý import
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UUID> {
 
@@ -19,4 +20,6 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UU
     // Lấy PTTT đang hoạt động cho B2B (ALL hoặc B2B)
     @Query("SELECT pm FROM PaymentMethod pm WHERE pm.isActive = true AND (pm.scope = 'ALL' OR pm.scope = 'B2B')")
     List<PaymentMethod> findActiveB2BMethods();
+
+    Optional<PaymentMethod> findByMethodName(String methodName);
 }

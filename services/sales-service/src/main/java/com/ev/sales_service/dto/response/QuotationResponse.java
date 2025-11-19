@@ -18,7 +18,7 @@ import java.util.UUID;
 public class QuotationResponse {
     private UUID quotationId;
     private UUID dealerId;
-    private Long customerId;
+    private UUID customerId;
     private Long modelId;
     private Long variantId;
     private UUID staffId;

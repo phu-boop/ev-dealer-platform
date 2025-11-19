@@ -32,7 +32,7 @@ public interface SalesContractService {
 
     void deleteContract(UUID contractId);
 
-    List<SalesContractResponse> searchContracts(Long customerId, ContractStatus status);
+    List<SalesContractResponse> searchContracts(UUID customerId, ContractStatus status);
 
     void cancleContract(UUID contractId);
 }

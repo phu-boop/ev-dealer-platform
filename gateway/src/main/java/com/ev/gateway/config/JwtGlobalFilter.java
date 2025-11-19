@@ -27,7 +27,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     private final RedisService redisService;
 
     //  Danh sách path được bỏ qua xác thực (không yêu cầu token)
-    private static final List<String> EXCLUDED_PATHS = List.of(
+        private static final List<String> EXCLUDED_PATHS = List.of(
             "/auth",
             "/users",
             "/sendmail",
@@ -35,9 +35,11 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             "/payments/payment/return",
             "/payments/payment/ipn",
             "/payments/payment/pay-url",
+            "/payments/api/v1/payments/gateway/callback/vnpay-return",
+            "/payments/api/v1/payments/gateway/callback/vnpay-ipn",
             "/favicon.ico"
 
-    );
+        );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {
         this.jwtUtil = jwtUtil;
