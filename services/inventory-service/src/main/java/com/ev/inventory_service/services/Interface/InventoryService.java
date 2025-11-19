@@ -103,4 +103,13 @@ public interface InventoryService {
      * @param status Chuỗi "IN_STOCK", "LOW_STOCK", hoặc "OUT_OF_STOCK"
      */
     List<Long> getVariantIdsByStatus(String status);
+
+    /**
+     * Lấy snapshot của inventory cho AI Service để phân tích và dự báo.
+     * @param variantId ID của variant (tùy chọn)
+     * @param dealerId ID của dealer (tùy chọn)
+     * @param limit Số lượng bản ghi tối đa
+     * @return Danh sách DealerInventoryDto chứa thông tin tồn kho
+     */
+    List<DealerInventoryDto> getInventorySnapshotsForAnalytics(Long variantId, UUID dealerId, int limit);
 }
