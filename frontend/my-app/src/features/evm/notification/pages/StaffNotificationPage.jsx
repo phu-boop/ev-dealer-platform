@@ -22,11 +22,13 @@ import {
   useDeleteNotification,
   useDeleteAllStaffNotifications,
 } from "../hooks/useStaffNotifications";
+import { useAuthContext } from "../../../auth/AuthProvider";
 
 const StaffNotificationPage = () => {
   const [filter, setFilter] = useState("all"); // all, read, unread
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const { roles } = useAuthContext();
   // Dùng React Query
   const {
     data,
@@ -109,11 +111,18 @@ const StaffNotificationPage = () => {
   const handleNotificationClick = (notification) => {
     if (!notification) return;
 
+    const isAdmin = roles?.some((role) => role.toUpperCase() === "ADMIN"); // kiểm tra nếu là role ADMIN
+
     if (notification.type === "ORDER_PLACED") {
-      // Đơn hàng mới -> Đi đến trang Điều phối xe
-      navigate("/evm/staff/distribution/allocation");
+      if (isAdmin) {
+        // Nếu là Admin, điều hướng đến trang allocation của Admin
+        navigate("/evm/admin/distribution/allocation");
+      } else {
+        // Nếu là Staff, điều hướng đến trang allocation của Staff
+        navigate("/evm/staff/distribution/allocation");
+      }
     } else if (notification.link) {
-      // Đơn hàng khiếu nại (hoặc loại khác) -> Dùng link có sẵn
+      // Các loại thông báo khác sẽ dùng link có sẵn
       navigate(notification.link);
     }
   };

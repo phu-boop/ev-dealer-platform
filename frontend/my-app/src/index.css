@@ -1,8 +1,8 @@
 @import "tailwindcss";
 /* src/index.css */
-@tailwind base;
+/* @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; */
 
 /* Thêm vào file CSS global */
 @keyframes fadeIn {
@@ -754,4 +754,15 @@
 
 .Toastify__progress-bar--info {
   background: #3b82f6 !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+  font-family: "Poppins", sans-serif !important;
+  background-color: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
