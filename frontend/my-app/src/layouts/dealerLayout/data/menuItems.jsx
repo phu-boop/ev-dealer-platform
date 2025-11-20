@@ -372,11 +372,6 @@ export const dealerStaffMenuItems = [
         label: "Doanh Số Cá Nhân",
         path: "/dealer/staff/reports/personal",
       },
-      {
-        icon: FiGift,
-        label: "Tỷ Lệ Chốt Đơn",
-        path: "/dealer/staff/reports/performance",
-      },
     ],
   },
 ];
