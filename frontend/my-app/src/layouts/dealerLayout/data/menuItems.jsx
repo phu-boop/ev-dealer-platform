@@ -151,11 +151,11 @@ export const dealerManagerMenuItems = [
         label: "Xe Trong Kho",
         path: "/dealer/manager/inventory/stock",
       },
-      {
-        icon: FiClipboard,
-        label: "Kiểm Kê",
-        path: "/dealer/manager/inventory/audit",
-      },
+      // {
+      //   icon: FiClipboard,
+      //   label: "Kiểm Kê",
+      //   path: "/dealer/manager/inventory/audit",
+      // },
       {
         icon: FiNavigation,
         label: "Đặt Xe Từ Hãng",
@@ -209,7 +209,6 @@ export const dealerManagerMenuItems = [
         label: "Công nợ khách hàng và hãng xe",
         path: "/dealer/manager/reports/model",
       },
-      
     ],
   },
 
