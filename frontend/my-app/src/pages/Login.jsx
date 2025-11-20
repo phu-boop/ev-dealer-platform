@@ -306,7 +306,7 @@
 //   );
 // }
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
 import {
@@ -320,6 +320,7 @@ import { useAuthContext } from "../features/auth/AuthProvider.jsx";
 import ReCAPTCHA from "react-google-recaptcha";
 import { getToken } from "firebase/messaging";
 import { messaging } from "../services/firebase/firebaseConfig.js";
+import { isAuthenticated } from "../utils/checkAuth.js";
 
 // --- Icon SVG (Không thay đổi) ---
 const MailIcon = () => (
@@ -356,6 +357,18 @@ const LockIcon = () => (
   </svg>
 );
 
+const getRedirectPath = (roles) => {
+  if (!roles || !Array.isArray(roles) || roles.length === 0) return "/";
+
+  // Ưu tiên quyền cao nhất (Admin -> Staff -> Dealer Manager -> Dealer Staff)
+  if (roles.includes("ADMIN")) return "/evm/admin/dashboard";
+  if (roles.includes("EVM_STAFF")) return "/evm/staff/dashboard";
+  if (roles.includes("DEALER_MANAGER")) return "/dealer/dashboard";
+  if (roles.includes("DEALER_STAFF")) return "/dealer/staff/dashboard";
+
+  return "/"; // Mặc định về trang chủ
+};
+
 const LogoPlaceholderIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -386,6 +399,23 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // --- CHECK LOGIN TỰ ĐỘNG (Nếu đã đăng nhập thì đá về Dashboard ngay) ---
+  useEffect(() => {
+    if (isAuthenticated()) {
+      // Lấy role từ SessionStorage ra để kiểm tra
+      const rolesStr = sessionStorage.getItem("roles");
+      let roles = [];
+      try {
+        roles = rolesStr ? JSON.parse(rolesStr) : [];
+      } catch (e) {
+        // Fallback nếu role lưu dạng string thường
+        roles = [rolesStr];
+      }
+
+      const path = getRedirectPath(roles);
+      navigate(path, { replace: true });
+    }
+  }, [navigate]);
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -395,7 +425,6 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // ... (Toàn bộ logic handleSubmit của bạn , không cần thay đổi)
     setLoading(true);
     setError(null);
 
@@ -434,50 +463,47 @@ export default function Login() {
         }
         sessionStorage.setItem("profileId", userData.memberId || "");
 
+        if (
+          rolesArray.includes("DEALER_MANAGER") ||
+          rolesArray.includes("DEALER_STAFF")
+        ) {
+          sessionStorage.setItem("dealerId", userData.dealerId || "");
+          sessionStorage.setItem("memberId", userData.memberId || "");
+        }
+        sessionStorage.setItem("profileId", userData.memberId || "");
+
+        // 4. HIỂN THỊ THÔNG BÁO & ĐIỀU HƯỚNG
         Swal.fire({
-          title: "Chúc mừng!",
-          text: "Bạn đã đăng nhập thành công!",
+          title: "Đăng nhập thành công!",
+          text: `Chào mừng ${userData.fullName || "bạn"} quay trở lại!`,
           icon: "success",
-          confirmButtonText: "OK",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
-            try {
-              const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-              const fcmToken = await getToken(messaging, { vapidKey });
-              if (fcmToken) {
-                await registerFCMToken(userData.id, fcmToken);
-                console.log("✅ FCM token đã gửi lên backend:", fcmToken);
-              } else {
-                console.warn(
-                  "⚠️ Không lấy được FCM token (có thể user từ chối thông báo)."
-                );
-              }
-            } catch (error) {
-              console.error("❌ Lỗi khi gửi FCM token:", error);
-            } finally {
-              // ✅ Vẫn điều hướng ngay cả khi FCM lỗi
-              if (
-                rolesArray.includes("ADMIN") ||
-                rolesArray.includes("EVM_STAFF")
-              ) {
-                navigate("/evm");
-              } else if (
-                rolesArray.includes("DEALER_MANAGER") ||
-                rolesArray.includes("DEALER_STAFF")
-              ) {
-                navigate("/dealer");
-              } else {
-                window.location.href = "/";
-              }
+          confirmButtonText: "Truy cập ngay",
+          timer: 1500,
+          timerProgressBar: true,
+        }).then(async () => {
+          // Xử lý FCM Token (Firebase) - chạy ngầm, không chặn điều hướng
+          try {
+            const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+            const fcmToken = await getToken(messaging, { vapidKey });
+            if (fcmToken) {
+              registerFCMToken(userData.id, fcmToken).catch(console.warn);
             }
+          } catch (fcmError) {
+            console.warn("FCM Warning:", fcmError);
           }
+
+          // --- HỰC HIỆN ĐIỀU HƯỚNG THEO ROLE ---
+          const targetPath = getRedirectPath(rolesArray);
+          navigate(targetPath, { replace: true });
         });
       } else {
         setError(response.message || "Đăng nhập thất bại");
       }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Đăng nhập thất bại");
+      setError(
+        err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
+      );
     } finally {
       setLoading(false);
     }
@@ -517,6 +543,10 @@ export default function Login() {
               <tbody>
                 <tr className="border-t border-white/30">
                   <td className="px-6 py-3">admin@gmail.com</td>
+                  <td className="px-6 py-3">123123123</td>
+                </tr>
+                <tr className="border-t border-white/30">
+                  <td className="px-6 py-3">StafffEVM@gmail.com</td>
                   <td className="px-6 py-3">123123123</td>
                 </tr>
               </tbody>

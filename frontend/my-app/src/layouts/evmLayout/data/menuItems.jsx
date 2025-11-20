@@ -155,7 +155,6 @@ export const adminMenuItems = [
         label: "Dự Báo AI",
         path: "/evm/admin/reports/forecast",
       },
-      
     ],
   },
 
@@ -240,7 +239,7 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiArchive,
-        label: "(80%)Kho Trung Tâm",
+        label: "Kho Trung Tâm",
         path: "/evm/staff/distribution/inventory/central",
       },
       {
@@ -259,12 +258,12 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiHomeAlt,
-        label: "(DONE)Tai Khoản Đại Lý",
+        label: "(DONE)Tài Khoản Đại Lý",
         path: "/evm/staff/dealers/dealer-accounts",
       },
       {
         icon: FiHomeAlt,
-        label: "(DOONE)Danh Sách Đại Lý",
+        label: "(DONE)Danh Sách Đại Lý",
         path: "/evm/staff/dealers/list",
       },
       {
@@ -451,11 +450,11 @@ export const dealerManagerMenuItems = [
         label: "Xe Trong Kho",
         path: "/dealer/manager/inventory/stock",
       },
-      {
-        icon: FiClipboard,
-        label: "Kiểm Kê",
-        path: "/dealer/manager/inventory/audit",
-      },
+      // {
+      //   icon: FiClipboard,
+      //   label: "Kiểm Kê",
+      //   path: "/dealer/manager/inventory/audit",
+      // },
       {
         icon: FiNavigation,
         label: "Đặt Xe Từ Hãng",
