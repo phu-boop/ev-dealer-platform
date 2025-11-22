@@ -3,14 +3,17 @@ package com.ev.payment_service.controller;
 import com.ev.payment_service.dto.request.ConfirmDealerTransactionRequest;
 import com.ev.payment_service.dto.request.CreateDealerInvoiceRequest;
 import com.ev.payment_service.dto.request.PayDealerInvoiceRequest;
+import com.ev.payment_service.dto.request.DealerVnpayInitiateRequest;
 import com.ev.payment_service.dto.response.DealerDebtSummaryResponse;
 import com.ev.payment_service.dto.response.DealerInvoiceResponse;
 import com.ev.payment_service.dto.response.DealerTransactionResponse;
 import com.ev.payment_service.service.Interface.IDealerPaymentService;
+import com.ev.payment_service.service.Interface.IVnpayService;
 import com.ev.payment_service.config.UserPrincipal;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +42,7 @@ import java.util.UUID;
 public class DealerPaymentController {
 
     private final IDealerPaymentService dealerPaymentService;
+    private final IVnpayService vnpayService;
     private final RestTemplate restTemplate;
     
     @Value("${user-service.url:http://localhost:8080/users}")
@@ -110,6 +114,42 @@ public class DealerPaymentController {
 
         DealerTransactionResponse response = dealerPaymentService.payDealerInvoice(invoiceId, request, dealerId);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    /**
+     * API 2.1: Khởi tạo thanh toán VNPAY cho hóa đơn B2B (Dealer Manager)
+     * POST /api/v1/payments/dealer/invoices/{invoiceId}/vnpay/initiate
+     */
+    @PostMapping("/invoices/{invoiceId}/vnpay/initiate")
+    @PreAuthorize("hasRole('DEALER_MANAGER')")
+    public ResponseEntity<Map<String, String>> initiateDealerInvoiceVnpay(
+            @PathVariable UUID invoiceId,
+            @Valid @RequestBody DealerVnpayInitiateRequest request,
+            HttpServletRequest httpServletRequest,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        if (principal == null || principal.getProfileId() == null) {
+            log.error("[DealerPaymentController] Missing principal when initiate VNPAY - InvoiceId: {}", invoiceId);
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+
+        UUID managerId = principal.getProfileId();
+        UUID dealerId = getDealerIdFromManagerId(managerId);
+        if (dealerId == null) {
+            log.error("[DealerPaymentController] Failed to resolve dealerId for manager {} when initiate VNPAY", managerId);
+            throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
+        }
+
+        String clientIp = getClientIpAddr(httpServletRequest);
+        String paymentUrl = vnpayService.initiateDealerInvoicePayment(
+                invoiceId,
+                dealerId,
+                request.getAmount(),
+                request.getReturnUrl(),
+                clientIp
+        );
+
+        return ResponseEntity.ok(Map.of("url", paymentUrl));
     }
 
     /**
@@ -407,6 +447,37 @@ public class DealerPaymentController {
                     managerId, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * Helper dùng chung để lấy IP client phục vụ VNPAY.
+     */
+    private String getClientIpAddr(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isEmpty()) {
+            ip = ip.split(",")[0].trim();
+            if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+            if ("127.0.0.1".equals(ip)) {
+                return "139.180.217.147"; // IP test hợp lệ của VNPAY
+            }
+            return ip;
+        }
+
+        ip = request.getHeader("X-Real-IP");
+        if (ip != null && !ip.isEmpty()) {
+            if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+            if ("127.0.0.1".equals(ip)) {
+                return "139.180.217.147"; // IP test hợp lệ của VNPAY
+            }
+            return ip;
+        }
+
+        ip = request.getRemoteAddr();
+        if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+        if ("127.0.0.1".equals(ip)) {
+            return "139.180.217.147"; // IP test hợp lệ của VNPAY
+        }
+        return ip;
     }
 }
 

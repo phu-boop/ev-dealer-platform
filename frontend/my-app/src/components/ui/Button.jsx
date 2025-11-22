@@ -16,6 +16,10 @@ export default function Button({
             "bg-slate-200 text-slate-800 hover:bg-slate-300 focus:ring-slate-400",
         danger:
             "bg-red-600 text-white hover:bg-red-500 focus:ring-red-400",
+        outline:
+            "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-400",
+        ghost:
+            "hover:bg-gray-100 text-gray-700 focus:ring-gray-400",
     }
 
     const sizes = {

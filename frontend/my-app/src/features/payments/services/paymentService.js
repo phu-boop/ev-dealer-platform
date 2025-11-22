@@ -99,6 +99,12 @@ const paymentService = {
     apiConstPaymentService.post(`/api/v1/payments/dealer/invoices/${invoiceId}/pay`, data),
 
   /**
+   * Khởi tạo thanh toán VNPAY cho hóa đơn B2B (Dealer Manager)
+   */
+  initiateDealerInvoiceVnpay: (invoiceId, data) => 
+    apiConstPaymentService.post(`/api/v1/payments/dealer/invoices/${invoiceId}/vnpay/initiate`, data),
+
+  /**
    * Xác nhận thanh toán từ Đại lý (EVM Staff)
    */
   confirmDealerTransaction: (transactionId, data) => 

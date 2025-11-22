@@ -15,6 +15,7 @@ import com.ev.payment_service.repository.PaymentMethodRepository;
 import com.ev.payment_service.repository.PaymentRecordRepository;
 import com.ev.payment_service.repository.TransactionRepository;
 import com.ev.payment_service.service.Interface.ICustomerPaymentService;
+import com.ev.payment_service.service.Interface.IPaymentRecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     private final TransactionRepository transactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final TransactionMapper transactionMapper;
+    private final IPaymentRecordService paymentRecordService;
 
     // === DYNAMIC CALL (SỬ DỤNG RestTemplate) ===
     private final RestTemplate restTemplate;
@@ -69,11 +71,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
 
         // 3. Lấy (hoặc tạo mới) Sổ thanh toán (PaymentRecord)
         log.info("Finding or creating PaymentRecord for orderId: {}", orderId);
-        PaymentRecord record = paymentRecordRepository.findByOrderId(orderId)
-                .orElseGet(() -> {
-                    log.info("PaymentRecord not found, creating new one for orderId: {}", orderId);
-                    return createNewPaymentRecord(orderData);
-                });
+        PaymentRecord record = paymentRecordService.findOrCreateRecord(
+                orderData.getOrderId(),
+                orderData.getCustomerId(), // customerId giờ đã là Long
+                orderData.getTotalAmount()
+        );
         
         // Cập nhật totalAmount nếu SalesOrder có totalAmount khác (đồng bộ với SalesOrder)
         BigDecimal salesOrderTotalAmount = orderData.getTotalAmount();
@@ -335,25 +337,25 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         // Parse customerId (Long) từ SalesOrder hoặc quotation
         // SalesOrder.customerId bây giờ đã là Long (bigint), không phải UUID nữa
         data.setCustomerId(null);
-        
+
         // Ưu tiên lấy customerId từ SalesOrder trước (đã là Long)
         if (salesOrderMap.get("customerId") != null) {
             try {
                 Object customerIdObj = salesOrderMap.get("customerId");
                 if (customerIdObj instanceof Number) {
                     data.setCustomerId(((Number) customerIdObj).longValue());
-                    log.info("Found customerId from SalesOrder - OrderId: {}, CustomerId: {}", 
+                    log.info("Found customerId from SalesOrder - OrderId: {}, CustomerId: {}",
                             data.getOrderId(), data.getCustomerId());
                 } else {
-                    log.warn("CustomerId from SalesOrder is not a Number - OrderId: {}, Type: {}", 
+                    log.warn("CustomerId from SalesOrder is not a Number - OrderId: {}, Type: {}",
                             data.getOrderId(), customerIdObj != null ? customerIdObj.getClass().getName() : "null");
                 }
             } catch (Exception e) {
-                log.warn("Failed to parse customerId from SalesOrder - OrderId: {}, Error: {}", 
+                log.warn("Failed to parse customerId from SalesOrder - OrderId: {}, Error: {}",
                         data.getOrderId(), e.getMessage());
             }
         }
-        
+
         // Nếu không có từ SalesOrder, thử lấy từ quotation (fallback)
         if (data.getCustomerId() == null && salesOrderMap.get("quotation") != null) {
             try {
@@ -363,12 +365,12 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     Object customerIdObj = quotationMap.get("customerId");
                     if (customerIdObj instanceof Number) {
                         data.setCustomerId(((Number) customerIdObj).longValue());
-                        log.info("Found customerId from quotation (fallback) - OrderId: {}, CustomerId: {}", 
+                        log.info("Found customerId from quotation (fallback) - OrderId: {}, CustomerId: {}",
                                 data.getOrderId(), data.getCustomerId());
                     }
                 }
             } catch (Exception e) {
-                log.warn("Failed to parse customerId from quotation - OrderId: {}, Error: {}", 
+                log.warn("Failed to parse customerId from quotation - OrderId: {}, Error: {}",
                         data.getOrderId(), e.getMessage());
             }
         }
@@ -445,18 +447,18 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                 Object customerIdObj = salesOrderMap.get("customerId");
                 if (customerIdObj instanceof Number) {
                     data.setCustomerId(((Number) customerIdObj).longValue());
-                    log.info("Found customerId from B2C order - OrderId: {}, CustomerId: {}", 
+                    log.info("Found customerId from B2C order - OrderId: {}, CustomerId: {}",
                             data.getOrderId(), data.getCustomerId());
                 } else {
-                    log.warn("CustomerId from B2C order is not a Number - OrderId: {}, Type: {}", 
+                    log.warn("CustomerId from B2C order is not a Number - OrderId: {}, Type: {}",
                             data.getOrderId(), customerIdObj != null ? customerIdObj.getClass().getName() : "null");
                 }
             } catch (Exception e) {
-                log.warn("Failed to parse customerId from B2C order - OrderId: {}, Error: {}", 
+                log.warn("Failed to parse customerId from B2C order - OrderId: {}, Error: {}",
                         data.getOrderId(), e.getMessage());
             }
         }
-        
+
         // Nếu không có customerId, thử lấy từ quotation (fallback)
         if (data.getCustomerId() == null && salesOrderMap.get("quotation") != null) {
             try {
@@ -466,12 +468,12 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     Object customerIdObj = quotationMap.get("customerId");
                     if (customerIdObj instanceof Number) {
                         data.setCustomerId(((Number) customerIdObj).longValue());
-                        log.info("Found customerId from quotation (fallback) - OrderId: {}, CustomerId: {}", 
+                        log.info("Found customerId from quotation (fallback) - OrderId: {}, CustomerId: {}",
                                 data.getOrderId(), data.getCustomerId());
-        }
+                    }
                 }
             } catch (Exception e) {
-                log.warn("Failed to parse customerId from quotation - OrderId: {}, Error: {}", 
+                log.warn("Failed to parse customerId from quotation - OrderId: {}, Error: {}",
                         data.getOrderId(), e.getMessage());
             }
         }
@@ -615,16 +617,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             throw new AppException(ErrorCode.INVALID_STATE);
         }
 
-        // 3. Kiểm tra phương thức thanh toán phải là MANUAL
-        if (transaction.getPaymentMethod() == null || 
-            transaction.getPaymentMethod().getMethodType() != com.ev.payment_service.enums.PaymentMethodType.MANUAL) {
-            log.error("Transaction payment method is not MANUAL - TransactionId: {}, MethodType: {}", 
-                    transactionId, 
-                    transaction.getPaymentMethod() != null ? transaction.getPaymentMethod().getMethodType() : "NULL");
-            throw new AppException(ErrorCode.INVALID_STATE);
-        }
-
-        // 4. Kiểm tra PaymentRecord không được đã thanh toán đầy đủ
+        // 3. Kiểm tra PaymentRecord không được đã thanh toán đầy đủ
         PaymentRecord record = transaction.getPaymentRecord();
         if ("PAID".equals(record.getStatus())) {
             log.error("PaymentRecord is already PAID - RecordId: {}, OrderId: {}", 
@@ -632,7 +625,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             throw new AppException(ErrorCode.INVALID_STATE);
         }
 
-        // 5. Cập nhật Transaction
+        // 4. Cập nhật Transaction
         transaction.setStatus("SUCCESS");
         // Cập nhật notes nếu có (ghi đè notes cũ nếu có notes mới từ Dealer Manager)
         if (notes != null && !notes.isBlank()) {
@@ -642,7 +635,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         Transaction savedTransaction = transactionRepository.save(transaction);
         log.info("Transaction updated to SUCCESS - TransactionId: {}", transactionId);
 
-        // 6. Cập nhật PaymentRecord
+        // 5. Cập nhật PaymentRecord
         BigDecimal newAmountPaid = record.getAmountPaid().add(transaction.getAmount());
         record.setAmountPaid(newAmountPaid);
 
@@ -664,7 +657,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         log.info("PaymentRecord saved - RecordId: {}, AmountPaid: {}, RemainingAmount: {}", 
                 savedRecord.getRecordId(), savedRecord.getAmountPaid(), savedRecord.getRemainingAmount());
 
-        // 7. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật payment status trong sales-service
+        // 6. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật payment status trong sales-service
         // Cập nhật payment status dựa trên status của PaymentRecord
         String paymentStatus;
         if ("PAID".equals(savedRecord.getStatus())) {
@@ -732,4 +725,5 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         Page<Transaction> transactions = transactionRepository.findPendingManualTransactions(pageable);
         return transactions.map(transactionMapper::toResponse);
     }
+
 }

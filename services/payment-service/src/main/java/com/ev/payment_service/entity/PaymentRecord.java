@@ -26,7 +26,7 @@ public class PaymentRecord {
     @Column(name = "order_id", columnDefinition = "BINARY(16)", nullable = false, unique = true)
     private UUID orderId; // << Khớp với sales_orders.order_id
 
-    @Column(name = "customer_id", nullable = true) // Có thể null nếu là B2B order (không có customer)
+    @Column(name = "customer_id", nullable = true)
     private Long customerId; // << Khớp với customers.customer_id (bigint)
 
     // --- Khóa ngoại nội bộ ---

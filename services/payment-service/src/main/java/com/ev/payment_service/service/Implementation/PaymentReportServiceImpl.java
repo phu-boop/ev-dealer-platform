@@ -102,12 +102,12 @@ public class PaymentReportServiceImpl implements IPaymentReportService {
                 .filter(record -> record.getCustomerId() != null)
                 .collect(Collectors.toList());
 
-        // Group by customerId
+        // 1. Group by customerId (Long)
         Map<Long, List<PaymentRecord>> recordsByCustomer = paymentRecords.stream()
                 .collect(Collectors.groupingBy(PaymentRecord::getCustomerId));
 
-        // Tính toán công nợ cho mỗi customer
         List<CustomerDebtSummaryResponse> debtList = new ArrayList<>();
+        // 2. Process each customer
         for (Map.Entry<Long, List<PaymentRecord>> entry : recordsByCustomer.entrySet()) {
             Long customerId = entry.getKey();
             List<PaymentRecord> customerRecords = entry.getValue();

@@ -36,6 +36,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
             errorCode = ErrorCode.TIMEOUT;
         }
 
+
         HttpStatus status = errorCode.getHttpStatus();
         response.setStatusCode(status);
 
@@ -49,6 +50,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
                 apiRespond.getCode(),
                 apiRespond.getMessage()
         );
+
 
         DataBufferFactory bufferFactory = response.bufferFactory();
         return response.writeWith(Mono.just(bufferFactory.wrap(json.getBytes(StandardCharsets.UTF_8))));

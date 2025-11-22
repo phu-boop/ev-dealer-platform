@@ -54,13 +54,28 @@ const ContractDetailPage = () => {
   };
 
   const handleDownload = () => {
-    if (contract?.contractFileUrl) {
-      window.open(contract.contractFileUrl, '_blank');
-    } else {
-      // Generate download URL or show message
+    if (!contract?.contractFileUrl) {
       console.log('No contract file available for download');
+      return;
     }
+
+    // Lấy URL
+    const url = contract.contractFileUrl;
+
+    // Tạo <a> tạm thời để download
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Giải mã URL và lấy tên file
+    const decodedFileName = decodeURIComponent(url.split('/').pop());
+    link.download = decodedFileName || 'contract.pdf'; // Nếu không có tên thì mặc định
+
+    // Thêm vào body và click
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
+
 
   // Loading state
   if (loading && !contract) {

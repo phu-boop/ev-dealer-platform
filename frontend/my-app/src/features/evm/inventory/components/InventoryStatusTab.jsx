@@ -8,17 +8,24 @@ import {
   FiNavigation, // Dùng cho Điều chuyển
   FiFilter,
   FiLoader,
+  FiEye,
 } from "react-icons/fi";
 
 import {
   getInventoryStatusByIds,
   getAvailableVins,
+  getAllInventory,
 } from "../services/inventoryService";
-import { getAllVariantsPaginated } from "../../catalog/services/vehicleCatalogService";
-
+import {
+  getAllVariantsPaginated,
+  getVariantDetailsByIds,
+  getVariantDetails,
+} from "../../catalog/services/vehicleCatalogService";
+import Pagination from "./Pagination";
 import TransactionModal from "./TransactionModal"; // Modal Nhập kho (RESTOCK)
 import TransferRequestModal from "./TransferRequestModal"; // Modal Tạo Yêu Cầu Điều Chuyển
 import ReorderLevelModal from "./ReorderLevelModal"; // Modal Sửa Ngưỡng
+import VariantDetailsModal from "../../../../components/common/detail/VariantDetailsModal";
 
 // Component để hiển thị badge trạng thái
 const StatusBadge = ({ status }) => {
@@ -57,6 +64,9 @@ const InventoryStatusTab = () => {
     search: "",
     dealerId: "", // (Lọc dealerId sẽ cần logic khác ở backend)
     status: "",
+    minPrice: "",
+    maxPrice: "",
+    sort: "vehicleModel.modelName,asc",
   });
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,12 +77,16 @@ const InventoryStatusTab = () => {
   // variantId đang được tải
   const [loadingVins, setLoadingVins] = useState(null);
 
-  // State cho Modals (giữ nguyên)
+  // State cho Modals
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailedVariant, setDetailedVariant] = useState(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   useEffect(() => {
     // Tạo một timer
@@ -91,98 +105,126 @@ const InventoryStatusTab = () => {
     };
   }, [searchTerm, setFilters, setPage]); // Phụ thuộc
 
+  // Danh sách các trường sort thuộc về Inventory
+  const inventorySortFields = [
+    "availableQuantity,asc",
+    "availableQuantity,desc",
+    "totalQuantity,asc",
+    "totalQuantity,desc",
+    "allocatedQuantity,asc",
+    "allocatedQuantity,desc",
+    "reorderLevel,asc",
+    "reorderLevel,desc",
+  ];
+
   const fetchInventory = useCallback(async () => {
     setIsLoading(true);
-    setMergedData({ content: [], totalPages: 0 }); // Xóa dữ liệu cũ
+    setMergedData({ content: [], totalPages: 0 });
 
     try {
-      // Lấy "Danh Sách Chủ" (Master List) từ Vehicle Service
+      // Chuẩn bị params chung
       const params = {
         search: filters.search,
         status: filters.status,
+        minPrice: filters.minPrice || null,
+        maxPrice: filters.maxPrice || null,
+        sort: filters.sort,
         page: page,
         size: 10,
       };
 
-      const vehicleResponse = await getAllVariantsPaginated(params);
-      const vehicleData = vehicleResponse.data.data; // { content: [], totalPages: ... }
+      // KIỂM TRA LOGIC "ĐẢO NGƯỢC"
+      const isInventorySort = inventorySortFields.includes(params.sort);
 
-      if (!vehicleData || vehicleData.content.length === 0) {
-        // Không tìm thấy xe nào trong danh mục
-        setIsLoading(false);
-        return;
-      }
+      if (isInventorySort) {
+        // ========== SORT THEO TỒN KHO ==========
 
-      // Lấy danh sách ID từ Bước 1
-      const variantIds = vehicleData.content.map(
-        (variant) => variant.variantId
-      );
+        // Gọi getAllInventory để lấy trang đã sắp xếp
+        // (API này sẽ lọc theo 'search' và 'status' phía backend)
+        const inventoryResponse = await getAllInventory(params);
+        const inventoryPage = inventoryResponse.data.data;
 
-      // Lấy "Dữ Liệu Phụ" (Inventory) từ Inventory Service
-      const inventoryResponse = await getInventoryStatusByIds(variantIds);
-      const inventoryList = inventoryResponse.data.data || [];
-
-      // Tạo một Map để tra cứu tồn kho nhanh (key: variantId, value: {availableQuantity, ...})
-      const inventoryMap = new Map(
-        inventoryList.map((inv) => [inv.variantId, inv])
-      );
-
-      // Gộp (Merge) hai danh sách
-      const finalMergedContent = vehicleData.content.map((variant) => {
-        const inventoryInfo = inventoryMap.get(variant.variantId);
-
-        if (inventoryInfo) {
-          // Lấy thông tin xe (có skuCode, name, specs...)
-          const vehicleDetails = { ...variant };
-
-          // Lấy thông tin kho (chỉ lấy các trường cần thiết)
-          const {
-            availableQuantity,
-            allocatedQuantity,
-            totalQuantity,
-            reorderLevel,
-            status, // Đây là status: "IN_STOCK"
-          } = inventoryInfo;
-
-          // Gộp lại
-          return {
-            ...vehicleDetails, // Lấy mọi thứ từ 'variant' (bao gồm skuCode)
-
-            // Ghi đè CÁC TRƯỜNG KHO CỤ THỂ từ 'inventoryInfo'
-            availableQuantity,
-            allocatedQuantity,
-            totalQuantity,
-            reorderLevel,
-            status, // status: "IN_STOCK" sẽ ghi đè status: "IN_PRODUCTION"
-
-            dealerStock: [],
-          };
-        } else {
-          // KHÔNG TÌM THẤY (Xe mới)
-          return {
-            ...variant,
-            availableQuantity: 0,
-            allocatedQuantity: 0,
-            totalQuantity: 0,
-            reorderLevel: 0,
-            status: "OUT_OF_STOCK",
-            dealerStock: [],
-          };
+        if (!inventoryPage || inventoryPage.content.length === 0) {
+          setIsLoading(false);
+          return;
         }
-      });
 
-      // Cập nhật State
-      setMergedData({
-        content: finalMergedContent,
-        totalPages: vehicleData.totalPages,
-      });
+        const inventoryContent = inventoryPage.content;
+        const variantIds = inventoryContent.map((inv) => inv.variantId);
+
+        // Lấy chi tiết xe (vehicle details) cho các ID này
+        const vehicleResponse = await getVariantDetailsByIds(variantIds);
+        const vehicleDetailsList = vehicleResponse.data.data || [];
+        const vehicleMap = new Map(
+          vehicleDetailsList.map((v) => [v.variantId, v])
+        );
+
+        // Gộp: Lấy danh sách Tồn kho làm gốc (để giữ thứ tự)
+        const finalMergedContent = inventoryContent.map((inventoryItem) => ({
+          ...vehicleMap.get(inventoryItem.variantId), // Chi tiết xe (name, sku)
+          ...inventoryItem, // Dữ liệu kho (quantity, status)
+        }));
+
+        setMergedData({
+          content: finalMergedContent,
+          totalPages: inventoryPage.totalPages,
+        });
+      } else {
+        // ========== CASE 2: SORT THEO TÊN/GIÁ ==========
+
+        // Gọi catalog để lấy 10 xe đã sắp xếp theo Tên/Giá
+        const vehicleResponse = await getAllVariantsPaginated(params);
+        const vehicleData = vehicleResponse.data.data;
+
+        if (!vehicleData || vehicleData.content.length === 0) {
+          setIsLoading(false);
+          return;
+        }
+
+        const variantIds = vehicleData.content.map(
+          (variant) => variant.variantId
+        );
+
+        // Lấy dữ liệu tồn kho cho 10 xe này
+        const inventoryResponse = await getInventoryStatusByIds(variantIds);
+        const inventoryList = inventoryResponse.data.data || [];
+        const inventoryMap = new Map(
+          inventoryList.map((inv) => [inv.variantId, inv])
+        );
+
+        // Gộp: Lấy danh sách Xe làm gốc (để giữ thứ tự)
+        const finalMergedContent = vehicleData.content.map((variant) => {
+          const inventoryInfo = inventoryMap.get(variant.variantId);
+          if (inventoryInfo) {
+            return {
+              ...variant,
+              ...inventoryInfo, // Ghi đè status và thêm quantity
+              status: inventoryInfo.status, // Đảm bảo status là của inventory
+            };
+          } else {
+            return {
+              ...variant,
+              availableQuantity: 0,
+              allocatedQuantity: 0,
+              totalQuantity: 0,
+              reorderLevel: 0,
+              status: "OUT_OF_STOCK",
+            };
+          }
+        });
+
+        setMergedData({
+          content: finalMergedContent,
+          totalPages: vehicleData.totalPages,
+        });
+      }
     } catch (error) {
       console.error("Failed to fetch merged inventory data", error);
-      setMergedData({ content: [], totalPages: 0 }); // Đặt lại về rỗng nếu lỗi
+      setMergedData({ content: [], totalPages: 0 });
     } finally {
       setIsLoading(false);
     }
-  }, [filters, page]); // Phụ thuộc vào filters và page
+  }, [filters, page]);
 
   useEffect(() => {
     fetchInventory();
@@ -237,41 +279,137 @@ const InventoryStatusTab = () => {
     setIsReorderModalOpen(true);
   };
 
+  const openDetailModal = async (variantId) => {
+    setSelectedVariantId(variantId); // Set ID
+    setIsDetailModalOpen(true); // Mở modal
+    setIsLoadingDetail(true); // Bắt đầu loading
+    setDetailedVariant(null); // Xóa dữ liệu cũ
+
+    try {
+      // Gọi API để lấy chi tiết đầy đủ
+      const response = await getVariantDetails(variantId);
+      setDetailedVariant(response.data.data);
+    } catch (error) {
+      console.error("Failed to fetch variant details", error);
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  };
+
   // Hàm đóng chung cho tất cả
   const closeModal = () => {
     setIsRestockModalOpen(false);
     setIsTransferModalOpen(false);
     setIsReorderModalOpen(false);
+    setIsDetailModalOpen(false);
     setSelectedVariantId(null);
+    setDetailedVariant(null);
   };
 
   return (
     <div>
       {/* Thanh tìm kiếm và bộ lọc */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="relative w-full max-w-md">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            name="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Tìm theo tên xe, SKU..."
-            className="p-2 pl-10 border rounded-lg w-full"
-          />
+      <div className="flex flex-col gap-4 mb-6">
+        {/* Hàng 1: Tìm kiếm  */}
+        <div className="flex justify-between items-center">
+          <div className="relative w-full max-w-md">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              name="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm theo tên xe, SKU..."
+              className="p-2 pl-10 border rounded-lg w-full"
+            />
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <FiFilter className="text-gray-500" />
-          <select
-            name="status"
-            value={filters.status}
-            onChange={handleFilterChange}
-            className="p-2 border rounded-lg bg-white"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="IN_STOCK">Còn hàng</option>
-            <option value="LOW_STOCK">Tồn kho thấp</option>
-            <option value="OUT_OF_STOCK">Hết hàng</option>
-          </select>
+
+        {/* Hàng 2: Các bộ lọc chi tiết */}
+        <div className="flex flex-wrap items-end gap-4 p-4 bg-gray-50 rounded-lg border">
+          <FiFilter className="text-gray-600 text-lg" />
+
+          {/* Lọc Trạng thái  */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Trạng thái
+            </label>
+            <select
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              className="p-2 border rounded-lg bg-white"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="IN_STOCK">Còn hàng</option>
+              <option value="LOW_STOCK">Tồn kho thấp</option>
+              <option value="OUT_OF_STOCK">Hết hàng</option>
+            </select>
+          </div>
+
+          {/* Lọc Giá Tối Thiểu */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Giá từ
+            </label>
+            <input
+              name="minPrice" // Phải khớp với state 'filters'
+              type="number"
+              placeholder="VD: 50000"
+              value={filters.minPrice} // Lấy từ state 'filters'
+              onChange={handleFilterChange} // Dùng chung hàm
+              className="p-2 border rounded-lg w-full"
+            />
+          </div>
+
+          {/* Lọc Giá Tối Đa */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Đến giá
+            </label>
+            <input
+              name="maxPrice" // Phải khớp với state 'filters'
+              type="number"
+              placeholder="VD: 100000"
+              value={filters.maxPrice} // Lấy từ state 'filters'
+              onChange={handleFilterChange} // Dùng chung hàm
+              className="p-2 border rounded-lg w-full"
+            />
+          </div>
+
+          {/* Sắp xếp */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sắp xếp
+            </label>
+            <select
+              name="sort"
+              value={filters.sort}
+              onChange={handleFilterChange}
+              className="p-2 border rounded-lg bg-white"
+            >
+              <option value="vehicleModel.modelName,asc">
+                Tên sản phẩm (A-Z)
+              </option>
+              <option value="vehicleModel.modelName,desc">
+                Tên sản phẩm (Z-A)
+              </option>
+              <option value="price,asc">Giá: Thấp đến Cao</option>
+              <option value="price,desc">Giá: Cao đến Thấp</option>
+
+              <option value="availableQuantity,desc">
+                Tồn kho: Cao đến Thấp
+              </option>
+              <option value="availableQuantity,asc">
+                Tồn kho: Thấp đến Cao
+              </option>
+              <option value="totalQuantity,desc">
+                Tổng số lượng: Cao đến Thấp
+              </option>
+              <option value="totalQuantity,asc">
+                Tổng số lượng: Thấp đến Cao
+              </option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -296,7 +434,7 @@ const InventoryStatusTab = () => {
             <tbody>
               {mergedData.content.map(
                 (
-                  item // <-- Tự động dùng dữ liệu đã gộp
+                  item // Tự động dùng dữ liệu đã gộp
                 ) => (
                   <React.Fragment key={item.variantId}>
                     <tr className="border-b hover:bg-gray-50">
@@ -311,7 +449,6 @@ const InventoryStatusTab = () => {
                         />
                       </td>
 
-                      {/* Các cột này giờ sẽ CÓ thông tin từ vehicle-service */}
                       <td className="p-3">
                         <p className="font-semibold text-gray-800">
                           {item.modelName} - {item.versionName} - {item.color}
@@ -321,7 +458,6 @@ const InventoryStatusTab = () => {
                         </p>
                       </td>
 
-                      {/* Các cột này CÓ thông tin từ inventory-service (kể cả khi là 0) */}
                       <td className="p-3 text-center text-lg font-bold text-green-600">
                         {item.availableQuantity}
                       </td>
@@ -338,6 +474,7 @@ const InventoryStatusTab = () => {
                         <StatusBadge status={item.status} />
                       </td>
                       <td className="p-3 text-right space-x-2">
+                        {/* Nút nhập kho */}
                         <button
                           onClick={() => openRestockModal(item.variantId)}
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-full"
@@ -345,6 +482,7 @@ const InventoryStatusTab = () => {
                         >
                           <FiPlusCircle />
                         </button>
+                        {/* Nút điều chuyển */}
                         <button
                           onClick={() => openTransferModal(item.variantId)}
                           className="p-2 text-purple-600 hover:bg-purple-100 rounded-full"
@@ -352,12 +490,21 @@ const InventoryStatusTab = () => {
                         >
                           <FiNavigation />
                         </button>
+                        {/* Nút sửa ngưỡng */}
                         <button
                           onClick={() => openReorderModal(item.variantId)}
                           className="p-2 text-yellow-600 hover:bg-yellow-100 rounded-full"
                           title="Cập nhật ngưỡng"
                         >
                           <FiEdit />
+                        </button>
+                        {/* Nút xem chi tiết */}
+                        <button
+                          onClick={() => openDetailModal(item.variantId)}
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+                          title="Xem chi tiết phiên bản"
+                        >
+                          <FiEye />
                         </button>
                       </td>
                     </tr>
@@ -369,7 +516,7 @@ const InventoryStatusTab = () => {
                               Các số VIN khả dụng (Kho Trung tâm):
                             </h4>
 
-                            {/* 1. Trạng thái đang tải VINs */}
+                            {/* Trạng thái đang tải VINs */}
                             {loadingVins === item.variantId && (
                               <div className="flex items-center text-gray-500">
                                 <FiLoader className="animate-spin mr-2" />
@@ -450,8 +597,18 @@ const InventoryStatusTab = () => {
           variantId={selectedVariantId}
         />
       )}
+      <VariantDetailsModal
+        isOpen={isDetailModalOpen}
+        onClose={closeModal}
+        variant={detailedVariant} // Truyền dữ liệu chi tiết
+        isLoading={isLoadingDetail} // Truyền trạng thái loading
+      />
 
-      {/* <Pagination currentPage={page} totalPages={inventoryWithDetails.totalPages} onPageChange={setPage} /> */}
+      <Pagination
+        currentPage={page}
+        totalPages={mergedData.totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

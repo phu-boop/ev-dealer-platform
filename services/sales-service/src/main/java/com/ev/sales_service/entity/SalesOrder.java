@@ -6,6 +6,7 @@ import com.ev.sales_service.enums.PaymentStatus;
 import com.ev.sales_service.enums.SaleOderType;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,8 +32,8 @@ public class SalesOrder {
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID dealerId;
 
-    @Column(name = "customer_id")
-    private Long customerId;
+    @Column(name = "customer_id", nullable = true)
+    private Long customerId; // Đã migrate từ UUID sang Long, có thể null cho B2B orders
 
     @Column(name = "staff_id", columnDefinition = "BINARY(16)")
     private UUID staffId;
@@ -82,9 +83,12 @@ public class SalesOrder {
 
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @EqualsAndHashCode.Exclude
-    private List<OrderItem> orderItems;
+    @Builder.Default
+    private List<OrderItem> orderItems = new java.util.ArrayList<>();
 
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @EqualsAndHashCode.Exclude
-    private List<OrderTracking> orderTrackings;
+    @Builder.Default
+    private List<OrderTracking> orderTrackings = new java.util.ArrayList<>();
 }
+

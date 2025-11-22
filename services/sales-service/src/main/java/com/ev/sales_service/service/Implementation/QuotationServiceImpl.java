@@ -440,7 +440,7 @@ public class QuotationServiceImpl implements QuotationService {
         if (customer != null && !customer.isEmpty()) {
             try {
                 filter.setCustomerId(Long.parseLong(customer));
-            } catch (NumberFormatException e) {
+            } catch (IllegalArgumentException e) {
                 log.warn("Invalid customer ID parameter: {}", customer);
             }
         }

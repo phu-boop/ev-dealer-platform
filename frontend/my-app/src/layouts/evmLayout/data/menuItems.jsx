@@ -35,7 +35,7 @@ import {
 
 export const adminMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Dashboard", path: "/evm/admin" },
+  { icon: FiHome, label: "Dashboard", path: "/evm/admin/dashboard" },
 
   // Quản lý sản phẩm
   {
@@ -57,6 +57,11 @@ export const adminMenuItems = [
         icon: FiTag,
         label: "Phiên Bản & Màu Sắc",
         path: "/evm/admin/products/variants",
+      },
+      {
+        icon: FiSliders,
+        label: "Quản Lý Tính Năng",
+        path: "/evm/admin/products/features",
       },
       {
         icon: FiCreditCard,
@@ -150,11 +155,6 @@ export const adminMenuItems = [
         label: "Dự Báo AI",
         path: "/evm/admin/reports/forecast",
       },
-      {
-        icon: FiMap,
-        label: "Theo Khu Vực",
-        path: "/evm/admin/reports/regional",
-      },
     ],
   },
 
@@ -200,7 +200,7 @@ export const adminMenuItems = [
 
 export const evmStaffMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Dashboard", path: "/evm/staff" },
+  { icon: FiHome, label: "Dashboard", path: "/evm/staff/dashboard" },
 
   // Quản lý sản phẩm
   {
@@ -239,7 +239,7 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiArchive,
-        label: "(80%)Kho Trung Tâm",
+        label: "Kho Trung Tâm",
         path: "/evm/staff/distribution/inventory/central",
       },
       {
@@ -258,12 +258,12 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiHomeAlt,
-        label: "(DONE)Tai Khoản Đại Lý",
+        label: "(DONE)Tài Khoản Đại Lý",
         path: "/evm/staff/dealers/dealer-accounts",
       },
       {
         icon: FiHomeAlt,
-        label: "(DOONE)Danh Sách Đại Lý",
+        label: "(DONE)Danh Sách Đại Lý",
         path: "/evm/staff/dealers/list",
       },
       {
@@ -297,17 +297,17 @@ export const evmStaffMenuItems = [
     submenu: [
       {
         icon: FiShoppingCart,
-        label: "Quản Lý Đơn Hàng B2B",
+        label: "Quản Lý Đơn Hàng (B2B)",
         path: "/evm/staff/orders",
       },
       {
         icon: FiCreditCard,
-        label: "Công Nợ Đại Lý",
+        label: "Công Nợ Đại Lý (B2B)",
         path: "/evm/staff/debt",
       },
       {
         icon: FiDollarSign,
-        label: "Đại Lý Thanh Toán Tiền Mặt",
+        label: "Đại Lý Thanh Toán Hóa Đơn (B2B)",
         path: "/evm/staff/payments/cash-payments",
       },
     ],
@@ -450,11 +450,11 @@ export const dealerManagerMenuItems = [
         label: "Xe Trong Kho",
         path: "/dealer/manager/inventory/stock",
       },
-      {
-        icon: FiClipboard,
-        label: "Kiểm Kê",
-        path: "/dealer/manager/inventory/audit",
-      },
+      // {
+      //   icon: FiClipboard,
+      //   label: "Kiểm Kê",
+      //   path: "/dealer/manager/inventory/audit",
+      // },
       {
         icon: FiNavigation,
         label: "Đặt Xe Từ Hãng",

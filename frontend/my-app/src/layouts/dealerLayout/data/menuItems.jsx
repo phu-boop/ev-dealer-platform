@@ -47,7 +47,7 @@ export const dealerManagerMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/manager/inventory/stock",
+        path: "/dealer/manager/inventory/available",
       },
       {
         icon: FiTag,
@@ -151,11 +151,11 @@ export const dealerManagerMenuItems = [
         label: "Xe Trong Kho",
         path: "/dealer/manager/inventory/stock",
       },
-      {
-        icon: FiClipboard,
-        label: "Kiểm Kê",
-        path: "/dealer/manager/inventory/audit",
-      },
+      // {
+      //   icon: FiClipboard,
+      //   label: "Kiểm Kê",
+      //   path: "/dealer/manager/inventory/audit",
+      // },
       {
         icon: FiNavigation,
         label: "Đặt Xe Từ Hãng",
@@ -177,12 +177,12 @@ export const dealerManagerMenuItems = [
     submenu: [
       {
         icon: FiFileText,
-        label: "Hóa Đơn Của Tôi",
+        label: "Hóa Đơn Của Tôi (B2B)",
         path: "/dealer/manager/payments/invoices",
       },
       {
         icon: FiDollarSign,
-        label: "Yêu Cầu Thanh Toán Tiền Mặt (B2C)",
+        label: "Yêu Cầu Thanh Toán (B2C)",
         path: "/dealer/manager/payments/b2c-cash-payments",
       },
       {
@@ -201,18 +201,13 @@ export const dealerManagerMenuItems = [
     submenu: [
       {
         icon: FiTrendingUp,
-        label: "Doanh Số Theo Nhân Viên",
+        label: "Doanh số theo nhân viên bán hàng",
         path: "/dealer/manager/reports/staff",
       },
       {
         icon: FiBarChart2,
-        label: "Doanh Số Theo Mẫu Xe",
+        label: "Công nợ khách hàng và hãng xe",
         path: "/dealer/manager/reports/model",
-      },
-      {
-        icon: FiGift,
-        label: "Hiệu Suất & Tỷ Lệ Chốt Đơn",
-        path: "/dealer/manager/reports/performance",
       },
     ],
   },
@@ -239,7 +234,7 @@ export const dealerManagerMenuItems = [
 
 export const dealerStaffMenuItems = [
   // Dashboard
-  { icon: FiHome, label: "Bảng Điều Khiển", path: "/staff/dashboard" },
+  { icon: FiHome, label: "Bảng Điều Khiển", path: "/dealer/staff/dashboard" },
 
   // Danh mục xe & báo giá
   {
@@ -250,7 +245,7 @@ export const dealerStaffMenuItems = [
       {
         icon: FiList,
         label: "Xe Có Sẵn",
-        path: "/dealer/staff/inventory/stock",
+        path: "/dealer/staff/inventory/available",
       },
       {
         icon: FiTag,
@@ -360,7 +355,7 @@ export const dealerStaffMenuItems = [
     submenu: [
       {
         icon: FiShoppingCart,
-        label: "Danh Sách Đơn Hàng B2C",
+        label: "Danh Sách Đơn Hàng (B2C)",
         path: "/dealer/staff/payments/b2c-orders",
       },
     ],
@@ -376,11 +371,6 @@ export const dealerStaffMenuItems = [
         icon: FiBarChart2,
         label: "Doanh Số Cá Nhân",
         path: "/dealer/staff/reports/personal",
-      },
-      {
-        icon: FiGift,
-        label: "Tỷ Lệ Chốt Đơn",
-        path: "/dealer/staff/reports/performance",
       },
     ],
   },

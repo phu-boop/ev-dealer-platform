@@ -1,284 +1,3 @@
-//  import { Routes, Route } from "react-router-dom";
-// import { AuthProvider } from "../features/auth/AuthProvider";
-
-// // layouts
-// import EvmLayout from "../layouts/evmLayout/EvmLayout.jsx";
-// import UserLayout from "../layouts/UserLayout";
-// import DealerLayout from "../layouts/dealerLayout/DealerLayout.jsx";
-
-// // pages
-// import Home from "../pages/Home";
-// import Login from "../pages/Login.jsx";
-// import Dashboard from "../features/dashboard/pages/Dashboard";
-// import NotFound from "../pages/NotFound";
-// import ProtectedRoute from "./ProtectedRoute";
-// import UserManagement from "../features/dashboard/users/pages/UserManagement.jsx";
-// import ProfileForm from "../features/profile/components/ProfileForm.jsx";
-// import SecuritySettings from "../features/profile/components/SecuritySettings.jsx";
-// import OAuthSuccess from "../pages/OAuthSuccess";
-// import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
-// import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
-// import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
-// import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
-// import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
-// import QuotationManagement from "../features/dealer/sales/pages/QuotationManagement.jsx";
-
-// // customer pages
-// import CustomerList from "../features/customers/pages/CustomerList.jsx";
-// import CreateCustomer from "../features/customers/pages/CreateCustomer.jsx";
-// import EditCustomer from "../features/customers/pages/EditCustomer.jsx";
-// import CustomerDetail from "../features/customers/pages/CustomerDetail.jsx";
-
-// // EVM
-// import VehicleCatalogManager from "../features/evm/catalog/pages/VehicleCatalogPage.jsx";
-// import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.jsx";
-// import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
-// import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
-// import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
-
-// // Dealer
-// import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPage.jsx";
-// import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
-// import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
-// import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
-
-// //Manage Dealer
-// import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
-
-// export default function AppRoutes() {
-//   return (
-//     <AuthProvider>
-//       {/*
-//         /                               ================= (Public)
-//         ├── /login
-//         ├── /oauth-success
-//         ├── /reset-password
-
-//         /evm                            ================= (ADMIN + EVM_STAFF)
-//         ├── /evm/profile
-//         │
-//         ├── /evm/admin                  ================= (ADMIN)
-//         │   ├── /evm/admin/products/promotions/*
-//         │
-//         └── /evm/staff                  ================= (EVM_STAFF)
-//             └── /evm/staff/products/promotions
-
-//         /dealer                         ================= (DEALER_MANAGER + DEALER_STAFF)
-//         ├── /dealer/profile
-//         │
-//         ├── /dealer/manager             ================= (DEALER_MANAGER)
-//         │   ├── /dealer/manager/promotions/*
-//         │
-//         └── /dealer/staff               ================= (DEALER_STAFF)
-//             └── /dealer/staff/promotions
-//         */}
-
-//       <Routes>
-//         {/* ================================================================== */}
-//         {/* ======================= PUBLIC ROUTES ============================ */}
-//         {/* ================================================================== */}
-//         <Route path="/" element={<UserLayout />}>
-//           <Route index element={<Home />} />
-//           <Route path="login" element={<Login />} />
-//           <Route path="oauth-success" element={<OAuthSuccess />} />
-//           <Route path="reset-password" element={<ResetPassword />} />
-//         </Route>
-
-//         {/* ================================================================== */}
-//         {/* ================== EVM ROUTES (ADMIN & STAFF) ==================== */}
-//         {/* ================================================================== */}
-//         <Route
-//           element={<ProtectedRoute allowedRoles={["ADMIN", "EVM_STAFF"]} />}
-//         >
-//           <Route path="evm" element={<EvmLayout />}>
-//             <Route index element={<Dashboard />} />
-//             <Route path="profile" element={<ProfileForm />} />
-//             <Route path="settings" element={<SecuritySettings />} />
-//             <Route path="promotions/*" element={<MainPromotion />} />
-//             <Route path="promotions/*" element={<MainPromotion />} />
-
-//             {/* Admin only */}
-//             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-//               <Route
-//                 path="admin/products/promotions/*"
-//                 element={<AdminPromotionManager />}
-//               />
-//               <Route path="admin/system/users" element={<UserManagement />} />
-//               <Route path="admin/notifications" element={<UserManagement />} />
-//             </Route>
-
-//             {/* Admin only */}
-//             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-//               <Route
-//                 element={<AdminPromotionManager />}
-//               />
-//               <Route path="admin/system/users" element={<UserManagement />} />
-//               <Route path="admin/notifications" element={<UserManagement />} />
-//               <Route
-//                 path="admin/reports/notifications"
-//                 element={<NotificationManagement />}
-//               />
-//               <Route
-//                 path="admin/distribution/allocation"
-//                 element={<AllocationPage />}
-//               />
-//               <Route
-//                 path="admin/dealers/list"
-//                 element={<DealersPage />}
-//               />
-//             </Route>
-//             {/* Staff only */}
-//             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
-//               <Route path="staff" element={<Dashboard />} />
-//               {/* --------------------------------QUẢN LÝ SẢN PHẨM-------------------------------------------------- */}
-//               {/* Quản lý danh mục xe */}
-//               <Route
-//                 path="staff/products/catalog"
-//                 element={<VehicleCatalogManager />}
-//               />
-//               {/* Quản lý phiên bản, màu sắc xe (thiếu tiềm kiếm (lọc theo màu, phiên bản)) */}
-//               <Route
-//                 path="staff/products/variants"
-//                 element={<VariantManager />}
-//               />
-//               {/* Giá Sỉ & Chiết Khấu */}
-//               <Route
-//                 path="staff/products/promotions"
-//                 element={<MainPromotion />}
-//               />
-//               {/* --------------------------------PHÂN PHỐI & KHO-------------------------------------------------- */}
-//               <Route
-//                 path="staff/distribution/inventory/central"
-//                 element={<InventoryCentral />}
-//               />
-//               <Route
-//                 path="staff/distribution/allocation"
-//                 element={<AllocationPage />}
-//               />
-//               {/* --------------------------------MANAGE DEALER-------------------------------------------------- */}
-//               <Route
-//                 path="staff/dealers/list"
-//                 element = {<DealersPage />}
-//               />
-//               <Route
-//                 path="staff/dealers/dealer-accounts"
-//                 element={<UserManagement />}
-//               />
-//             </Route>
-//           </Route>
-//         </Route>
-
-//         {/* ================================================================== */}
-//         {/* ================== DEALER ROUTES (MANAGER & STAFF) =============== */}
-//         {/* ================================================================== */}
-//         <Route
-//           element={
-//             <ProtectedRoute allowedRoles={["DEALER_MANAGER", "DEALER_STAFF"]} />
-//           }
-//         >
-//           <Route path="dealer" element={<DealerLayout />}>
-//             <Route index element={<DashboardForDealer />} />
-//             <Route path="profile" element={<ProfileForm />} />
-//             <Route path="settings" element={<SecuritySettings />} />
-
-//             {/* --- DEALER MANAGER ONLY ROUTES --- */}
-//             <Route
-//               element={<ProtectedRoute allowedRoles={["DEALER_MANAGER"]} />}
-//             >
-//               {/* Customer Management */}
-//               <Route
-//                 path="manager/customers/create"
-//                 element={<CreateCustomer />}
-//               />
-//               <Route path="manager/customers/list" element={<CustomerList />} />
-//               <Route
-//                 path="manager/customers/:id"
-//                 element={<CustomerDetail />}
-//               />
-//               <Route
-//                 path="manager/customers/:id/edit"
-//                 element={<EditCustomer />}
-//               />
-//               <Route
-//                 path="manager/quotations/*"
-//                 element={<QuotationManagement />}
-//               />
-//                           {/* Xem tồn kho đại lí */}
-//               <Route
-//                 path="manager/inventory/stock"
-//                 element={<DealerInventoryStockPage />}
-//               />
-//               <Route
-//                 path="manager/vehicles/all"
-//                 element={<DealerProductCatalogPage />}
-//               />
-
-//               <Route
-//                   path="manager/quotations/*"
-//                   element={<QuotationManagement />}
-//               />
-//               {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
-
-//               <Route
-//                   path="manager/settings/staff*"
-//                   element={<UserManagement />}
-//               />
-
-//               {/* Promotions */}
-//               <Route path="manager/promotions/*" element={<MainPromotion />} />
-
-//               {/* System */}
-//               <Route path="manager/system/users" element={<UserManagement />} />
-
-//               <Route
-//                 path="manager/inventory/order"
-//                 element={<B2BOrderForm />}
-//               />
-//               <Route path="manager/inventory/info" element={<B2BOrderPage />} />
-//             </Route>
-
-//             {/* Dealer Staff Routes */}
-//             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
-//               {/* Customer Management */}
-//               <Route
-//                 path="staff/customers/create"
-//                 element={<CreateCustomer />}
-//               />
-//               <Route path="staff/customers/list" element={<CustomerList />} />
-//               <Route path="staff/customers/:id" element={<CustomerDetail />} />
-//               <Route
-//                 path="staff/customers/:id/edit"
-//                 element={<EditCustomer />}
-//               />
-
-//               <Route
-//                 path="staff/quotations/*"
-//                 element={<QuotationManagement />}
-//               />
-
-//               {/* Danh mục xe & báo cáo */}
-//               {/* Xe có sẵn trong kho đại lí */}
-//               <Route
-//                   path="staff/quotations/*"
-//                   element={<QuotationManagement />}
-//               />
-
-//               {/* Promotions */}
-//               <Route
-//                 path="staff/promotions"
-//                 element={<CustomerPromotionView />}
-//               />
-//             </Route>
-//           </Route>
-//         </Route>
-
-//         {/* 404 Not Found */}
-//         <Route path="*" element={<NotFound />} />
-//       </Routes>
-//     </AuthProvider>
-//   );
-// }
-
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
@@ -286,11 +5,13 @@ import { AuthProvider } from "../features/auth/AuthProvider";
 import EvmLayout from "../layouts/evmLayout/EvmLayout.jsx";
 import UserLayout from "../layouts/UserLayout";
 import DealerLayout from "../layouts/dealerLayout/DealerLayout.jsx";
+import AuthLayout from "../layouts/AuthLayout";
 
 // pages
 import Home from "../pages/Home";
 import Login from "../pages/Login.jsx";
-import Dashboard from "../features/dashboard/pages/Dashboard";
+// import Dashboard from "../features/dashboard/pages/Dashboard";
+// import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
 import UserManagement from "../features/dashboard/users/pages/UserManagement.jsx";
@@ -298,7 +19,10 @@ import ProfileForm from "../features/profile/components/ProfileForm.jsx";
 import SecuritySettings from "../features/profile/components/SecuritySettings.jsx";
 import OAuthSuccess from "../pages/OAuthSuccess";
 import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
-import DashboardForDealer from "../features/dashboard/pages/DashboardForDealer.jsx";
+import DealerDashboardPage from "../features/dealer/dashboard/pages/DashboardPage.jsx";
+import StaffDashboardPage from "../features/dealer/staff/dashboard/pages/StaffDashboardPage.jsx";
+import AdminDashboardPage from "../features/admin/dashboard/pages/AdminDashboardPage.jsx";
+import EvmStaffDashboardPage from "../features/evm/dashboard/pages/EvmStaffDashboardPage.jsx";
 import AdminPromotionManager from "../features/admin/promotions/pages/AdminPromotionManager.jsx";
 import CustomerPromotionView from "../features/dealer/promotions/CustomerPromotionView.jsx";
 import NotificationManagement from "../features/admin/notifications/NotificationManagement.jsx";
@@ -325,6 +49,8 @@ import VariantManager from "../features/evm/catalog/pages/VariantManagementPage.
 import MainPromotion from "../features/evm/promotions/pages/MainPromotion.jsx";
 import InventoryCentral from "../features/evm/inventory/pages/InventoryPage.jsx";
 import AllocationPage from "../features/evm/inventory/pages/AllocationPage.jsx";
+import FeatureManagementPage from "../features/evm/catalog/pages/FeatureManagementPage.jsx";
+import DistributionHistoryPage from "../features/evm/inventory/pages/DistributionHistoryPage.jsx";
 
 // Thông báo (Socket)
 import StaffNotificationPage from "../features/evm/notification/pages/StaffNotificationPage.jsx";
@@ -343,12 +69,18 @@ import B2BOrderPage from "../features/dealer/ordervariants/pages/DealerOrdersPag
 import B2BOrderForm from "../features/dealer/ordervariants/pages/B2BOrderForm.jsx";
 import DealerInventoryStockPage from "../features/dealer/ordervariants/pages/DealerInventoryStockPage.jsx";
 import DealerProductCatalogPage from "../features/dealer/ordervariants/pages/DealerProductCatalogPage.jsx";
+import AvailableVehicleCatalogPage from "../features/dealer/sales/availableVehicle/pages/AvailableVehicleCatalogPage.jsx";
 
 // Manage Dealer
 import DealersPage from "../features/admin/manageDealer/dealers/DealersPage.jsx";
 // Reporting
 import SalesReportPage from "../features/admin/reporting/pages/SalesReportPage.jsx";
 import InventoryReportPage from "../features/admin/reporting/pages/InventoryReportPage.jsx";
+
+// AI Forecast
+import ForecastDashboard from "../pages/ai-forecast/ForecastDashboard.jsx";
+import DemandForecastPage from "../pages/ai-forecast/DemandForecastPage.jsx";
+import ProductionPlanPage from "../pages/ai-forecast/ProductionPlanPage.jsx";
 
 // SYSTEM (ADMIN)
 import BackfillPage from "../features/admin/system/pages/BackfillPage.jsx";
@@ -372,7 +104,12 @@ import B2COrderDetailPage from "../features/payments/pages/B2COrderDetailPage.js
 import PayB2COrderPage from "../features/payments/pages/PayB2COrderPage.jsx";
 import B2CCashPaymentsManagementPage from "../features/payments/pages/B2CCashPaymentsManagementPage.jsx";
 import B2CDebtManagementPage from "../features/payments/pages/B2CDebtManagementPage.jsx";
+import DealerPaymentResultPage from "../features/payments/pages/DealerPaymentResultPage.jsx";
 import VnpayReturnPage from "../pages/VnpayReturnPage.jsx";
+import PaymentResultPage from "../features/payments/pages/PaymentResultPage.jsx";
+
+// Reporting features
+import DealerDebtReportPage from "../features/dealer/reporting/pages/DealerDebtReportPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -384,11 +121,19 @@ export default function AppRoutes() {
 
         <Route path="/" element={<UserLayout />}>
           <Route index element={<Home />} />
+          {/* Public Payment Routes */}
+          <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
+        </Route>
+
+        {/* --- Layout cho trang xác thực FULL-SCREEN --- */}
+        <Route element={<AuthLayout />}>
           <Route path="login" element={<Login />} />
           <Route path="oauth-success" element={<OAuthSuccess />} />
           <Route path="reset-password" element={<ResetPassword />} />
           {/* Public Payment Routes */}
           <Route path="payment/vnpay-return" element={<VnpayReturnPage />} />
+          {/* VNPAY */}
+          <Route path="payment/result" element={<PaymentResultPage />} />
         </Route>
 
         {/* ================================================================== */}
@@ -398,7 +143,7 @@ export default function AppRoutes() {
           element={<ProtectedRoute allowedRoles={["ADMIN", "EVM_STAFF"]} />}
         >
           <Route path="evm" element={<EvmLayout />}>
-            <Route index element={<Dashboard />} />
+            {/* <Route index element={<Dashboard />} /> */}
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
             <Route path="promotions/*" element={<MainPromotion />} />
@@ -412,6 +157,8 @@ export default function AppRoutes() {
 
             {/* Admin only */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="admin/dashboard" element={<AdminDashboardPage />} />
               <Route
                 path="admin/products/promotions/*"
                 element={<AdminPromotionManager />}
@@ -439,6 +186,12 @@ export default function AppRoutes() {
                 element={<VariantManager />}
               />
 
+              {/* Quản lý tính năng của xe */}
+              <Route
+                path="admin/products/features"
+                element={<FeatureManagementPage />}
+              />
+
               {/* Giá Sỉ & Chiết Khấu */}
               <Route
                 path="admin/products/promotions"
@@ -451,11 +204,31 @@ export default function AppRoutes() {
                 element={<InventoryCentral />}
               />
 
+              {/* Lịch sử phân phối B2B */}
+              <Route
+                path="admin/distribution/history"
+                element={<DistributionHistoryPage />}
+              />
+
               {/* Báo cáo */}
               <Route path="admin/reports/sales" element={<SalesReportPage />} />
               <Route
                 path="admin/reports/inventory"
                 element={<InventoryReportPage />}
+              />
+
+              {/* AI Forecast & Production Planning */}
+              <Route
+                path="admin/reports/forecast"
+                element={<ForecastDashboard />}
+              />
+              <Route
+                path="admin/reports/forecast/demand"
+                element={<DemandForecastPage />}
+              />
+              <Route
+                path="admin/reports/forecast/production"
+                element={<ProductionPlanPage />}
               />
 
               {/* Khôi phục dữ liệu cho báo cáo */}
@@ -473,7 +246,12 @@ export default function AppRoutes() {
 
             {/* Staff only */}
             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
-              <Route path="staff" element={<Dashboard />} />
+              {/* <Route path="staff" element={<Dashboard />} /> */}
+              <Route index element={<EvmStaffDashboardPage />} />
+              <Route
+                path="staff/dashboard"
+                element={<EvmStaffDashboardPage />}
+              />
               {/* --------------------------------QUẢN LÝ SẢN PHẨM-------------------------------------------------- */}
               {/* Quản lý danh mục xe */}
               <Route
@@ -553,14 +331,19 @@ export default function AppRoutes() {
           <Route path="dealer" element={<DealerLayout />}>
             {/* Sales Module */}
             <Route path="*" element={<SalesRoutes />} />
-            <Route index element={<DashboardForDealer />} />
+            {/* <Route index element={<DashboardForDealer />} /> */}
+            <Route path="dashboard" element={<DealerDashboardPage />} />
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
+
+            {/* Staff Dashboard */}
+            <Route path="staff/dashboard" element={<StaffDashboardPage />} />
 
             {/* --- DEALER MANAGER ONLY ROUTES --- */}
             <Route
               element={<ProtectedRoute allowedRoles={["DEALER_MANAGER"]} />}
             >
+              <Route index element={<DealerDashboardPage />} />
               {/* Customer Management */}
               <Route
                 path="manager/customers/create"
@@ -619,6 +402,16 @@ export default function AppRoutes() {
               <Route
                 path="manager/vehicles/all"
                 element={<DealerProductCatalogPage />}
+              />
+              <Route
+                path="manager/inventory/available"
+                element={<AvailableVehicleCatalogPage />}
+              />
+
+              {/* Báo cáo đại lý */}
+              <Route
+                path="manager/reports/model"
+                element={<DealerDebtReportPage />}
               />
 
               {/* --------------------------------Cai dar dai ly-------------------------------------------------- */}
@@ -680,6 +473,10 @@ export default function AppRoutes() {
                 element={<DealerPaymentPage />}
               />
               <Route
+                path="manager/payments/vnpay-result"
+                element={<DealerPaymentResultPage />}
+              />
+              <Route
                 path="manager/payments/b2c-cash-payments"
                 element={<B2CCashPaymentsManagementPage />}
               />
@@ -699,6 +496,7 @@ export default function AppRoutes() {
 
             {/* --- DEALER STAFF ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["DEALER_STAFF"]} />}>
+              <Route index element={<StaffDashboardPage />} />
               {/* Customer Management */}
               <Route
                 path="staff/customers/create"
@@ -755,6 +553,10 @@ export default function AppRoutes() {
               <Route
                 path="staff/vehicles/all"
                 element={<DealerProductCatalogPage />}
+              />
+              <Route
+                path="staff/inventory/available"
+                element={<AvailableVehicleCatalogPage />}
               />
 
               {/* Promotions */}

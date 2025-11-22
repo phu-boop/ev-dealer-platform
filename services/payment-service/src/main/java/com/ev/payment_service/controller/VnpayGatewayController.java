@@ -7,6 +7,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.ev.payment_service.dto.request.VnpayInitiateRequest; // Thêm
+import jakarta.servlet.http.HttpServletRequest; // Thêm
+import jakarta.annotation.security.PermitAll;
+import java.util.HashMap;
+
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,13 +28,65 @@ public class VnpayGatewayController {
     private final IVnpayService vnpayService;
 
     /**
+     * ENDPOINT MỚI: Nhận yêu cầu từ Frontend
+     */
+    @PostMapping("/initiate-b2c")
+    public ResponseEntity<Map<String, String>> initiateB2CPayment(
+            @RequestBody VnpayInitiateRequest body,
+            HttpServletRequest request) {
+
+        try {
+            String ipAddr = getClientIpAddr(request); // Lấy IP
+            String paymentUrl = vnpayService.initiateB2CPayment(body, ipAddr);
+
+            return ResponseEntity.ok(Map.of("url", paymentUrl));
+        } catch (Exception e) {
+            log.error("Error initiating VNPAY payment - Error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Internal error: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * HÀM HELPER: Lấy IP (Copy từ PaymentService)
+     */
+    private String getClientIpAddr(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isEmpty()) {
+            ip = ip.split(",")[0].trim();
+            if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+            if ("127.0.0.1".equals(ip)) {
+                return "139.180.217.147"; // IP test hợp lệ của VNPAY
+            }
+            return ip;
+        }
+
+        ip = request.getHeader("X-Real-IP");
+        if (ip != null && !ip.isEmpty()) {
+            if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+            if ("127.0.0.1".equals(ip)) {
+                return "139.180.217.147"; // IP test hợp lệ của VNPAY
+            }
+            return ip;
+        }
+
+        ip = request.getRemoteAddr();
+        if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+        if ("127.0.0.1".equals(ip)) {
+            return "139.180.217.147"; // IP test hợp lệ của VNPAY
+        }
+        return ip;
+    }
+
+    /**
      * VNPAY IPN Callback
      * VNPAY sẽ gọi endpoint này để thông báo kết quả thanh toán (server-to-server)
-     * 
+     *
      * Endpoint: POST /api/v1/payments/gateway/callback/vnpay-ipn
      * Permissions: PUBLIC (nhưng có validate checksum từ VNPAY)
      */
     @PostMapping("/callback/vnpay-ipn")
+    @PermitAll // CHO PHÉP TRUY CẬP KHÔNG CẦN XÁC THỰC
     public ResponseEntity<Map<String, String>> vnpayIpnCallback(
             @RequestParam Map<String, String> vnpParams) {
 
@@ -43,14 +100,14 @@ public class VnpayGatewayController {
                 // Trả về response cho VNPAY
                 // VNPAY yêu cầu response với format: {"RspCode": "00", "Message": "Confirm Success"}
                 return ResponseEntity.ok(Map.of(
-                    "RspCode", "00",
-                    "Message", "Confirm Success"
+                        "RspCode", "00",
+                        "Message", "Confirm Success"
                 ));
             } else {
                 // Payment failed hoặc invalid
                 return ResponseEntity.ok(Map.of(
-                    "RspCode", "01",
-                    "Message", "Order not found or payment failed"
+                        "RspCode", "01",
+                        "Message", "Order not found or payment failed"
                 ));
             }
 
@@ -58,8 +115,8 @@ public class VnpayGatewayController {
             log.error("Error processing VNPAY IPN callback - Error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
-                        "RspCode", "99",
-                        "Message", "Internal error"
+                            "RspCode", "99",
+                            "Message", "Internal error"
                     ));
         }
     }
@@ -68,55 +125,72 @@ public class VnpayGatewayController {
      * VNPAY Return URL (Redirect từ VNPAY về frontend)
      * Endpoint này có thể được sử dụng để xử lý redirect từ VNPAY
      * Nhưng thông thường, VNPAY sẽ redirect về frontend, và frontend sẽ gọi API để check status
-     * 
+     *
      * Endpoint: GET /api/v1/payments/gateway/callback/vnpay-return
      * Permissions: PUBLIC
      */
     @GetMapping("/callback/vnpay-return")
+    @PermitAll // CHO PHÉP TRUY CẬP KHÔNG CẦN XÁC THỰC
     public ResponseEntity<Map<String, Object>> vnpayReturn(
             @RequestParam Map<String, String> vnpParams) {
 
         log.info("VNPAY Return URL called - Params: {}", vnpParams);
 
-        try {
-            // Validate checksum
-            String vnpSecureHash = vnpParams.get("vnp_SecureHash");
-            boolean isValid = vnpayService.validateChecksum(vnpParams, vnpSecureHash);
+        // Lấy thông tin từ VNPAY
+        String vnpResponseCode = vnpParams.getOrDefault("vnp_ResponseCode", "");
+        String vnpTransactionStatus = vnpParams.getOrDefault("vnp_TransactionStatus", "");
+        String vnpTxnRef = vnpParams.getOrDefault("vnp_TxnRef", "");
+        String vnpAmount = vnpParams.getOrDefault("vnp_Amount", "0");
 
+        // Convert amount từ VNPAY format (nhân 100) về định dạng bình thường
+        long amount = 0;
+        try {
+            amount = Long.parseLong(vnpAmount) / 100;
+        } catch (Exception e) {
+            log.warn("Error parsing amount: {}", vnpAmount);
+        }
+
+        try {
+            boolean isValid = vnpayService.verifyVnpayHash(vnpParams);
             if (!isValid) {
                 log.error("VNPAY Return - Invalid checksum");
-                return ResponseEntity.ok(Map.of(
-                    "success", false,
-                    "message", "Invalid checksum"
-                ));
+                return ResponseEntity.ok(createResponse(false, vnpTxnRef, vnpResponseCode,
+                        vnpTransactionStatus, amount, "Invalid checksum"));
             }
 
-            // Lấy thông tin từ VNPAY
-            String vnpResponseCode = vnpParams.get("vnp_ResponseCode");
-            String vnpTransactionStatus = vnpParams.get("vnp_TransactionStatus");
-            String vnpTxnRef = vnpParams.get("vnp_TxnRef");
+            boolean isPaymentSuccess = "00".equals(vnpResponseCode) && "00".equals(vnpTransactionStatus);
+            UUID updatedTransaction = vnpayService.processReturnResult(vnpParams);
+            log.info("VNPAY Return - Transaction {} updated via return handler", updatedTransaction);
 
-            // Xử lý kết quả (tương tự IPN)
-            UUID transactionId = vnpayService.processIpnCallback(vnpParams);
-
-            // Return response để frontend xử lý
-            return ResponseEntity.ok(Map.of(
-                "success", transactionId != null,
-                "transactionId", vnpTxnRef != null ? vnpTxnRef : "",
-                "responseCode", vnpResponseCode != null ? vnpResponseCode : "",
-                "transactionStatus", vnpTransactionStatus != null ? vnpTransactionStatus : "",
-                "message", "00".equals(vnpResponseCode) && "00".equals(vnpTransactionStatus) 
-                    ? "Payment successful" 
-                    : "Payment failed"
+            return ResponseEntity.ok(createResponse(
+                    isPaymentSuccess,
+                    vnpTxnRef,
+                    vnpResponseCode,
+                    vnpTransactionStatus,
+                    amount,
+                    isPaymentSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"
             ));
-
         } catch (Exception e) {
             log.error("Error processing VNPAY return - Error: {}", e.getMessage(), e);
-            return ResponseEntity.ok(Map.of(
-                "success", false,
-                "message", "Internal error"
-            ));
+            return ResponseEntity.ok(createResponse(false, vnpTxnRef, vnpResponseCode,
+                    vnpTransactionStatus, amount, "Internal error"));
         }
+    }
+
+    private Map<String, Object> createResponse(boolean success,
+                                               String transactionId,
+                                               String responseCode,
+                                               String transactionStatus,
+                                               long amount,
+                                               String message) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+        response.put("transactionId", transactionId != null ? transactionId : "");
+        response.put("responseCode", responseCode != null ? responseCode : "");
+        response.put("transactionStatus", transactionStatus != null ? transactionStatus : "");
+        response.put("amount", amount);
+        response.put("message", message);
+        return response;
     }
 }
 
