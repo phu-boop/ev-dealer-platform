@@ -30,46 +30,25 @@ const DashboardPage = () => {
       setLoading(true);
       setError(null);
 
-      const dealerId = sessionStorage.getItem("dealerId") || sessionStorage.getItem("profileId");
-      
-      console.log("🔑 Dashboard Loading:", {
-        dealerId,
-        dateRange,
-        sessionStorage: {
-          dealerId: sessionStorage.getItem("dealerId"),
-          profileId: sessionStorage.getItem("profileId"),
-          memberId: sessionStorage.getItem("memberId")
-        }
-      });
-      
+      const dealerId =
+        sessionStorage.getItem("dealerId") ||
+        sessionStorage.getItem("profileId");
+
       if (!dealerId) {
         throw new Error("Không tìm thấy thông tin đại lý");
       }
 
       const data = await fetchDashboardData(dealerId, dateRange);
-      
-      console.log("✅ Dashboard Data Received:", {
-        ordersCount: data.orders?.length || 0,
-        quotationsCount: data.quotations?.length || 0,
-        ordersSample: data.orders?.slice(0, 2),
-        dateRange: data.dateRange,
-        fullData: data
-      });
-      
+
       // Đảm bảo orders và quotations luôn là mảng
       const safeData = {
         ...data,
         orders: data.orders || [],
         quotations: data.quotations || [],
         prevOrders: data.prevOrders || [],
-        prevQuotations: data.prevQuotations || []
+        prevQuotations: data.prevQuotations || [],
       };
-      
-      console.log("✅ Safe Data Set:", {
-        ordersCount: safeData.orders.length,
-        quotationsCount: safeData.quotations.length
-      });
-      
+
       setDashboardData(safeData);
     } catch (err) {
       console.error("Error loading dashboard data:", err);
@@ -123,18 +102,18 @@ const DashboardPage = () => {
   }
 
   // Đảm bảo orders và quotations luôn là mảng
-  const safeOrders = Array.isArray(dashboardData.orders) ? dashboardData.orders : [];
-  const safeQuotations = Array.isArray(dashboardData.quotations) ? dashboardData.quotations : [];
-  const safePrevOrders = Array.isArray(dashboardData.prevOrders) ? dashboardData.prevOrders : [];
-  const safePrevQuotations = Array.isArray(dashboardData.prevQuotations) ? dashboardData.prevQuotations : [];
-
-  console.log("📊 DashboardPage Render:", {
-    hasDashboardData: !!dashboardData,
-    ordersCount: safeOrders.length,
-    quotationsCount: safeQuotations.length,
-    ordersType: typeof dashboardData.orders,
-    ordersIsArray: Array.isArray(dashboardData.orders)
-  });
+  const safeOrders = Array.isArray(dashboardData.orders)
+    ? dashboardData.orders
+    : [];
+  const safeQuotations = Array.isArray(dashboardData.quotations)
+    ? dashboardData.quotations
+    : [];
+  const safePrevOrders = Array.isArray(dashboardData.prevOrders)
+    ? dashboardData.prevOrders
+    : [];
+  const safePrevQuotations = Array.isArray(dashboardData.prevQuotations)
+    ? dashboardData.prevQuotations
+    : [];
 
   const userName = fullName || name || "Quản lý";
 
@@ -144,12 +123,14 @@ const DashboardPage = () => {
         {/* Header với Search Bar */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Bảng Điều Khiển</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Bảng Điều Khiển
+            </h1>
             <p className="text-gray-600">
               Tổng quan doanh số và hoạt động của đại lý
             </p>
           </div>
-          
+
           {/* Search Bar */}
           <div className="relative">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -162,9 +143,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Congratulations Card */}
-        <CongratulationsCard
-          userName={userName}
-        />
+        <CongratulationsCard userName={userName} />
 
         {/* Quick Actions */}
         <QuickActions />
@@ -181,7 +160,7 @@ const DashboardPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Order Status Chart */}
           <OrderStatusChart orders={safeOrders} />
-          
+
           {/* Top Customers Chart */}
           <TopCustomersChart orders={safeOrders} />
         </div>
@@ -204,4 +183,3 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
-

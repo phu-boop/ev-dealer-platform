@@ -29,18 +29,8 @@ const AdminDashboardPage = () => {
       setLoading(true);
       setError(null);
 
-      console.log("🔑 Admin Dashboard Loading:", { dateRange });
-
       const data = await fetchAdminDashboardData(dateRange);
-      
-      console.log("✅ Admin Dashboard Data Received:", {
-        dealersCount: data.dealers?.length || 0,
-        customersCount: data.customers?.length || 0,
-        ordersB2BCount: data.ordersB2B?.length || 0,
-        totalRevenue: data.totalRevenue,
-        dateRange: data.dateRange
-      });
-      
+
       setDashboardData(data);
     } catch (err) {
       console.error("Error loading admin dashboard data:", err);
@@ -97,12 +87,12 @@ const AdminDashboardPage = () => {
         {/* Header với Search Bar */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Bảng Điều Khiển</h1>
-            <p className="text-gray-600">
-              Tổng quan hệ thống và quản lý
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Bảng Điều Khiển
+            </h1>
+            <p className="text-gray-600">Tổng quan hệ thống và quản lý</p>
           </div>
-          
+
           {/* Search Bar */}
           <div className="relative">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -132,10 +122,10 @@ const AdminDashboardPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Dealers Status Chart */}
           <DealersStatusChart dealersByStatus={dashboardData.dealersByStatus} />
-          
+
           {/* Top Dealers Chart */}
-          <TopDealersChart 
-            orders={dashboardData.allOrders} 
+          <TopDealersChart
+            orders={dashboardData.allOrders}
             dealers={dashboardData.dealers}
           />
         </div>
@@ -153,4 +143,3 @@ const AdminDashboardPage = () => {
 };
 
 export default AdminDashboardPage;
-

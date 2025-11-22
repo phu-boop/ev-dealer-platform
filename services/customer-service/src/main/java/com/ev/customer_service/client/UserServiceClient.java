@@ -25,7 +25,7 @@ public class UserServiceClient {
 
     private final RestTemplate restTemplate;
 
-    @Value("${user.service.url:http://localhost:8081/users}")
+    @Value("${user.service.url}")
     private String userServiceUrl;
 
     /**
@@ -37,24 +37,23 @@ public class UserServiceClient {
         try {
             String url = userServiceUrl + "/" + staffId;
             log.info("Calling User Service to get staff info: {}", url);
-            
+
             // User Service trả về ApiRespond<UserRespond>
             ResponseEntity<Map> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                Map.class
-            );
-            
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    Map.class);
+
             Map<String, Object> body = response.getBody();
             if (body == null || !body.containsKey("data")) {
                 log.error("Invalid response from User Service: {}", body);
                 return null;
             }
-            
+
             // Extract data từ ApiRespond wrapper
             Map<String, Object> userData = (Map<String, Object>) body.get("data");
-            
+
             // Map UserRespond to StaffDTO
             StaffDTO staff = new StaffDTO();
             staff.setId(userData.get("id") != null ? userData.get("id").toString() : null);
@@ -64,10 +63,10 @@ public class UserServiceClient {
             staff.setPhone(userData.get("phone") != null ? userData.get("phone").toString() : null);
             staff.setAddress(userData.get("address") != null ? userData.get("address").toString() : null);
             staff.setStatus(userData.get("status") != null ? userData.get("status").toString() : "INACTIVE");
-            
+
             log.info("Successfully fetched staff: {}", staff.getFullName());
             return staff;
-            
+
         } catch (Exception e) {
             log.error("Error calling User Service for staffId {}: {}", staffId, e.getMessage(), e);
             throw new RuntimeException("Unable to fetch staff information from User Service: " + e.getMessage(), e);
@@ -82,22 +81,21 @@ public class UserServiceClient {
         try {
             String url = userServiceUrl;
             log.info("Calling User Service to get all staff: {}", url);
-            
+
             ResponseEntity<Map> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                Map.class
-            );
-            
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    Map.class);
+
             Map<String, Object> body = response.getBody();
             if (body == null || !body.containsKey("data")) {
                 return new ArrayList<>();
             }
-            
+
             List<Map<String, Object>> userList = (List<Map<String, Object>>) body.get("data");
             List<StaffDTO> staffList = new ArrayList<>();
-            
+
             for (Map<String, Object> userData : userList) {
                 StaffDTO staff = new StaffDTO();
                 staff.setId(userData.get("id") != null ? userData.get("id").toString() : null);
@@ -109,7 +107,7 @@ public class UserServiceClient {
                 staff.setStatus(userData.get("status") != null ? userData.get("status").toString() : "INACTIVE");
                 staffList.add(staff);
             }
-            
+
             return staffList;
         } catch (Exception e) {
             log.error("Error calling User Service to get all staff: {}", e.getMessage());

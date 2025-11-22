@@ -1,7 +1,7 @@
 // features/admin/promotions/pages/PromotionListPage.js
-import React, { useState, useMemo } from 'react';
-import { 
-  PlusIcon, 
+import React, { useState, useMemo } from "react";
+import {
+  PlusIcon,
   MagnifyingGlassIcon,
   PencilIcon,
   TrashIcon,
@@ -10,72 +10,73 @@ import {
   CalendarIcon,
   FunnelIcon,
   ArrowUpIcon,
-  ArrowDownIcon
-} from '@heroicons/react/24/outline';
-import { usePromotions } from '../hooks/usePromotions';
-import PromotionStats from '../components/PromotionStats';
-import StatusFilter from '../components/StatusFilter';
-import PromotionDetailsModal from '../components/PromotionDetailsModal';
-import { format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import Alert from '../../../../components/ui/Alert';
-import Swal from 'sweetalert2';
+  ArrowDownIcon,
+} from "@heroicons/react/24/outline";
+import { usePromotions } from "../hooks/usePromotions";
+import PromotionStats from "../components/PromotionStats";
+import StatusFilter from "../components/StatusFilter";
+import PromotionDetailsModal from "../components/PromotionDetailsModal";
+import { format, parseISO } from "date-fns";
+import { vi } from "date-fns/locale";
+import Alert from "../../../../components/ui/Alert";
+import Swal from "sweetalert2";
 
 export const PromotionListPage = ({ onCreate, onEdit }) => {
-  const { 
-    promotions, 
-    loading, 
+  const {
+    promotions,
+    loading,
     error,
-    approvePromotion, 
+    approvePromotion,
     deletePromotion,
-    loadPromotions 
+    loadPromotions,
   } = usePromotions();
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('ALL');
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
-  const [alert, setAlert] = useState({ show: false, type: '', message: '' });
+  const [alert, setAlert] = useState({ show: false, type: "", message: "" });
   const [sortConfig, setSortConfig] = useState({
-    key: 'status', // Mặc định sort theo trạng thái
-    direction: 'asc' // asc: DRAFT lên đầu, desc: ACTIVE/EXPIRED lên đầu
+    key: "status", // Mặc định sort theo trạng thái
+    direction: "asc", // asc: DRAFT lên đầu, desc: ACTIVE/EXPIRED lên đầu
   });
 
   const sortedAndFilteredPromotions = useMemo(() => {
     let filtered = promotions;
 
     // Filter by status
-    if (selectedStatus !== 'ALL') {
-      filtered = filtered.filter(p => p.status === selectedStatus);
+    if (selectedStatus !== "ALL") {
+      filtered = filtered.filter((p) => p.status === selectedStatus);
     }
 
     // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.promotionName.toLowerCase().includes(term) ||
-        p.description?.toLowerCase().includes(term)
+      filtered = filtered.filter(
+        (p) =>
+          p.promotionName.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term)
       );
     }
 
     // Sort promotions
     return filtered.sort((a, b) => {
       // Ưu tiên sort theo trạng thái: DRAFT lên đầu
-      if (sortConfig.key === 'status') {
+      if (sortConfig.key === "status") {
         const statusPriority = {
-          'DRAFT': 1,    // Cao nhất
-          'ACTIVE': 2,
-          'INACTIVE': 3,
-          'EXPIRED': 4   // Thấp nhất
+          DRAFT: 1, // Cao nhất
+          ACTIVE: 2,
+          INACTIVE: 3,
+          EXPIRED: 4, // Thấp nhất
         };
 
         const aPriority = statusPriority[a.status] || 5;
         const bPriority = statusPriority[b.status] || 5;
 
         if (aPriority !== bPriority) {
-          return sortConfig.direction === 'asc' 
-            ? aPriority - bPriority  // DRAFT -> ACTIVE -> INACTIVE -> EXPIRED
+          return sortConfig.direction === "asc"
+            ? aPriority - bPriority // DRAFT -> ACTIVE -> INACTIVE -> EXPIRED
             : bPriority - aPriority; // EXPIRED -> INACTIVE -> ACTIVE -> DRAFT
         }
       }
@@ -83,8 +84,8 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
       // Nếu cùng trạng thái hoặc sort theo key khác, sort theo ngày tạo (mới nhất lên đầu)
       const dateA = new Date(a.startDate);
       const dateB = new Date(b.startDate);
-      
-      if (sortConfig.direction === 'asc') {
+
+      if (sortConfig.direction === "asc") {
         return dateB - dateA; // Mới nhất lên đầu
       } else {
         return dateA - dateB; // Cũ nhất lên đầu
@@ -96,19 +97,22 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
     setAlert({
       show: true,
       type,
-      message
+      message,
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCloseAlert = () => {
-    setAlert({ show: false, type: '', message: '' });
+    setAlert({ show: false, type: "", message: "" });
   };
 
   const handleSort = (key) => {
-    setSortConfig(prevConfig => ({
+    setSortConfig((prevConfig) => ({
       key,
-      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+      direction:
+        prevConfig.key === key && prevConfig.direction === "asc"
+          ? "desc"
+          : "asc",
     }));
   };
 
@@ -116,45 +120,49 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
     if (sortConfig.key !== key) {
       return <FunnelIcon className="h-4 w-4 opacity-50" />;
     }
-    
-    return sortConfig.direction === 'asc' 
-      ? <ArrowUpIcon className="h-4 w-4" />
-      : <ArrowDownIcon className="h-4 w-4" />;
+
+    return sortConfig.direction === "asc" ? (
+      <ArrowUpIcon className="h-4 w-4" />
+    ) : (
+      <ArrowDownIcon className="h-4 w-4" />
+    );
   };
 
   const getSortLabel = () => {
-    if (sortConfig.key === 'status') {
-      return sortConfig.direction === 'asc' ? 'Chưa duyệt trước' : 'Đã duyệt trước';
+    if (sortConfig.key === "status") {
+      return sortConfig.direction === "asc"
+        ? "Chưa duyệt trước"
+        : "Đã duyệt trước";
     }
-    return sortConfig.direction === 'asc' ? 'Mới nhất trước' : 'Cũ nhất trước';
+    return sortConfig.direction === "asc" ? "Mới nhất trước" : "Cũ nhất trước";
   };
 
   const handleApprove = async (id) => {
     setActionLoading(id);
     const result = await approvePromotion(id);
     setActionLoading(null);
-    
+
     if (result.success) {
-      showAlert('success', 'Đã phê duyệt khuyến mãi thành công!');
+      showAlert("success", "Đã phê duyệt khuyến mãi thành công!");
       setIsDetailsModalOpen(false);
     } else {
-      showAlert('error', result.error);
+      showAlert("error", result.error);
     }
   };
 
   const handleDelete = async (id, name) => {
     const result = await Swal.fire({
-      title: 'Xác nhận xóa',
+      title: "Xác nhận xóa",
       text: `Bạn có chắc muốn xóa khuyến mãi "${name}"?`,
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'Xóa',
-      cancelButtonText: 'Hủy',
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
       buttonsStyling: true,
       customClass: {
-        confirmButton: 'btn btn-danger',
-        cancelButton: 'btn btn-secondary'
-      }
+        confirmButton: "btn btn-danger",
+        cancelButton: "btn btn-secondary",
+      },
     });
 
     if (result.isConfirmed) {
@@ -164,18 +172,18 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
 
       if (deleteResult.success) {
         await Swal.fire({
-          title: 'Thành công',
-          text: 'Đã xóa khuyến mãi thành công!',
-          icon: 'success',
-          confirmButtonText: 'OK'
+          title: "Thành công",
+          text: "Đã xóa khuyến mãi thành công!",
+          icon: "success",
+          confirmButtonText: "OK",
         });
         setIsDetailsModalOpen(false);
       } else {
         await Swal.fire({
-          title: 'Lỗi',
+          title: "Lỗi",
           text: deleteResult.error,
-          icon: 'error',
-          confirmButtonText: 'OK'
+          icon: "error",
+          confirmButtonText: "OK",
         });
       }
     }
@@ -187,7 +195,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return '-';
+    if (!dateString) return "-";
     try {
       return format(parseISO(dateString), "dd/MM/yyyy HH:mm", { locale: vi });
     } catch (error) {
@@ -201,31 +209,33 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      DRAFT: { 
-        color: 'bg-yellow-100 text-yellow-800 border-yellow-200', 
-        text: 'Chờ xác thực',
-        icon: '⏳'
+      DRAFT: {
+        color: "bg-yellow-100 text-yellow-800 border-yellow-200",
+        text: "Chờ xác thực",
+        icon: "⏳",
       },
-      ACTIVE: { 
-        color: 'bg-green-100 text-green-800 border-green-200', 
-        text: 'Đang hoạt động',
-        icon: '✅'
+      ACTIVE: {
+        color: "bg-green-100 text-green-800 border-green-200",
+        text: "Đang hoạt động",
+        icon: "✅",
       },
-      EXPIRED: { 
-        color: 'bg-red-100 text-red-800 border-red-200', 
-        text: 'Đã hết hạn',
-        icon: '❌'
+      EXPIRED: {
+        color: "bg-red-100 text-red-800 border-red-200",
+        text: "Đã hết hạn",
+        icon: "❌",
       },
-      INACTIVE: { 
-        color: 'bg-gray-100 text-gray-800 border-gray-200', 
-        text: 'Không hoạt động',
-        icon: '⏸️'
-      }
+      INACTIVE: {
+        color: "bg-gray-100 text-gray-800 border-gray-200",
+        text: "Không hoạt động",
+        icon: "⏸️",
+      },
     };
-    
+
     const config = statusConfig[status] || statusConfig.DRAFT;
     return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+      <span
+        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${config.color}`}
+      >
         <span className="mr-1">{config.icon}</span>
         {config.text}
       </span>
@@ -236,7 +246,9 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="text-center">
-          <div className="text-red-600 text-lg font-semibold mb-2">Lỗi khi tải dữ liệu</div>
+          <div className="text-red-600 text-lg font-semibold mb-2">
+            Lỗi khi tải dữ liệu
+          </div>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={loadPromotions}
@@ -256,7 +268,9 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Quản lý Khuyến mãi</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Quản lý Khuyến mãi
+              </h1>
               <p className="mt-2 text-sm text-gray-600">
                 Quản lý và phê duyệt tất cả các chương trình khuyến mãi
               </p>
@@ -291,23 +305,25 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-4">
               <StatusFilter
                 selectedStatus={selectedStatus}
                 onStatusChange={setSelectedStatus}
-                onClearFilters={() => setSelectedStatus('ALL')}
+                onClearFilters={() => setSelectedStatus("ALL")}
               />
 
               {/* Sort Button */}
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600 whitespace-nowrap">Sắp xếp:</span>
+                <span className="text-sm text-gray-600 whitespace-nowrap">
+                  Sắp xếp:
+                </span>
                 <button
-                  onClick={() => handleSort('status')}
+                  onClick={() => handleSort("status")}
                   className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                 >
                   <span className="mr-2">{getSortLabel()}</span>
-                  {getSortIcon('status')}
+                  {getSortIcon("status")}
                 </button>
               </div>
             </div>
@@ -330,9 +346,10 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
           <div className="flex items-center text-blue-800">
             <FunnelIcon className="h-4 w-4 mr-2" />
             <span className="text-sm">
-              Đang hiển thị: {sortedAndFilteredPromotions.length} khuyến mãi • 
-              Sắp xếp: {getSortLabel()} • 
-              {sortConfig.key === 'status' && ' Mới nhất lên đầu khi cùng trạng thái'}
+              Đang hiển thị: {sortedAndFilteredPromotions.length} khuyến mãi •
+              Sắp xếp: {getSortLabel()} •
+              {sortConfig.key === "status" &&
+                " Mới nhất lên đầu khi cùng trạng thái"}
             </span>
           </div>
         </div>
@@ -349,19 +366,34 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Thông tin khuyến mãi
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Giảm giá
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Thời gian
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Trạng thái
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Thao tác
                       </th>
                     </tr>
@@ -369,10 +401,12 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {sortedAndFilteredPromotions.length > 0 ? (
                       sortedAndFilteredPromotions.map((promotion) => (
-                        <tr 
-                          key={promotion.promotionId} 
+                        <tr
+                          key={promotion.promotionId}
                           className={`hover:bg-gray-50 transition-colors ${
-                            promotion.status === 'DRAFT' ? 'bg-yellow-50 border-l-4 border-l-yellow-400' : ''
+                            promotion.status === "DRAFT"
+                              ? "bg-yellow-50 border-l-4 border-l-yellow-400"
+                              : ""
                           }`}
                         >
                           <td className="px-6 py-4">
@@ -385,7 +419,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                                   <p className="text-sm font-medium text-gray-900 truncate">
                                     {promotion.promotionName}
                                   </p>
-                                  {promotion.status === 'DRAFT' && (
+                                  {promotion.status === "DRAFT" && (
                                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                       Cần duyệt
                                     </span>
@@ -397,7 +431,10 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                                   </p>
                                 )}
                                 <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
-                                  <span>ID: {promotion.promotionId.substring(0, 8)}...</span>
+                                  <span>
+                                    ID: {promotion.promotionId.substring(0, 8)}
+                                    ...
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -406,7 +443,9 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                             <div className="text-lg font-bold text-green-600">
                               {formatDiscountRate(promotion.discountRate)}
                             </div>
-                            <div className="text-xs text-gray-500">Tỷ lệ giảm</div>
+                            <div className="text-xs text-gray-500">
+                              Tỷ lệ giảm
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-900 space-y-1">
@@ -432,12 +471,15 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                                 <EyeIcon className="h-4 w-4 mr-1" />
                                 Xem
                               </button>
-                              
-                              {promotion.status === 'DRAFT' && (
-  console.log('Render nút Duyệt cho', promotion.promotionName),
+
+                              {promotion.status === "DRAFT" && (
                                 <button
-                                  onClick={() => handleApprove(promotion.promotionId)}
-                                  disabled={actionLoading === promotion.promotionId}
+                                  onClick={() =>
+                                    handleApprove(promotion.promotionId)
+                                  }
+                                  disabled={
+                                    actionLoading === promotion.promotionId
+                                  }
                                   className="inline-flex items-center px-3 py-1 border border-green-300 rounded-md text-green-600 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
                                 >
                                   {actionLoading === promotion.promotionId ? (
@@ -450,7 +492,7 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                                   )}
                                 </button>
                               )}
-                              
+
                               <button
                                 onClick={() => onEdit(promotion)}
                                 className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
@@ -458,10 +500,17 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                                 <PencilIcon className="h-4 w-4 mr-1" />
                                 Sửa
                               </button>
-                              
+
                               <button
-                                onClick={() => handleDelete(promotion.promotionId, promotion.promotionName)}
-                                disabled={actionLoading === promotion.promotionId}
+                                onClick={() =>
+                                  handleDelete(
+                                    promotion.promotionId,
+                                    promotion.promotionName
+                                  )
+                                }
+                                disabled={
+                                  actionLoading === promotion.promotionId
+                                }
                                 className="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 transition-colors"
                               >
                                 <TrashIcon className="h-4 w-4 mr-1" />
@@ -480,12 +529,11 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                               Không tìm thấy khuyến mãi nào
                             </h3>
                             <p className="text-gray-500 mb-4">
-                              {searchTerm || selectedStatus !== 'ALL' 
-                                ? 'Thử thay đổi điều kiện tìm kiếm hoặc bộ lọc' 
-                                : 'Bắt đầu bằng cách tạo khuyến mãi đầu tiên'
-                              }
+                              {searchTerm || selectedStatus !== "ALL"
+                                ? "Thử thay đổi điều kiện tìm kiếm hoặc bộ lọc"
+                                : "Bắt đầu bằng cách tạo khuyến mãi đầu tiên"}
                             </p>
-                            {!searchTerm && selectedStatus === 'ALL' && (
+                            {!searchTerm && selectedStatus === "ALL" && (
                               <button
                                 onClick={onCreate}
                                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -501,20 +549,36 @@ export const PromotionListPage = ({ onCreate, onEdit }) => {
                   </tbody>
                 </table>
               </div>
-              
+
               {/* Summary */}
               {sortedAndFilteredPromotions.length > 0 && (
                 <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700">
-                      Hiển thị <span className="font-medium">{sortedAndFilteredPromotions.length}</span> khuyến mãi • 
+                      Hiển thị{" "}
+                      <span className="font-medium">
+                        {sortedAndFilteredPromotions.length}
+                      </span>{" "}
+                      khuyến mãi •
                       <span className="ml-2">
                         <span className="text-yellow-600 font-medium">
-                          {sortedAndFilteredPromotions.filter(p => p.status === 'DRAFT').length} chờ duyệt
+                          {
+                            sortedAndFilteredPromotions.filter(
+                              (p) => p.status === "DRAFT"
+                            ).length
+                          }{" "}
+                          chờ duyệt
                         </span>
-                        {sortedAndFilteredPromotions.filter(p => p.status === 'ACTIVE').length > 0 && (
+                        {sortedAndFilteredPromotions.filter(
+                          (p) => p.status === "ACTIVE"
+                        ).length > 0 && (
                           <span className="ml-2 text-green-600">
-                            {sortedAndFilteredPromotions.filter(p => p.status === 'ACTIVE').length} đang hoạt động
+                            {
+                              sortedAndFilteredPromotions.filter(
+                                (p) => p.status === "ACTIVE"
+                              ).length
+                            }{" "}
+                            đang hoạt động
                           </span>
                         )}
                       </span>

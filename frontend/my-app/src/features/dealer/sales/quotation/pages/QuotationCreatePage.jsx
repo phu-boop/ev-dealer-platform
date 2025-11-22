@@ -241,12 +241,6 @@ const QuotationCreatePage = () => {
       toast.success("Tính toán giá thành công!");
     } catch (error) {
       const errorMsg = handleApiError(error, "Lỗi khi tính toán giá");
-
-      if (errorMsg.includes("Promotion is not applicable")) {
-        console.log(
-          "Khuyến mãi không áp dụng được, vui lòng chọn khuyến mãi khác"
-        );
-      }
     } finally {
       setLoading(false);
     }

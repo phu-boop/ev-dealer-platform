@@ -44,8 +44,8 @@ public class DealerPaymentController {
     private final IDealerPaymentService dealerPaymentService;
     private final IVnpayService vnpayService;
     private final RestTemplate restTemplate;
-    
-    @Value("${user-service.url:http://localhost:8080/users}")
+
+    @Value("${user-service.url}")
     private String userServiceUrl;
 
     /**
@@ -58,9 +58,9 @@ public class DealerPaymentController {
             @Valid @RequestBody CreateDealerInvoiceRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        log.info("[DealerPaymentController] POST /invoices - Request: dealerId={}, amount={}, dueDate={}", 
+        log.info("[DealerPaymentController] POST /invoices - Request: dealerId={}, amount={}, dueDate={}",
                 request.getDealerId(), request.getAmount(), request.getDueDate());
-        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}", 
+        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}",
                 principal != null ? principal.getEmail() : "null",
                 principal != null ? principal.getRole() : "null",
                 principal != null ? principal.getProfileId() : "null");
@@ -87,9 +87,9 @@ public class DealerPaymentController {
             @Valid @RequestBody PayDealerInvoiceRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        log.info("[DealerPaymentController] POST /invoices/{}/pay - Request: amount={}, paymentMethodId={}", 
+        log.info("[DealerPaymentController] POST /invoices/{}/pay - Request: amount={}, paymentMethodId={}",
                 invoiceId, request.getAmount(), request.getPaymentMethodId());
-        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}", 
+        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}",
                 principal != null ? principal.getEmail() : "null",
                 principal != null ? principal.getRole() : "null",
                 principal != null ? principal.getProfileId() : "null");
@@ -102,14 +102,14 @@ public class DealerPaymentController {
             log.error("[DealerPaymentController] ManagerId is null in principal");
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
-        
+
         UUID dealerId = getDealerIdFromManagerId(managerId);
         if (dealerId == null) {
             log.error("[DealerPaymentController] Failed to get dealerId from managerId: {}", managerId);
             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
-        
-        log.info("[DealerPaymentController] Got dealerId from User Service - ManagerId: {}, DealerId: {}", 
+
+        log.info("[DealerPaymentController] Got dealerId from User Service - ManagerId: {}, DealerId: {}",
                 managerId, dealerId);
 
         DealerTransactionResponse response = dealerPaymentService.payDealerInvoice(invoiceId, request, dealerId);
@@ -136,7 +136,8 @@ public class DealerPaymentController {
         UUID managerId = principal.getProfileId();
         UUID dealerId = getDealerIdFromManagerId(managerId);
         if (dealerId == null) {
-            log.error("[DealerPaymentController] Failed to resolve dealerId for manager {} when initiate VNPAY", managerId);
+            log.error("[DealerPaymentController] Failed to resolve dealerId for manager {} when initiate VNPAY",
+                    managerId);
             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
 
@@ -146,8 +147,7 @@ public class DealerPaymentController {
                 dealerId,
                 request.getAmount(),
                 request.getReturnUrl(),
-                clientIp
-        );
+                clientIp);
 
         return ResponseEntity.ok(Map.of("url", paymentUrl));
     }
@@ -164,7 +164,7 @@ public class DealerPaymentController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         log.info("[DealerPaymentController] POST /transactions/{}/confirm", transactionId);
-        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}", 
+        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}",
                 principal != null ? principal.getEmail() : "null",
                 principal != null ? principal.getRole() : "null",
                 principal != null ? principal.getProfileId() : "null");
@@ -177,7 +177,8 @@ public class DealerPaymentController {
         }
 
         String notes = request != null ? request.getNotes() : null;
-        DealerTransactionResponse response = dealerPaymentService.confirmDealerTransaction(transactionId, staffId, notes);
+        DealerTransactionResponse response = dealerPaymentService.confirmDealerTransaction(transactionId, staffId,
+                notes);
         return ResponseEntity.ok(response);
     }
 
@@ -185,8 +186,9 @@ public class DealerPaymentController {
      * API 4.1: Lấy chi tiết hóa đơn theo ID
      * GET /api/v1/payments/dealer/{dealerId}/invoices/{invoiceId}
      * 
-     * Lưu ý: Endpoint này PHẢI được đặt TRƯỚC endpoint GET /{dealerId}/invoices 
-     * để Spring có thể match path chính xác (path cụ thể hơn phải được khai báo trước)
+     * Lưu ý: Endpoint này PHẢI được đặt TRƯỚC endpoint GET /{dealerId}/invoices
+     * để Spring có thể match path chính xác (path cụ thể hơn phải được khai báo
+     * trước)
      */
     @GetMapping("/{dealerId}/invoices/{invoiceId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_MANAGER', 'EVM_STAFF')")
@@ -196,21 +198,21 @@ public class DealerPaymentController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         log.info("[DealerPaymentController] GET /{}/invoices/{}", dealerId, invoiceId);
-        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}", 
+        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}",
                 principal != null ? principal.getEmail() : "null",
                 principal != null ? principal.getRole() : "null",
                 principal != null ? principal.getProfileId() : "null");
 
         // Lấy invoice
         DealerInvoiceResponse invoice = dealerPaymentService.getDealerInvoiceById(invoiceId);
-        
+
         // Validate dealerId trong path match với invoice dealerId
         if (!dealerId.equals(invoice.getDealerId())) {
-            log.error("[DealerPaymentController] Path dealerId does not match invoice dealerId - Path: {}, Invoice: {}", 
+            log.error("[DealerPaymentController] Path dealerId does not match invoice dealerId - Path: {}, Invoice: {}",
                     dealerId, invoice.getDealerId());
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
-        
+
         // Authorization: Nếu là DEALER_MANAGER, chỉ được xem invoice của chính mình
         if (principal != null && "DEALER_MANAGER".equals(principal.getRole())) {
             UUID managerId = principal.getProfileId();
@@ -218,29 +220,31 @@ public class DealerPaymentController {
                 log.error("[DealerPaymentController] ManagerId is null for DEALER_MANAGER");
                 throw new AppException(ErrorCode.BAD_REQUEST);
             }
-            
+
             UUID principalDealerId = getDealerIdFromManagerId(managerId);
-            
+
             if (principalDealerId == null) {
-                log.error("[DealerPaymentController] Failed to get dealerId from User Service for ManagerId: {}", managerId);
+                log.error("[DealerPaymentController] Failed to get dealerId from User Service for ManagerId: {}",
+                        managerId);
                 throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
             }
-            
+
             // Validate principal dealerId match với invoice dealerId
             if (!principalDealerId.equals(invoice.getDealerId())) {
-                log.error("[DealerPaymentController] DealerManager can only view their own invoices - Requested Invoice DealerId: {}, Principal DealerId: {}, ManagerId: {}", 
+                log.error(
+                        "[DealerPaymentController] DealerManager can only view their own invoices - Requested Invoice DealerId: {}, Principal DealerId: {}, ManagerId: {}",
                         invoice.getDealerId(), principalDealerId, managerId);
                 throw new AppException(ErrorCode.FORBIDDEN);
             }
-            
-            log.info("[DealerPaymentController] DealerManager authorized - Invoice DealerId: {}, ManagerId: {}", 
+
+            log.info("[DealerPaymentController] DealerManager authorized - Invoice DealerId: {}, ManagerId: {}",
                     invoice.getDealerId(), managerId);
         }
         // EVM_STAFF và ADMIN có thể xem tất cả invoices (không cần check)
-        
+
         return ResponseEntity.ok(invoice);
     }
-    
+
     /**
      * API 4: Lấy danh sách hóa đơn của một Đại lý
      * GET /api/v1/payments/dealer/{dealerId}/invoices
@@ -254,7 +258,7 @@ public class DealerPaymentController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         log.info("[DealerPaymentController] GET /{}/invoices - Status: {}", dealerId, status);
-        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}", 
+        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}",
                 principal != null ? principal.getEmail() : "null",
                 principal != null ? principal.getRole() : "null",
                 principal != null ? principal.getProfileId() : "null");
@@ -268,34 +272,37 @@ public class DealerPaymentController {
                 log.error("[DealerPaymentController] ManagerId is null for DEALER_MANAGER");
                 throw new AppException(ErrorCode.BAD_REQUEST);
             }
-            
+
             UUID principalDealerId = getDealerIdFromManagerId(managerId);
-            
+
             // Nếu không lấy được dealerId từ User Service, trả về lỗi service unavailable
             if (principalDealerId == null) {
-                log.error("[DealerPaymentController] Failed to get dealerId from User Service for ManagerId: {}", managerId);
+                log.error("[DealerPaymentController] Failed to get dealerId from User Service for ManagerId: {}",
+                        managerId);
                 throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
             }
-            
+
             // Kiểm tra dealerId có match không
             if (!principalDealerId.equals(dealerId)) {
-                log.error("[DealerPaymentController] DealerManager can only view their own invoices - Requested: {}, Principal DealerId: {}, ManagerId: {}", 
+                log.error(
+                        "[DealerPaymentController] DealerManager can only view their own invoices - Requested: {}, Principal DealerId: {}, ManagerId: {}",
                         dealerId, principalDealerId, managerId);
                 throw new AppException(ErrorCode.FORBIDDEN);
             }
-            
-            log.info("[DealerPaymentController] DealerManager authorized - DealerId: {}, ManagerId: {}", 
+
+            log.info("[DealerPaymentController] DealerManager authorized - DealerId: {}, ManagerId: {}",
                     principalDealerId, managerId);
         }
-        
+
         // EVM_STAFF và ADMIN có thể xem invoices của tất cả dealers (không cần check)
 
         Page<DealerInvoiceResponse> response = dealerPaymentService.getDealerInvoices(dealerId, status, pageable);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
-     * API 4.1 (Alternative): Lấy chi tiết hóa đơn theo ID (không cần dealerId trong path)
+     * API 4.1 (Alternative): Lấy chi tiết hóa đơn theo ID (không cần dealerId trong
+     * path)
      * GET /api/v1/payments/dealer/invoices/{invoiceId}
      */
     @GetMapping("/invoices/{invoiceId}")
@@ -305,14 +312,14 @@ public class DealerPaymentController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         log.info("[DealerPaymentController] GET /invoices/{}", invoiceId);
-        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}", 
+        log.info("[DealerPaymentController] UserPrincipal - Email: {}, Role: {}, ProfileId: {}",
                 principal != null ? principal.getEmail() : "null",
                 principal != null ? principal.getRole() : "null",
                 principal != null ? principal.getProfileId() : "null");
 
         // Lấy invoice
         DealerInvoiceResponse invoice = dealerPaymentService.getDealerInvoiceById(invoiceId);
-        
+
         // Authorization: Nếu là DEALER_MANAGER, chỉ được xem invoice của chính mình
         if (principal != null && "DEALER_MANAGER".equals(principal.getRole())) {
             UUID managerId = principal.getProfileId();
@@ -320,29 +327,31 @@ public class DealerPaymentController {
                 log.error("[DealerPaymentController] ManagerId is null for DEALER_MANAGER");
                 throw new AppException(ErrorCode.BAD_REQUEST);
             }
-            
+
             UUID principalDealerId = getDealerIdFromManagerId(managerId);
-            
+
             if (principalDealerId == null) {
-                log.error("[DealerPaymentController] Failed to get dealerId from User Service for ManagerId: {}", managerId);
+                log.error("[DealerPaymentController] Failed to get dealerId from User Service for ManagerId: {}",
+                        managerId);
                 throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
             }
-            
+
             // Validate principal dealerId match với invoice dealerId
             if (!principalDealerId.equals(invoice.getDealerId())) {
-                log.error("[DealerPaymentController] DealerManager can only view their own invoices - Requested Invoice DealerId: {}, Principal DealerId: {}, ManagerId: {}", 
+                log.error(
+                        "[DealerPaymentController] DealerManager can only view their own invoices - Requested Invoice DealerId: {}, Principal DealerId: {}, ManagerId: {}",
                         invoice.getDealerId(), principalDealerId, managerId);
                 throw new AppException(ErrorCode.FORBIDDEN);
             }
-            
-            log.info("[DealerPaymentController] DealerManager authorized - Invoice DealerId: {}, ManagerId: {}", 
+
+            log.info("[DealerPaymentController] DealerManager authorized - Invoice DealerId: {}, ManagerId: {}",
                     invoice.getDealerId(), managerId);
         }
         // EVM_STAFF và ADMIN có thể xem tất cả invoices (không cần check)
-        
+
         return ResponseEntity.ok(invoice);
     }
-    
+
     /**
      * API 5: Lấy tổng hợp công nợ của tất cả Đại lý (EVM Staff)
      * GET /api/v1/payments/dealer/debt-summary
@@ -370,7 +379,7 @@ public class DealerPaymentController {
         boolean hasInvoice = dealerPaymentService.hasInvoiceForOrder(orderId);
         Map<String, Boolean> response = new HashMap<>();
         response.put("hasInvoice", hasInvoice);
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -387,10 +396,12 @@ public class DealerPaymentController {
         Page<DealerTransactionResponse> response = dealerPaymentService.getPendingCashPayments(pageable);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Lấy dealerId từ managerId (hoặc staffId) bằng cách gọi User Service
-     * @param managerId ManagerId hoặc StaffId (ProfileId của DEALER_MANAGER hoặc DEALER_STAFF)
+     * 
+     * @param managerId ManagerId hoặc StaffId (ProfileId của DEALER_MANAGER hoặc
+     *                  DEALER_STAFF)
      * @return DealerId
      */
     private UUID getDealerIdFromManagerId(UUID managerId) {
@@ -398,52 +409,54 @@ public class DealerPaymentController {
             log.error("[DealerPaymentController] ManagerId is null");
             return null;
         }
-        
+
         try {
             String url = userServiceUrl + "/profile/idDealer";
-            log.info("[DealerPaymentController] Calling User Service to get dealerId - URL: {}, ManagerId: {}", url, managerId);
-            
+            log.info("[DealerPaymentController] Calling User Service to get dealerId - URL: {}, ManagerId: {}", url,
+                    managerId);
+
             // Tạo request body
             Map<String, String> requestBody = new HashMap<>();
             requestBody.put("idDealer", managerId.toString());
-            
+
             // Gọi User Service API
-            ParameterizedTypeReference<ApiRespond<UUID>> responseType = 
-                    new ParameterizedTypeReference<ApiRespond<UUID>>() {};
-            
+            ParameterizedTypeReference<ApiRespond<UUID>> responseType = new ParameterizedTypeReference<ApiRespond<UUID>>() {
+            };
+
             // Tạo HttpEntity với headers
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-            
-            org.springframework.http.HttpEntity<Map<String, String>> requestEntity = 
-                    new org.springframework.http.HttpEntity<>(requestBody, headers);
-            
+
+            org.springframework.http.HttpEntity<Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(
+                    requestBody, headers);
+
             ResponseEntity<ApiRespond<UUID>> response = restTemplate.exchange(
-                    url, 
-                    HttpMethod.POST, 
-                    requestEntity, 
-                    responseType
-            );
-            
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    responseType);
+
             ApiRespond<UUID> apiResponse = response.getBody();
             if (apiResponse == null || apiResponse.getData() == null) {
                 log.error("[DealerPaymentController] Failed to get dealerId from User Service - Response is null");
                 return null;
             }
-            
+
             UUID dealerId = apiResponse.getData();
-            log.info("[DealerPaymentController] Successfully got dealerId from User Service - ManagerId: {}, DealerId: {}", 
+            log.info(
+                    "[DealerPaymentController] Successfully got dealerId from User Service - ManagerId: {}, DealerId: {}",
                     managerId, dealerId);
             return dealerId;
-            
+
         } catch (RestClientException e) {
-            log.error("[DealerPaymentController] Failed to get dealerId from User Service - ManagerId: {}, Error: {}", 
+            log.error("[DealerPaymentController] Failed to get dealerId from User Service - ManagerId: {}, Error: {}",
                     managerId, e.getMessage(), e);
             // Nếu User Service không available, không thể xác định dealerId
             // Trả về null để caller có thể xử lý
             return null;
         } catch (Exception e) {
-            log.error("[DealerPaymentController] Unexpected error getting dealerId from User Service - ManagerId: {}, Error: {}", 
+            log.error(
+                    "[DealerPaymentController] Unexpected error getting dealerId from User Service - ManagerId: {}, Error: {}",
                     managerId, e.getMessage(), e);
             return null;
         }
@@ -456,7 +469,8 @@ public class DealerPaymentController {
         String ip = request.getHeader("X-Forwarded-For");
         if (ip != null && !ip.isEmpty()) {
             ip = ip.split(",")[0].trim();
-            if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+            if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1"))
+                ip = "127.0.0.1";
             if ("127.0.0.1".equals(ip)) {
                 return "139.180.217.147"; // IP test hợp lệ của VNPAY
             }
@@ -465,7 +479,8 @@ public class DealerPaymentController {
 
         ip = request.getHeader("X-Real-IP");
         if (ip != null && !ip.isEmpty()) {
-            if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+            if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1"))
+                ip = "127.0.0.1";
             if ("127.0.0.1".equals(ip)) {
                 return "139.180.217.147"; // IP test hợp lệ của VNPAY
             }
@@ -473,11 +488,11 @@ public class DealerPaymentController {
         }
 
         ip = request.getRemoteAddr();
-        if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) ip = "127.0.0.1";
+        if (ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1"))
+            ip = "127.0.0.1";
         if ("127.0.0.1".equals(ip)) {
             return "139.180.217.147"; // IP test hợp lệ của VNPAY
         }
         return ip;
     }
 }
-

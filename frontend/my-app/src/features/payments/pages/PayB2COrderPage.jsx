@@ -23,9 +23,9 @@ const PayB2COrderPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [activePaymentMethod, setActivePaymentMethod] = useState("other"); // 'vnpay' or 'other'
 
-  const API_BASE_URL = "http://localhost:8080";
-  const FRONTEND_URL = "http://localhost:5173";
-  const API_VNPAY_GATEWAY_URL = "http://localhost:8080/payments/api/v1/payments/gateway";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
+  const API_VNPAY_GATEWAY_URL = `${API_BASE_URL}/payments/api/v1/payments/gateway`;
 
   // useEffect(() => {
   //   const query = new URLSearchParams(window.location.search);
@@ -64,7 +64,6 @@ const PayB2COrderPage = () => {
   //     loadPaymentHistory();
   //     loadOrder();
   //   } catch (error) {
-  //     console.error(error);
   //     toast.error("Không thể xác nhận thanh toán");
   //   }
   // };
@@ -76,7 +75,6 @@ const PayB2COrderPage = () => {
       const data = response.data?.data || response.data;
       setOrder(data);
     } catch (error) {
-      console.error("Error loading order:", error);
       toast.error("Không thể tải thông tin đơn hàng");
       navigate("/dealer/staff/payments/b2c-orders");
     } finally {
@@ -89,7 +87,6 @@ const PayB2COrderPage = () => {
       const response = await paymentService.getActivePaymentMethods();
       setPaymentMethods(response.data.data || response.data || []);
     } catch (error) {
-      console.error("Error loading payment methods:", error);
       toast.error("Không thể tải danh sách phương thức thanh toán");
     }
   };
@@ -98,9 +95,7 @@ const PayB2COrderPage = () => {
     try {
       const response = await paymentService.getPaymentHistory(orderId);
       setPaymentHistory(response.data.data || response.data || []);
-    } catch (error) {
-      console.error("Error loading payment history:", error);
-    }
+    } catch (error) {}
   };
 
   const handlePayment = async (paymentData) => {
@@ -132,7 +127,6 @@ const PayB2COrderPage = () => {
       loadPaymentHistory();
       loadOrder();
     } catch (error) {
-      console.error("Error initiating payment:", error);
       toast.error(
         error.response?.data?.message || "Không thể khởi tạo thanh toán"
       );
@@ -151,13 +145,6 @@ const PayB2COrderPage = () => {
     // Giả sử order.customerId. Bạn cần kiểm tra lại cấu trúc state 'order'
     // Nó có thể là 'order.customerId' hoặc 'order.customer.id'
     const customerId = order.customerId; // <-- KIỂM TRA LẠI TRƯỜNG NÀY
-
-    // Thêm dòng này để debug, bạn có thể xóa sau
-    console.log("Đang tiến hành thanh toán cho:", {
-      orderId: order.orderId,
-      customerId: customerId,
-      totalAmount: order.totalAmount
-    });
 
     if (!customerId) {
       toast.error("Không thể tìm thấy ID khách hàng trong đơn hàng.");
@@ -179,47 +166,51 @@ const PayB2COrderPage = () => {
         customerId: customerId,
         totalAmount: order.totalAmount, // Tổng giá trị đơn hàng
         paymentAmount: amount, // Số tiền thanh toán
-        returnUrl: returnUrl
+        returnUrl: returnUrl,
       };
 
       // 4. Gọi endpoint MỚI bằng phương thức POST
       const response = await fetch(
-          `${API_VNPAY_GATEWAY_URL}/initiate-b2c`, // ĐÃ THAY ĐỔI
-          {
-            method: "POST", // ĐÃ THAY ĐỔI
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json", // ĐÃ THAY ĐỔI
-            },
-            body: JSON.stringify(initiationData), // ĐÃ THAY ĐỔI
-          }
+        `${API_VNPAY_GATEWAY_URL}/initiate-b2c`, // ĐÃ THAY ĐỔI
+        {
+          method: "POST", // ĐÃ THAY ĐỔI
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json", // ĐÃ THAY ĐỔI
+          },
+          body: JSON.stringify(initiationData), // ĐÃ THAY ĐỔI
+        }
       );
 
       if (!response.ok) {
         // Nếu là lỗi 401, báo cụ thể
         if (response.status === 401) {
-          throw new Error("Lỗi 401: Phiên đăng nhập hết hạn. Vui lòng đăng xuất và đăng nhập lại.");
+          throw new Error(
+            "Lỗi 401: Phiên đăng nhập hết hạn. Vui lòng đăng xuất và đăng nhập lại."
+          );
         }
 
         // Nếu là lỗi khác, thử đọc JSON
         try {
           const errorData = await response.json();
-          throw new Error(errorData.message || `Backend trả lỗi ${response.status}`);
+          throw new Error(
+            errorData.message || `Backend trả lỗi ${response.status}`
+          );
         } catch {
-          throw new Error(`Backend trả lỗi ${response.status} (phản hồi không phải JSON).`);
+          throw new Error(
+            `Backend trả lỗi ${response.status} (phản hồi không phải JSON).`
+          );
         }
       }
 
       const data = await response.json();
 
       if (data.url) {
-        console.log("Redirecting to VNPAY URL:", data.url);
         window.location.href = data.url; // Chuyển sang VNPAY
       } else {
         throw new Error("Backend chưa trả về payment URL");
       }
     } catch (error) {
-      console.error("Lỗi khi tạo thanh toán:", error);
       toast.error(error.message || "Lỗi khi tạo thanh toán");
       setSubmitting(false);
     }

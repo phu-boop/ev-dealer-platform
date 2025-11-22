@@ -6,15 +6,17 @@ export const salesOrderB2CApi = {
    * @param {string} quotationId - ID của quotation
    * @returns {Promise} Promise trả về sales order đã tạo
    */
-  createFromQuotation: (quotationId) => 
-    apiConstSaleService.post(`/api/v1/sales-orders/b2c/from-quotation/${quotationId}`),
+  createFromQuotation: (quotationId) =>
+    apiConstSaleService.post(
+      `/api/v1/sales-orders/b2c/from-quotation/${quotationId}`
+    ),
 
   /**
    * Lấy sales order theo ID
    * @param {string} orderId - ID của sales order
    * @returns {Promise} Promise trả về sales order
    */
-  getById: (orderId) => 
+  getById: (orderId) =>
     apiConstSaleService.get(`/api/v1/sales-orders/b2c/${orderId}`),
 
   /**
@@ -22,7 +24,7 @@ export const salesOrderB2CApi = {
    * @param {string} dealerId - ID của dealer
    * @returns {Promise} Promise trả về danh sách sales orders
    */
-  getByDealer: (dealerId) => 
+  getByDealer: (dealerId) =>
     apiConstSaleService.get(`/api/v1/sales-orders/b2c/dealer/${dealerId}`),
 
   /**
@@ -30,7 +32,7 @@ export const salesOrderB2CApi = {
    * @param {number} customerId - ID của customer (Long)
    * @returns {Promise} Promise trả về danh sách sales orders
    */
-  getByCustomer: (customerId) => 
+  getByCustomer: (customerId) =>
     apiConstSaleService.get(`/api/v1/sales-orders/b2c/customer/${customerId}`),
 
   /**
@@ -39,8 +41,10 @@ export const salesOrderB2CApi = {
    * @param {string} status - Trạng thái mới
    * @returns {Promise} Promise trả về sales order đã cập nhật
    */
-  updateStatus: (orderId, status) => 
-    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/status?status=${status}`),
+  updateStatus: (orderId, status) =>
+    apiConstSaleService.put(
+      `/api/v1/sales-orders/b2c/${orderId}/status?status=${status}`
+    ),
 
   /**
    * Duyệt sales order
@@ -48,8 +52,10 @@ export const salesOrderB2CApi = {
    * @param {string} managerId - ID của manager
    * @returns {Promise} Promise trả về sales order đã duyệt
    */
-  approve: (orderId, managerId) => 
-    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/approve?managerId=${managerId}`),
+  approve: (orderId, managerId) =>
+    apiConstSaleService.put(
+      `/api/v1/sales-orders/b2c/${orderId}/approve?managerId=${managerId}`
+    ),
   /**
    * Thêm hoặc recalculating order items
    * @param {string} orderId - ID của sales order
@@ -57,30 +63,32 @@ export const salesOrderB2CApi = {
    */
   addOrderItemsToSalesOrder: (orderId) =>
     apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/order-items`),
-   /**
+  /**
    * Chuyển trạng thái đơn hàng sang EDITED
    * @param {string} orderId - ID của sales order
    * @param {string} staffId - ID nhân viên thao tác
    * @returns {Promise} ApiRespond<SalesOrderB2CResponse>
    */
   markAsEdited: (orderId, staffId) =>
-    apiConstSaleService.put(`/api/v1/sales-orders/b2c/${orderId}/mark-edited?staffId=${staffId}`)
+    apiConstSaleService.put(
+      `/api/v1/sales-orders/b2c/${orderId}/mark-edited?staffId=${staffId}`
+    ),
 };
 
 export const salesOrderService = {
   ...salesOrderB2CApi,
-  
+
   /**
    * Lấy danh sách sales orders của dealer hiện tại
    * @param {Object} params - Tham số tìm kiếm (optional)
    * @returns {Promise} Promise trả về danh sách sales orders
    */
   getList: async (params = {}) => {
-    const dealerId = sessionStorage.getItem('dealerId');
+    const dealerId = sessionStorage.getItem("dealerId");
     const response = await salesOrderB2CApi.getByDealer(dealerId);
     return response.data || [];
   },
-  
+
   /**
    * Tạo sales order từ quotation
    * @param {string} quotationId - ID của quotation
@@ -91,7 +99,7 @@ export const salesOrderService = {
     const response = await salesOrderB2CApi.createFromQuotation(quotationId);
     return response.data?.data;
   },
-  
+
   /**
    * Cập nhật trạng thái sales order
    * @param {string} orderId - ID của sales order
@@ -99,12 +107,12 @@ export const salesOrderService = {
    * @param {string} reason - Lý do (optional)
    * @returns {Promise} Promise trả về sales order đã cập nhật
    */
-  updateOrderStatus: async (orderId, status, reason = '') => {
+  updateOrderStatus: async (orderId, status, reason = "") => {
     const response = await salesOrderB2CApi.updateStatus(orderId, status);
     return response.data?.data;
   },
-  
-   /**
+
+  /**
    * Thêm hoặc recalculating order items
    * @param {string} orderId - ID của sales order
    * @returns {Promise} ApiRespond<SalesOrderB2CResponse>
@@ -113,7 +121,7 @@ export const salesOrderService = {
     const response = await salesOrderB2CApi.addOrderItemsToSalesOrder(orderId);
     return response.data.data;
   },
-    /**
+  /**
    * Chuyển trạng thái đơn hàng sang EDITED
    * @param {string} orderId - ID của sales order
    * @param {string} staffId - ID nhân viên thao tác
@@ -128,8 +136,7 @@ export const salesOrderService = {
    * @param {string} orderId - ID của sales order
    * @returns {Promise} Promise trả về sales order đã gửi duyệt
    */
-  sendForApproval: async (orderId,dealerId) => {
-    console.log(dealerId);
+  sendForApproval: async (orderId, dealerId) => {
     const response = await salesOrderB2CApi.markAsEdited(orderId, dealerId);
     return response.data?.data;
   },

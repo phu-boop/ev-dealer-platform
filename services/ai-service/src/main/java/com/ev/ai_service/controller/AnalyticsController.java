@@ -15,31 +15,27 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/ai/analytics")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class AnalyticsController {
-    
+
     private final AnalyticsService analyticsService;
-    
+
     /**
      * Lấy dashboard analytics
      * GET /api/ai/analytics/dashboard
      */
     @GetMapping("/dashboard")
     public ResponseEntity<ApiRespond<DashboardDto>> getDashboard(
-        @RequestParam(defaultValue = "30") int daysBack
-    ) {
+            @RequestParam(defaultValue = "30") int daysBack) {
         log.info("Getting dashboard analytics for last {} days", daysBack);
-        
+
         try {
             DashboardDto dashboard = analyticsService.getDashboard(daysBack);
             return ResponseEntity.ok(
-                ApiRespond.success("Dashboard retrieved successfully", dashboard)
-            );
+                    ApiRespond.success("Dashboard retrieved successfully", dashboard));
         } catch (Exception e) {
             log.error("Error getting dashboard: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(
-                ApiRespond.error("ERROR", e.getMessage(), null)
-            );
+                    ApiRespond.error("ERROR", e.getMessage(), null));
         }
     }
 }

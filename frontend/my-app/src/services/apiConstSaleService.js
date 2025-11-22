@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiConstSaleService = axios.create({
-  baseURL: "http://localhost:8080/sales/",
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/sales/`,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
@@ -23,20 +23,18 @@ apiConstSaleService.interceptors.response.use(
       try {
         // Gọi refresh API
         const res = await axios.post(
-          "http://localhost:8080/auth/refresh",
+          `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );
 
         // Lấy accessToken mới
         const newToken = res.data.data.accessToken;
-        console.log(newToken);
         sessionStorage.setItem("token", newToken);
         // Gửi lại request cũ với token mới
         error.config.headers["Authorization"] = `Bearer ${newToken}`;
         return apiConstSaleService(error.config);
       } catch (refreshError) {
-        console.error("Refresh token failed", refreshError);
         sessionStorage.removeItem("token");
         window.location.href = "/login";
       }

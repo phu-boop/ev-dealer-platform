@@ -1,16 +1,19 @@
-import axios from 'axios';
+import axios from "axios";
+
+// 🔹 Lấy Base URL từ biến môi trường
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const vehicleAPI = axios.create({
-  baseURL: 'http://localhost:8080/vehicles/vehicle-catalog',
+  baseURL: `${API_BASE_URL}/vehicles/vehicle-catalog`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  withCredentials: true
+  withCredentials: true,
 });
 
 // Add token to requests
 vehicleAPI.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('token');
+  const token = sessionStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -23,14 +26,18 @@ vehicleAPI.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       try {
-        const res = await axios.post('http://localhost:8080/auth/refresh', {}, { withCredentials: true });
+        const res = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
         const newToken = res.data.data.accessToken;
-        sessionStorage.setItem('token', newToken);
+        sessionStorage.setItem("token", newToken);
         error.config.headers.Authorization = `Bearer ${newToken}`;
         return vehicleAPI(error.config);
       } catch (refreshError) {
-        sessionStorage.removeItem('token');
-        window.location.href = '/login';
+        sessionStorage.removeItem("token");
+        window.location.href = "/login";
       }
     }
     return Promise.reject(error);
@@ -42,7 +49,7 @@ vehicleAPI.interceptors.response.use(
  * GET /vehicles/vehicle-catalog/models
  */
 export const getAllModels = async () => {
-  const response = await vehicleAPI.get('/models');
+  const response = await vehicleAPI.get("/models");
   return response.data;
 };
 

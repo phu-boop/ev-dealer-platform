@@ -6,7 +6,8 @@ import {
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 
-const API_VNPAY_GATEWAY_URL = "http://localhost:8080/payments/api/v1/payments/gateway";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_VNPAY_GATEWAY_URL = `${API_BASE_URL}/payments/api/v1/payments/gateway`;
 
 const DealerPaymentResultPage = () => {
   const [searchParams] = useSearchParams();
@@ -27,32 +28,39 @@ const DealerPaymentResultPage = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+            throw new Error(
+              "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+            );
           }
 
           try {
             const errorData = await response.json();
-            throw new Error(errorData.message || `Lỗi server: ${response.status}`);
+            throw new Error(
+              errorData.message || `Lỗi server: ${response.status}`
+            );
           } catch {
-            throw new Error(`Lỗi server: ${response.status} - ${response.statusText}`);
+            throw new Error(
+              `Lỗi server: ${response.status} - ${response.statusText}`
+            );
           }
         }
 
         const data = await response.json();
         setPaymentResult(data);
       } catch (error) {
-        console.error("Error checking dealer payment result:", error);
-
         const vnpResponseCode = searchParams.get("vnp_ResponseCode");
         const vnpTransactionStatus = searchParams.get("vnp_TransactionStatus");
         const vnpAmount = searchParams.get("vnp_Amount");
 
-        const isSuccess = vnpResponseCode === "00" && vnpTransactionStatus === "00";
+        const isSuccess =
+          vnpResponseCode === "00" && vnpTransactionStatus === "00";
         const amount = vnpAmount ? parseInt(vnpAmount, 10) / 100 : 0;
 
         setPaymentResult({
           success: isSuccess,
-          message: error.message || (isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"),
+          message:
+            error.message ||
+            (isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"),
           amount,
           transactionId: searchParams.get("vnp_TxnRef") || "",
           responseCode: vnpResponseCode || "",
@@ -86,9 +94,12 @@ const DealerPaymentResultPage = () => {
   }
 
   const isSuccess = paymentResult?.success;
-  const invoiceId = searchParams.get("invoiceId") || searchParams.get("vnp_TxnRef") || "";
+  const invoiceId =
+    searchParams.get("invoiceId") || searchParams.get("vnp_TxnRef") || "";
   const invoicesListPath = "/dealer/manager/payments/invoices";
-  const invoiceDetailPath = invoiceId ? `${invoicesListPath}/${invoiceId}` : null;
+  const invoiceDetailPath = invoiceId
+    ? `${invoicesListPath}/${invoiceId}`
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -102,7 +113,11 @@ const DealerPaymentResultPage = () => {
         </Link>
 
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className={`p-8 text-center ${isSuccess ? "bg-green-50" : "bg-red-50"}`}>
+          <div
+            className={`p-8 text-center ${
+              isSuccess ? "bg-green-50" : "bg-red-50"
+            }`}
+          >
             <div className="flex justify-center mb-4">
               {isSuccess ? (
                 <CheckCircleIcon className="h-20 w-20 text-green-500" />
@@ -111,16 +126,31 @@ const DealerPaymentResultPage = () => {
               )}
             </div>
 
-            <h1 className={`text-3xl font-bold mb-2 ${isSuccess ? "text-green-800" : "text-red-800"}`}>
-              {isSuccess ? "Thanh toán hóa đơn thành công" : "Thanh toán hóa đơn thất bại"}
+            <h1
+              className={`text-3xl font-bold mb-2 ${
+                isSuccess ? "text-green-800" : "text-red-800"
+              }`}
+            >
+              {isSuccess
+                ? "Thanh toán hóa đơn thành công"
+                : "Thanh toán hóa đơn thất bại"}
             </h1>
-            <p className={`text-lg ${isSuccess ? "text-green-600" : "text-red-600"}`}>
-              {paymentResult?.message || (isSuccess ? "Giao dịch đã được ghi nhận." : "Giao dịch bị từ chối." )}
+            <p
+              className={`text-lg ${
+                isSuccess ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {paymentResult?.message ||
+                (isSuccess
+                  ? "Giao dịch đã được ghi nhận."
+                  : "Giao dịch bị từ chối.")}
             </p>
           </div>
 
           <div className="p-8 border-t border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Chi tiết giao dịch</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Chi tiết giao dịch
+            </h2>
 
             <div className="space-y-4">
               {paymentResult?.amount && (
@@ -199,7 +229,10 @@ const DealerPaymentResultPage = () => {
         <div className="mt-8 bg-blue-50 rounded-2xl p-6">
           <h3 className="font-semibold text-blue-900 mb-3">Thông tin hỗ trợ</h3>
           <div className="text-sm text-blue-800 space-y-2">
-            <p>• Nếu có thắc mắc về giao dịch, vui lòng liên hệ bộ phận kế toán EVM.</p>
+            <p>
+              • Nếu có thắc mắc về giao dịch, vui lòng liên hệ bộ phận kế toán
+              EVM.
+            </p>
             <p>• Hotline: 1900 1234</p>
             <p>• Email: finance@evm.com</p>
           </div>

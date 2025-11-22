@@ -1,13 +1,13 @@
 // B2C Order Detail Page (Dealer Staff)
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { salesOrderB2CApi } from '../../dealer/sales/salesOrder/services/salesOrderService';
-import paymentService from '../services/paymentService';
-import PaymentHistory from '../components/PaymentHistory';
-import { toast } from 'react-toastify';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { salesOrderB2CApi } from "../../dealer/sales/salesOrder/services/salesOrderService";
+import paymentService from "../services/paymentService";
+import PaymentHistory from "../components/PaymentHistory";
+import { toast } from "react-toastify";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 const B2COrderDetailPage = () => {
   const { orderId } = useParams();
@@ -15,7 +15,7 @@ const B2COrderDetailPage = () => {
   const [order, setOrder] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState('UNPAID');
+  const [paymentStatus, setPaymentStatus] = useState("UNPAID");
 
   useEffect(() => {
     if (orderId) {
@@ -38,18 +38,20 @@ const B2COrderDetailPage = () => {
       const data = response.data?.data || response.data;
       setOrder(data);
     } catch (error) {
-      console.error('Error loading order:', error);
+      console.error("Error loading order:", error);
       if (error.response?.status === 404) {
-        toast.error('Không tìm thấy đơn hàng B2C với ID này. Có thể đơn hàng đã bị xóa hoặc không tồn tại.');
+        toast.error(
+          "Không tìm thấy đơn hàng B2C với ID này. Có thể đơn hàng đã bị xóa hoặc không tồn tại."
+        );
       } else {
-        toast.error('Không thể tải thông tin đơn hàng');
+        toast.error("Không thể tải thông tin đơn hàng");
       }
       // Navigate back based on user role or previous page
-      const userRole = sessionStorage.getItem('role');
-      if (userRole === 'DEALER_MANAGER') {
-        navigate('/dealer/manager/payments/b2c-cash-payments');
+      const userRole = sessionStorage.getItem("role");
+      if (userRole === "DEALER_MANAGER") {
+        navigate("/dealer/manager/payments/b2c-cash-payments");
       } else {
-        navigate('/dealer/staff/payments/b2c-orders');
+        navigate("/dealer/staff/payments/b2c-orders");
       }
     } finally {
       setLoading(false);
@@ -62,7 +64,7 @@ const B2COrderDetailPage = () => {
       const history = response.data?.data || response.data || [];
       setPaymentHistory(history);
     } catch (error) {
-      console.error('Error loading payment history:', error);
+      console.error("Error loading payment history:", error);
     }
   };
 
@@ -72,38 +74,31 @@ const B2COrderDetailPage = () => {
     }
 
     if (!paymentHistory || paymentHistory.length === 0) {
-      setPaymentStatus('UNPAID');
+      setPaymentStatus("UNPAID");
       return;
     }
 
     const totalPaid = paymentHistory
-      .filter(t => t.status === 'SUCCESS' || t.status === 'CONFIRMED')
+      .filter((t) => t.status === "SUCCESS" || t.status === "CONFIRMED")
       .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
+
     const totalAmount = parseFloat(order.totalAmount) || 0;
-    
+
     // Use Math.abs to handle floating point precision issues
     // Consider paid if difference is less than 1 VND (0.01)
     const difference = Math.abs(totalAmount - totalPaid);
-    
-    console.log('Payment Status Calculation:', {
-      totalAmount,
-      totalPaid,
-      difference,
-      remaining: totalAmount - totalPaid
-    });
-    
+
     if (totalAmount <= 0) {
-      setPaymentStatus('UNPAID');
+      setPaymentStatus("UNPAID");
     } else if (difference < 0.01 || totalPaid >= totalAmount) {
       // Fully paid (with tolerance for floating point errors)
       // Only if totalPaid is greater than or equal to totalAmount (with small tolerance)
-      setPaymentStatus('PAID');
+      setPaymentStatus("PAID");
     } else if (totalPaid > 0) {
       // Partially paid - totalPaid > 0 but < totalAmount
-      setPaymentStatus('PARTIALLY_PAID');
+      setPaymentStatus("PARTIALLY_PAID");
     } else {
-      setPaymentStatus('UNPAID');
+      setPaymentStatus("UNPAID");
     }
   };
 
@@ -112,23 +107,31 @@ const B2COrderDetailPage = () => {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return '0 ₫';
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    if (!amount) return "0 ₫";
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount);
   };
 
   const getPaymentStatusBadge = (status) => {
     const statusConfig = {
-      'UNPAID': { color: 'bg-red-100 text-red-800', label: 'Chưa thanh toán' },
-      'PARTIALLY_PAID': { color: 'bg-yellow-100 text-yellow-800', label: 'Thanh toán một phần' },
-      'PAID': { color: 'bg-green-100 text-green-800', label: 'Đã thanh toán' }
+      UNPAID: { color: "bg-red-100 text-red-800", label: "Chưa thanh toán" },
+      PARTIALLY_PAID: {
+        color: "bg-yellow-100 text-yellow-800",
+        label: "Thanh toán một phần",
+      },
+      PAID: { color: "bg-green-100 text-green-800", label: "Đã thanh toán" },
     };
 
-    const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800', label: status };
+    const config = statusConfig[status] || {
+      color: "bg-gray-100 text-gray-800",
+      label: status,
+    };
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-medium ${config.color}`}
+      >
         {config.label}
       </span>
     );
@@ -151,17 +154,17 @@ const B2COrderDetailPage = () => {
   }
 
   const totalPaid = paymentHistory
-    .filter(t => t.status === 'SUCCESS' || t.status === 'CONFIRMED')
+    .filter((t) => t.status === "SUCCESS" || t.status === "CONFIRMED")
     .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
   const remainingAmount = (parseFloat(order.totalAmount) || 0) - totalPaid;
 
   // Determine back navigation based on user role
-  const userRole = sessionStorage.getItem('role');
+  const userRole = sessionStorage.getItem("role");
   const getBackPath = () => {
-    if (userRole === 'DEALER_MANAGER') {
-      return '/dealer/manager/payments/b2c-cash-payments';
+    if (userRole === "DEALER_MANAGER") {
+      return "/dealer/manager/payments/b2c-cash-payments";
     }
-    return '/dealer/staff/payments/b2c-orders';
+    return "/dealer/staff/payments/b2c-orders";
   };
 
   return (
@@ -176,7 +179,9 @@ const B2COrderDetailPage = () => {
 
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Chi Tiết Đơn Hàng B2C</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Chi Tiết Đơn Hàng B2C
+          </h1>
           <p className="text-gray-600 mt-1">Mã đơn hàng: {order.orderId}</p>
         </div>
         {getPaymentStatusBadge(paymentStatus)}
@@ -185,19 +190,23 @@ const B2COrderDetailPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Order Details */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Thông Tin Đơn Hàng</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Thông Tin Đơn Hàng
+          </h2>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-600">Ngày đặt hàng</p>
                 <p className="text-lg font-medium text-gray-900">
-                  {format(new Date(order.orderDate), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                  {format(new Date(order.orderDate), "dd/MM/yyyy HH:mm", {
+                    locale: vi,
+                  })}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Trạng thái đơn hàng</p>
                 <p className="text-lg font-medium text-gray-900">
-                  {order.orderStatusB2C || order.orderStatus || '-'}
+                  {order.orderStatusB2C || order.orderStatus || "-"}
                 </p>
               </div>
               <div>
@@ -222,7 +231,9 @@ const B2COrderDetailPage = () => {
                 <div>
                   <p className="text-sm text-gray-600">Ngày giao hàng</p>
                   <p className="text-lg font-medium text-gray-900">
-                    {format(new Date(order.deliveryDate), 'dd/MM/yyyy', { locale: vi })}
+                    {format(new Date(order.deliveryDate), "dd/MM/yyyy", {
+                      locale: vi,
+                    })}
                   </p>
                 </div>
               )}
@@ -230,11 +241,15 @@ const B2COrderDetailPage = () => {
 
             {order.orderItems && order.orderItems.length > 0 && (
               <div className="border-t pt-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">Sản phẩm</p>
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Sản phẩm
+                </p>
                 <div className="space-y-2">
                   {order.orderItems.map((item, index) => (
                     <div key={index} className="flex justify-between text-sm">
-                      <span className="text-gray-600">{item.variantName || item.productName || 'Sản phẩm'}</span>
+                      <span className="text-gray-600">
+                        {item.variantName || item.productName || "Sản phẩm"}
+                      </span>
                       <span className="text-gray-900 font-medium">
                         {formatCurrency(item.price)} x {item.quantity}
                       </span>
@@ -249,11 +264,14 @@ const B2COrderDetailPage = () => {
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div
                   className="bg-blue-600 h-3 rounded-full transition-all"
-                  style={{ width: `${((totalPaid / (order.totalAmount || 1)) * 100)}%` }}
+                  style={{
+                    width: `${(totalPaid / (order.totalAmount || 1)) * 100}%`,
+                  }}
                 ></div>
               </div>
               <p className="text-sm text-gray-500 mt-2">
-                {((totalPaid / (order.totalAmount || 1)) * 100).toFixed(1)}% đã thanh toán
+                {((totalPaid / (order.totalAmount || 1)) * 100).toFixed(1)}% đã
+                thanh toán
               </p>
             </div>
           </div>
@@ -262,8 +280,11 @@ const B2COrderDetailPage = () => {
         {/* Payment History */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Lịch Sử Thanh Toán</h2>
-            {(paymentStatus === 'UNPAID' || paymentStatus === 'PARTIALLY_PAID') && (
+            <h2 className="text-xl font-semibold text-gray-900">
+              Lịch Sử Thanh Toán
+            </h2>
+            {(paymentStatus === "UNPAID" ||
+              paymentStatus === "PARTIALLY_PAID") && (
               <button
                 onClick={handlePayOrder}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
@@ -280,4 +301,3 @@ const B2COrderDetailPage = () => {
 };
 
 export default B2COrderDetailPage;
-

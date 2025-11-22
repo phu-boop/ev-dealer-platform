@@ -16,53 +16,49 @@ const BASE_ORDER_B2B_URL = "/sales-orders/b2b";
  */
 export const fetchEvmStaffDashboardData = async (staffId = null) => {
   try {
-    console.log("🚀 fetchEvmStaffDashboardData called:", { staffId });
-    
     // Tính toán date range (tháng hiện tại và tháng trước)
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
+
     // Tháng trước
-    const firstDayOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const firstDayOfPrevMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1
+    );
     const lastDayOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-    
-    const currentMonthStart = firstDayOfMonth.toISOString().split('T')[0];
-    const currentMonthEnd = lastDayOfMonth.toISOString().split('T')[0];
-    const prevMonthStart = firstDayOfPrevMonth.toISOString().split('T')[0];
-    const prevMonthEnd = lastDayOfPrevMonth.toISOString().split('T')[0];
-    
+
+    const currentMonthStart = firstDayOfMonth.toISOString().split("T")[0];
+    const currentMonthEnd = lastDayOfMonth.toISOString().split("T")[0];
+    const prevMonthStart = firstDayOfPrevMonth.toISOString().split("T")[0];
+    const prevMonthEnd = lastDayOfPrevMonth.toISOString().split("T")[0];
+
     // Hôm nay
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
-    
-    console.log("📅 Date Ranges:", { 
-      currentMonth: { currentMonthStart, currentMonthEnd },
-      prevMonth: { prevMonthStart, prevMonthEnd },
-      today: todayStr
-    });
+    const todayStr = today.toISOString().split("T")[0];
 
     // Fetch tất cả dữ liệu song song
     const [
       pendingOrdersResponse,
       allB2BOrdersResponse,
       inventoryResponse,
-      allInventoryResponse
+      allInventoryResponse,
     ] = await Promise.allSettled([
       // Fetch đơn hàng B2B chờ duyệt
-      getB2BOrders({ status: 'PENDING', page: 0, size: 1000 }),
+      getB2BOrders({ status: "PENDING", page: 0, size: 1000 }),
       // Fetch tất cả đơn hàng B2B (để tính toán đã hoàn thành)
       getB2BOrders({ page: 0, size: 1000 }),
       // Fetch inventory với status IN_STOCK để lấy tổng số xe trong kho
-      getAllInventory({ status: 'IN_STOCK', page: 0, size: 1000 }),
+      getAllInventory({ status: "IN_STOCK", page: 0, size: 1000 }),
       // Fetch tất cả inventory để tính toán
-      getAllInventory({ page: 0, size: 1000 })
+      getAllInventory({ page: 0, size: 1000 }),
     ]);
 
     // Xử lý đơn hàng chờ duyệt
     let pendingOrders = [];
-    if (pendingOrdersResponse.status === 'fulfilled') {
+    if (pendingOrdersResponse.status === "fulfilled") {
       const data = pendingOrdersResponse.value.data?.data;
       if (data?.content) {
         pendingOrders = data.content;
@@ -70,15 +66,10 @@ export const fetchEvmStaffDashboardData = async (staffId = null) => {
         pendingOrders = data;
       }
     }
-    
-    console.log("⏳ Pending Orders:", {
-      status: pendingOrdersResponse.status,
-      count: pendingOrders.length
-    });
 
     // Xử lý tất cả đơn hàng B2B
     let allB2BOrders = [];
-    if (allB2BOrdersResponse.status === 'fulfilled') {
+    if (allB2BOrdersResponse.status === "fulfilled") {
       const data = allB2BOrdersResponse.value.data?.data;
       if (data?.content) {
         allB2BOrders = data.content;
@@ -86,64 +77,72 @@ export const fetchEvmStaffDashboardData = async (staffId = null) => {
         allB2BOrders = data;
       }
     }
-    
-    console.log("🛒 All B2B Orders:", {
-      status: allB2BOrdersResponse.status,
-      count: allB2BOrders.length
-    });
 
     // Lọc đơn hàng đã hoàn thành (tháng này và tháng trước)
     const getOrderStatus = (order) => {
       let status = order.orderStatus;
-      if (status && typeof status === 'object') {
+      if (status && typeof status === "object") {
         status = status.name || status.toString();
       }
-      return String(status || '').toUpperCase().trim();
+      return String(status || "")
+        .toUpperCase()
+        .trim();
     };
 
-    const completedStatuses = ['CONFIRMED', 'DELIVERED', 'APPROVED'];
-    
-    const completedOrdersThisMonth = allB2BOrders.filter(order => {
+    const completedStatuses = ["CONFIRMED", "DELIVERED", "APPROVED"];
+
+    const completedOrdersThisMonth = allB2BOrders.filter((order) => {
       const status = getOrderStatus(order);
       if (!completedStatuses.includes(status)) return false;
-      
+
       if (!order.orderDate) return false;
       const orderDate = new Date(order.orderDate);
       if (isNaN(orderDate.getTime())) return false;
-      
-      const orderDateStr = orderDate.toISOString().split('T')[0];
-      return orderDateStr >= currentMonthStart && orderDateStr <= currentMonthEnd;
+
+      const orderDateStr = orderDate.toISOString().split("T")[0];
+      return (
+        orderDateStr >= currentMonthStart && orderDateStr <= currentMonthEnd
+      );
     });
 
-    const completedOrdersPrevMonth = allB2BOrders.filter(order => {
+    const completedOrdersPrevMonth = allB2BOrders.filter((order) => {
       const status = getOrderStatus(order);
       if (!completedStatuses.includes(status)) return false;
-      
+
       if (!order.orderDate) return false;
       const orderDate = new Date(order.orderDate);
       if (isNaN(orderDate.getTime())) return false;
-      
-      const orderDateStr = orderDate.toISOString().split('T')[0];
+
+      const orderDateStr = orderDate.toISOString().split("T")[0];
       return orderDateStr >= prevMonthStart && orderDateStr <= prevMonthEnd;
     });
 
     // Tính tổng giá trị đơn hàng đã hoàn thành
-    const totalRevenueThisMonth = completedOrdersThisMonth.reduce((sum, order) => {
-      return sum + (parseFloat(order.totalAmount) || 0);
-    }, 0);
+    const totalRevenueThisMonth = completedOrdersThisMonth.reduce(
+      (sum, order) => {
+        return sum + (parseFloat(order.totalAmount) || 0);
+      },
+      0
+    );
 
-    const totalRevenuePrevMonth = completedOrdersPrevMonth.reduce((sum, order) => {
-      return sum + (parseFloat(order.totalAmount) || 0);
-    }, 0);
+    const totalRevenuePrevMonth = completedOrdersPrevMonth.reduce(
+      (sum, order) => {
+        return sum + (parseFloat(order.totalAmount) || 0);
+      },
+      0
+    );
 
     // Tính % thay đổi
-    const revenueChangePercent = prevMonthStart > 0
-      ? ((totalRevenueThisMonth - totalRevenuePrevMonth) / totalRevenuePrevMonth) * 100
-      : 0;
+    const revenueChangePercent =
+      prevMonthStart > 0
+        ? ((totalRevenueThisMonth - totalRevenuePrevMonth) /
+            totalRevenuePrevMonth) *
+          100
+        : 0;
 
     // Xử lý inventory
     let inventoryData = [];
-    if (inventoryResponse.status === 'fulfilled') {
+    if (inventoryResponse.status === "fulfilled") {
       const data = inventoryResponse.value.data?.data;
       if (data?.content) {
         inventoryData = data.content;
@@ -153,7 +152,7 @@ export const fetchEvmStaffDashboardData = async (staffId = null) => {
     }
 
     let allInventoryData = [];
-    if (allInventoryResponse.status === 'fulfilled') {
+    if (allInventoryResponse.status === "fulfilled") {
       const data = allInventoryResponse.value.data?.data;
       if (data?.content) {
         allInventoryData = data.content;
@@ -173,27 +172,31 @@ export const fetchEvmStaffDashboardData = async (staffId = null) => {
     }, 0);
 
     // Tính số xe đã xuất kho hôm nay (từ đơn hàng đã ship hôm nay)
-    const shippedOrdersToday = allB2BOrders.filter(order => {
+    const shippedOrdersToday = allB2BOrders.filter((order) => {
       const status = getOrderStatus(order);
-      if (status !== 'IN_TRANSIT' && status !== 'DELIVERED') return false;
-      
+      if (status !== "IN_TRANSIT" && status !== "DELIVERED") return false;
+
       // Kiểm tra nếu có shippedDate hoặc updatedDate hôm nay
-      const checkDate = order.shippedDate || order.updatedDate || order.orderDate;
+      const checkDate =
+        order.shippedDate || order.updatedDate || order.orderDate;
       if (!checkDate) return false;
-      
+
       const date = new Date(checkDate);
       if (isNaN(date.getTime())) return false;
-      
-      const dateStr = date.toISOString().split('T')[0];
+
+      const dateStr = date.toISOString().split("T")[0];
       return dateStr === todayStr;
     });
 
     // Đếm số xe đã xuất kho hôm nay (từ order items)
     const vehiclesShippedToday = shippedOrdersToday.reduce((sum, order) => {
       if (order.orderItems && Array.isArray(order.orderItems)) {
-        return sum + order.orderItems.reduce((itemSum, item) => {
-          return itemSum + (parseInt(item.quantity) || 0);
-        }, 0);
+        return (
+          sum +
+          order.orderItems.reduce((itemSum, item) => {
+            return itemSum + (parseInt(item.quantity) || 0);
+          }, 0)
+        );
       }
       return sum;
     }, 0);
@@ -204,38 +207,25 @@ export const fetchEvmStaffDashboardData = async (staffId = null) => {
 
     // Tính top đại lý đã hỗ trợ (số đơn hàng đã xử lý cho từng đại lý)
     const dealerOrderCount = {};
-    processedOrders.forEach(order => {
+    processedOrders.forEach((order) => {
       const dealerId = order.dealerId;
       if (dealerId) {
         if (!dealerOrderCount[dealerId]) {
           dealerOrderCount[dealerId] = {
             dealerId,
             orderCount: 0,
-            totalRevenue: 0
+            totalRevenue: 0,
           };
         }
         dealerOrderCount[dealerId].orderCount += 1;
-        dealerOrderCount[dealerId].totalRevenue += parseFloat(order.totalAmount) || 0;
+        dealerOrderCount[dealerId].totalRevenue +=
+          parseFloat(order.totalAmount) || 0;
       }
     });
 
     const topDealers = Object.values(dealerOrderCount)
       .sort((a, b) => b.orderCount - a.orderCount)
       .slice(0, 5);
-
-    console.log("📊 EVM Staff Dashboard Data Summary:", {
-      pendingOrders: pendingOrders.length,
-      completedOrdersThisMonth: completedOrdersThisMonth.length,
-      completedOrdersPrevMonth: completedOrdersPrevMonth.length,
-      totalRevenueThisMonth,
-      totalRevenuePrevMonth,
-      revenueChangePercent: revenueChangePercent.toFixed(2),
-      totalVehiclesInWarehouse,
-      vehiclesInTransit,
-      vehiclesShippedToday,
-      processedOrders: processedOrders.length,
-      topDealers: topDealers.length
-    });
 
     return {
       pendingOrders,
@@ -253,12 +243,11 @@ export const fetchEvmStaffDashboardData = async (staffId = null) => {
       dateRanges: {
         currentMonth: { start: currentMonthStart, end: currentMonthEnd },
         prevMonth: { start: prevMonthStart, end: prevMonthEnd },
-        today: todayStr
-      }
+        today: todayStr,
+      },
     };
   } catch (error) {
     console.error("Error fetching EVM Staff dashboard data:", error);
     throw error;
   }
 };
-

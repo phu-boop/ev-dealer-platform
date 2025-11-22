@@ -11,10 +11,15 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfiguration;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Configuration
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 public class SecurityConfig {
+
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
@@ -48,7 +53,6 @@ public class SecurityConfig {
                                 "/api/v1/payments/gateway/callback/vnpay-return",
                                 "/api/v1/payments/gateway/callback/vnpay-ipn",
 
-
                                 // "/sales/**"
                                 "/sales/**",
 
@@ -61,12 +65,14 @@ public class SecurityConfig {
                                 // sendmail
                                 "/sendmail/customer-response/**",
 
-                                "/ws/**"
-                        ).permitAll()
+                                "/ws/**",
+
+                                // ai-service
+                                "/ai/**")
+                        .permitAll()
 
                         // ===== Các route khác cần JWT =====
-                        .anyExchange().authenticated()
-                )
+                        .anyExchange().authenticated())
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 // Không tạo session
@@ -77,7 +83,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.addAllowedOrigin("http://localhost:5173");
+        corsConfig.addAllowedOrigin(allowedOrigins);
         corsConfig.addAllowedMethod("*"); // Cho phép tất cả phương thức: GET, POST, PUT, DELETE, OPTIONS
         corsConfig.addAllowedHeader("*"); // Cho phép tất cả header
         corsConfig.setAllowCredentials(true); // Cho phép gửi cookie/token

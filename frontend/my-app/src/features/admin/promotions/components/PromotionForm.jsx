@@ -573,7 +573,6 @@ export default function PromotionForm({
                     {selectedModels
                       .filter((model) => model != null) // Bỏ các model null/undefined
                       .map((model) => {
-                        console.log("Selected model:", model); // Debug từng model
                         return (
                           <div
                             key={model.modelId || Math.random()} // phòng trường hợp modelId null

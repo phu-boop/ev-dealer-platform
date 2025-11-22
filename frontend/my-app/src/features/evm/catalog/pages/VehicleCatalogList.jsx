@@ -8,6 +8,7 @@ import {
   FiSearch,
   FiRefreshCw,
 } from "react-icons/fi";
+import Swal from "sweetalert2";
 import { getModels, deactivateModel } from "../services/vehicleCatalogService";
 import ModelForm from "../components/ModelForm";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -69,7 +70,7 @@ const VehicleCatalogPage = () => {
       fetchModels(); // Refresh list after deactivating
     } catch (error) {
       console.error("Failed to deactivate model", error);
-      alert("Có lỗi xảy ra khi ngừng sản xuất mẫu xe.");
+      Swal.fire("Lỗi!", "Có lỗi xảy ra khi ngừng sản xuất mẫu xe.", "error");
     }
   };
 
@@ -130,7 +131,11 @@ const VehicleCatalogPage = () => {
               <div className="mt-6 flex justify-end space-x-3">
                 <button
                   onClick={() =>
-                    alert("Chức năng xem chi tiết đang được phát triển.")
+                    Swal.fire(
+                      "Thông báo",
+                      "Chức năng xem chi tiết đang được phát triển.",
+                      "info"
+                    )
                   }
                   className="p-3 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition duration-300"
                   title="Xem chi tiết"

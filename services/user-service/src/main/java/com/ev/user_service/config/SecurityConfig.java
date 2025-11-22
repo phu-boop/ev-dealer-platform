@@ -32,7 +32,7 @@ public class SecurityConfig {
     private final RateLimitFilter rateLimitFilter;
 
     SecurityConfig(RateLimitFilter rateLimitFilter, OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
-                   @Value("${frontend.url}") String urlFrontend) {
+            @Value("${frontend.url}") String urlFrontend) {
         this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
         this.urlFrontend = urlFrontend;
         this.rateLimitFilter = rateLimitFilter;
@@ -47,30 +47,29 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter)
             throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/error", "/auth/**", "/auth/oauth2/success", "/users/**",
-                                 "/payment/**", "/payment/return/**").permitAll()
-                .requestMatchers(
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/swagger/**"
-                ).permitAll()
-                .requestMatchers("/auth/admin/**").hasRole("ADMIN")
-                .requestMatchers("/auth/user/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/auth/oauth2/success").authenticated()
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth -> oauth
-                .successHandler(oAuth2LoginSuccessHandler)
-            )
-            .exceptionHandling(ex -> ex.accessDeniedHandler((req, res, e) -> {
-                throw e;
-            }))
-            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/error", "/auth/**", "/auth/oauth2/success", "/users/**",
+                                "/payment/**", "/payment/return/**")
+                        .permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger/**")
+                        .permitAll()
+                        .requestMatchers("/auth/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/auth/user/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/auth/oauth2/success").authenticated()
+                        .anyRequest().authenticated())
+                .oauth2Login(oauth -> oauth
+                        .successHandler(oAuth2LoginSuccessHandler))
+                .exceptionHandling(ex -> ex.accessDeniedHandler((req, res, e) -> {
+                    throw e;
+                }))
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -87,8 +86,8 @@ public class SecurityConfig {
 
     @Bean
     public LettuceConnectionFactory redisConnectionFactory(
-            @Value("${spring.redis.host:localhost}") String redisHost,
-            @Value("${spring.redis.port:6379}") int redisPort) {
+            @Value("${spring.redis.host}") String redisHost,
+            @Value("${spring.redis.port}") int redisPort) {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
         return new LettuceConnectionFactory(config);
     }
@@ -102,4 +101,3 @@ public class SecurityConfig {
         return template;
     }
 }
-
