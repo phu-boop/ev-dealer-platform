@@ -32,11 +32,7 @@ COPY --from=builder /app/user-service/target/*.jar app.jar
 # Copy application.properties vào container
 COPY services/user-service/src/main/resources/application.properties .
 
-# Copy wait-for-it
-COPY wait-for-it.sh /wait-for-it.sh
-RUN chmod +x /wait-for-it.sh
-
 EXPOSE 8081
 
 # Chờ DB và Redis trước khi chạy app
-ENTRYPOINT ["/wait-for-it.sh", "db:3306", "-t", "60", "--", "/wait-for-it.sh", "redis-db:6379", "-t", "60", "--", "java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
