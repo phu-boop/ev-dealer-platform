@@ -31,5 +31,4 @@ COPY --from=builder /app/user-service/target/*.jar app.jar
 
 EXPOSE 8081
 
-# Chạy Spring Boot, biến môi trường sẽ được inject từ docker-compose
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -38,10 +38,14 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app/gateway
 
-# Copy JAR từ stage 2
+# Copy JAR
 COPY --from=builder /app/gateway/target/gateway-0.0.1-SNAPSHOT.jar app.jar
+
+# Copy file env vào container
+COPY config/gateway.env ./config/gateway.env
 
 EXPOSE 8080
 
-# Chạy gateway
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=docker"]
+# Spring Boot đọc trực tiếp từ file env
+ENTRYPOINT ["java", "-jar", "app.jar", "--spring.config.import=optional:classpath:config/gateway.env", "--spring.profiles.active=docker"]
+
