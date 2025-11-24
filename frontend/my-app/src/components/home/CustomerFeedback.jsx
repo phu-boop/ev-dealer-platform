@@ -1,98 +1,68 @@
 import { Star, Quote } from "lucide-react";
 
-const CustomerFeedback = () => {
-  const feedbacks = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      rating: 5,
-      comment: "Dịch vụ tuyệt vời, nhân viên tư vấn nhiệt tình. Xe EVM X5 vận hành êm ái, tiết kiệm điện năng đúng như quảng cáo.",
-      vehicle: "EVM X5 Premium",
-      date: "2024-10-15"
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      rating: 4,
-      comment: "Rất hài lòng với trải nghiệm lái thử. Chất lượng xe tốt, thiết kế đẹp. Sẽ quay lại đặt mua trong tháng tới.",
-      vehicle: "EVM S3 Standard",
-      date: "2024-10-10"
-    },
-    {
-      id: 3,
-      name: "Lê Văn C",
-      rating: 5,
-      comment: "Đại lý chuyên nghiệp, hỗ trợ tốt về thủ tục trả góp. Xe sử dụng 2 tháng rất ổn định, phí sạc rẻ hơn xăng nhiều.",
-      vehicle: "EVM T7 Luxury",
-      date: "2024-10-05"
-    }
-  ];
+// Dữ liệu giả lập nhiều lên để chạy slider
+const initialFeedbacks = [
+  { id: 1, name: "Nguyễn Văn A", rating: 5, comment: "Dịch vụ tuyệt vời, nhân viên nhiệt tình. Xe EVM X5 vận hành quá êm.", vehicle: "EVM X5 Premium" },
+  { id: 2, name: "Trần Thị B", rating: 4, comment: "Thiết kế xe đẹp, nội thất sang trọng. Rất hài lòng với trải nghiệm lái thử.", vehicle: "EVM S3 Standard" },
+  { id: 3, name: "Lê Văn C", rating: 5, comment: "Thủ tục trả góp nhanh gọn. Phí sạc rẻ hơn xăng nhiều, đi lại tiết kiệm.", vehicle: "EVM T7 Luxury" },
+  { id: 4, name: "Phạm Minh D", rating: 5, comment: "Công nghệ tự lái hoạt động mượt mà trên cao tốc. Rất đáng tiền!", vehicle: "EVM X5 Premium" },
+  { id: 5, name: "Hoàng Tuấn E", rating: 4, comment: "Showroom hiện đại, nhân viên chuyên nghiệp. Xe giao đúng hẹn.", vehicle: "EVM S3 Standard" }
+];
 
-  const averageRating = 4.7;
-  const totalReviews = 128;
+const CustomerFeedback = () => {
+  // Nhân 3 danh sách để đủ dài
+  const feedbacks = [...initialFeedbacks, ...initialFeedbacks, ...initialFeedbacks];
 
   return (
-    <section className="bg-gray-50 py-12 px-6 rounded-lg my-12">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-2">Đánh giá từ khách hàng</h2>
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className="text-4xl font-bold text-blue-600">{averageRating}</div>
-            <div>
-              <div className="flex items-center">
+    <section className="py-24 bg-white overflow-hidden border-t border-gray-100">
+      <div className="text-center mb-16 px-4">
+        <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Cộng Đồng Chủ Xe EVDMS</h2>
+        <div className="inline-flex items-center bg-gray-50 px-6 py-2 rounded-full border border-gray-200">
+          <span className="text-2xl font-bold text-gray-900 mr-3">4.7</span>
+          <div className="flex space-x-1 mr-4">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star key={star} className="w-5 h-5 text-yellow-400 fill-current" />
+            ))}
+          </div>
+          <span className="text-sm text-gray-500 border-l border-gray-300 pl-4">Dựa trên 500+ đánh giá</span>
+        </div>
+      </div>
+
+      <div className="w-full relative">
+         {/* Fade Effect */}
+        <div className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+
+        {/* Marquee Container - Chạy chậm hơn (40s) */}
+        <div className="flex w-max animate-marquee gap-8 px-6" style={{ animationDuration: '40s' }}>
+          {feedbacks.map((feedback, idx) => (
+            <div 
+              key={`${feedback.id}-${idx}`} 
+              className="w-[400px] bg-gray-50 rounded-2xl p-8 shadow-sm hover:shadow-lg hover:bg-white border border-transparent hover:border-gray-200 transition-all duration-300 relative group"
+            >
+              <Quote className="absolute top-6 right-6 w-12 h-12 text-gray-200 group-hover:text-blue-100 transition-colors" />
+              
+              <div className="flex mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-5 h-5 ${
-                      star <= Math.floor(averageRating) 
-                        ? 'text-yellow-400 fill-current' 
-                        : 'text-gray-300'
-                    }`}
-                  />
+                  <Star key={star} className={`w-4 h-4 ${star <= feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
                 ))}
               </div>
-              <div className="text-sm text-gray-600">Dựa trên {totalReviews} đánh giá</div>
-            </div>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {feedbacks.map((feedback) => (
-            <div key={feedback.id} className="bg-white rounded-lg shadow-md p-6 relative">
-              <Quote className="w-8 h-8 text-blue-100 absolute top-4 right-4" />
+              <p className="text-gray-700 text-lg mb-6 leading-relaxed font-medium">"{feedback.comment}"</p>
               
-              <div className="flex items-center mb-4">
-                <div className="flex items-center">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`w-4 h-4 ${
-                        star <= feedback.rating 
-                          ? 'text-yellow-400 fill-current' 
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
+              <div className="flex items-center pt-4 border-t border-gray-200/50">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center text-white font-bold text-lg mr-4 shadow-md">
+                    {feedback.name.charAt(0)}
                 </div>
-              </div>
-
-              <p className="text-gray-700 mb-4 italic">"{feedback.comment}"</p>
-              
-              <div className="border-t pt-4">
-                <div className="font-semibold">{feedback.name}</div>
-                <div className="text-sm text-gray-600">{feedback.vehicle}</div>
-                <div className="text-sm text-gray-500">
-                  {new Date(feedback.date).toLocaleDateString('vi-VN')}
+                <div>
+                    <div className="font-bold text-gray-900">{feedback.name}</div>
+                    <div className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mt-1">
+                      {feedback.vehicle}
+                    </div>
                 </div>
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="text-center mt-8">
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-            Gửi đánh giá của bạn
-          </button>
         </div>
       </div>
     </section>
