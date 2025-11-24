@@ -79,18 +79,29 @@ public class SecurityConfig {
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .build();
     }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.addAllowedOrigin(allowedOrigins);
-        corsConfig.addAllowedMethod("*"); // Cho phép tất cả phương thức: GET, POST, PUT, DELETE, OPTIONS
-        corsConfig.addAllowedHeader("*"); // Cho phép tất cả header
-        corsConfig.setAllowCredentials(true); // Cho phép gửi cookie/token
-        corsConfig.setMaxAge(3600L); // Cache preflight request trong 1 giờ
+
+        // Nhiều origin (tách bởi dấu phẩy)
+        for (String origin : allowedOrigins.split(",")) {
+            if (!origin.trim().isEmpty()) {
+                corsConfig.addAllowedOrigin(origin.trim());
+            }
+        }
+
+        corsConfig.addAllowedMethod("*");
+        corsConfig.addAllowedHeader("*");
+        corsConfig.setAllowCredentials(true);
+        corsConfig.setMaxAge(3600L);
+
+        // Quan trọng: Hỗ trợ wildcard nếu cần
+        corsConfig.addAllowedOriginPattern("*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
         return source;
     }
+
+
 }
