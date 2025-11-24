@@ -2,7 +2,7 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS common-lib
 WORKDIR /build/common-lib
 
-# Copy common-lib từ root context
+# Copy common-lib
 COPY common-lib/pom.xml ./pom.xml
 COPY common-lib/src ./src
 
@@ -12,11 +12,11 @@ RUN mvn clean install -DskipTests
 FROM maven:3.9.9-eclipse-temurin-21 AS builder
 WORKDIR /app/user-service
 
-# Copy user-service source
+# Copy source user-service
 COPY services/user-service/pom.xml .
 COPY services/user-service/src ./src
 
-# Copy common-lib jar từ stage trước
+# Copy common-lib jar
 COPY --from=common-lib /root/.m2/repository/com/ev/common-lib/0.0.1-SNAPSHOT/*.jar /root/.m2/repository/com/ev/common-lib/0.0.1-SNAPSHOT/
 
 # Build user-service
@@ -29,10 +29,7 @@ WORKDIR /app/user-service
 # Copy jar đã build
 COPY --from=builder /app/user-service/target/*.jar app.jar
 
-# Copy application.properties vào container
-COPY services/user-service/src/main/resources/application.properties .
-
 EXPOSE 8081
 
-# Chờ DB và Redis trước khi chạy app
+# Chạy Spring Boot, biến môi trường sẽ được inject từ docker-compose
 ENTRYPOINT ["java", "-jar", "app.jar"]

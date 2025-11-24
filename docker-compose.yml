@@ -12,7 +12,7 @@ services:
       - app-network
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
     ports:
       - "9092:9092"
@@ -29,7 +29,7 @@ services:
     image: redis:7
     container_name: redis-db
     ports:
-      - "6380:6379"
+      - "6379:6379"   # sửa về port chuẩn Redis
     restart: always
     networks:
       - app-network
@@ -66,7 +66,7 @@ services:
       context: .
       dockerfile: services/dealer-service/Dockerfile
     ports:
-      - "8082:8082"
+      - "8083:8083"  # khớp với SERVICE_DISCOVERY
     env_file:
       - ./config/dealer-service.env
     networks:
@@ -80,7 +80,7 @@ services:
       context: .
       dockerfile: services/customer-service/Dockerfile
     ports:
-      - "8083:8083"
+      - "8082:8082"  # khớp với SERVICE_DISCOVERY
     env_file:
       - ./config/customer-service.env
     networks:
@@ -94,7 +94,7 @@ services:
       context: .
       dockerfile: services/vehicle-service/Dockerfile
     ports:
-      - "8084:8084"
+      - "8087:8087"
     env_file:
       - ./config/vehicle-service.env
     networks:
@@ -109,7 +109,7 @@ services:
       context: .
       dockerfile: services/inventory-service/Dockerfile
     ports:
-      - "8085:8085"
+      - "8084:8084"  
     env_file:
       - ./config/inventory-service.env
     networks:
@@ -137,7 +137,7 @@ services:
       context: .
       dockerfile: services/payment-service/Dockerfile
     ports:
-      - "8087:8087"
+      - "8085:8085"  
     env_file:
       - ./config/payment-service.env
     networks:
@@ -165,7 +165,7 @@ services:
       context: .
       dockerfile: services/ai-service/Dockerfile
     ports:
-      - "8089:8089"
+      - "8500:8500"
     env_file:
       - ./config/ai-service.env
     networks:
@@ -173,7 +173,6 @@ services:
     depends_on:
       - kafka
 
-  # Gateway - Chạy sau các core services
   gateway:
     image: my-gateway:latest
     build:
@@ -196,13 +195,12 @@ services:
       - reporting-service
       - ai-service
 
-  # Frontend - Chạy cuối cùng
   frontend:
-    build: 
+    build:
       context: ./frontend/my-app
       dockerfile: Dockerfile
     ports:
-      - "5173:80"
+      - "5173:5173"
     networks:
       - app-network
     depends_on:
