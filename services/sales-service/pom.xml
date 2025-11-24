@@ -140,13 +140,6 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
-        <!-- Dotenv (load environment variables) -->
-        <dependency>
-            <groupId>io.github.cdimascio</groupId>
-            <artifactId>dotenv-java</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-
         <!-- OpenFeign for service-to-service calls -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
