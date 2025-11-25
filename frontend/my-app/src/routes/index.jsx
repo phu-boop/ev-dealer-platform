@@ -143,74 +143,97 @@ export default function AppRoutes() {
           element={<ProtectedRoute allowedRoles={["ADMIN", "EVM_STAFF"]} />}
         >
           <Route path="evm" element={<EvmLayout />}>
-            {/* <Route index element={<Dashboard />} /> */}
+            {/* --- SHARED ROUTES (Cả Admin và Staff đều vào được) --- */}
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
             <Route path="promotions/*" element={<MainPromotion />} />
             <Route path="notifications" element={<StaffNotificationPage />} />
-            {/* (Route chi tiết đơn hàng) */}
             <Route
               path="b2b-orders/:orderId"
               element={<B2BOrderDetailsPage />}
             />
 
-            {/* Admin only */}
+            {/* --- ADMIN ONLY ROUTES --- */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route index element={<AdminDashboardPage />} />
               <Route path="admin/dashboard" element={<AdminDashboardPage />} />
+              {/* 1. SẢN PHẨM */}
               <Route
                 path="admin/products/promotions/*"
-                element={<AdminPromotionManager />}
+                element={<MainPromotion />}
               />
-              <Route path="admin/system/users" element={<UserManagement />} />
-              <Route
-                path="admin/reports/notifications"
-                element={<NotificationManagement />}
-              />
-              <Route
-                path="admin/distribution/allocation"
-                element={<AllocationPage />}
-              />
-              <Route path="admin/dealers/list" element={<DealersPage />} />
-
-              {/* Quản lý danh mục xe */}
               <Route
                 path="admin/products/catalog"
                 element={<VehicleCatalogManager />}
               />
-
-              {/* Quản lý phiên bản, màu sắc xe (thiếu tiềm kiếm (lọc theo màu, phiên bản)) */}
               <Route
                 path="admin/products/variants"
                 element={<VariantManager />}
               />
-
-              {/* Quản lý tính năng của xe */}
               <Route
                 path="admin/products/features"
                 element={<FeatureManagementPage />}
               />
-
-              {/* Quản lý phân phối & kho */}
+              {/* 2. PHÂN PHỐI */}
+              <Route
+                path="admin/distribution/allocation"
+                element={<AllocationPage />}
+              />
               <Route
                 path="admin/distribution/inventory/central"
                 element={<InventoryCentral />}
               />
-
-              {/* Lịch sử phân phối B2B */}
               <Route
                 path="admin/distribution/history"
                 element={<DistributionHistoryPage />}
               />
-
-              {/* Báo cáo */}
+              {/* Reuse các component của Staff cho Admin */}
+              <Route
+                path="admin/orders"
+                element={<B2BOrdersManagementPage />}
+              />
+              <Route
+                path="admin/orders/:orderId/create-invoice"
+                element={<CreateInvoiceFromOrderPage />}
+              />
+              <Route
+                path="admin/payments/invoices"
+                element={<DealerInvoiceManagement />}
+              />
+              <Route path="admin/debt" element={<DealerDebtManagementPage />} />
+              <Route
+                path="admin/debt/:dealerId/invoices"
+                element={<DealerInvoicesListPage />}
+              />
+              <Route
+                path="admin/debt/invoices/:invoiceId"
+                element={<DealerInvoiceDetailsPage />}
+              />
+              <Route
+                path="admin/payments/cash-history"
+                element={<CashPaymentsManagementPage />}
+              />
+              <Route
+                path="admin/payments/methods"
+                element={<PaymentMethodsManagement />}
+              />
+              {/* 4. QUẢN LÝ ĐẠI LÝ */}
+              <Route path="admin/dealers/list" element={<DealersPage />} />
+              <Route
+                path="admin/dealers/accounts"
+                element={<UserManagement />}
+              />
+              {/* 5. BÁO CÁO */}
               <Route path="admin/reports/sales" element={<SalesReportPage />} />
               <Route
                 path="admin/reports/inventory"
                 element={<InventoryReportPage />}
               />
-
-              {/* AI Forecast & Production Planning */}
+              <Route
+                path="admin/reports/notifications"
+                element={<NotificationManagement />}
+              />
+              {/* AI Forecast */}
               <Route
                 path="admin/reports/forecast"
                 element={<ForecastDashboard />}
@@ -223,45 +246,41 @@ export default function AppRoutes() {
                 path="admin/reports/forecast/production"
                 element={<ProductionPlanPage />}
               />
-
-              {/* Khôi phục dữ liệu cho báo cáo */}
+              {/* 6. SYSTEM */}
+              <Route path="admin/system/users" element={<UserManagement />} />
               <Route
                 path="admin/system/data-backfill"
                 element={<BackfillPage />}
               />
-
-              {/* Payment Methods Management (Admin) */}
-              <Route
-                path="admin/payments/methods"
-                element={<PaymentMethodsManagement />}
-              />
+              {/* <Route path="admin/system/permissions" ... /> */}
+              {/* <Route path="admin/system/config" ... /> */}
+              {/* <Route path="admin/system/audit" ... /> */}
             </Route>
 
-            {/* Staff only */}
+            {/* --- STAFF ONLY ROUTES --- */}
+            {/* Các route này giữ nguyên cho Staff, Admin đã có các route tương đương ở trên */}
             <Route element={<ProtectedRoute allowedRoles={["EVM_STAFF"]} />}>
-              {/* <Route path="staff" element={<Dashboard />} /> */}
               <Route index element={<EvmStaffDashboardPage />} />
               <Route
                 path="staff/dashboard"
                 element={<EvmStaffDashboardPage />}
               />
-              {/* --------------------------------QUẢN LÝ SẢN PHẨM-------------------------------------------------- */}
-              {/* Quản lý danh mục xe */}
+
+              {/* Sản phẩm */}
               <Route
                 path="staff/products/catalog"
                 element={<VehicleCatalogManager />}
               />
-              {/* Quản lý phiên bản, màu sắc xe */}
               <Route
                 path="staff/products/variants"
                 element={<VariantManager />}
               />
-              {/* Giá Sỉ & Chiết Khấu */}
               <Route
                 path="staff/products/promotions"
                 element={<MainPromotion />}
               />
-              {/* --------------------------------PHÂN PHỐI & KHO-------------------------------------------------- */}
+
+              {/* Phân phối */}
               <Route
                 path="staff/distribution/inventory/central"
                 element={<InventoryCentral />}
@@ -270,20 +289,19 @@ export default function AppRoutes() {
                 path="staff/distribution/allocation"
                 element={<AllocationPage />}
               />
-              {/* --------------------------------MANAGE DEALER-------------------------------------------------- */}
+
+              {/* Đại lý */}
               <Route path="staff/dealers/list" element={<DealersPage />} />
               <Route
                 path="staff/dealers/dealer-accounts"
                 element={<UserManagement />}
               />
 
-              {/* Payment Management (EVM Staff) */}
+              {/* Thanh toán & Đơn hàng (Staff Routes) */}
               <Route
                 path="staff/payments/dealer-invoices"
                 element={<DealerInvoiceManagement />}
               />
-
-              {/* Orders & Invoices Management (EVM Staff) */}
               <Route
                 path="staff/orders"
                 element={<B2BOrdersManagementPage />}
@@ -293,7 +311,6 @@ export default function AppRoutes() {
                 element={<CreateInvoiceFromOrderPage />}
               />
 
-              {/* Debt Management (EVM Staff) */}
               <Route path="staff/debt" element={<DealerDebtManagementPage />} />
               <Route
                 path="staff/debt/:dealerId/invoices"
@@ -304,7 +321,6 @@ export default function AppRoutes() {
                 element={<DealerInvoiceDetailsPage />}
               />
 
-              {/* Cash Payments Management (EVM Staff) */}
               <Route
                 path="staff/payments/cash-payments"
                 element={<CashPaymentsManagementPage />}

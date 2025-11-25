@@ -48,11 +48,11 @@ export const adminMenuItems = [
         label: "Danh Mục Xe",
         path: "/evm/admin/products/catalog",
       },
-      {
-        icon: FiCreditCard,
-        label: "Giá & Khuyến Mãi",
-        path: "/evm/admin/products/pricing",
-      },
+      // {
+      //   icon: FiCreditCard,
+      //   label: "Giá & Khuyến Mãi",
+      //   path: "/evm/admin/products/pricing",
+      // },
       {
         icon: FiTag,
         label: "Phiên Bản & Màu Sắc",
@@ -91,6 +91,34 @@ export const adminMenuItems = [
         icon: FiTruck,
         label: "Lịch Sử Phân Phối",
         path: "/evm/admin/distribution/history",
+      },
+    ],
+  },
+
+  {
+    icon: FiDollarSign,
+    label: "Đơn Hàng & Thanh Toán",
+    path: "/evm/admin/sales-finance",
+    submenu: [
+      {
+        icon: FiShoppingCart,
+        label: "Đơn Hàng Đại Lý (B2B)",
+        path: "/evm/admin/orders",
+      },
+      {
+        icon: FiFileText,
+        label: "Quản Lý Hóa Đơn",
+        path: "/evm/admin/payments/invoices",
+      },
+      {
+        icon: FiCreditCard,
+        label: "Công Nợ Đại Lý",
+        path: "/evm/admin/debt",
+      },
+      {
+        icon: FiDollarSign,
+        label: "Lịch Sử Thanh Toán",
+        path: "/evm/admin/payments/cash-history",
       },
     ],
   },
@@ -218,11 +246,11 @@ export const evmStaffMenuItems = [
         label: "Phiên Bản & Màu Sắc",
         path: "/evm/staff/products/variants",
       },
-      {
-        icon: FiCreditCard,
-        label: "Giá Sỉ & Chiết Khấu",
-        path: "/evm/staff/products/pricing",
-      },
+      // {
+      //   icon: FiCreditCard,
+      //   label: "Giá Sỉ & Chiết Khấu",
+      //   path: "/evm/staff/products/pricing",
+      // },
       {
         icon: FiCreditCard,
         label: "Khuyến Mãi",
@@ -266,16 +294,16 @@ export const evmStaffMenuItems = [
         label: "Danh Sách Đại Lý",
         path: "/evm/staff/dealers/list",
       },
-      {
-        icon: FiFileText,
-        label: "Hợp Đồng & Chỉ Tiêu",
-        path: "/evm/staff/dealers/contracts",
-      },
-      {
-        icon: FiCreditCardAlt,
-        label: "Công Nợ & Thanh Toán",
-        path: "/evm/staff/dealers/debts",
-      },
+      // {
+      //   icon: FiFileText,
+      //   label: "Hợp Đồng & Chỉ Tiêu",
+      //   path: "/evm/staff/dealers/contracts",
+      // },
+      // {
+      //   icon: FiCreditCardAlt,
+      //   label: "Công Nợ & Thanh Toán",
+      //   path: "/evm/staff/dealers/debts",
+      // },
       {
         icon: FiFileText,
         label: "Hóa Đơn Đại Lý",

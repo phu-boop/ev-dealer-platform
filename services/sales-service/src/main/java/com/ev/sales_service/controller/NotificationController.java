@@ -77,10 +77,10 @@ public class NotificationController {
     @Transactional
     public ResponseEntity<ApiRespond<String>> deleteAllStaffNotifications() {
 
-        // 1. Lấy TẤT CẢ thông báo của Staff
+        // Lấy TẤT CẢ thông báo của Staff
         List<Notification> allStaffNotifications = notificationRepository.findAllByAudience(NotificationAudience.STAFF);
 
-        // 2. Tách thành 2 nhóm: "đang khiếu nại" và "có thể xóa"
+        // Tách thành 2 nhóm: "đang khiếu nại" và "có thể xóa"
         List<Notification> notificationsToDelete = new ArrayList<>();
         List<Notification> activeDisputes = new ArrayList<>();
 
