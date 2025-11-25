@@ -64,14 +64,14 @@ export const dealerManagerMenuItems = [
         label: "Tạo Báo Giá",
         path: "/dealer/manager/quotes/create",
       },
+      // {
+      //   icon: FiCreditCard,
+      //   label: "In Báo Giá",
+      //   path: "/dealer/manager/quotes/print",
+      // },
       {
         icon: FiCreditCard,
-        label: "In Báo Giá",
-        path: "/dealer/manager/quotes/print",
-      },
-      {
-        icon: FiCreditCard,
-        label: "(DONE)Giá & Khuyến Mãi",
+        label: "Giá & Khuyến Mãi",
         path: "/dealer/manager/promotions",
       },
     ],
@@ -259,7 +259,7 @@ export const dealerStaffMenuItems = [
       },
       {
         icon: FiFileText,
-        label: "(DONE)Xem khuyến mãi",
+        label: "Xem khuyến mãi",
         path: "/dealer/staff/promotions",
       },
     ],

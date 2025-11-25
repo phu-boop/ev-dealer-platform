@@ -3,52 +3,40 @@ package com.ev.vehicle_service.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@Profile("docker") // <-- HOẠT ĐỘNG KHI PROFILE KHÔNG PHẢI LÀ "dev"
+@Profile("!dev")
 public class ProductionSecurityConfig {
 
-    // @Bean
-    // public SecurityFilterChain securityFilterChain(HttpSecurity http) throws
-    // Exception {
-    // // Đây là nơi cấu hình JWT thật sự sau này
-    // System.out.println(">>> Running in PRODUCTION security mode. JWT is required.
-    // <<<");
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // http
-    // .csrf(csrf -> csrf.disable())
-    // .authorizeHttpRequests(auth -> auth
-    // // Cho phép GET công khai
-    // .requestMatchers(HttpMethod.GET, "/vehicle-models/**").permitAll()
-    // // Yêu cầu quyền "EVM_STAFF" cho các thao tác thay đổi dữ liệu
-    // .requestMatchers(HttpMethod.POST,
-    // "/vehicle-models").hasAnyAuthority("EVM_STAFF", "ADMIN")
-    // .requestMatchers(HttpMethod.PUT,
-    // "/vehicle-models/**").hasAnyAuthority("EVM_STAFF", "ADMIN")
-    // .requestMatchers(HttpMethod.DELETE,
-    // "/vehicle-models/**").hasAnyAuthority("EVM_STAFF", "ADMIN")
-    // // Tất cả các request còn lại phải được xác thực
-    // .anyRequest().authenticated()
-    // );
+    public ProductionSecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
-    // // TODO: Thêm bộ lọc JWT (JwtAuthenticationFilter) vào đây
-
-    // return http.build();
-    // }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // In môi trường dev, cho phép tất cả request đi qua
-        System.out.println(" Running in DOCKER security mode. All requests are permitted. !!!");
+        System.out.println(">>> Running in PRODUCTION security mode. JWT is required. <<<");
 
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll());
+                        .requestMatchers(HttpMethod.GET, "/vehicle-models/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/vehicle-models")
+                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/vehicle-models/**")
+                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/vehicle-models/**")
+                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

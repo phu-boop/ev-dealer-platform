@@ -16,9 +16,12 @@ services:
     container_name: kafka
     ports:
       - "9092:9092"
+      - "29092:29092"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
@@ -33,6 +36,11 @@ services:
     restart: always
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   redisinsight:
     image: redis/redisinsight:latest
@@ -43,7 +51,8 @@ services:
     networks:
       - app-network
     depends_on:
-      - redis-db
+      redis-db:
+        condition: service_healthy
 
   user-service:
     image: my-user-service:latest
@@ -185,15 +194,26 @@ services:
     networks:
       - app-network
     depends_on:
-      - user-service
-      - customer-service
-      - dealer-service
-      - vehicle-service
-      - inventory-service
-      - sales-service
-      - payment-service
-      - reporting-service
-      - ai-service
+      redis-db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      customer-service:
+        condition: service_started
+      dealer-service:
+        condition: service_started
+      vehicle-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      sales-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      reporting-service:
+        condition: service_started
+      ai-service:
+        condition: service_started
 
   frontend:
     build:
