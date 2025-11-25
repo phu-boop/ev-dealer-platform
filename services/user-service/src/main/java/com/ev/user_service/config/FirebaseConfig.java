@@ -18,7 +18,6 @@ public class FirebaseConfig {
             InputStream serviceAccount =
                     getClass().getClassLoader().getResourceAsStream("firebase-service-account.json");
 
-            // ✅ Kiểm tra file có tồn tại không
             if (serviceAccount == null) {
                 throw new IOException("❌ firebase-service-account.json not found in resources folder!");
             }

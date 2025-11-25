@@ -97,7 +97,7 @@ public class NotificationService {
     public void createPromotionNotification(PromotionCreatedEvent event) {
         Notification notification = Notification.builder()
                 .type("NEW_PROMOTION")
-                .title("🎉 " + event.getPromotionName())
+                .title("" + event.getPromotionName())
                 .message(event.getDescription())
                 .promotionId(event.getPromotionId())
                 .eventId(event.getEventId()) // để idempotency
@@ -109,9 +109,7 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-    // ✅ Gửi thông báo FCM tới các admin / user (tùy logic bạn muốn)
     public void sendPromotionFCM(PromotionCreatedEvent event) {
-        // Lấy tất cả device token của admin (hoặc user)
         List<UserDevice> adminDevices = userDeviceRepository.findAllAdminDevices();
 
         for (UserDevice device : adminDevices) {
@@ -119,7 +117,7 @@ public class NotificationService {
                 Message message = Message.builder()
                         .setToken(device.getFcmToken())
                         .setNotification(com.google.firebase.messaging.Notification.builder()
-                                .setTitle("🎉 " + event.getPromotionName())
+                                .setTitle("" + event.getPromotionName())
                                 .setBody(event.getDescription())
                                 .build())
                         .putData("promotionId", event.getPromotionId().toString())

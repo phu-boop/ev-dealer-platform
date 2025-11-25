@@ -92,6 +92,10 @@ public class OutboxProcessor {
             
             case "PromotionEventType": 
                 return TOPIC;
+
+            // PROMOTION EVENT
+            case "PromotionCreated":      
+                return TOPIC;
             
             // --- MẶC ĐỊNH ---
             default:
