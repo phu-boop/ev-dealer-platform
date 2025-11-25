@@ -92,7 +92,6 @@ const B2CCashPaymentsManagementPage = () => {
       };
       const response = await paymentService.confirmManualPayment(selectedTransaction.transactionId, payload);
       
-      console.log('Confirm response:', response);
 
       if (response && response.data) {
         toast.success('Đã duyệt thanh toán thành công! Công nợ và lịch sử thanh toán đã được cập nhật.');
