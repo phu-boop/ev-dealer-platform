@@ -147,7 +147,6 @@ export default function AppRoutes() {
             <Route path="profile" element={<ProfileForm />} />
             <Route path="settings" element={<SecuritySettings />} />
             <Route path="promotions/*" element={<MainPromotion />} />
-
             <Route path="notifications" element={<StaffNotificationPage />} />
             {/* (Route chi tiết đơn hàng) */}
             <Route
@@ -190,12 +189,6 @@ export default function AppRoutes() {
               <Route
                 path="admin/products/features"
                 element={<FeatureManagementPage />}
-              />
-
-              {/* Giá Sỉ & Chiết Khấu */}
-              <Route
-                path="admin/products/promotions"
-                element={<MainPromotion />}
               />
 
               {/* Quản lý phân phối & kho */}
