@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuthContext } from "../../../auth/AuthProvider";
 import { FiEye, FiLoader, FiFilter } from "react-icons/fi";
+import Swal from "sweetalert2";
 import {
   getAllVariantsPaginated,
   getComparisonDetails,
@@ -99,7 +100,11 @@ const DealerProductCatalogPage = () => {
       } else {
         if (prevItems.length >= 3) {
           // Giới hạn 3 xe
-          alert("Chỉ có thể so sánh tối đa 3 sản phẩm.");
+          Swal.fire(
+            "Thông báo",
+            "Chỉ có thể so sánh tối đa 3 sản phẩm.",
+            "warning"
+          );
           return prevItems;
         }
         return [...prevItems, variant];
@@ -110,7 +115,7 @@ const DealerProductCatalogPage = () => {
   // Xử lý gọi API khi bấm nút "So sánh"
   const handleCompareSubmit = async () => {
     if (compareItems.length < 2) {
-      alert("Cần chọn ít nhất 2 sản phẩm để so sánh.");
+      Swal.fire("Thông báo", "Cần chọn ít nhất 2 sản phẩm để so sánh.", "info");
       return;
     }
 
@@ -119,7 +124,11 @@ const DealerProductCatalogPage = () => {
         "Lỗi: Không tìm thấy thông tin user hoặc profileId.",
         userData
       );
-      alert("Lỗi thông tin người dùng. Vui lòng thử đăng nhập lại.");
+      Swal.fire(
+        "Lỗi!",
+        "Lỗi thông tin người dùng. Vui lòng thử đăng nhập lại.",
+        "error"
+      );
       setIsLoadingCompare(false);
       return;
     }
@@ -135,7 +144,11 @@ const DealerProductCatalogPage = () => {
       setIsCompareModalOpen(true);
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu so sánh:", error);
-      alert("Không thể tải dữ liệu so sánh. Vui lòng thử lại.");
+      Swal.fire(
+        "Lỗi!",
+        "Không thể tải dữ liệu so sánh. Vui lòng thử lại.",
+        "error"
+      );
     } finally {
       setIsLoadingCompare(false);
     }
@@ -149,7 +162,7 @@ const DealerProductCatalogPage = () => {
       setSelectedVariant(response.data.data); // Tải dữ liệu chi tiết
     } catch (error) {
       console.error("Lỗi khi tải chi tiết xe:", error);
-      alert("Không thể tải chi tiết sản phẩm.");
+      Swal.fire("Lỗi!", "Không thể tải chi tiết sản phẩm.", "error");
       setIsDetailModalOpen(false); // Đóng modal nếu lỗi
     } finally {
       setIsLoadingDetail(false);

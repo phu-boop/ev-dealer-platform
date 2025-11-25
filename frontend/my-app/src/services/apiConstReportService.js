@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiConstReportService = axios.create({
-  baseURL: "http://localhost:8080/reporting/",
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/reporting/`,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
@@ -18,7 +18,7 @@ apiConstReportService.interceptors.response.use(
     if (error.response?.status === 401) {
       try {
         const res = await axios.post(
-          "http://localhost:8080/auth/refresh",
+          `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );

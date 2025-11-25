@@ -1,27 +1,25 @@
-import React from "react";
-import { FiX, FiLogOut, FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { MenuItem } from "./MenuItem";
-import { UserProfile } from "./UserProfile";
+import React from 'react';
+import { FiX, FiLogOut, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { MenuItem } from './MenuItem';
+import { UserProfile } from './UserProfile';
 
-export const Sidebar = ({
-  isSidebarOpen,
-  setIsSidebarOpen,
-  menuItems,
-  activePath,
-  openSubmenus,
-  toggleSubmenu,
-  handleNavigation,
+export const Sidebar = ({ 
+  isSidebarOpen, 
+  setIsSidebarOpen, 
+  menuItems, 
+  activePath, 
+  openSubmenus, 
+  toggleSubmenu, 
+  handleNavigation, 
   handleLogout,
-  user,
+  user 
 }) => {
   return (
     <>
       {/* Overlay */}
       <div
         className={`fixed inset-0 z-20 transition-all duration-300 lg:hidden ${
-          isSidebarOpen
-            ? "bg-black bg-opacity-50"
-            : "bg-opacity-0 pointer-events-none"
+          isSidebarOpen ? "bg-black bg-opacity-50" : "bg-opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsSidebarOpen(false)}
       />
@@ -38,29 +36,25 @@ export const Sidebar = ({
           {/* Header với logo và nút toggle */}
           <div className="flex items-center h-20 min-w-10 justify-around mx-6 mb-9 my-3 border-y border-white rounded-xl">
             {/* Logo và tên */}
-            <div
-              className={`flex items-center transition-all duration-300 h-20 ${
-                isSidebarOpen ? "opacity-100" : "opacity-0 lg:opacity-100"
-              }`}
-            >
-              {/* Logo */}
-              <div className="relative w-10 h-10 flex items-center justify-center mr-3">
-                {/* Vòng tròn lớn */}
-                <div className="absolute w-10 h-10 rounded-full border-2 border-white/80"></div>
-
-                {/* Vòng tròn nhỏ xoay */}
-                <div className="absolute w-6 h-6 rounded-full border border-white border-t-transparent animate-spin-slow"></div>
-
-                {/* Icon lá */}
-                <div className="text-white text-lg">
-                  <i className="fas fa-leaf"></i>
-                </div>
-
-                {/* Icon xe ở góc */}
-                <div className="absolute -bottom-1 -right-1 text-white text-xs">
-                  <i className="fas fa-car"></i>
-                </div>
+            <div className={`flex items-center transition-all duration-300 h-20 ${isSidebarOpen ? "opacity-100" : "opacity-0 lg:opacity-100"}`}>
+             {/* Logo */}
+            <div className="relative w-10 h-10 flex items-center justify-center mr-3">
+              {/* Vòng tròn lớn */}
+              <div className="absolute w-10 h-10 rounded-full border-2 border-white/80"></div>
+              
+              {/* Vòng tròn nhỏ xoay */}
+              <div className="absolute w-6 h-6 rounded-full border border-white border-t-transparent animate-spin-slow"></div>
+              
+              {/* Icon lá */}
+              <div className="text-white text-lg">
+                <i className="fas fa-leaf"></i>
               </div>
+              
+              {/* Icon xe ở góc */}
+              <div className="absolute -bottom-1 -right-1 text-white text-xs">
+                <i className="fas fa-car"></i>
+              </div>
+            </div>
               {/* Tên công ty - chỉ hiện khi sidebar mở */}
               {isSidebarOpen && (
                 <h1 className="text-xl ml-2 font-bold bg-gradient-to-r from-emerald-300 bg-clip-text text-transparent whitespace-nowrap">
@@ -78,7 +72,7 @@ export const Sidebar = ({
               >
                 <FiX className="w-5 h-5 text-white" />
               </button>
-
+              
               {/* Nút toggle trên desktop */}
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -95,7 +89,10 @@ export const Sidebar = ({
           </div>
 
           {/* User Profile */}
-          <UserProfile isSidebarOpen={isSidebarOpen} user={user} />
+          <UserProfile 
+            isSidebarOpen={isSidebarOpen} 
+            user={user} 
+          />
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 overflow-y-scroll no-scrollbar">

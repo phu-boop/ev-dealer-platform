@@ -1,2 +1,0 @@
-org.springframework.context.ApplicationContextInitializer=\
-  com.ev.inventory_service.config.DotenvApplicationInitializer

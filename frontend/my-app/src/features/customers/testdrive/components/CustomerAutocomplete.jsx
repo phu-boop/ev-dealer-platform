@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { Search, User, X, ChevronDown } from 'lucide-react';
-import apiConstCustomerService from '../../../../services/apiConstCustomerService';
+import { useState, useEffect, useRef } from "react";
+import { Search, User, X, ChevronDown } from "lucide-react";
+import apiConstCustomerService from "../../../../services/apiConstCustomerService";
 
 const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -18,8 +18,8 @@ const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Load initial customer if value is provided
@@ -51,20 +51,20 @@ const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
         setSelectedCustomer(response.data.data);
       }
     } catch (error) {
-      console.error('Error loading customer:', error);
+      console.error("Error loading customer:", error);
     }
   };
 
   const loadAllCustomers = async () => {
     try {
       setLoading(true);
-      const response = await apiConstCustomerService.get('');
+      const response = await apiConstCustomerService.get("");
       if (response.data.success) {
         setCustomers(response.data.data.slice(0, 10)); // Limit to 10
         setIsOpen(true); // ✅ Mở dropdown khi có kết quả
       }
     } catch (error) {
-      console.error('Error loading customers:', error);
+      console.error("Error loading customers:", error);
       setCustomers([]);
     } finally {
       setLoading(false);
@@ -74,47 +74,45 @@ const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
   const searchCustomers = async (keyword) => {
     try {
       setLoading(true);
-      console.log('🔍 Searching for:', keyword);
-      
+
       // Use the search parameter in the main endpoint
-      const response = await apiConstCustomerService.get('', {
-        params: { search: keyword }
+      const response = await apiConstCustomerService.get("", {
+        params: { search: keyword },
       });
-      
-      console.log('✅ Search response:', response.data);
-      
+
       if (response.data.success) {
         const results = response.data.data.slice(0, 10);
-        console.log('📋 Setting customers:', results.length, 'results');
-        console.log('📋 Customers data:', results);
+
         setCustomers(results);
         setIsOpen(true); // ✅ Mở dropdown khi có kết quả
       } else {
-        console.warn('⚠️ Response not successful:', response.data);
+        console.warn("⚠️ Response not successful:", response.data);
         setCustomers([]);
       }
     } catch (error) {
       // If search fails, fallback to client-side filtering
-      console.warn('⚠️ Search failed, using client-side filter:', error);
+      console.warn("⚠️ Search failed, using client-side filter:", error);
       try {
-        const response = await apiConstCustomerService.get('');
+        const response = await apiConstCustomerService.get("");
         if (response.data.success) {
-          const filtered = response.data.data.filter(customer => {
-            const fullName = `${customer.firstName} ${customer.lastName}`.toLowerCase();
-            const email = (customer.email || '').toLowerCase();
-            const phone = (customer.phone || '').toLowerCase();
+          const filtered = response.data.data.filter((customer) => {
+            const fullName =
+              `${customer.firstName} ${customer.lastName}`.toLowerCase();
+            const email = (customer.email || "").toLowerCase();
+            const phone = (customer.phone || "").toLowerCase();
             const search = keyword.toLowerCase();
-            
-            return fullName.includes(search) || 
-                   email.includes(search) || 
-                   phone.includes(search);
+
+            return (
+              fullName.includes(search) ||
+              email.includes(search) ||
+              phone.includes(search)
+            );
           });
-          console.log('📋 Fallback filtered:', filtered.length, 'results');
           setCustomers(filtered.slice(0, 10));
           setIsOpen(true); // ✅ Mở dropdown khi có kết quả
         }
       } catch (fallbackError) {
-        console.error('❌ Error in fallback search:', fallbackError);
+        console.error("❌ Error in fallback search:", fallbackError);
         setCustomers([]);
       }
     } finally {
@@ -126,13 +124,13 @@ const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
     setSelectedCustomer(customer);
     onChange(customer.customerId);
     setIsOpen(false);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const handleClear = () => {
     setSelectedCustomer(null);
-    onChange('');
-    setSearchTerm('');
+    onChange("");
+    setSearchTerm("");
     setCustomers([]);
   };
 
@@ -147,10 +145,15 @@ const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
     <div ref={wrapperRef} className="relative">
       {/* Selected Customer Display */}
       {selectedCustomer ? (
-        <div className={`flex items-center justify-between px-3 py-2 border rounded-lg bg-white ${
-          error ? 'border-red-500' : 'border-gray-300'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-          <div className="flex items-center space-x-3 flex-1" onClick={() => !disabled && setIsOpen(true)}>
+        <div
+          className={`flex items-center justify-between px-3 py-2 border rounded-lg bg-white ${
+            error ? "border-red-500" : "border-gray-300"
+          } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        >
+          <div
+            className="flex items-center space-x-3 flex-1"
+            onClick={() => !disabled && setIsOpen(true)}
+          >
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <User className="w-5 h-5 text-blue-600" />
             </div>
@@ -185,22 +188,21 @@ const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
             disabled={disabled}
             placeholder="Tìm kiếm khách hàng theo tên, email, SĐT..."
             className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              error ? 'border-red-500' : 'border-gray-300'
-            } ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+              error ? "border-red-500" : "border-gray-300"
+            } ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
           />
-          <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`} />
+          <ChevronDown
+            className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
         </div>
       )}
 
       {/* Error Message */}
-      {error && (
-        <p className="text-red-500 text-sm mt-1">{error}</p>
-      )}
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
 
       {/* Dropdown List */}
-      {console.log('🎨 Render - isOpen:', isOpen, 'disabled:', disabled, 'loading:', loading, 'customers.length:', customers.length)}
       {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {loading ? (
@@ -228,12 +230,16 @@ const CustomerAutocomplete = ({ value, onChange, error, disabled = false }) => {
                         {customer.phone} • {customer.email}
                       </p>
                       {customer.customerType && (
-                        <span className={`inline-block px-2 py-0.5 text-xs rounded-full mt-1 ${
-                          customer.customerType === 'INDIVIDUAL' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {customer.customerType === 'INDIVIDUAL' ? 'Cá nhân' : 'Doanh nghiệp'}
+                        <span
+                          className={`inline-block px-2 py-0.5 text-xs rounded-full mt-1 ${
+                            customer.customerType === "INDIVIDUAL"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          {customer.customerType === "INDIVIDUAL"
+                            ? "Cá nhân"
+                            : "Doanh nghiệp"}
                         </span>
                       )}
                     </div>

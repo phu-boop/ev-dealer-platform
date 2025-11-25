@@ -6,7 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { markAllNotificationsAsRead } from "../services/notificationApi";
 import Swal from "sweetalert2";
 
-const SOCKET_URL = "http://localhost:8080/ws"; // Thay bằng URL Spring Boot của bạn
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const SOCKET_URL = `${API_BASE_URL}/ws`;
 
 export const useNotificationSocket = (isEnabled = true) => {
   const queryClient = useQueryClient(); // Để refresh lại data khi có tin mới
@@ -18,11 +19,7 @@ export const useNotificationSocket = (isEnabled = true) => {
 
     const client = new Client({
       webSocketFactory: () => new SockJS(SOCKET_URL),
-      debug: (str) => {
-        console.log("STOMP: " + str);
-      },
       onConnect: () => {
-        console.log("Đã kết nối WebSocket");
         // Lắng nghe topic mà Kafka Listener đẩy tới
         client.subscribe("/topic/staff-notifications", (message) => {
           // Khi có tin nhắn mới, làm 2 việc:

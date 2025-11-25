@@ -1,5 +1,5 @@
-import apiConstCustomerService from "../../../../services/apiConstCustomerService"; 
-import apiConstVehicleService from "../../../../services/apiConstVehicleService"; 
+import apiConstCustomerService from "../../../../services/apiConstCustomerService";
+import apiConstVehicleService from "../../../../services/apiConstVehicleService";
 
 // --- Khai báo các API liên quan đến Khách hàng ---
 
@@ -8,8 +8,7 @@ import apiConstVehicleService from "../../../../services/apiConstVehicleService"
  * @returns {Promise<any>}
  */
 export const getCustomers = () => {
-  // apiConstCustomerService đã có baseURL là http://localhost:8080/customers
-  return apiConstCustomerService.get(""); 
+  return apiConstCustomerService.get("");
 };
 
 // --- Khai báo các API liên quan đến Xe (Vehicle Catalog) ---
@@ -19,7 +18,6 @@ export const getCustomers = () => {
  * @returns {Promise<any>}
  */
 export const getVehicleModels = () => {
-  // apiConstVehicleService có baseURL là http://localhost:8080/vehicle-catalog
   return apiConstVehicleService.get("/vehicle-catalog/models");
 };
 
@@ -29,8 +27,9 @@ export const getVehicleModels = () => {
  * @returns {Promise<any>}
  */
 export const getVehicleVariantsByModelId = (modelId) => {
-  // apiConstVehicleService có baseURL là http://localhost:8080/vehicle-catalog
-  return apiConstVehicleService.get(`/vehicle-catalog/models/${modelId}/variants`);
+  return apiConstVehicleService.get(
+    `/vehicle-catalog/models/${modelId}/variants`
+  );
 };
 // --- Các hàm lấy dữ liệu từ Session Storage (Giữ nguyên) ---
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
+import Swal from "sweetalert2";
 import { updateDealerReorderLevel } from "../services/dealerSalesService";
 
 const DealerReorderModal = ({
@@ -54,7 +55,11 @@ const DealerReorderModal = ({
 
       await updateDealerReorderLevel(payload);
 
-      alert("Cập nhật ngưỡng đặt lại thành công!");
+      Swal.fire(
+        "Thành công!",
+        "Cập nhật ngưỡng đặt lại thành công!",
+        "success"
+      );
       onSuccess();
       onClose();
     } catch (err) {

@@ -1,6 +1,7 @@
 // Đây là component UI Quản Lý Tính Năng. Nó sẽ hiển thị hai cột: một cột là các tính năng có sẵn, cột còn lại là các tính năng đã được gán
 import React, { useState, useEffect } from "react";
 import { FiX, FiArrowRight, FiTrash2, FiLoader } from "react-icons/fi";
+import Swal from "sweetalert2";
 import {
   getAllFeatures,
   assignFeatureToVariant,
@@ -48,7 +49,7 @@ const FeatureAssignmentModal = ({ isOpen, onClose, variant, onSuccess }) => {
         { ...featureToAssign, ...featureData },
       ]);
     } catch (err) {
-      alert("Lỗi: Không thể gán tính năng.");
+      Swal.fire("Lỗi!", "Không thể gán tính năng.", "error");
     }
   };
 
@@ -65,7 +66,7 @@ const FeatureAssignmentModal = ({ isOpen, onClose, variant, onSuccess }) => {
         )
       );
     } catch (err) {
-      alert("Lỗi: Không thể bỏ gán tính năng.");
+      Swal.fire("Lỗi!", "Không thể bỏ gán tính năng.", "error");
     }
   };
 

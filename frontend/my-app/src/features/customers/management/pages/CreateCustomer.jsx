@@ -2,8 +2,17 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
-  FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiSave, FiX,
-  FiCheck, FiAlertCircle, FiChevronDown, FiUsers
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiCalendar,
+  FiSave,
+  FiX,
+  FiCheck,
+  FiAlertCircle,
+  FiChevronDown,
+  FiUsers,
 } from "react-icons/fi";
 import customerService from "../services/customerService";
 import staffService from "../../assignment/services/staffService";
@@ -14,7 +23,7 @@ const CreateCustomer = () => {
   const { id } = useParams(); // Get customer ID from URL if editing
   const { roles } = useAuthContext();
   const isEditMode = Boolean(id); // Check if we're in edit mode
-  
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -26,7 +35,7 @@ const CreateCustomer = () => {
     registrationDate: "",
     assignedStaffId: "", // Thêm field phân công nhân viên
     // status không cần thiết khi tạo mới - backend tự động set = NEW
-    preferredDealerId: null
+    preferredDealerId: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -34,10 +43,13 @@ const CreateCustomer = () => {
   const [staffList, setStaffList] = useState([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
-  
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // Check if user is DEALER_MANAGER
-  const isDealerManager = roles?.includes('DEALER_MANAGER');
-  const dealerId = sessionStorage.getItem('dealerId') || sessionStorage.getItem('profileId');
+  const isDealerManager = roles?.includes("DEALER_MANAGER");
+  const dealerId =
+    sessionStorage.getItem("dealerId") || sessionStorage.getItem("profileId");
 
   // Load customer data if editing
   useEffect(() => {
@@ -56,17 +68,12 @@ const CreateCustomer = () => {
   const fetchCustomerData = async () => {
     setLoadingCustomer(true);
     try {
-      console.log("🔍 Fetching customer with ID:", id);
-      console.log("📡 API URL:", `http://localhost:8080/customers/${id}`);
-      
       const customer = await customerService.getCustomerById(id);
-      console.log("✅ Customer data received:", customer);
-      
       // Check if customer data is valid
       if (!customer || !customer.customerId) {
         throw new Error("Invalid customer data received");
       }
-      
+
       setFormData({
         firstName: customer.firstName || "",
         lastName: customer.lastName || "",
@@ -77,20 +84,19 @@ const CreateCustomer = () => {
         customerType: customer.customerType || "INDIVIDUAL",
         registrationDate: customer.registrationDate || "",
         assignedStaffId: customer.assignedStaffId || "",
-        preferredDealerId: customer.preferredDealerId || null
+        preferredDealerId: customer.preferredDealerId || null,
       });
     } catch (error) {
-      console.error("❌ Error fetching customer:", error);
-      console.error("Error response:", error.response?.data);
-      console.error("Error status:", error.response?.status);
-      
-      const errorMsg = error.response?.data?.message || 
-                       error.message || 
-                       "Không thể tải thông tin khách hàng";
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Không thể tải thông tin khách hàng";
       toast.error(errorMsg);
-      
+
       // Navigate back to list instead of -1 to avoid infinite loop
-      const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
+      const base = roles?.includes("DEALER_MANAGER")
+        ? "/dealer/manager"
+        : "/dealer/staff";
       setTimeout(() => {
         navigate(`${base}/customers/list`);
       }, 1500); // Give user time to see the error
@@ -102,14 +108,9 @@ const CreateCustomer = () => {
   const fetchStaffList = async () => {
     setLoadingStaff(true);
     try {
-      console.log("=== DEBUG Frontend: Fetching staff for dealerId:", dealerId);
       const data = await staffService.getStaffByDealerId(dealerId);
-      console.log("=== DEBUG Frontend: Received staff list:", data);
-      console.log("=== DEBUG Frontend: First staff object:", data[0]);
       setStaffList(data);
     } catch (error) {
-      console.error("Error fetching staff list:", error);
-      console.error("Error details:", error.response?.data);
       setStaffList([]);
     } finally {
       setLoadingStaff(false);
@@ -118,16 +119,16 @@ const CreateCustomer = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ""
+        [name]: "",
       }));
     }
   };
@@ -173,54 +174,60 @@ const CreateCustomer = () => {
         customerType: formData.customerType,
         registrationDate: formData.registrationDate || null,
         assignedStaffId: formData.assignedStaffId || null,
-        preferredDealerId: formData.preferredDealerId || null
+        preferredDealerId: formData.preferredDealerId || null,
       };
 
       if (isEditMode) {
         // Update existing customer
         await customerService.updateCustomer(id, customerData);
-        
+
         // Handle staff assignment if changed
         if (formData.assignedStaffId) {
           try {
             await customerService.assignStaffToCustomer(id, {
               staffId: formData.assignedStaffId,
-              notes: "Cập nhật phân công nhân viên"
+              notes: "Cập nhật phân công nhân viên",
             });
-          } catch (assignError) {
-            console.error("Error assigning staff:", assignError);
-          }
+          } catch (assignError) {}
         }
-        
+
         toast.success("Cập nhật thông tin khách hàng thành công!");
       } else {
         // Create new customer
         const newCustomer = await customerService.createCustomer(customerData);
-        
+
         // Nếu có phân công nhân viên, gọi API phân công
         if (formData.assignedStaffId && newCustomer.customerId) {
           try {
-            await customerService.assignStaffToCustomer(newCustomer.customerId, {
-              staffId: formData.assignedStaffId,
-              notes: "Phân công khi tạo khách hàng mới"
-            });
+            await customerService.assignStaffToCustomer(
+              newCustomer.customerId,
+              {
+                staffId: formData.assignedStaffId,
+                notes: "Phân công khi tạo khách hàng mới",
+              }
+            );
             toast.success("Thêm khách hàng và phân công nhân viên thành công!");
           } catch (assignError) {
-            console.error("Error assigning staff:", assignError);
-            toast.warning("Khách hàng đã được tạo nhưng không thể phân công nhân viên");
+            toast.warning(
+              "Khách hàng đã được tạo nhưng không thể phân công nhân viên"
+            );
           }
         } else {
           toast.success("Thêm khách hàng thành công!");
         }
       }
-      
+
       // Navigate based on role
-      const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
+      const base = roles?.includes("DEALER_MANAGER")
+        ? "/dealer/manager"
+        : "/dealer/staff";
       navigate(`${base}/customers/list`);
     } catch (error) {
-      console.error(`Error ${isEditMode ? 'updating' : 'creating'} customer:`, error);
-      const errorMessage = error.response?.data?.message || 
-        `Không thể ${isEditMode ? 'cập nhật' : 'thêm'} khách hàng. Vui lòng thử lại.`;
+      const errorMessage =
+        error.response?.data?.message ||
+        `Không thể ${
+          isEditMode ? "cập nhật" : "thêm"
+        } khách hàng. Vui lòng thử lại.`;
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -228,7 +235,9 @@ const CreateCustomer = () => {
   };
 
   const handleCancel = () => {
-    const base = roles?.includes("DEALER_MANAGER") ? '/dealer/manager' : '/dealer/staff';
+    const base = roles?.includes("DEALER_MANAGER")
+      ? "/dealer/manager"
+      : "/dealer/staff";
     navigate(`${base}/customers/list`);
   };
 
@@ -251,11 +260,13 @@ const CreateCustomer = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                {isEditMode ? 'Cập Nhật Khách Hàng' : 'Thêm Khách Hàng Mới'}
+                {isEditMode ? "Cập Nhật Khách Hàng" : "Thêm Khách Hàng Mới"}
               </h1>
               <p className="text-gray-600 flex items-center">
                 <FiUser className="w-4 h-4 mr-2" />
-                {isEditMode ? 'Chỉnh sửa thông tin khách hàng' : 'Nhập thông tin chi tiết của khách hàng'}
+                {isEditMode
+                  ? "Chỉnh sửa thông tin khách hàng"
+                  : "Nhập thông tin chi tiết của khách hàng"}
               </p>
             </div>
             <button
@@ -279,7 +290,9 @@ const CreateCustomer = () => {
                 </div>
                 Thông Tin Cơ Bản
               </h2>
-              <p className="text-sm text-gray-500 mt-2 ml-13">Thông tin cá nhân của khách hàng</p>
+              <p className="text-sm text-gray-500 mt-2 ml-13">
+                Thông tin cá nhân của khách hàng
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* First Name */}
@@ -295,7 +308,9 @@ const CreateCustomer = () => {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white ${
-                      errors.firstName ? "border-red-300 bg-red-50" : "border-gray-300"
+                      errors.firstName
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="Nguyễn Văn"
                   />
@@ -321,7 +336,9 @@ const CreateCustomer = () => {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white ${
-                      errors.lastName ? "border-red-300 bg-red-50" : "border-gray-300"
+                      errors.lastName
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="An"
                   />
@@ -347,7 +364,9 @@ const CreateCustomer = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white ${
-                      errors.email ? "border-red-300 bg-red-50" : "border-gray-300"
+                      errors.email
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     }`}
                     placeholder="example@email.com"
                   />
@@ -438,7 +457,11 @@ const CreateCustomer = () => {
               <FiAlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-800">
                 <p className="font-semibold mb-1">💡 Lưu ý:</p>
-                <p>Khách hàng mới sẽ tự động được gán trạng thái <span className="font-bold">"Khách hàng mới"</span>. Bạn có thể cập nhật trạng thái sau khi tạo.</p>
+                <p>
+                  Khách hàng mới sẽ tự động được gán trạng thái{" "}
+                  <span className="font-bold">"Khách hàng mới"</span>. Bạn có
+                  thể cập nhật trạng thái sau khi tạo.
+                </p>
               </div>
             </div>
           </div>
@@ -452,7 +475,9 @@ const CreateCustomer = () => {
                 </div>
                 Địa Chỉ
               </h2>
-              <p className="text-sm text-gray-500 mt-2 ml-13">Địa chỉ liên lạc của khách hàng</p>
+              <p className="text-sm text-gray-500 mt-2 ml-13">
+                Địa chỉ liên lạc của khách hàng
+              </p>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -481,7 +506,9 @@ const CreateCustomer = () => {
                 </div>
                 Phân Công Nhân Viên
               </h2>
-              <p className="text-sm text-gray-500 mt-2 ml-13">Chọn nhân viên phụ trách khách hàng (không bắt buộc)</p>
+              <p className="text-sm text-gray-500 mt-2 ml-13">
+                Chọn nhân viên phụ trách khách hàng (không bắt buộc)
+              </p>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -495,21 +522,21 @@ const CreateCustomer = () => {
                   onChange={handleInputChange}
                   disabled={loadingStaff || !isDealerManager}
                   className={`w-full pl-10 pr-10 py-3.5 border rounded-xl transition-all duration-300 appearance-none ${
-                    isDealerManager 
-                      ? 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white cursor-pointer' 
-                      : 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed'
+                    isDealerManager
+                      ? "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white cursor-pointer"
+                      : "border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed"
                   }`}
                 >
                   <option value="">-- Chọn nhân viên --</option>
                   {staffList.map((staff) => (
                     <option key={staff.staffId} value={staff.staffId}>
-                      {staff.fullName || staff.name || 'N/A'} ({staff.email})
-                      {staff.position ? ` - ${staff.position}` : ''}
+                      {staff.fullName || staff.name || "N/A"} ({staff.email})
+                      {staff.position ? ` - ${staff.position}` : ""}
                     </option>
                   ))}
                 </select>
                 <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                
+
                 {/* Tooltip for Staff role */}
                 {!isDealerManager && (
                   <div className="absolute left-0 -top-12 bg-gray-900 text-white text-sm rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20 shadow-lg">
@@ -558,7 +585,7 @@ const CreateCustomer = () => {
                 ) : (
                   <>
                     <FiSave className="w-5 h-5 mr-2" />
-                    {isEditMode ? 'Cập Nhật Khách Hàng' : 'Lưu Khách Hàng'}
+                    {isEditMode ? "Cập Nhật Khách Hàng" : "Lưu Khách Hàng"}
                   </>
                 )}
               </button>

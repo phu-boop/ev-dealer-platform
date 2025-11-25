@@ -58,9 +58,7 @@ const QuotationListPage = () => {
   const handleDelete = async (quotationId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa báo giá này?')) {
       const success = await deleteQuotation(quotationId);
-      if (success) {
-        console.log('Xóa báo giá thành công');
-      }
+
     }
   };
 

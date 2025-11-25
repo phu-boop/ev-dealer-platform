@@ -37,7 +37,6 @@ export default function UserForm({isOpen, onClose, onSubmit, initialData, mode =
         const fetchDealers = async () => {
             try {
                 const response = (await dealerService.getAll()).data;
-                console.log("Fetched dealers:", response);
                 if (response.code === "1000") {
                     setDealers(response.data);
                 }

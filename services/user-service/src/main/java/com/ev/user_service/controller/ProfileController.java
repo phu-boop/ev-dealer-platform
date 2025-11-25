@@ -20,7 +20,6 @@ public class ProfileController {
     public  ProfileController(ProfileService profileService){
         this.profileService = profileService;
     }
-    //lấy staff theo đại lý
     @GetMapping("/{dealerId}")
     public ResponseEntity<ApiRespond<List<ApiResponseStaffDealer>>> getStaffDealerByIdDealer(@PathVariable UUID dealerId) {
         List<ApiResponseStaffDealer> apiResponseStaffDealers = profileService.getStaffDealerByIdDealer(dealerId);

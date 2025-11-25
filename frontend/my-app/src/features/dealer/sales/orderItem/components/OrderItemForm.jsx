@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  getModelIdBySalesOrderId, 
-  getVehicleVariantsByModelId, 
+import React, { useState, useEffect } from "react";
+import {
+  getModelIdBySalesOrderId,
+  getVehicleVariantsByModelId,
   getActivePromotions,
-  getCurrentDealerId 
-} from '../../services/optionService';
+  getCurrentDealerId,
+} from "../../services/optionService";
 
 /**
  * Form thêm/chỉnh sửa Order Item với đầy đủ trường từ backend
@@ -16,8 +16,8 @@ const OrderItemForm = ({
   loading = false,
   validationErrors = {},
   onChange,
-  mode = 'create', // 'create' | 'edit'
-  orderId
+  mode = "create", // 'create' | 'edit'
+  orderId,
 }) => {
   const [formData, setFormData] = useState({
     variantId: "",
@@ -63,18 +63,14 @@ const OrderItemForm = ({
   useEffect(() => {
     const loadModelAndVariants = async () => {
       if (!orderId) {
-        console.log("❌ Không có orderId");
         return;
       }
 
       setLoadingData(true);
       setError(null);
       try {
-        console.log("🔄 Đang lấy modelId từ orderId:", orderId);
-
         // 1. Lấy modelId từ orderId
         const modelIdResponse = await getModelIdBySalesOrderId(orderId);
-        console.log("✅ ModelId response:", modelIdResponse);
 
         // Xử lý response - có thể là số trực tiếp hoặc object
         let modelId;
@@ -83,8 +79,6 @@ const OrderItemForm = ({
         } else if (modelIdResponse && typeof modelIdResponse === "object") {
           modelId = modelIdResponse.data || modelIdResponse.modelId;
         }
-
-        console.log("✅ ModelId nhận được:", modelId);
 
         if (!modelId) {
           const errorMsg = `❌ Không tìm thấy modelId cho order: ${orderId}`;
@@ -95,7 +89,6 @@ const OrderItemForm = ({
 
         // 2. Lấy dealerId từ session storage
         const dealerId = getCurrentDealerId();
-        console.log("🏪 DealerId:", dealerId);
 
         if (!dealerId) {
           const errorMsg = "❌ Không tìm thấy dealerId trong session storage";
@@ -105,14 +98,11 @@ const OrderItemForm = ({
         }
 
         // 3. Load variants và promotions song song
-        console.log("🔄 Đang load variants và promotions...");
+
         const [variantsResponse, promotionsResponse] = await Promise.all([
           (await getVehicleVariantsByModelId(modelId)).data,
           getActivePromotions(dealerId, modelId),
         ]);
-
-        console.log("🚗 Variants response:", variantsResponse);
-        console.log("🎁 Promotions response:", promotionsResponse);
 
         // Xử lý variants response
         if (
@@ -120,7 +110,6 @@ const OrderItemForm = ({
           variantsResponse.code === "1000" &&
           variantsResponse.data
         ) {
-          console.log(`✅ Load được ${variantsResponse.data.length} variants`);
           setVariants(variantsResponse.data);
         } else {
           const errorMsg = "❌ Không thể load danh sách variants";
@@ -130,12 +119,8 @@ const OrderItemForm = ({
 
         // Xử lý promotions response
         if (promotionsResponse && Array.isArray(promotionsResponse)) {
-          console.log(`✅ Load được ${promotionsResponse.length} promotions`);
           setPromotions(promotionsResponse);
         } else {
-          console.log(
-            "ℹ️ Không có promotions nào hoặc response không đúng định dạng"
-          );
         }
       } catch (error) {
         console.error("❌ Lỗi khi load dữ liệu:", error);
@@ -154,7 +139,6 @@ const OrderItemForm = ({
     const variant = variants.find((v) => v.variantId === variantIdNum);
 
     if (variant) {
-      console.log("🎯 Variant được chọn:", variant);
       setSelectedVariant(variant);
 
       const newFormData = {
@@ -182,7 +166,6 @@ const OrderItemForm = ({
   const handlePromotionChange = (promotionId) => {
     const promotion = promotions.find((p) => p.promotionId === promotionId);
     if (promotion) {
-      console.log("🎯 Promotion được chọn:", promotion);
       const newDiscount = promotion.discountRate * 100; // Chuyển từ rate (0.2) sang phần trăm (20%)
       const newFormData = {
         ...formData,

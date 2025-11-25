@@ -7,6 +7,7 @@ import {
   FiEye,
   FiSearch,
 } from "react-icons/fi";
+import Swal from "sweetalert2";
 import {
   getModels,
   getModelDetails,
@@ -127,7 +128,7 @@ const VariantManagementPage = () => {
       await deactivateVariant(variantToDeactivate.variantId);
       fetchVariantsForModel(); // Tải lại danh sách sau khi xóa thành công
     } catch (error) {
-      alert("Lỗi: Không thể ngừng sản xuất phiên bản này.");
+      Swal.fire("Lỗi!", "Không thể ngừng sản xuất phiên bản này.", "error");
       console.error(error);
     } finally {
       handleCloseModals();

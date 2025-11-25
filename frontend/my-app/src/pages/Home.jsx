@@ -123,7 +123,6 @@ const Home = () => {
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
     // Xử lý lọc dữ liệu ở đây
-    console.log("Filters changed:", newFilters);
   };
 
   const handleCreateQuote = () => {
@@ -140,7 +139,6 @@ const Home = () => {
   };
 
   const handleSaveQuote = (quoteData) => {
-    console.log("Quote saved:", quoteData);
     // Xử lý lưu báo giá
   };
 
@@ -154,7 +152,6 @@ const Home = () => {
           <VehicleGrid
             vehicles={vehicles}
             onVehicleSelect={handleVehicleSelect}
-            onCompare={(vehicle) => console.log("Compare:", vehicle)}
           />
         </div>
 

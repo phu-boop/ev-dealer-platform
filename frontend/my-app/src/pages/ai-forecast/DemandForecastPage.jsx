@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription
-} from '../../components/ui/card';
-import Button from '../../components/ui/Button';
+  CardDescription,
+} from "../../components/ui/card";
+import Button from "../../components/ui/Button";
+import Swal from "sweetalert2";
 import {
   LineChart,
   Line,
@@ -18,20 +19,29 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
-} from 'recharts';
-import { TrendingUp, TrendingDown, Minus, Activity, Package, AlertCircle, ArrowLeft, Calendar } from 'lucide-react';
-import forecastService from '../../services/ai/forecastService';
+  ResponsiveContainer,
+} from "recharts";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Activity,
+  Package,
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+} from "lucide-react";
+import forecastService from "../../services/ai/forecastService";
 
 export default function DemandForecastPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [forecastData, setForecastData] = useState(null);
   const [formData, setFormData] = useState({
-    variantId: '',
+    variantId: "",
     daysToForecast: 30,
-    forecastMethod: 'AUTO',
-    region: ''
+    forecastMethod: "AUTO",
+    region: "",
   });
 
   const handleGenerate = async () => {
@@ -41,20 +51,34 @@ export default function DemandForecastPage() {
         variantId: formData.variantId ? Number(formData.variantId) : null,
         daysToForecast: formData.daysToForecast,
         forecastMethod: formData.forecastMethod,
-        region: formData.region || null
+        region: formData.region || null,
       };
 
       const response = await forecastService.generateForecast(request);
-      
-      if (!response.data || !response.data.forecasts || response.data.forecasts.length === 0) {
-        alert('⚠️ Không có dữ liệu dự báo!\n\nNguyên nhân: Chưa có dữ liệu bán hàng/tồn kho thực tế trong hệ thống.\n\nGiải pháp:\n1. Tạo đơn hàng (Sales) từ Dealer Portal\n2. Cập nhật tồn kho (Inventory) từ EVM Portal\n3. Đợi AI Service thu thập dữ liệu qua Kafka (real-time)');
+
+      if (
+        !response.data ||
+        !response.data.forecasts ||
+        response.data.forecasts.length === 0
+      ) {
+        Swal.fire({
+          title: "⚠️ Không có dữ liệu dự báo!",
+          html: '<p><strong>Nguyên nhân:</strong> Chưa có dữ liệu bán hàng/tồn kho thực tế trong hệ thống.</p><p><strong>Giải pháp:</strong></p><ol style="text-align: left; margin-left: 20px;"><li>Tạo đơn hàng (Sales) từ Dealer Portal</li><li>Cập nhật tồn kho (Inventory) từ EVM Portal</li><li>Đợi AI Service thu thập dữ liệu qua Kafka (real-time)</li></ol>',
+          icon: "warning",
+          confirmButtonText: "Đã hiểu",
+        });
         return;
       }
-      
+
       setForecastData(response.data);
     } catch (error) {
-      console.error('Error generating forecast:', error);
-      alert('❌ Lỗi khi tạo dự báo: ' + (error.response?.data?.message || error.message));
+      console.error("Error generating forecast:", error);
+      Swal.fire(
+        "Lỗi!",
+        "Lỗi khi tạo dự báo: " +
+          (error.response?.data?.message || error.message),
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -62,11 +86,11 @@ export default function DemandForecastPage() {
 
   const getTrendIcon = (trend) => {
     switch (trend) {
-      case 'INCREASING':
+      case "INCREASING":
         return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'DECREASING':
+      case "DECREASING":
         return <TrendingDown className="h-4 w-4 text-red-600" />;
-      case 'VOLATILE':
+      case "VOLATILE":
         return <Activity className="h-4 w-4 text-orange-600" />;
       default:
         return <Minus className="h-4 w-4 text-gray-600" />;
@@ -74,9 +98,9 @@ export default function DemandForecastPage() {
   };
 
   const getConfidenceColor = (score) => {
-    if (score >= 0.8) return 'text-green-600 bg-green-100';
-    if (score >= 0.6) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
+    if (score >= 0.8) return "text-green-600 bg-green-100";
+    if (score >= 0.6) return "text-yellow-600 bg-yellow-100";
+    return "text-red-600 bg-red-100";
   };
 
   return (
@@ -85,12 +109,14 @@ export default function DemandForecastPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">📊 Dự Báo Nhu Cầu</h1>
-          <p className="text-sm text-muted-foreground mt-1">Tạo dự báo nhu cầu cho sản phẩm và khu vực</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Tạo dự báo nhu cầu cho sản phẩm và khu vực
+          </p>
         </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => navigate('/evm/admin/reports/forecast')}
+            onClick={() => navigate("/evm/admin/reports/forecast")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -98,7 +124,7 @@ export default function DemandForecastPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => navigate('/evm/admin/reports/forecast/production')}
+            onClick={() => navigate("/evm/admin/reports/forecast/production")}
             className="flex items-center gap-2"
           >
             <Calendar className="h-4 w-4" />
@@ -132,7 +158,9 @@ export default function DemandForecastPage() {
                 className="w-full px-3 py-2 border rounded-lg"
                 placeholder="Bỏ trống để dự báo tất cả"
                 value={formData.variantId}
-                onChange={(e) => setFormData({ ...formData, variantId: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, variantId: e.target.value })
+                }
               />
             </div>
 
@@ -143,7 +171,12 @@ export default function DemandForecastPage() {
               <select
                 className="w-full px-3 py-2 border rounded-lg"
                 value={formData.daysToForecast}
-                onChange={(e) => setFormData({ ...formData, daysToForecast: Number(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    daysToForecast: Number(e.target.value),
+                  })
+                }
               >
                 <option value={7}>7 ngày</option>
                 <option value={15}>15 ngày</option>
@@ -160,7 +193,9 @@ export default function DemandForecastPage() {
               <select
                 className="w-full px-3 py-2 border rounded-lg"
                 value={formData.forecastMethod}
-                onChange={(e) => setFormData({ ...formData, forecastMethod: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, forecastMethod: e.target.value })
+                }
               >
                 <option value="OPENAI">🤖 OpenAI (Khuyến nghị)</option>
                 <option value="AUTO">AUTO (Tự động)</option>
@@ -179,7 +214,9 @@ export default function DemandForecastPage() {
                 className="w-full px-3 py-2 border rounded-lg"
                 placeholder="Miền Bắc, Miền Nam..."
                 value={formData.region}
-                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, region: e.target.value })
+                }
               />
             </div>
           </div>
@@ -190,7 +227,7 @@ export default function DemandForecastPage() {
               disabled={loading}
               className="w-full md:w-auto"
             >
-              {loading ? 'Đang tạo dự báo...' : '🚀 Tạo Dự Báo'}
+              {loading ? "Đang tạo dự báo..." : "🚀 Tạo Dự Báo"}
             </Button>
           </div>
         </CardContent>
@@ -253,7 +290,9 @@ export default function DemandForecastPage() {
                 <div className="text-2xl font-bold">
                   {(forecastData.summary.averageConfidence * 100).toFixed(1)}%
                 </div>
-                <p className="text-xs text-muted-foreground">confidence score</p>
+                <p className="text-xs text-muted-foreground">
+                  confidence score
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -272,8 +311,16 @@ export default function DemandForecastPage() {
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="predictedDemand" fill="#0088FE" name="Dự báo" />
-                  <Bar dataKey="currentInventory" fill="#00C49F" name="Tồn kho" />
-                  <Bar dataKey="historicalAverage" fill="#FFBB28" name="TB lịch sử" />
+                  <Bar
+                    dataKey="currentInventory"
+                    fill="#00C49F"
+                    name="Tồn kho"
+                  />
+                  <Bar
+                    dataKey="historicalAverage"
+                    fill="#FFBB28"
+                    name="TB lịch sử"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -302,7 +349,9 @@ export default function DemandForecastPage() {
                     {forecastData.forecasts.map((forecast, index) => (
                       <tr key={index} className="border-b hover:bg-gray-50">
                         <td className="p-2">
-                          <div className="font-medium">{forecast.variantName}</div>
+                          <div className="font-medium">
+                            {forecast.variantName}
+                          </div>
                           <div className="text-xs text-muted-foreground">
                             {forecast.modelName}
                           </div>
@@ -310,7 +359,9 @@ export default function DemandForecastPage() {
                         <td className="text-right p-2 font-semibold">
                           {forecast.predictedDemand}
                         </td>
-                        <td className="text-right p-2">{forecast.currentInventory}</td>
+                        <td className="text-right p-2">
+                          {forecast.currentInventory}
+                        </td>
                         <td className="text-right p-2 text-orange-600 font-medium">
                           {forecast.recommendedStock}
                         </td>
@@ -321,7 +372,11 @@ export default function DemandForecastPage() {
                           </div>
                         </td>
                         <td className="text-center p-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceColor(forecast.confidenceScore)}`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceColor(
+                              forecast.confidenceScore
+                            )}`}
+                          >
                             {(forecast.confidenceScore * 100).toFixed(0)}%
                           </span>
                         </td>
@@ -347,9 +402,10 @@ export default function DemandForecastPage() {
                       ⚠️ Cảnh Báo Tồn Kho Thấp
                     </h3>
                     <p className="text-sm text-red-700 mt-1">
-                      Có <strong>{forecastData.summary.lowStockVariants}</strong> variants 
-                      có tồn kho thấp hơn 50% nhu cầu dự báo. 
-                      Cần lên kế hoạch sản xuất ngay!
+                      Có{" "}
+                      <strong>{forecastData.summary.lowStockVariants}</strong>{" "}
+                      variants có tồn kho thấp hơn 50% nhu cầu dự báo. Cần lên
+                      kế hoạch sản xuất ngay!
                     </p>
                   </div>
                 </div>
@@ -373,7 +429,10 @@ export default function DemandForecastPage() {
                   <li>Để dự báo cho tất cả variants, bỏ trống Variant ID</li>
                   <li>AUTO mode sẽ tự động chọn thuật toán tốt nhất</li>
                   <li>Confidence score cao hơn = dự báo chính xác hơn</li>
-                  <li>Production Gap = Predicted Demand + Safety Stock - Current Inventory</li>
+                  <li>
+                    Production Gap = Predicted Demand + Safety Stock - Current
+                    Inventory
+                  </li>
                 </ul>
               </div>
             </div>

@@ -9,21 +9,21 @@ const staffService = {
    */
   async getStaffByDealerId(dealerId) {
     try {
-      const response = await apiConstUserService.get(`/users/profile/${dealerId}`);
-      console.log("=== DEBUG: Staff list from /users/profile:", response.data);
-      
+      const response = await apiConstUserService.get(
+        `/users/profile/${dealerId}`
+      );
+
       const staffList = response.data.data || [];
-      
+
       // Filter only ACTIVE staff
-      const activeStaff = staffList.filter(staff => staff.status === 'ACTIVE');
-      
-      console.log("=== DEBUG: Active staff count:", activeStaff.length);
-      console.log("=== DEBUG: First staff object:", activeStaff[0]);
-      
+      const activeStaff = staffList.filter(
+        (staff) => staff.status === "ACTIVE"
+      );
+
       return activeStaff;
     } catch (error) {
-      console.error('Error fetching staff list:', error);
-      console.error('Error details:', error.response?.data);
+      console.error("Error fetching staff list:", error);
+      console.error("Error details:", error.response?.data);
       throw error;
     }
   },

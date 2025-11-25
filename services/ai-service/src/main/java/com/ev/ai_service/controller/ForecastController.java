@@ -20,116 +20,101 @@ import java.util.UUID;
 @RequestMapping("/api/ai/forecast")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class ForecastController {
-    
+
     private final DemandForecastService forecastService;
-    
+
     /**
      * Tạo dự báo nhu cầu
      * POST /api/ai/forecast/generate
      */
     @PostMapping("/generate")
     public ResponseEntity<ApiRespond<ForecastResponse>> generateForecast(
-        @RequestBody ForecastRequest request
-    ) {
+            @RequestBody ForecastRequest request) {
         log.info("Generating forecast for request: {}", request);
-        
+
         try {
             ForecastResponse response = forecastService.generateForecast(request);
             return ResponseEntity.ok(
-                ApiRespond.success("Forecast generated successfully", response)
-            );
+                    ApiRespond.success("Forecast generated successfully", response));
         } catch (Exception e) {
             log.error("Error generating forecast: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(
-                ApiRespond.error("ERROR", e.getMessage(), null)
-            );
+                    ApiRespond.error("ERROR", e.getMessage(), null));
         }
     }
-    
+
     /**
      * Lấy dự báo theo region
      * GET /api/ai/forecast/region/{region}
      */
     @GetMapping("/region/{region}")
     public ResponseEntity<ApiRespond<List<ForecastResult>>> getForecastByRegion(
-        @PathVariable String region,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
-    ) {
+            @PathVariable String region,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         log.info("Getting forecast for region: {} from {} to {}", region, startDate, endDate);
-        
+
         try {
             List<ForecastResult> results = forecastService.getForecastByRegion(
-                region, startDate, endDate
-            );
+                    region, startDate, endDate);
             return ResponseEntity.ok(
-                ApiRespond.success("Forecast retrieved successfully", results)
-            );
+                    ApiRespond.success("Forecast retrieved successfully", results));
         } catch (Exception e) {
             log.error("Error getting forecast by region: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(
-                ApiRespond.error("ERROR", e.getMessage(), null)
-            );
+                    ApiRespond.error("ERROR", e.getMessage(), null));
         }
     }
-    
+
     /**
      * Lấy dự báo theo dealer
      * GET /api/ai/forecast/dealer/{dealerId}
      */
     @GetMapping("/dealer/{dealerId}")
     public ResponseEntity<ApiRespond<List<ForecastResult>>> getForecastByDealer(
-        @PathVariable UUID dealerId,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
-    ) {
+            @PathVariable UUID dealerId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         log.info("Getting forecast for dealer: {} from {} to {}", dealerId, startDate, endDate);
-        
+
         try {
             List<ForecastResult> results = forecastService.getForecastByDealer(
-                dealerId, startDate, endDate
-            );
+                    dealerId, startDate, endDate);
             return ResponseEntity.ok(
-                ApiRespond.success("Forecast retrieved successfully", results)
-            );
+                    ApiRespond.success("Forecast retrieved successfully", results));
         } catch (Exception e) {
             log.error("Error getting forecast by dealer: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(
-                ApiRespond.error("ERROR", e.getMessage(), null)
-            );
+                    ApiRespond.error("ERROR", e.getMessage(), null));
         }
     }
-    
+
     /**
      * Dự báo nhanh cho một variant
      * GET /api/ai/forecast/variant/{variantId}
      */
     @GetMapping("/variant/{variantId}")
     public ResponseEntity<ApiRespond<ForecastResponse>> quickForecast(
-        @PathVariable Long variantId,
-        @RequestParam(defaultValue = "30") Integer daysToForecast,
-        @RequestParam(defaultValue = "AUTO") String method
-    ) {
+            @PathVariable Long variantId,
+            @RequestParam(defaultValue = "30") Integer daysToForecast,
+            @RequestParam(defaultValue = "AUTO") String method) {
         log.info("Quick forecast for variant: {}", variantId);
-        
+
         try {
             ForecastRequest request = ForecastRequest.builder()
-                .variantId(variantId)
-                .daysToForecast(daysToForecast)
-                .forecastMethod(method)
-                .build();
-            
+                    .variantId(variantId)
+                    .daysToForecast(daysToForecast)
+                    .forecastMethod(method)
+                    .build();
+
             ForecastResponse response = forecastService.generateForecast(request);
             return ResponseEntity.ok(
-                ApiRespond.success("Quick forecast generated successfully", response)
-            );
+                    ApiRespond.success("Quick forecast generated successfully", response));
         } catch (Exception e) {
             log.error("Error in quick forecast: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(
-                ApiRespond.error("ERROR", e.getMessage(), null)
-            );
+                    ApiRespond.error("ERROR", e.getMessage(), null));
         }
     }
 }

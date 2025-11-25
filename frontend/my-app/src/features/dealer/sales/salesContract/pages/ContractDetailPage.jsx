@@ -1,42 +1,45 @@
 // export default ContractDetailPage;
-import React, { useState, useEffect } from 'react';
-import { PageContainer, ProCard } from '@ant-design/pro-components';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Space, Alert, Spin } from 'antd';
-import { ArrowLeftOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { useSalesContracts } from '../hooks/useSalesContracts';
-import ContractDetails from '../components/ContractDetails';
-import ContractSignModal from '../components/ContractSignModal';
+import React, { useState, useEffect } from "react";
+import { PageContainer, ProCard } from "@ant-design/pro-components";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button, Space, Alert, Spin } from "antd";
+import {
+  ArrowLeftOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons";
+import { useSalesContracts } from "../hooks/useSalesContracts";
+import ContractDetails from "../components/ContractDetails";
+import ContractSignModal from "../components/ContractSignModal";
 
 const ContractDetailPage = () => {
   const { contractId } = useParams();
   const navigate = useNavigate();
-  const { 
-    contract, 
-    loading, 
+  const {
+    contract,
+    loading,
     error,
-    signContract, 
+    signContract,
     updateContract,
     fetchContractById,
-    cancelContract
+    cancelContract,
   } = useSalesContracts();
   const handleCancel = async (contractId) => {
-  try {
-    await cancelContract(contractId);
-    // Refresh contract data sau khi hủy
-    fetchContractById(contractId);
-  } catch (err) {
-    console.error(err);
-  }
-};
+    try {
+      await cancelContract(contractId);
+      // Refresh contract data sau khi hủy
+      fetchContractById(contractId);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const [signModalVisible, setSignModalVisible] = useState(false);
 
   // Fetch contract data when component mounts or contractId changes
   useEffect(() => {
-  if (contractId) {
-    fetchContractById(contractId);
-  }
-}, [contractId, fetchContractById]);
+    if (contractId) {
+      fetchContractById(contractId);
+    }
+  }, [contractId, fetchContractById]);
 
   const handleSign = async (contractId, digitalSignature) => {
     try {
@@ -55,7 +58,6 @@ const ContractDetailPage = () => {
 
   const handleDownload = () => {
     if (!contract?.contractFileUrl) {
-      console.log('No contract file available for download');
       return;
     }
 
@@ -63,12 +65,12 @@ const ContractDetailPage = () => {
     const url = contract.contractFileUrl;
 
     // Tạo <a> tạm thời để download
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
 
     // Giải mã URL và lấy tên file
-    const decodedFileName = decodeURIComponent(url.split('/').pop());
-    link.download = decodedFileName || 'contract.pdf'; // Nếu không có tên thì mặc định
+    const decodedFileName = decodeURIComponent(url.split("/").pop());
+    link.download = decodedFileName || "contract.pdf"; // Nếu không có tên thì mặc định
 
     // Thêm vào body và click
     document.body.appendChild(link);
@@ -76,12 +78,11 @@ const ContractDetailPage = () => {
     document.body.removeChild(link);
   };
 
-
   // Loading state
   if (loading && !contract) {
     return (
       <PageContainer>
-        <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div style={{ textAlign: "center", padding: "50px" }}>
           <Spin size="large" />
           <div style={{ marginTop: 16 }}>Đang tải thông tin hợp đồng...</div>
         </div>
@@ -119,7 +120,7 @@ const ContractDetailPage = () => {
           type="warning"
           showIcon
           action={
-            <Button size="small" onClick={() => navigate('/dealer/contracts')}>
+            <Button size="small" onClick={() => navigate("/dealer/contracts")}>
               Quay lại danh sách
             </Button>
           }
@@ -134,17 +135,21 @@ const ContractDetailPage = () => {
         title: `Hợp đồng #${contract.contractNumber || contract.contractId}`,
         breadcrumb: {
           items: [
-            { title: 'Bán hàng' },
-            { title: 'Hợp đồng', path: '/dealer/contracts' },
-            { title: `Hợp đồng #${contract.contractNumber || contract.contractId}` },
+            { title: "Bán hàng" },
+            { title: "Hợp đồng", path: "/dealer/contracts" },
+            {
+              title: `Hợp đồng #${
+                contract.contractNumber || contract.contractId
+              }`,
+            },
           ],
         },
       }}
       extra={[
-        <Button 
-          key="back" 
-          icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate('/dealer/contracts')}
+        <Button
+          key="back"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate("/dealer/contracts")}
         >
           Quay lại
         </Button>,
@@ -152,7 +157,7 @@ const ContractDetailPage = () => {
       content={
         <div>
           <p>Chi tiết hợp đồng bán hàng</p>
-          {contract.contractStatus === 'PENDING_SIGNATURE' && (
+          {contract.contractStatus === "PENDING_SIGNATURE" && (
             <Alert
               message="Hợp đồng đang chờ ký"
               description="Vui lòng ký hợp đồng để hoàn tất quá trình."
@@ -165,8 +170,8 @@ const ContractDetailPage = () => {
       loading={loading}
     >
       <ProCard>
-        <ContractDetails 
-          contract={contract} 
+        <ContractDetails
+          contract={contract}
           onEdit={handleEdit}
           onDownload={handleDownload}
           onSign={() => setSignModalVisible(true)}

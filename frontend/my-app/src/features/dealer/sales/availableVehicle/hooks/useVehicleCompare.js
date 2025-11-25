@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 // Đảm bảo đường dẫn này trỏ đúng đến file service của bạn
 import { getComparisonDetails } from "../services/availableVehicleService.js";
 import { useAuthContext } from "../../../../auth/AuthProvider";
+import Swal from "sweetalert2";
 
 export const useVehicleCompare = () => {
   const { userData } = useAuthContext();
@@ -52,8 +53,7 @@ export const useVehicleCompare = () => {
    */
   const handleSubmitCompare = useCallback(async () => {
     if (selectedItems.length < 2) {
-      // Bạn có thể đổi cái này thành console.warn nếu muốn
-      alert("Bạn cần chọn ít nhất 2 xe để so sánh.");
+      Swal.fire("Thông báo", "Bạn cần chọn ít nhất 2 xe để so sánh.", "info");
       return;
     }
 

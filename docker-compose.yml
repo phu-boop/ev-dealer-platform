@@ -1,31 +1,47 @@
-version: "3.9"
+version: "3.8"
 
 services:
-  # MySQL Database
-  db:
-    image: mysql:8.0
-    container_name: mysql-db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: 12345678
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
     ports:
-      - "3307:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
     networks:
       - app-network
 
-  # Redis
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - app-network
+
   redis-db:
     image: redis:7
+    container_name: redis-db
     ports:
-      - "6380:6379"
+      - "6379:6379"
     restart: always
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
-  # RedisInsight
   redisinsight:
     image: redis/redisinsight:latest
     container_name: redisinsight
@@ -35,179 +51,180 @@ services:
     networks:
       - app-network
     depends_on:
-      - redis-db
+      redis-db:
+        condition: service_healthy
 
-  # API Gateway
-  gateway:
-    build:
-      context: .
-      dockerfile: gateway/Dockerfile
-    container_name: api-gateway
-    ports:
-      - "8080:8080"
-    depends_on:
-      - user-service
-    restart: always
-    networks:
-      - app-network
-
-  # User Service
   user-service:
+    image: my-user-service:latest
     build:
       context: .
       dockerfile: services/user-service/Dockerfile
-    container_name: user-service
     ports:
       - "8081:8081"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/user_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 12345678
-      SPRING_REDIS_HOST: redis-db
-      SPRING_REDIS_PORT: 6379
-    depends_on:
-      - db
-      - redis-db
-    volumes:
-      - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint:
-      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
-    restart: always
+    env_file:
+      - ./config/user-service.env
     networks:
       - app-network
+    depends_on:
+      - redis-db
+      - kafka
 
-  # Customer-service
   customer-service:
+    image: my-customer-service:latest
     build:
       context: .
       dockerfile: services/customer-service/Dockerfile
-    container_name: customer-service
     ports:
       - "8082:8082"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/customer_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 12345678
-      # External service URLs for staff assignment feature
-      USER_SERVICE_URL: http://user-service:8081/api/users
-      NOTIFICATION_SERVICE_URL: http://payment-service:8085/api/notifications
-    depends_on:
-      - db
-      - user-service
-    volumes:
-      - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint:
-      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    env_file:
+      - ./config/customer-service.env
     networks:
       - app-network
+    depends_on:
+      - kafka
 
-  # Dealer-service
   dealer-service:
+    image: my-dealer-service:latest
     build:
       context: .
       dockerfile: services/dealer-service/Dockerfile
-    container_name: dealer-service
     ports:
       - "8083:8083"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/dealer_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 12345678
-    depends_on:
-      - db
-    volumes:
-      - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint:
-      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    env_file:
+      - ./config/dealer-service.env
     networks:
       - app-network
+    depends_on:
+      - kafka
 
-  # Inventory-service
   inventory-service:
+    image: my-inventory-service:latest
     build:
       context: .
       dockerfile: services/inventory-service/Dockerfile
-    container_name: inventory-service
     ports:
       - "8084:8084"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 12345678
-    depends_on:
-      - db
-    volumes:
-      - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint:
-      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    env_file:
+      - ./config/inventory-service.env
     networks:
       - app-network
+    depends_on:
+      - kafka
 
-  # Payment-service
   payment-service:
+    image: my-payment-service:latest
     build:
       context: .
       dockerfile: services/payment-service/Dockerfile
-    container_name: payment-service
     ports:
       - "8085:8085"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 12345678
-    depends_on:
-      - db
-    volumes:
-      - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint:
-      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    env_file:
+      - ./config/payment-service.env
     networks:
       - app-network
+    depends_on:
+      - kafka
 
-  # Sales-service
   sales-service:
+    image: my-sales-service:latest
     build:
       context: .
       dockerfile: services/sales-service/Dockerfile
-    container_name: sales-service
     ports:
       - "8086:8086"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/sales_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 12345678
-    depends_on:
-      - db
-    volumes:
-      - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint:
-      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    env_file:
+      - ./config/sales-service.env
     networks:
       - app-network
+    depends_on:
+      - kafka
 
-  # Vehicle_service
-  vehicle_service:
+  vehicle-service:
+    image: my-vehicle-service:latest
     build:
       context: .
-      dockerfile: services/vehicle_service/Dockerfile
-    container_name: vehicle_service
+      dockerfile: services/vehicle-service/Dockerfile
     ports:
       - "8087:8087"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/vehicle_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 12345678
-    depends_on:
-      - db
-    volumes:
-      - ./wait-for-it.sh:/wait-for-it.sh
-    entrypoint:
-      ["sh", "/wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    env_file:
+      - ./config/vehicle-service.env
     networks:
       - app-network
+    depends_on:
+      - redis-db
+      - kafka
 
-volumes:
-  db_data:
+  reporting-service:
+    image: my-reporting-service:latest
+    build:
+      context: .
+      dockerfile: services/reporting-service/Dockerfile
+    ports:
+      - "8088:8088"
+    env_file:
+      - ./config/reporting-service.env
+    networks:
+      - app-network
+    depends_on:
+      - kafka
+
+  ai-service:
+    image: my-ai-service:latest
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+    ports:
+      - "8500:8500"
+    env_file:
+      - ./config/ai-service.env
+    networks:
+      - app-network
+    depends_on:
+      - kafka
+
+  gateway:
+    image: my-gateway:latest
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./config/gateway.env
+    networks:
+      - app-network
+    depends_on:
+      redis-db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      customer-service:
+        condition: service_started
+      dealer-service:
+        condition: service_started
+      vehicle-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      sales-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      reporting-service:
+        condition: service_started
+      ai-service:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend/my-app
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    networks:
+      - app-network
+    depends_on:
+      - gateway
 
 networks:
   app-network:

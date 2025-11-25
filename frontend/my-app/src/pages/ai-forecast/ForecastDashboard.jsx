@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '../../components/ui/card';
+} from "../../components/ui/card";
 import {
   LineChart,
   Line,
@@ -19,13 +19,25 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
-} from 'recharts';
-import { TrendingUp, TrendingDown, Package, DollarSign, ShoppingCart, AlertTriangle, BarChart3, Calendar } from 'lucide-react';
-import forecastService from '../../services/ai/forecastService';
-import { getSalesSummary, getInventoryVelocity } from '../../features/admin/reporting/services/reportingService';
+  Cell,
+} from "recharts";
+import {
+  TrendingUp,
+  TrendingDown,
+  Package,
+  DollarSign,
+  ShoppingCart,
+  AlertTriangle,
+  BarChart3,
+  Calendar,
+} from "lucide-react";
+import forecastService from "../../services/ai/forecastService";
+import {
+  getSalesSummary,
+  getInventoryVelocity,
+} from "../../features/admin/reporting/services/reportingService";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 export default function ForecastDashboard() {
   const navigate = useNavigate();
@@ -40,25 +52,36 @@ export default function ForecastDashboard() {
   const loadDashboard = async () => {
     try {
       setLoading(true);
-      
+
       // Gọi API từ Reporting Service để lấy dữ liệu thực
       const [salesResponse, inventoryResponse] = await Promise.all([
         getSalesSummary({}),
-        getInventoryVelocity({})
+        getInventoryVelocity({}),
       ]);
 
-      console.log('Sales Response:', salesResponse);
-      console.log('Inventory Response:', inventoryResponse);
-
       // Transform data để phù hợp với format dashboard
-      const salesData = Array.isArray(salesResponse.data) ? salesResponse.data : [];
-      const inventoryData = Array.isArray(inventoryResponse.data) ? inventoryResponse.data : [];
+      const salesData = Array.isArray(salesResponse.data)
+        ? salesResponse.data
+        : [];
+      const inventoryData = Array.isArray(inventoryResponse.data)
+        ? inventoryResponse.data
+        : [];
 
       // Tính toán sales metrics từ sales data
-      const totalSales = salesData.reduce((sum, item) => sum + (Number(item.totalUnitsSold) || 0), 0);
-      const totalRevenue = salesData.reduce((sum, item) => sum + (Number(item.totalRevenue) || 0), 0);
-      const totalOrders = salesData.reduce((sum, item) => sum + (Number(item.orderCount) || 0), 0);
-      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+      const totalSales = salesData.reduce(
+        (sum, item) => sum + (Number(item.totalUnitsSold) || 0),
+        0
+      );
+      const totalRevenue = salesData.reduce(
+        (sum, item) => sum + (Number(item.totalRevenue) || 0),
+        0
+      );
+      const totalOrders = salesData.reduce(
+        (sum, item) => sum + (Number(item.orderCount) || 0),
+        0
+      );
+      const averageOrderValue =
+        totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       // Tìm top selling variant
       const topVariant = salesData.reduce((top, item) => {
@@ -70,14 +93,14 @@ export default function ForecastDashboard() {
       const regionMap = new Map();
 
       // Add sales data by region
-      salesData.forEach(item => {
-        const region = item.region || 'Unknown';
+      salesData.forEach((item) => {
+        const region = item.region || "Unknown";
         if (!regionMap.has(region)) {
-          regionMap.set(region, { 
-            region, 
-            totalSales: 0, 
-            totalInventory: 0, 
-            trend: 'STABLE' 
+          regionMap.set(region, {
+            region,
+            totalSales: 0,
+            totalInventory: 0,
+            trend: "STABLE",
           });
         }
         const regionData = regionMap.get(region);
@@ -85,33 +108,37 @@ export default function ForecastDashboard() {
       });
 
       // Add inventory data by region
-      inventoryData.forEach(item => {
-        const region = item.region || 'Unknown';
+      inventoryData.forEach((item) => {
+        const region = item.region || "Unknown";
         if (!regionMap.has(region)) {
-          regionMap.set(region, { 
-            region, 
-            totalSales: 0, 
-            totalInventory: 0, 
-            trend: 'STABLE' 
+          regionMap.set(region, {
+            region,
+            totalSales: 0,
+            totalInventory: 0,
+            trend: "STABLE",
           });
         }
         const regionData = regionMap.get(region);
         regionData.totalInventory += Number(item.currentStock) || 0;
-        
+
         // Determine trend based on velocity
-        if (item.velocityLevel === 'FAST') {
-          regionData.trend = 'INCREASING';
-        } else if (item.velocityLevel === 'SLOW') {
-          regionData.trend = 'DECREASING';
+        if (item.velocityLevel === "FAST") {
+          regionData.trend = "INCREASING";
+        } else if (item.velocityLevel === "SLOW") {
+          regionData.trend = "DECREASING";
         }
       });
 
       const regionalPerformances = Array.from(regionMap.values());
 
       // Calculate total inventory
-      const totalInventory = inventoryData.reduce((sum, item) => sum + (Number(item.currentStock) || 0), 0);
-      const lowStockVariants = inventoryData.filter(item => 
-        item.velocityLevel === 'FAST' && Number(item.currentStock) < 10
+      const totalInventory = inventoryData.reduce(
+        (sum, item) => sum + (Number(item.currentStock) || 0),
+        0
+      );
+      const lowStockVariants = inventoryData.filter(
+        (item) =>
+          item.velocityLevel === "FAST" && Number(item.currentStock) < 10
       ).length;
 
       const dashboardData = {
@@ -120,20 +147,20 @@ export default function ForecastDashboard() {
           totalRevenue: totalRevenue,
           totalOrders: totalOrders,
           averageOrderValue: averageOrderValue,
-          topSellingVariant: topVariant ? `${topVariant.modelName} - ${topVariant.variantName}` : 'N/A'
+          topSellingVariant: topVariant
+            ? `${topVariant.modelName} - ${topVariant.variantName}`
+            : "N/A",
         },
         inventoryAnalytics: {
           totalInventory: totalInventory,
-          lowStockVariants: lowStockVariants
+          lowStockVariants: lowStockVariants,
         },
-        regionalPerformances: regionalPerformances
+        regionalPerformances: regionalPerformances,
       };
-
-      console.log('Dashboard Data:', dashboardData);
 
       setDashboard(dashboardData);
     } catch (error) {
-      console.error('Error loading dashboard:', error);
+      console.error("Error loading dashboard:", error);
     } finally {
       setLoading(false);
     }
@@ -150,18 +177,21 @@ export default function ForecastDashboard() {
   if (!dashboard) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-lg text-red-500">Không thể tải dữ liệu dashboard</div>
+        <div className="text-lg text-red-500">
+          Không thể tải dữ liệu dashboard
+        </div>
       </div>
     );
   }
 
-  const { salesAnalytics, inventoryAnalytics, regionalPerformances } = dashboard;
+  const { salesAnalytics, inventoryAnalytics, regionalPerformances } =
+    dashboard;
 
   // Format số tiền
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(value);
   };
 
@@ -171,7 +201,9 @@ export default function ForecastDashboard() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">🤖 AI Dự Báo & Phân Tích</h1>
-          <p className="text-sm text-muted-foreground mt-1">Theo dõi hiệu suất bán hàng và tồn kho theo thời gian thực</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Theo dõi hiệu suất bán hàng và tồn kho theo thời gian thực
+          </p>
         </div>
         <div className="flex gap-2 items-center">
           <select
@@ -189,24 +221,28 @@ export default function ForecastDashboard() {
       {/* Quick Action Buttons */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <button
-          onClick={() => navigate('/evm/admin/reports/forecast/demand')}
+          onClick={() => navigate("/evm/admin/reports/forecast/demand")}
           className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors"
         >
           <BarChart3 className="h-8 w-8 text-blue-600" />
           <div className="text-left">
             <h3 className="font-semibold text-blue-900">Dự Báo Nhu Cầu</h3>
-            <p className="text-sm text-blue-700">Tạo dự báo cho sản phẩm & khu vực</p>
+            <p className="text-sm text-blue-700">
+              Tạo dự báo cho sản phẩm & khu vực
+            </p>
           </div>
         </button>
-        
+
         <button
-          onClick={() => navigate('/evm/admin/reports/forecast/production')}
+          onClick={() => navigate("/evm/admin/reports/forecast/production")}
           className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors"
         >
           <Calendar className="h-8 w-8 text-green-600" />
           <div className="text-left">
             <h3 className="font-semibold text-green-900">Kế Hoạch Sản Xuất</h3>
-            <p className="text-sm text-green-700">Lập kế hoạch dựa trên dự báo</p>
+            <p className="text-sm text-green-700">
+              Lập kế hoạch dựa trên dự báo
+            </p>
           </div>
         </button>
       </div>
@@ -225,9 +261,7 @@ export default function ForecastDashboard() {
             <div className="text-2xl font-bold">
               {salesAnalytics?.totalSales || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              xe đã bán
-            </p>
+            <p className="text-xs text-muted-foreground">xe đã bán</p>
           </CardContent>
         </Card>
 
@@ -261,9 +295,7 @@ export default function ForecastDashboard() {
             <div className="text-2xl font-bold">
               {inventoryAnalytics?.totalInventory || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              xe trong kho
-            </p>
+            <p className="text-xs text-muted-foreground">xe trong kho</p>
           </CardContent>
         </Card>
 
@@ -279,9 +311,7 @@ export default function ForecastDashboard() {
             <div className="text-2xl font-bold text-orange-600">
               {inventoryAnalytics?.lowStockVariants || 0}
             </div>
-            <p className="text-xs text-orange-600">
-              variants tồn kho thấp
-            </p>
+            <p className="text-xs text-orange-600">variants tồn kho thấp</p>
           </CardContent>
         </Card>
       </div>
@@ -326,7 +356,10 @@ export default function ForecastDashboard() {
                   label
                 >
                   {(regionalPerformances || []).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -351,7 +384,8 @@ export default function ForecastDashboard() {
               {salesAnalytics.topSellingVariant}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Giá trị đơn hàng trung bình: {formatCurrency(salesAnalytics.averageOrderValue || 0)}
+              Giá trị đơn hàng trung bình:{" "}
+              {formatCurrency(salesAnalytics.averageOrderValue || 0)}
             </p>
           </CardContent>
         </Card>
@@ -380,19 +414,19 @@ export default function ForecastDashboard() {
                     <td className="text-right p-2">{region.totalSales}</td>
                     <td className="text-right p-2">{region.totalInventory}</td>
                     <td className="text-center p-2">
-                      {region.trend === 'INCREASING' && (
+                      {region.trend === "INCREASING" && (
                         <span className="inline-flex items-center text-green-600">
                           <TrendingUp className="h-4 w-4" />
                           Tăng
                         </span>
                       )}
-                      {region.trend === 'DECREASING' && (
+                      {region.trend === "DECREASING" && (
                         <span className="inline-flex items-center text-red-600">
                           <TrendingDown className="h-4 w-4" />
                           Giảm
                         </span>
                       )}
-                      {region.trend === 'STABLE' && (
+                      {region.trend === "STABLE" && (
                         <span className="text-gray-600">Ổn định</span>
                       )}
                     </td>

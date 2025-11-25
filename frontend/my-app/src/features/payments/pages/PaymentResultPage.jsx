@@ -8,7 +8,8 @@ import {
 } from "@heroicons/react/24/outline";
 // import apiConstPaymentService from "../../../services/apiConstPaymentService";
 
-const API_VNPAY_GATEWAY_URL = "http://localhost:8080/payments/api/v1/payments/gateway";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_VNPAY_GATEWAY_URL = `${API_BASE_URL}/payments/api/v1/payments/gateway`;
 
 const PaymentResultPage = () => {
   const [searchParams] = useSearchParams();
@@ -19,10 +20,8 @@ const PaymentResultPage = () => {
   useEffect(() => {
     const checkPaymentResult = async () => {
       try {
-        console.log("Checking payment result with params:", searchParams.toString());
-
         const response = await fetch(
-            `${API_VNPAY_GATEWAY_URL}/callback/vnpay-return?${searchParams.toString()}`
+          `${API_VNPAY_GATEWAY_URL}/callback/vnpay-return?${searchParams.toString()}`
         );
 
         // Kiểm tra nếu response không OK
@@ -35,20 +34,22 @@ const PaymentResultPage = () => {
           // Thử đọc thông báo lỗi từ response
           try {
             const errorData = await response.json();
-            throw new Error(errorData.message || `Lỗi server: ${response.status}`);
+            throw new Error(
+              errorData.message || `Lỗi server: ${response.status}`
+            );
           } catch {
             // Nếu không parse được JSON, dùng message mặc định (ĐÃ SỬA: bỏ biến jsonError)
-            throw new Error(`Lỗi server: ${response.status} - ${response.statusText}`);
+            throw new Error(
+              `Lỗi server: ${response.status} - ${response.statusText}`
+            );
           }
         }
 
         // Parse response JSON
         const data = await response.json();
-        console.log("Payment result data:", data);
 
         // Backend (VnpayGatewayController) đã trả về { success, message, ... }
         setPaymentResult(data);
-
       } catch (error) {
         console.error("Error checking payment result:", error);
 
@@ -57,7 +58,8 @@ const PaymentResultPage = () => {
         const vnpTransactionStatus = searchParams.get("vnp_TransactionStatus");
         const vnpAmount = searchParams.get("vnp_Amount");
 
-        const isSuccess = vnpResponseCode === "00" && vnpTransactionStatus === "00";
+        const isSuccess =
+          vnpResponseCode === "00" && vnpTransactionStatus === "00";
         const amount = vnpAmount ? parseInt(vnpAmount) / 100 : 0;
 
         setPaymentResult({
@@ -66,7 +68,7 @@ const PaymentResultPage = () => {
           amount: amount,
           transactionId: searchParams.get("vnp_TxnRef") || "",
           responseCode: vnpResponseCode || "",
-          transactionStatus: vnpTransactionStatus || ""
+          transactionStatus: vnpTransactionStatus || "",
         });
       } finally {
         setLoading(false);

@@ -1,14 +1,10 @@
-
 // features/customer/promotions/pages/PromotionViewPage.js
-import React, { useState, useEffect } from 'react';
-import { useCustomerPromotions } from '../hooks/useCustomerPromotions';
-import PromotionFilter from '../components/PromotionFilter';
-import PromotionGrid from '../components/PromotionGrid';
-import PromotionDetailsModal from './PromotionDetailsModal';
-import { 
-  GiftIcon, 
-  ArrowPathIcon
-} from '@heroicons/react/24/outline';
+import React, { useState, useEffect } from "react";
+import { useCustomerPromotions } from "../hooks/useCustomerPromotions";
+import PromotionFilter from "../components/PromotionFilter";
+import PromotionGrid from "../components/PromotionGrid";
+import PromotionDetailsModal from "./PromotionDetailsModal";
+import { GiftIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 
 export const PromotionViewPage = () => {
   const [currentDealerId, setCurrentDealerId] = useState(null);
@@ -16,8 +12,8 @@ export const PromotionViewPage = () => {
 
   useEffect(() => {
     // Lấy dealerId từ sessionStorage khi component mount
-    const dealerId = sessionStorage.getItem('dealerId');
-    console.log('Current dealerId from sessionStorage:', dealerId);
+    const dealerId = sessionStorage.getItem("dealerId");
+
     setCurrentDealerId(dealerId);
   }, []);
 
@@ -38,39 +34,41 @@ export const PromotionViewPage = () => {
   // Lọc khuyến mãi theo dealerId và status
   useEffect(() => {
     if (currentDealerId && promotions && promotions.length > 0) {
-      console.log('Filtering promotions for dealer:', currentDealerId);
-      console.log('All promotions:', promotions);
-      
-      const filtered = promotions.filter(promotion => {
+      const filtered = promotions.filter((promotion) => {
         try {
           // Parse dealerIdJson từ chuỗi JSON thành mảng
           const dealerIds = JSON.parse(promotion.dealerIdJson);
-          console.log(`Promotion ${promotion.promotionId} dealerIds:`, dealerIds);
-          
+
           // Kiểm tra xem dealerId hiện tại có trong mảng dealerIds không
           // VÀ chỉ lấy những promotion có status ACTIVE hoặc NEAR
-          const shouldInclude = dealerIds.includes(currentDealerId) && 
-                               (promotion.status === 'ACTIVE' || promotion.status === 'NEAR');
-          
-          console.log(`Should include promotion ${promotion.promotionId}:`, shouldInclude);
+          const shouldInclude =
+            dealerIds.includes(currentDealerId) &&
+            (promotion.status === "ACTIVE" || promotion.status === "NEAR");
+
           return shouldInclude;
         } catch (error) {
-          console.error('Error parsing dealerIdJson for promotion:', promotion.promotionId, error);
+          console.error(
+            "Error parsing dealerIdJson for promotion:",
+            promotion.promotionId,
+            error
+          );
           return false;
         }
       });
-      
-      console.log('Filtered promotions:', filtered);
+
       setFilteredPromotions(filtered);
     } else {
-      console.log('No current dealerId or promotions, setting empty array');
       setFilteredPromotions([]);
     }
   }, [promotions, currentDealerId]);
 
   // Tính toán lại số lượng khuyến mãi sau khi lọc
-  const activePromotionsCountFiltered = filteredPromotions.filter(p => p.status === 'ACTIVE').length;
-  const upcomingPromotionsCountFiltered = filteredPromotions.filter(p => p.status === 'NEAR').length;
+  const activePromotionsCountFiltered = filteredPromotions.filter(
+    (p) => p.status === "ACTIVE"
+  ).length;
+  const upcomingPromotionsCountFiltered = filteredPromotions.filter(
+    (p) => p.status === "NEAR"
+  ).length;
 
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,10 +84,10 @@ export const PromotionViewPage = () => {
   };
 
   const formatLastUpdated = (date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleTimeString('vi-VN', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    if (!date) return "";
+    return new Date(date).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -100,7 +98,9 @@ export const PromotionViewPage = () => {
           <div className="w-20 h-20 bg-gradient-to-br from-rose-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-rose-200/50">
             <div className="text-2xl">😔</div>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Đã có lỗi xảy ra</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            Đã có lỗi xảy ra
+          </h2>
           <p className="text-gray-600 mb-6 text-sm leading-relaxed">{error}</p>
           <button
             onClick={refresh}
@@ -121,7 +121,9 @@ export const PromotionViewPage = () => {
           <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-amber-200/50">
             <div className="text-2xl">🔒</div>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Không có quyền truy cập</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            Không có quyền truy cập
+          </h2>
           <p className="text-gray-600 mb-6 text-sm leading-relaxed">
             Không tìm thấy thông tin đại lý. Vui lòng đăng nhập lại.
           </p>
@@ -174,15 +176,17 @@ export const PromotionViewPage = () => {
               </div>
             )}
           </div>
-          
+
           <button
             onClick={refresh}
             disabled={loading}
             className="flex items-center px-5 py-3 bg-white border border-gray-200 rounded-2xl text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 disabled:opacity-50 shadow-sm"
           >
-            <ArrowPathIcon className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <ArrowPathIcon
+              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             <span className="text-sm font-medium">
-              {loading ? 'Đang tải...' : 'Làm mới'}
+              {loading ? "Đang tải..." : "Làm mới"}
             </span>
           </button>
         </div>
@@ -201,22 +205,23 @@ export const PromotionViewPage = () => {
               <div className="w-32 h-32 bg-gradient-to-br from-slate-100 to-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-200">
                 <div className="text-4xl">🎯</div>
               </div>
-              
+
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold text-gray-800">
-                  {filter === 'ACTIVE' ? 'Chưa có ưu đãi đang diễn ra' : 
-                   'Chưa có ưu đãi sắp tới'}
+                  {filter === "ACTIVE"
+                    ? "Chưa có ưu đãi đang diễn ra"
+                    : "Chưa có ưu đãi sắp tới"}
                 </h3>
-                
+
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  {filter === 'ACTIVE' ? 
-                    'Hiện tại đại lý của bạn không có chương trình ưu đãi nào đang hoạt động.' :
-                    'Đại lý của bạn chưa có ưu đãi nào sắp diễn ra.'}
+                  {filter === "ACTIVE"
+                    ? "Hiện tại đại lý của bạn không có chương trình ưu đãi nào đang hoạt động."
+                    : "Đại lý của bạn chưa có ưu đãi nào sắp diễn ra."}
                 </p>
 
-                {filter !== 'ACTIVE' && (
+                {filter !== "ACTIVE" && (
                   <button
-                    onClick={() => setFilter('ACTIVE')}
+                    onClick={() => setFilter("ACTIVE")}
                     className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-6 py-3 rounded-2xl font-medium hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-sm text-sm"
                   >
                     Xem ưu đãi đang hoạt động
