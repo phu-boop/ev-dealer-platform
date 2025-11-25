@@ -31,10 +31,10 @@ public class ProductionSecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/vehicle-models").hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/vehicle-models/**").hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/vehicle-models/**").hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                .requestMatchers("/vehicle-catalog/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }

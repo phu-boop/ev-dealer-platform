@@ -71,7 +71,7 @@ export const dealerManagerMenuItems = [
       },
       {
         icon: FiCreditCard,
-        label: "(DONE)Giá & Khuyến Mãi",
+        label: "Giá & Khuyến Mãi",
         path: "/dealer/manager/promotions",
       },
     ],
@@ -254,7 +254,7 @@ export const dealerStaffMenuItems = [
       },
       {
         icon: FiFileText,
-        label: "(DONE)Xem khuyến mãi",
+        label: "Xem khuyến mãi",
         path: "/dealer/staff/promotions",
       },
     ],

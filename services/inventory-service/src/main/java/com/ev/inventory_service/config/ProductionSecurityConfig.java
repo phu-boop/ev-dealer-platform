@@ -3,6 +3,7 @@ package com.ev.inventory_service.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -12,7 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Configuration
 @EnableWebSecurity
-@Profile("!dev") // Hoạt động khi profile KHÔNG PHẢI là "dev"
+@EnableMethodSecurity
+@Profile("docker")
 public class ProductionSecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -24,18 +26,33 @@ public class ProductionSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        System.out.println(">>> Running in PRODUCTION security mode. JWT is required. <<<");
+        // In môi trường dev, cho phép tất cả request đi qua
+        System.out.println("!!! ATTENTION: Running in DOCKER security mode. All requests are permitted. !!!");
 
         http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyRole("DEALER_STAFF", "DEALER_MANAGER", "EVM_STAFF")
-                .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyRole("EVM_STAFF", "ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**").hasAnyRole("DEALER_MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**").hasAnyRole("EVM_STAFF", "ADMIN")
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/inventory/**")
+                        .hasAnyRole("DEALER_STAFF", "DEALER_MANAGER", "EVM_STAFF","ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/inventory/transactions")
+                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/inventory/transactions")
+                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**")
+                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/inventory/allocate")
+                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/inventory/ship-b2b")
+                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+
+                        // dealer
+                        .requestMatchers(HttpMethod.GET, "/inventory/my-stock")
+                        .hasAnyAuthority("ROLE_DEALER_MANAGER", "ROLE_DEALER_STAFF")
+                        .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**")
+                        .hasAnyAuthority("ROLE_DEALER_MANAGER")
+
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
