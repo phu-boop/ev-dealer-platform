@@ -25,18 +25,16 @@ public class ProductionSecurityConfig {
         System.out.println(">>> Running in PRODUCTION security mode. JWT is required. <<<");
 
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/vehicle-models/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/vehicle-models")
-                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/vehicle-models/**")
-                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/vehicle-models/**")
-                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
-                        .anyRequest().authenticated())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/vehicle-models/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/vehicle-models").hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/vehicle-models/**").hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/vehicle-models/**").hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
+                .requestMatchers("/vehicle-catalog/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

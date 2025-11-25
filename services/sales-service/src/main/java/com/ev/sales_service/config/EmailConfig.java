@@ -15,14 +15,20 @@ public class EmailConfig {
     private String quotationRejectPath = "/sendmail/customer-response/quotation/{quotationId}/reject";
 
     public String getOrderConfirmUrl(String orderId) {
-        return baseUrl + orderConfirmPath.replace("{orderId}", orderId);
+        return trimUrl(baseUrl) + orderConfirmPath.replace("{orderId}", orderId);
     }
 
     public String getQuotationAcceptUrl(String quotationId) {
-        return baseUrl + quotationAcceptPath.replace("{quotationId}", quotationId);
+        return trimUrl(baseUrl) + quotationAcceptPath.replace("{quotationId}", quotationId);
     }
 
     public String getQuotationRejectUrl(String quotationId) {
-        return frontendUrl + quotationRejectPath.replace("{quotationId}", quotationId);
+        return trimUrl(frontendUrl) + quotationRejectPath.replace("{quotationId}", quotationId);
+    }
+
+    // =================== Utils ===================
+    private String trimUrl(String url) {
+        if (url == null) return "";
+        return url.strip(); // Loại bỏ khoảng trắng đầu/cuối
     }
 }
