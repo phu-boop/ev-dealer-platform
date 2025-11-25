@@ -1,82 +1,64 @@
-import { Eye, Heart, ArrowLeftRight } from "lucide-react";
+import { Eye, Zap, Battery, ArrowRight } from "lucide-react";
 import Button from "../ui/Button";
 
-const VehicleGrid = ({ vehicles, onVehicleSelect, onCompare }) => {
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price * 1000000);
-  };
+const VehicleGrid = ({ vehicles, onVehicleSelect }) => {
+  const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price * 1000000);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'sold_out': return 'bg-red-100 text-red-800';
-      case 'pre_order': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'available': return 'Còn hàng';
-      case 'sold_out': return 'Hết hàng';
-      case 'pre_order': return 'Đặt trước';
-      default: return 'Liên hệ';
-    }
+  // HÀM FIX LỖI ẢNH QUAN TRỌNG
+  const handleImageError = (e) => {
+    e.target.src = "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&q=80&w=1000"; // Ảnh fallback xịn xò
+    e.target.onerror = null; // Tránh loop vô hạn
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20 px-4">
       {vehicles.map((vehicle) => (
-        <div key={vehicle.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-          <div className="relative">
+        <div key={vehicle.id} className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-500 border border-gray-100 flex flex-col">
+          
+          {/* Image Section - Có xử lý lỗi ảnh */}
+          <div className="relative h-64 overflow-hidden bg-gray-100">
             <img
               src={vehicle.image}
               alt={vehicle.name}
-              className="w-full h-48 object-cover"
+              onError={handleImageError} // <--- Gắn hàm xử lý lỗi vào đây
+              className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
             />
-            <div className="absolute top-2 right-2 flex space-x-1">
-              <button className="bg-white p-1 rounded-full shadow-md hover:bg-gray-100">
-                <Heart className="w-4 h-4 text-gray-600" />
-              </button>
-              <button 
-                onClick={() => onCompare(vehicle)}
-                className="bg-white p-1 rounded-full shadow-md hover:bg-gray-100"
-              >
-                <ArrowLeftRight className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-            <div className="absolute top-2 left-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(vehicle.status)}`}>
-                {getStatusText(vehicle.status)}
-              </span>
+            
+            {/* Overlay Gradient khi hover */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
+              {vehicle.status === 'available' ? 'Có sẵn' : 'Đặt trước'}
             </div>
           </div>
           
-          <div className="p-4">
-            <h3 className="font-semibold text-lg mb-1">{vehicle.name}</h3>
-            <p className="text-gray-600 text-sm mb-2">{vehicle.version}</p>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-2xl font-bold text-blue-600">{formatPrice(vehicle.price)}</span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-4">
-              <div>Quãng đường: {vehicle.range}km</div>
-              <div>Sạc: {vehicle.chargingTime}</div>
-              <div>Công suất: {vehicle.power}</div>
-              <div>Màu sắc: {vehicle.colors.length}</div>
+          {/* Content Section */}
+          <div className="p-6 flex-1 flex flex-col">
+            <div className="mb-4">
+              <h3 className="text-2xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                {vehicle.name}
+              </h3>
+              <p className="text-sm text-gray-500 font-medium">{vehicle.version}</p>
             </div>
 
-            <div className="flex space-x-2">
-              <Button 
+            {/* Specs Mini Grid */}
+            <div className="flex items-center gap-4 text-sm text-gray-600 mb-6 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <div className="flex items-center gap-1"><Zap className="w-4 h-4 text-yellow-500"/> {vehicle.range}km</div>
+                <div className="w-px h-4 bg-gray-300"></div>
+                <div className="flex items-center gap-1"><Battery className="w-4 h-4 text-green-500"/> {vehicle.chargingTime}</div>
+            </div>
+
+            <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-100">
+              <div>
+                <span className="text-xs text-gray-400 font-semibold uppercase block">Giá khởi điểm</span>
+                <span className="text-xl font-black text-gray-900">{formatPrice(vehicle.price)}</span>
+              </div>
+              <button 
                 onClick={() => onVehicleSelect(vehicle)}
-                className="flex-1 flex items-center justify-center"
+                className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center group-hover:bg-blue-600 transition-all shadow-lg group-hover:shadow-blue-500/30 hover:scale-110"
               >
-                <Eye className="w-4 h-4 mr-1" />
-                Chi tiết
-              </Button>
+                <ArrowRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -84,5 +66,4 @@ const VehicleGrid = ({ vehicles, onVehicleSelect, onCompare }) => {
     </div>
   );
 };
-
 export default VehicleGrid;

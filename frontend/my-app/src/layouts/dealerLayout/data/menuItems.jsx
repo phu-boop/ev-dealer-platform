@@ -200,11 +200,6 @@ export const dealerManagerMenuItems = [
     path: "/dealer/manager/reports",
     submenu: [
       {
-        icon: FiTrendingUp,
-        label: "Doanh số theo nhân viên bán hàng",
-        path: "/dealer/manager/reports/staff",
-      },
-      {
         icon: FiBarChart2,
         label: "Công nợ khách hàng và hãng xe",
         path: "/dealer/manager/reports/model",
