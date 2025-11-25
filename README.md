@@ -1,4 +1,4 @@
-# 🚗 Electric Vehicle Dealer Management Syste
+# 🚗 Electric Vehicle Dealer Management System
 
 > Hệ thống quản lý bán xe điện thông qua kênh đại lý
 
