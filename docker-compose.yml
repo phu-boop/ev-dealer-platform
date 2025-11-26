@@ -109,7 +109,10 @@ services:
     networks:
       - app-network
     depends_on:
-      - kafka
+      redis-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   payment-service:
     image: my-payment-service:latest
@@ -151,8 +154,10 @@ services:
     networks:
       - app-network
     depends_on:
-      - redis-db
-      - kafka
+      redis-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   reporting-service:
     image: my-reporting-service:latest

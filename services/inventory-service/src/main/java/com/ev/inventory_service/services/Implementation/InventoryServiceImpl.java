@@ -52,6 +52,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+// Redis for cache
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 // import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Value;
@@ -126,6 +129,7 @@ public class InventoryServiceImpl implements InventoryService {
     private String vehicleCatalogUrl;
 
     @Override
+    @Cacheable(value = "inventory-status", key = "#variantId")
     public InventoryStatusDto getInventoryStatusForVariant(Long variantId) {
         // Chỉ lấy dữ liệu từ kho trung tâm
         CentralInventory central = centralRepo.findByVariantId(variantId)
@@ -480,6 +484,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "inventory-status", allEntries = true)
     public void allocateStockForOrder(AllocationRequestDto request, String staffEmail) {
         for (AllocationRequestDto.AllocationItem item : request.getItems()) {
             CentralInventory central = centralRepo.findByVariantId(item.getVariantId())
@@ -506,6 +511,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "inventory-status", allEntries = true) // Xóa cache khi giao hàng
     public void shipAllocatedStock(ShipmentRequestDto request, String staffEmail) {
         UUID dealerId = request.getDealerId();
         UUID orderId = request.getOrderId();
@@ -774,6 +780,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "inventory-status", allEntries = true) // Xóa cache khi trả hàng
     public void returnStockForOrder(UUID orderId, String staffEmail) {
 
         // Tìm tất cả các xe (vehicle) đã bị gán cho đơn hàng này
@@ -1282,15 +1289,15 @@ public class InventoryServiceImpl implements InventoryService {
 
             // Gọi Vehicle Service để lấy thông tin chi tiết variant
             String url = vehicleCatalogUrl + "/vehicle-catalog/variants/details-by-ids";
-            
+
             HttpEntity<List<Long>> requestEntity = new HttpEntity<>(variantIds);
-            
+
             ResponseEntity<ApiRespond<List<VariantDetailDto>>> response = restTemplate.exchange(
                     url,
                     HttpMethod.POST,
                     requestEntity,
-                    new ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>>() {}
-            );
+                    new ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>>() {
+                    });
 
             List<VariantDetailDto> variantDetails = (response.getBody() != null && response.getBody().getData() != null)
                     ? response.getBody().getData()
