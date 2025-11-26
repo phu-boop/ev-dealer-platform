@@ -45,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.domain.Specification;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
-import jakarta.persistence.criteria.Predicate;
+// import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.kafka.core.KafkaTemplate;
@@ -63,6 +63,10 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
+// Cache for vehicle
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 import java.util.List;
 import java.util.UUID;
@@ -71,9 +75,6 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.util.Collections;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +100,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     private String inventoryServiceUrl;
 
     @Override
+    @Cacheable(value = "all-models", key = "#sort != null ? #sort.toString() : 'default'")
     public List<ModelSummaryDto> getAllModels(Sort sort) {
         Sort sortToUse = (sort != null && sort.isSorted()) ? sort : Sort.by(Direction.ASC, "modelName");
 
@@ -108,6 +110,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     @Override
+    @Cacheable(value = "models", key = "#modelId")
     public ModelDetailDto getModelDetails(Long modelId) {
         VehicleModel model = modelRepository.findModelWithDetailsById(modelId)
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
@@ -115,6 +118,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     @Override
+    @Cacheable(value = "variants", key = "#variantId")
     public VariantDetailDto getVariantDetails(Long variantId) {
         VehicleVariant variant = findVariantById(variantId);
         return mapToVariantDetailDto(variant);
@@ -209,6 +213,10 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "models", key = "#modelId"), // Xóa cache model cụ thể
+            @CacheEvict(value = "all-models", allEntries = true) // Xóa toàn bộ cache danh sách
+    })
     public VehicleModel updateModel(Long modelId, UpdateModelRequest request, String updatedByEmail) {
         VehicleModel model = findModelById(modelId);
         model.setModelName(request.getModelName());
@@ -240,6 +248,11 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "variants", key = "#variantId"), // Xóa cache variant
+            @CacheEvict(value = "models", key = "#result.vehicleModel.modelId"), // Xóa cache model cha
+            @CacheEvict(value = "all-models", allEntries = true) // Xóa cache danh sách
+    })
     public VehicleVariant updateVariant(Long variantId, UpdateVariantRequest request, String updatedByEmail) {
         // Tìm variant hiện có
         VehicleVariant variant = findVariantById(variantId);

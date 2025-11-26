@@ -104,12 +104,18 @@ services:
       dockerfile: services/inventory-service/Dockerfile
     ports:
       - "8084:8084"
+    environment:
+      REDIS_HOST: redis-db
+      REDIS_PORT: 6379
     env_file:
       - ./config/inventory-service.env
     networks:
       - app-network
     depends_on:
-      - kafka
+      redis-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   payment-service:
     image: my-payment-service:latest
@@ -146,13 +152,18 @@ services:
       dockerfile: services/vehicle-service/Dockerfile
     ports:
       - "8087:8087"
+    environment:
+      REDIS_HOST: redis-db
+      REDIS_PORT: 6379
     env_file:
       - ./config/vehicle-service.env
     networks:
       - app-network
     depends_on:
-      - redis-db
-      - kafka
+      redis-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   reporting-service:
     image: my-reporting-service:latest
