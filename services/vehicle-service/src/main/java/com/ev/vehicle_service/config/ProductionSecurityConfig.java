@@ -34,24 +34,9 @@ public class ProductionSecurityConfig {
                         .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/vehicle-models/**")
                         .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
-
-                        // catalog
-                        .requestMatchers(HttpMethod.GET, "/vehicle-catalog/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/vehicle-catalog/variants/search").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/vehicle-catalog/models/**")
-                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/vehicle-catalog/models/**")
-                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/vehicle-catalog/models/**")
-                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/vehicle-catalog/models/*/variants")
-                        .hasAnyAuthority("ROLE_EVM_STAFF", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/vehicle-catalog/features").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/vehicle-catalog/features/**").hasAuthority("ROLE_ADMIN")
-
+                        .requestMatchers("/vehicle-catalog/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }

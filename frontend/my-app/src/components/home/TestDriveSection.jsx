@@ -1,145 +1,110 @@
 import { useState } from "react";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Calendar, MapPin, Clock, Car } from "lucide-react"; // Đã sửa SteeringWheel thành Car
 import Button from "../ui/Button";
-import Input from "../ui/Input";
 
 const TestDriveSection = () => {
   const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    date: "",
-    time: "",
-    location: "",
-    vehicle: "",
+    name: '', phone: '', email: '', date: '', time: '', location: '', vehicle: ''
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('Đặt lịch lái thử:', formData);
   };
 
+  const inputClass = "w-full pl-3 pr-3 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all";
+  const labelClass = "block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5";
+
   return (
-    <section className="bg-gray-50 py-12 px-6 rounded-lg my-12">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-2">
-          Đặt Lịch Lái Thử
-        </h2>
-        <p className="text-gray-600 text-center mb-8">
-          Trải nghiệm thực tế với dòng xe điện mới nhất
-        </p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg shadow-md p-6"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Họ và tên"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              required
-            />
-            <Input
-              label="Số điện thoại"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              required
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mẫu xe quan tâm
-              </label>
-              <select
-                value={formData.vehicle}
-                onChange={(e) =>
-                  setFormData({ ...formData, vehicle: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Chọn mẫu xe</option>
-                <option value="evm-x5">EVM X5 Premium</option>
-                <option value="evm-s3">EVM S3 Standard</option>
-                <option value="evm-t7">EVM T7 Luxury</option>
-              </select>
+    <section className="my-20">
+      <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+        <div className="grid grid-cols-1 lg:grid-cols-5">
+          
+          {/* Left Side: Visual & Context */}
+          <div className="lg:col-span-2 bg-blue-900 p-10 text-white relative overflow-hidden flex flex-col justify-between">
+            <div className="relative z-10">
+              <h2 className="text-3xl font-bold mb-4">Đăng Ký Lái Thử</h2>
+              <p className="text-blue-200 leading-relaxed mb-6">
+                Trải nghiệm cảm giác lái phấn khích và công nghệ đỉnh cao trên các dòng xe điện thế hệ mới nhất.
+              </p>
+              <ul className="space-y-4 text-sm text-blue-100">
+                <li className="flex items-center"><div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>Tư vấn 1:1 chuyên sâu</li>
+                <li className="flex items-center"><div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>Trải nghiệm full tính năng</li>
+                <li className="flex items-center"><div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>Quà tặng khi tham gia</li>
+              </ul>
             </div>
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ngày lái thử
-              </label>
-              <Calendar className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) =>
-                  setFormData({ ...formData, date: e.target.value })
-                }
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giờ
-              </label>
-              <Clock className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
-              <select
-                value={formData.time}
-                onChange={(e) =>
-                  setFormData({ ...formData, time: e.target.value })
-                }
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Chọn giờ</option>
-                <option value="08:00">08:00</option>
-                <option value="09:00">09:00</option>
-                <option value="10:00">10:00</option>
-                <option value="14:00">14:00</option>
-                <option value="15:00">15:00</option>
-                <option value="16:00">16:00</option>
-              </select>
-            </div>
-            <div className="relative md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Địa điểm
-              </label>
-              <MapPin className="absolute left-3 top-9 w-5 h-5 text-gray-400" />
-              <select
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Chọn đại lý</option>
-                <option value="hanoi">Hà Nội - 123 Trần Duy Hưng</option>
-                <option value="hcm">TP.HCM - 456 Nguyễn Văn Linh</option>
-                <option value="danang">Đà Nẵng - 789 Trần Phú</option>
-              </select>
+            {/* Abstract Decorative Circle */}
+            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-800 rounded-full opacity-50"></div>
+            <div className="absolute top-10 right-10 opacity-10">
+                {/* Đã thay SteeringWheel bằng Car để sửa lỗi */}
+                <Car className="w-40 h-40" />
             </div>
           </div>
 
-          <div className="text-center mt-6">
-            <Button type="submit" className="px-8">
-              Đặt Lịch Ngay
-            </Button>
+          {/* Right Side: Form */}
+          <div className="lg:col-span-3 p-10 bg-white">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelClass}>Họ và tên *</label>
+                  <input type="text" className={inputClass} placeholder="Nguyễn Văn A" required
+                    value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                </div>
+                <div>
+                  <label className={labelClass}>Số điện thoại *</label>
+                  <input type="tel" className={inputClass} placeholder="0901234567" required
+                    value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                </div>
+              </div>
+
+              <div>
+                  <label className={labelClass}>Mẫu xe quan tâm</label>
+                  <select className={inputClass} required value={formData.vehicle} onChange={(e) => setFormData({...formData, vehicle: e.target.value})}>
+                    <option value="">-- Chọn mẫu xe --</option>
+                    <option value="evm-x5">EVM X5 Premium</option>
+                    <option value="evm-s3">EVM S3 Standard</option>
+                    <option value="evm-t7">EVM T7 Luxury</option>
+                  </select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="relative">
+                  <label className={labelClass}>Ngày lái thử</label>
+                  <input type="date" className={inputClass} required
+                    value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+                </div>
+                <div className="relative">
+                  <label className={labelClass}>Giờ</label>
+                  <select className={inputClass} required value={formData.time} onChange={(e) => setFormData({...formData, time: e.target.value})}>
+                    <option value="">-- Chọn giờ --</option>
+                    <option value="08:00">08:00</option>
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="14:00">14:00</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                  <label className={labelClass}>Showroom thuận tiện</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                    <select className={`${inputClass} pl-10`} required value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})}>
+                      <option value="">-- Chọn đại lý --</option>
+                      <option value="hanoi">Hà Nội - 123 Trần Duy Hưng</option>
+                      <option value="hcm">TP.HCM - 456 Nguyễn Văn Linh</option>
+                    </select>
+                  </div>
+              </div>
+
+              <div className="pt-4">
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all text-lg">
+                  Xác Nhận Đặt Lịch
+                </Button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </section>
   );

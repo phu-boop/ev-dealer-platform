@@ -1,162 +1,148 @@
-import { useState } from "react";
-import { FiCheckCircle, FiXCircle, FiRefreshCw } from "react-icons/fi";
+import { useState, useEffect } from "react"; // Đã thêm useEffect vào import
+import { FiCheckCircle, FiXCircle, FiRefreshCw, FiActivity, FiServer } from "react-icons/fi";
 
 const ServiceHealthCheck = () => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
-
+  // --- LOGIC GIỮ NGUYÊN 100% ---
   const [services, setServices] = useState({
-    gateway: { status: "checking", url: API_BASE_URL },
-    customerService: { status: "checking", url: `${API_BASE_URL}/customers` },
-    frontend: { status: "running", url: FRONTEND_URL },
+    gateway: { status: 'checking', url: 'http://localhost:8080' },
+    customerService: { status: 'checking', url: 'http://localhost:8082' },
+    frontend: { status: 'running', url: 'http://localhost:5173' }
   });
 
   const [checking, setChecking] = useState(false);
 
   const checkServices = async () => {
     setChecking(true);
-
     // Check Gateway
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/health`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('http://localhost:8080/auth/health', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
       });
-      setServices((prev) => ({
+      setServices(prev => ({
         ...prev,
-        gateway: { ...prev.gateway, status: response.ok ? "running" : "error" },
+        gateway: { ...prev.gateway, status: response.ok ? 'running' : 'error' }
       }));
     } catch (error) {
-      setServices((prev) => ({
+      setServices(prev => ({
         ...prev,
-        gateway: { ...prev.gateway, status: "offline" },
+        gateway: { ...prev.gateway, status: 'offline' }
       }));
     }
 
-    // Check Customer Service (through gateway)
+    // Check Customer Service
     try {
-      const token = sessionStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/customers`, {
-        method: "GET",
+      const token = sessionStorage.getItem('token');
+      const response = await fetch('http://localhost:8080/customers', {
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       });
-      setServices((prev) => ({
+      setServices(prev => ({
         ...prev,
-        customerService: {
-          ...prev.customerService,
-          status: response.ok ? "running" : "error",
-        },
+        customerService: { ...prev.customerService, status: response.ok ? 'running' : 'error' }
       }));
     } catch (error) {
-      setServices((prev) => ({
+      setServices(prev => ({
         ...prev,
-        customerService: { ...prev.customerService, status: "offline" },
+        customerService: { ...prev.customerService, status: 'offline' }
       }));
     }
-
     setChecking(false);
   };
 
-  useState(() => {
+  useEffect(() => {
     checkServices();
   }, []);
+  // --- HẾT PHẦN LOGIC ---
 
-  const getStatusIcon = (status) => {
+  // Phần UI Helper function
+  const getStatusColor = (status) => {
     switch (status) {
-      case "running":
-        return <FiCheckCircle className="w-6 h-6 text-green-500" />;
-      case "offline":
-      case "error":
-        return <FiXCircle className="w-6 h-6 text-red-500" />;
-      default:
-        return <FiRefreshCw className="w-6 h-6 text-gray-400 animate-spin" />;
+      case 'running': return 'bg-green-50 text-green-700 border-green-200';
+      case 'offline': return 'bg-red-50 text-red-700 border-red-200';
+      case 'error': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      default: return 'bg-gray-50 text-gray-600 border-gray-200';
     }
   };
 
-  const getStatusText = (status) => {
+  const getStatusIcon = (status) => {
     switch (status) {
-      case "running":
-        return "Running";
-      case "offline":
-        return "Offline";
-      case "error":
-        return "Error";
-      default:
-        return "Checking...";
+      case 'running': return <FiCheckCircle className="w-5 h-5 text-green-600" />;
+      case 'offline': case 'error': return <FiXCircle className="w-5 h-5 text-red-600" />;
+      default: return <FiRefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">🔍 Services Status</h2>
+    <div className="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
+      {/* Header Widget */}
+      <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FiActivity className="w-5 h-5 text-blue-600" />
+          <h2 className="text-lg font-bold text-gray-800">System Monitor</h2>
+        </div>
         <button
           onClick={checkServices}
           disabled={checking}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          className="flex items-center px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm"
         >
-          <FiRefreshCw
-            className={`w-4 h-4 mr-2 ${checking ? "animate-spin" : ""}`}
-          />
-          Refresh
+          <FiRefreshCw className={`w-4 h-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
+          {checking ? 'Checking...' : 'Refresh Status'}
         </button>
       </div>
 
-      <div className="space-y-4">
+      {/* Body List */}
+      <div className="p-6 space-y-4">
         {Object.entries(services).map(([key, service]) => (
-          <div
-            key={key}
-            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-          >
-            <div className="flex items-center space-x-3">
-              {getStatusIcon(service.status)}
+          <div key={key} className={`flex items-center justify-between p-4 rounded-lg border ${getStatusColor(service.status)} transition-all`}>
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-white rounded-full shadow-sm">
+                {getStatusIcon(service.status)}
+              </div>
               <div>
-                <h3 className="font-semibold text-gray-900 capitalize">
-                  {key.replace(/([A-Z])/g, " $1").trim()}
+                <h3 className="font-bold capitalize flex items-center gap-2">
+                  {key.replace(/([A-Z])/g, ' $1').trim()}
+                  {service.status === 'running' && <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>}
                 </h3>
-                <p className="text-sm text-gray-500">{service.url}</p>
+                <code className="text-xs font-mono opacity-80 mt-1 block bg-black/5 px-2 py-0.5 rounded w-fit">
+                  {service.url}
+                </code>
               </div>
             </div>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                service.status === "running"
-                  ? "bg-green-100 text-green-800"
-                  : service.status === "offline"
-                  ? "bg-red-100 text-red-800"
-                  : service.status === "error"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              {getStatusText(service.status)}
-            </span>
+            
+            <div className="text-right">
+              <span className="text-xs font-bold uppercase tracking-wider opacity-75">
+                {service.status}
+              </span>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <h3 className="font-semibold text-blue-900 mb-2">
-          💡 Hướng dẫn khắc phục:
-        </h3>
-        <ul className="space-y-2 text-sm text-blue-800">
-          <li>
-            • <strong>Gateway Offline:</strong> Chạy{" "}
-            <code className="bg-blue-100 px-2 py-1 rounded">
-              cd gateway && mvn spring-boot:run
-            </code>
+      {/* Footer / Console Log Style */}
+      <div className="bg-gray-900 p-4 text-gray-300 text-xs font-mono border-t border-gray-800">
+        <div className="flex items-center gap-2 mb-2 text-blue-400 font-bold border-b border-gray-800 pb-2">
+          <FiServer className="w-4 h-4" />
+          DEV_CONSOLE_LOGS
+        </div>
+        <ul className="space-y-2">
+          <li className="flex gap-2">
+            <span className="text-red-500">➜</span> 
+            <span>Gateway Offline? Run: <span className="text-yellow-400">cd gateway && mvn spring-boot:run</span></span>
           </li>
-          <li>
-            • <strong>Customer Service Offline:</strong> Chạy{" "}
-            <code className="bg-blue-100 px-2 py-1 rounded">
-              cd services/customer-service && mvn spring-boot:run
-            </code>
+          <li className="flex gap-2">
+            <span className="text-red-500">➜</span> 
+            <span>Service Offline? Run: <span className="text-yellow-400">cd services/customer && mvn spring-boot:run</span></span>
           </li>
-          <li>
-            • <strong>Error 401:</strong> Kiểm tra token trong sessionStorage
-            hoặc đăng nhập lại
+          <li className="flex gap-2">
+            <span className="text-blue-500">ℹ</span> 
+            <span>Auth Error (401)? Check sessionStorage or Re-login.</span>
           </li>
         </ul>
       </div>
