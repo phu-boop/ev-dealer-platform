@@ -104,9 +104,6 @@ services:
       dockerfile: services/inventory-service/Dockerfile
     ports:
       - "8084:8084"
-    environment:
-      REDIS_HOST: redis-db
-      REDIS_PORT: 6379
     env_file:
       - ./config/inventory-service.env
     networks:
@@ -152,9 +149,6 @@ services:
       dockerfile: services/vehicle-service/Dockerfile
     ports:
       - "8087:8087"
-    environment:
-      REDIS_HOST: redis-db
-      REDIS_PORT: 6379
     env_file:
       - ./config/vehicle-service.env
     networks:
