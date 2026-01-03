@@ -15,33 +15,43 @@ services:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
     ports:
-      - "9092:9092"
-      - "29092:29092"
+      - "9092:9092" # Port cho Localhost (Spring Boot chạy ngoài Docker)
+      - "29092:29092" # Port cho nội bộ Docker (Các service khác trong Docker)
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # --- PHẦN QUAN TRỌNG NHẤT ĐÃ SỬA ---
+      # INTERNAL: Dành cho các container khác (vd: redis, service khác) gọi kafka:29092
+      # EXTERNAL: Dành cho máy tính của bạn (Spring Boot) gọi localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      # -----------------------------------
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
     networks:
       - app-network
 
+  # LƯU Ý QUAN TRỌNG: Bạn đang làm AI Vector Search
+  # Image 'redis:7' KHÔNG hỗ trợ Vector Search. Bạn PHẢI dùng 'redis-stack-server'
   redis-db:
-    image: redis:7
+    image: redis/redis-stack-server:latest
     container_name: redis-db
     ports:
       - "6379:6379"
+      - "8001:8001" # Port cho UI RedisInsight tích hợp sẵn (tùy chọn)
     restart: always
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+    # Healthcheck cho redis-stack hơi khác chút, tạm thời bỏ qua hoặc dùng lệnh cơ bản
+    # healthcheck:
+    #   test: ["CMD", "redis-cli", "ping"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 5
 
+  # Nếu dùng redis-stack-server thì không nhất thiết cần redisinsight riêng
+  # nhưng giữ lại cũng không sao
   redisinsight:
     image: redis/redisinsight:latest
     container_name: redisinsight
@@ -51,185 +61,7 @@ services:
     networks:
       - app-network
     depends_on:
-      redis-db:
-        condition: service_healthy
-
-  user-service:
-    image: my-user-service:latest
-    build:
-      context: .
-      dockerfile: services/user-service/Dockerfile
-    ports:
-      - "8081:8081"
-    env_file:
-      - ./config/user-service.env
-    networks:
-      - app-network
-    depends_on:
       - redis-db
-      - kafka
-
-  customer-service:
-    image: my-customer-service:latest
-    build:
-      context: .
-      dockerfile: services/customer-service/Dockerfile
-    ports:
-      - "8082:8082"
-    env_file:
-      - ./config/customer-service.env
-    networks:
-      - app-network
-    depends_on:
-      - kafka
-
-  dealer-service:
-    image: my-dealer-service:latest
-    build:
-      context: .
-      dockerfile: services/dealer-service/Dockerfile
-    ports:
-      - "8083:8083"
-    env_file:
-      - ./config/dealer-service.env
-    networks:
-      - app-network
-    depends_on:
-      - kafka
-
-  inventory-service:
-    image: my-inventory-service:latest
-    build:
-      context: .
-      dockerfile: services/inventory-service/Dockerfile
-    ports:
-      - "8084:8084"
-    env_file:
-      - ./config/inventory-service.env
-    networks:
-      - app-network
-    depends_on:
-      redis-db:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-
-  payment-service:
-    image: my-payment-service:latest
-    build:
-      context: .
-      dockerfile: services/payment-service/Dockerfile
-    ports:
-      - "8085:8085"
-    env_file:
-      - ./config/payment-service.env
-    networks:
-      - app-network
-    depends_on:
-      - kafka
-
-  sales-service:
-    image: my-sales-service:latest
-    build:
-      context: .
-      dockerfile: services/sales-service/Dockerfile
-    ports:
-      - "8086:8086"
-    env_file:
-      - ./config/sales-service.env
-    networks:
-      - app-network
-    depends_on:
-      - kafka
-
-  vehicle-service:
-    image: my-vehicle-service:latest
-    build:
-      context: .
-      dockerfile: services/vehicle-service/Dockerfile
-    ports:
-      - "8087:8087"
-    env_file:
-      - ./config/vehicle-service.env
-    networks:
-      - app-network
-    depends_on:
-      redis-db:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-
-  reporting-service:
-    image: my-reporting-service:latest
-    build:
-      context: .
-      dockerfile: services/reporting-service/Dockerfile
-    ports:
-      - "8088:8088"
-    env_file:
-      - ./config/reporting-service.env
-    networks:
-      - app-network
-    depends_on:
-      - kafka
-
-  ai-service:
-    image: my-ai-service:latest
-    build:
-      context: .
-      dockerfile: services/ai-service/Dockerfile
-    ports:
-      - "8500:8500"
-    env_file:
-      - ./config/ai-service.env
-    networks:
-      - app-network
-    depends_on:
-      - kafka
-
-  gateway:
-    image: my-gateway:latest
-    build:
-      context: .
-      dockerfile: gateway/Dockerfile
-    ports:
-      - "8080:8080"
-    env_file:
-      - ./config/gateway.env
-    networks:
-      - app-network
-    depends_on:
-      redis-db:
-        condition: service_healthy
-      user-service:
-        condition: service_started
-      customer-service:
-        condition: service_started
-      dealer-service:
-        condition: service_started
-      vehicle-service:
-        condition: service_started
-      inventory-service:
-        condition: service_started
-      sales-service:
-        condition: service_started
-      payment-service:
-        condition: service_started
-      reporting-service:
-        condition: service_started
-      ai-service:
-        condition: service_started
-
-  frontend:
-    build:
-      context: ./frontend/my-app
-      dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
-    networks:
-      - app-network
-    depends_on:
-      - gateway
 
 networks:
   app-network:

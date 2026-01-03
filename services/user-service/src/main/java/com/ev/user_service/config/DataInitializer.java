@@ -2,6 +2,7 @@ package com.ev.user_service.config;
 
 import com.ev.user_service.enums.UserStatus;
 import com.ev.user_service.service.AdminProfileService;
+import com.ev.user_service.service.CustomerProfileService;
 import com.ev.user_service.service.DealerManagerProfileService;
 import com.ev.user_service.service.DealerStaffProfileService;
 import com.ev.user_service.service.EvmStaffProfileService;
@@ -37,6 +38,7 @@ public class DataInitializer implements ApplicationRunner {
     private final DealerManagerProfileService dealerManagerProfileService;
     private final EvmStaffProfileService evmStaffProfileService;
     private final DealerStaffProfileService dealerStaffProfileService;
+    private final CustomerProfileService customerProfileService;
 
     // Helper method
     private Permission createPermission(PermissionName permissionName) {
@@ -53,8 +55,8 @@ public class DataInitializer implements ApplicationRunner {
             AdminProfileService adminProfileService,
             DealerManagerProfileService dealerManagerProfileService,
             EvmStaffProfileService evmStaffProfileService,
-            DealerStaffProfileService dealerStaffProfileService
-    ) {
+            DealerStaffProfileService dealerStaffProfileService,
+            CustomerProfileService customerProfileService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
@@ -62,7 +64,8 @@ public class DataInitializer implements ApplicationRunner {
         this.adminProfileService = adminProfileService;
         this.dealerManagerProfileService = dealerManagerProfileService;
         this.evmStaffProfileService = evmStaffProfileService;
-        this.dealerStaffProfileService =dealerStaffProfileService;
+        this.dealerStaffProfileService = dealerStaffProfileService;
+        this.customerProfileService = customerProfileService;
     }
 
     @Override
@@ -71,16 +74,17 @@ public class DataInitializer implements ApplicationRunner {
         initializeAdminRole();
         initializeDealerManagerRole();
         initializeDealerStaffRole();
+        initializeCustomerRole();
 
         // ========== INITIALIZE USERS ==========
         if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
             initializeAdminUser();
         }
-        
+
         if (userRepository.findByEmail("TrongManager@gmail.com").isEmpty()) {
             initializeDealerManagerUser();
         }
-        
+
         if (userRepository.findByEmail("TrongStaff@gmail.com").isEmpty()) {
             initializeDealerStaffUser();
         }
@@ -163,7 +167,7 @@ public class DataInitializer implements ApplicationRunner {
         Role adminRole = roleRepository.findFirstByName(RoleName.ADMIN.getRoleName())
                 .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
         roles.add(adminRole);
-        
+
         User admin = new User();
         admin.setEmail("admin@gmail.com");
         admin.setPassword(passwordEncoder.encode("123123123"));
@@ -175,51 +179,76 @@ public class DataInitializer implements ApplicationRunner {
 
     private void initializeDealerManagerUser() {
         UUID dealerId = UUID.fromString("3ec76f92-7d44-49f4-ada1-b47d4f55b418");
-        
+
         Set<Role> roles = new HashSet<>();
         Role dealerManagerRole = roleRepository.findFirstByName(RoleName.DEALER_MANAGER.getRoleName())
                 .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
         roles.add(dealerManagerRole);
-        
+
         User dealerManager = new User();
         dealerManager.setEmail("TrongManager@gmail.com");
         dealerManager.setPassword(passwordEncoder.encode("123123123"));
         dealerManager.setRoles(new HashSet<>(roles));
         dealerManager.setStatus(UserStatus.ACTIVE);
         userRepository.save(dealerManager);
-        
+
         dealerManagerProfileService.SaveDealerManagerProfile(
-            dealerManager,
-            dealerId,
-            "MANAGER",
-            new BigDecimal("1000000000"), // approvalLimit
-            "Quản lý"
-        );
+                dealerManager,
+                dealerId,
+                "MANAGER",
+                new BigDecimal("1000000000"), // approvalLimit
+                "Quản lý");
     }
 
     private void initializeDealerStaffUser() {
         UUID dealerId = UUID.fromString("3ec76f92-7d44-49f4-ada1-b47d4f55b418");
-        
+
         Set<Role> roles = new HashSet<>();
         Role dealerStaffRole = roleRepository.findFirstByName(RoleName.DEALER_STAFF.getRoleName())
                 .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
         roles.add(dealerStaffRole);
-        
+
         User dealerStaff = new User();
         dealerStaff.setEmail("TrongStaff@gmail.com");
         dealerStaff.setPassword(passwordEncoder.encode("123123123"));
         dealerStaff.setRoles(new HashSet<>(roles));
         dealerStaff.setStatus(UserStatus.ACTIVE);
         userRepository.save(dealerStaff);
-        
+
         dealerStaffProfileService.SaveDealerStaffProfile(
-            dealerStaff,
-            dealerId,
-            "Nhân viên bán hàng",
-            "Bán hàng",
-            LocalDate.now(), // hireDate
-            new BigDecimal("10000000"), // salary
-            new BigDecimal("2.5") // commissionRate
+                dealerStaff,
+                dealerId,
+                "Nhân viên bán hàng",
+                "Bán hàng",
+                LocalDate.now(), // hireDate
+                new BigDecimal("10000000"), // salary
+                new BigDecimal("2.5") // commissionRate
         );
+    }
+
+    private void initializeCustomerRole() {
+        if (roleRepository.findFirstByName(RoleName.CUSTOMER.getName()).isEmpty()) {
+            Set<Permission> permissions = new HashSet<>();
+
+            // Quyền của CUSTOMER (B2C)
+            permissions.add(createPermission(PermissionName.VIEW_VEHICLES));
+            permissions.add(createPermission(PermissionName.COMPARE_VEHICLES));
+            permissions.add(createPermission(PermissionName.VIEW_OWN_PROFILE));
+            permissions.add(createPermission(PermissionName.UPDATE_OWN_PROFILE));
+            permissions.add(createPermission(PermissionName.VIEW_OWN_ORDERS));
+            permissions.add(createPermission(PermissionName.CREATE_OWN_ORDER));
+            permissions.add(createPermission(PermissionName.CANCEL_OWN_ORDER));
+            permissions.add(createPermission(PermissionName.VIEW_OWN_PAYMENTS));
+            permissions.add(createPermission(PermissionName.MAKE_PAYMENT));
+            permissions.add(createPermission(PermissionName.REQUEST_TEST_DRIVE));
+            permissions.add(createPermission(PermissionName.VIEW_PROMOTIONS));
+            permissions.add(createPermission(PermissionName.CREATE_FEEDBACK));
+
+            permissionRepository.saveAll(permissions);
+            Role role = new Role();
+            role.setName(RoleName.CUSTOMER.getName());
+            role.setPermissions(permissions);
+            roleRepository.save(role);
+        }
     }
 }

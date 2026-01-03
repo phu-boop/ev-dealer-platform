@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🚗 Electric Vehicle Dealer Management System
 
 > Hệ thống quản lý bán xe điện thông qua kênh đại lý
@@ -36,14 +35,15 @@
 
 ## 🎯 Actors
 
-Hệ thống phục vụ 4 nhóm người dùng chính:
+Hệ thống phục vụ 5 nhóm người dùng chính:
 
-| Actor              | Mô tả                         |
-| ------------------ | ----------------------------- |
-| **Dealer Staff**   | Nhân viên bán hàng tại đại lý |
-| **Dealer Manager** | Quản lý đại lý                |
-| **EVM Staff**      | Nhân viên hãng xe điện        |
-| **Admin**          | Quản trị viên hệ thống        |
+| Actor              | Mô tả                         | Cổng truy cập |
+| ------------------ | ----------------------------- | ------------- |
+| **Customer**       | Khách hàng phổ thông (B2C)    | Port 5174     |
+| **Dealer Staff**   | Nhân viên bán hàng tại đại lý | Port 5173     |
+| **Dealer Manager** | Quản lý đại lý                | Port 5173     |
+| **EVM Staff**      | Nhân viên hãng xe điện        | Port 5173     |
+| **Admin**          | Quản trị viên hệ thống        | Port 5173     |
 
 ---
 
@@ -104,7 +104,9 @@ Hệ thống phục vụ 4 nhóm người dùng chính:
 ```
 Application
 ├── common-lib                # Lib For Project
-├── frontend/my-app/          # React Frontend
+├── frontend/
+│   ├── my-app/              # React Frontend (Admin/Dealer - Port 5173)
+│   └── customer-app/        # React Frontend (B2C Customer - Port 5174)
 ├── gateway/                  # Spring Boot API Gateway
 ├── services/                 # Microservices
 │   ├── user-service/
@@ -131,6 +133,11 @@ Application
 - Axios (API Communication)
 - React Hook Form (Form Handling)
 - WebSocket / StompJS (Real-time features)
+
+**Frontend Ports:**
+
+- Port 5173: Admin/Dealer Portal (`frontend/my-app/`)
+- Port 5174: Customer B2C Portal (`frontend/customer-app/`)
 
 **Backend:**
 
@@ -165,10 +172,17 @@ cd ev-dealer-management
 
 ### Bước 2: Cài đặt dependencies
 
-**Frontend:**
+**Frontend (Admin/Dealer Portal):**
 
 ```bash
 cd frontend/my-app/
+npm install
+```
+
+**Frontend (Customer B2C Portal):**
+
+```bash
+cd frontend/customer-app/
 npm install
 ```
 
@@ -209,7 +223,3 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <div align="center">
   <sub>Built with ❤️ by <b>My Team</b></sub>
 </div>
-=======
-# VMS-Commerce
-Vehicle Management &amp; Sales
->>>>>>> 7fd13c1daedc7146c91057451c68e2ef4a746f14

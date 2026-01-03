@@ -17,6 +17,8 @@ import com.ev.common_lib.exception.ErrorCode;
 import com.ev.user_service.service.AuthService;
 import com.ev.user_service.service.LoginAttemptService;
 import com.ev.user_service.service.RecaptchaService;
+import com.ev.user_service.dto.request.CustomerRegistrationRequest;
+import com.ev.user_service.dto.respond.UserRespond;
 
 import java.util.Map;
 import java.util.UUID;
@@ -32,6 +34,18 @@ public class AuthController {
         this.loginAttemptService = loginAttemptService;
         this.recaptchaService = recaptchaService;
         this.authService = authService;
+    }
+
+    @PostMapping("/register/customer")
+    public ResponseEntity<ApiRespond<UserRespond>> registerCustomer(
+            @Valid @RequestBody CustomerRegistrationRequest request) {
+        // Verify reCAPTCHA
+        boolean ok = recaptchaService.verifyCaptcha(request.getCaptchaToken());
+        if (!ok) throw new AppException(ErrorCode.RECAPTCHA_FAILED);
+        
+        UserRespond userRespond = authService.registerCustomer(request);
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(ApiRespond.success("Customer registered successfully", userRespond));
     }
 
     @PostMapping("/login")
@@ -57,7 +71,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Login successful", loginRespond));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF', 'CUSTOMER')")
     @GetMapping("/me")
     public ResponseEntity<ApiRespond<LoginRespond>> getCurrentUser() {
         LoginRespond loginRespond = authService.getCurrentUser();
@@ -65,7 +79,7 @@ public class AuthController {
     }
 
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF', 'CUSTOMER')")
     @PostMapping("/refresh")
     public ResponseEntity<ApiRespond<?>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         TokenPair tokenPair = authService.newRefreshTokenAndAccessToken(request);
@@ -80,7 +94,7 @@ public class AuthController {
                 ApiRespond.success("RefreshToken successful", tokenPair));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF', 'CUSTOMER')")
     @PostMapping("/logout")
     public ResponseEntity<ApiRespond<?>> logout(HttpServletRequest request, HttpServletResponse response) {
         authService.addTokenBlacklist(request);
@@ -112,7 +126,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Password updated successfully", null));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF', 'CUSTOMER')")
     @PostMapping("/change-password")
     public ResponseEntity<ApiRespond<?>> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         authService.changePassword(changePasswordRequest.getEmail(), changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword());

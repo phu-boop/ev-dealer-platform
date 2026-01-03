@@ -30,11 +30,7 @@ public class User {
     String email;
     String password;
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_role",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     @JsonIgnore
     Set<Role> roles;
     String name;
@@ -82,6 +78,9 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private AdminProfile adminProfile;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private CustomerProfile customerProfile;
+
     public UUID getProfileId() {
         if (evmStaffProfile != null) {
             return evmStaffProfile.getEvmStaffId();
@@ -95,8 +94,10 @@ public class User {
         if (adminProfile != null) {
             return adminProfile.getAdmin_id();
         }
+        if (customerProfile != null) {
+            return customerProfile.getCustomerId();
+        }
         return null;
     }
-
 
 }

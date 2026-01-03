@@ -57,10 +57,13 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 
 
          // Path được bỏ qua xác thực
-        if (EXCLUDED_PATHS.stream().anyMatch(path::contains)) {
-            log.debug("[JwtGlobalFilter] Path excluded from authentication: {}", path);
+        boolean isExcluded = EXCLUDED_PATHS.stream().anyMatch(excludedPath -> path.startsWith(excludedPath));
+        if (isExcluded) {
+            log.info("[JwtGlobalFilter] Path excluded from authentication: {}", path);
             return chain.filter(exchange);
         }
+        
+        log.debug("[JwtGlobalFilter] Path requires authentication: {}", path);
 
         // Tất cả các path khác đều yêu cầu token (Gateway xác thực)
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);

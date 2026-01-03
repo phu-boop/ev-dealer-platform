@@ -18,9 +18,17 @@ import com.ev.user_service.security.JwtUtil;
 
 import com.ev.user_service.repository.DealerManagerProfileRepository;
 import com.ev.user_service.repository.DealerStaffProfileRepository;
+import com.ev.user_service.repository.CustomerProfileRepository;
+import com.ev.user_service.repository.RoleRepository;
 import com.ev.user_service.entity.DealerManagerProfile;
 import com.ev.user_service.entity.DealerStaffProfile;
+import com.ev.user_service.entity.Role;
+import com.ev.user_service.enums.RoleName;
+import com.ev.user_service.enums.UserStatus;
+import com.ev.user_service.dto.request.CustomerRegistrationRequest;
 import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -39,6 +47,8 @@ public class AuthService {
 
     private final DealerManagerProfileRepository managerProfileRepository;
     private final DealerStaffProfileRepository staffProfileRepository;
+    private final CustomerProfileService customerProfileService;
+    private final RoleRepository roleRepository;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -47,7 +57,9 @@ public class AuthService {
                        RedisService redisService,
                        EmailService emailService,
                        DealerManagerProfileRepository managerProfileRepository,
-                       DealerStaffProfileRepository staffProfileRepository) {
+                       DealerStaffProfileRepository staffProfileRepository,
+                       CustomerProfileService customerProfileService,
+                       RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -57,6 +69,8 @@ public class AuthService {
 
         this.managerProfileRepository = managerProfileRepository;
         this.staffProfileRepository = staffProfileRepository;
+        this.customerProfileService = customerProfileService;
+        this.roleRepository = roleRepository;
     }
 
 
@@ -226,6 +240,47 @@ public class AuthService {
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    public UserRespond registerCustomer(CustomerRegistrationRequest request) {
+        // Check if email already exists
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+
+        // Check if phone already exists (if provided)
+        if (request.getPhone() != null && !request.getPhone().isEmpty() && userRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
+        }
+
+        // Create user
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setName(request.getName());
+        user.setFullName(request.getFullName());
+        user.setPhone(request.getPhone());
+        user.setAddress(request.getAddress());
+        user.setCity(request.getCity());
+        user.setCountry(request.getCountry());
+        user.setBirthday(request.getBirthday());
+        user.setGender(request.getGender());
+        user.setStatus(UserStatus.ACTIVE);
+
+        // Assign CUSTOMER role
+        Set<Role> roles = new HashSet<>();
+        Role customerRole = roleRepository.findFirstByName(RoleName.CUSTOMER.getName())
+                .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+        roles.add(customerRole);
+        user.setRoles(roles);
+
+        // Save user
+        User savedUser = userRepository.save(user);
+
+        // Create customer profile
+        customerProfileService.saveCustomerProfile(savedUser, request.getPreferredDealerId());
+
+        return userMapper.usertoUserRespond(savedUser);
     }
 
 }
