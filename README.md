@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🚗 Electric Vehicle Dealer Management System
 
 > Hệ thống quản lý bán xe điện thông qua kênh đại lý
@@ -208,3 +209,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <div align="center">
   <sub>Built with ❤️ by <b>My Team</b></sub>
 </div>
+=======
+# VMS-Commerce
+Vehicle Management &amp; Sales
+>>>>>>> 7fd13c1daedc7146c91057451c68e2ef4a746f14
