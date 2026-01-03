@@ -223,3 +223,9 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <div align="center">
   <sub>Built with ❤️ by <b>My Team</b></sub>
 </div>
+<<<<<<< HEAD
+=======
+=======
+# VMS-Commerce
+Vehicle Management &amp; Sales
+>>>>>>> e0abd37d31f15949e186bfaa4d6d420688229212
