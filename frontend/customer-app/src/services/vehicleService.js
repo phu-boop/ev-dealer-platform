@@ -1,30 +1,16 @@
-import axios from "axios";
+import apiConst from "./apiConst";
 
-const vehicleService = axios.create({
-  baseURL: `${
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"
-  }/vehicles/`,
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true,
-});
-
-vehicleService.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
+// B2C: lấy danh sách model xe điện cho khách hàng
 export const getVehicles = () =>
-  vehicleService.get("vehicle-catalog/models").then((res) => res.data);
+  apiConst.get("/vehicles/vehicle-catalog/models").then((res) => res.data);
 
 export const getVehicleById = (id) =>
-  vehicleService.get(`vehicle-catalog/models/${id}`).then((res) => res.data);
-
-export const getVariants = (modelId) =>
-  vehicleService
-    .get(`vehicle-catalog/models/${modelId}/variants`)
+  apiConst
+    .get(`/vehicles/vehicle-catalog/models/${id}`)
     .then((res) => res.data);
 
-export default vehicleService;
+export const getVariants = (modelId) =>
+  apiConst
+    .get(`/vehicles/vehicle-catalog/models/${modelId}/variants`)
+    .then((res) => res.data);
+

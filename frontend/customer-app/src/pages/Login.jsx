@@ -20,6 +20,15 @@ export default function Login() {
     setForm((prev) => ({ ...prev, captchaToken: token }));
   };
 
+  const handleGoogleLogin = () => {
+    const baseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+    const redirectUri = window.location.origin;
+    window.location.href = `${baseUrl}/oauth2/authorization/google?redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -109,6 +118,20 @@ export default function Login() {
           className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+        </button>
+        <div className="flex items-center gap-2 my-2">
+          <div className="h-px bg-gray-200 flex-1" />
+          <span className="text-xs text-gray-400">HOẶC</span>
+          <div className="h-px bg-gray-200 flex-1" />
+        </div>
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          className="w-full py-2 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
+        >
+          <span className="text-sm font-medium text-gray-700">
+            Đăng nhập với Google
+          </span>
         </button>
         <div className="text-center text-sm">
           <Link to="/forgot-password" className="text-blue-600 hover:underline">

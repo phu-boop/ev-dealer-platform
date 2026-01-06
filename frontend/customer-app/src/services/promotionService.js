@@ -1,21 +1,9 @@
-import axios from "axios";
+import apiConst from "./apiConst";
 
-const promotionService = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/sales/promotions/`,
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true,
-});
-
-promotionService.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
+// B2C: lấy danh sách khuyến mãi đang hoạt động
 export const getActivePromotions = () =>
-  promotionService.get("active").then((res) => res.data);
+  apiConst
+    .get("/sales/promotions/active")
+    .then((res) => res.data);
 
-export default promotionService;
 
