@@ -133,3 +133,6 @@ services/user-service/src/main/resources/firebase-service-account.json
 # Other temp docs
 *_TEMP.md
 *_DRAFT.md
+
+# Configuration files
+/config/
