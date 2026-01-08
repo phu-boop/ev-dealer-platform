@@ -27,52 +27,9 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Thêm cấu hình CORS
                 .authorizeExchange(exchanges -> exchanges
-                        // ===== Cho phép public routes =====
-                        .pathMatchers(
-                                "/",
-                                "/error",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-
-                                // user-service
-                                "/auth/**",
-                                "/users/**",
-
-                                // customer-service
-                                "/customers/**",
-
-                                // dealer-service
-                                "/dealers/**",
-
-                                // inventory-service
-                                "/inventory/**",
-
-                                // payment-service
-                                "/payments/**",
-                                "/favicon.ico",
-                                "/api/v1/payments/gateway/callback/vnpay-return",
-                                "/api/v1/payments/gateway/callback/vnpay-ipn",
-
-                                // "/sales/**"
-                                "/sales/**",
-
-                                // vehicle-service
-                                "/vehicles/**",
-
-                                // reporting-service
-                                "/reporting/**",
-
-                                // sendmail
-                                "/sendmail/customer-response/**",
-
-                                "/ws/**",
-
-                                // ai-service
-                                "/ai/**")
-                        .permitAll()
-
-                        // ===== Các route khác cần JWT =====
-                        .anyExchange().authenticated())
+                        // ===== Cho phép TẤT CẢ requests đi qua =====
+                        // JWT authentication được xử lý bởi JwtGlobalFilter
+                        .anyExchange().permitAll())
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 // Không tạo session
