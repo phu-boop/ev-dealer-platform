@@ -33,3 +33,7 @@ build/
 .vscode/
 
 EMAIL_SETUP_GUIDE.md    
+.env*
+.flaskenv*
+!.env.project
+!.env.vault

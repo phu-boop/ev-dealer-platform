@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { handleOAuthCallback } from "../services/authService";
@@ -9,9 +9,17 @@ export default function OAuthCallback() {
   const [error, setError] = useState(null);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
     const processOAuth = async () => {
+      // Prevent duplicate execution (React Strict Mode runs useEffect twice)
+      if (hasProcessed.current) {
+        console.log("[OAuth] Already processed, skipping...");
+        return;
+      }
+      hasProcessed.current = true;
+
       const accessToken = searchParams.get("accessToken");
 
       if (!accessToken) {

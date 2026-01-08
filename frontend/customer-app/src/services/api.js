@@ -27,9 +27,17 @@ api.interceptors.response.use(
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
-      // Redirect to login
-      sessionStorage.clear();
-      window.location.href = "/login";
+      
+      // Chỉ redirect đến login nếu user đang ở trang yêu cầu authentication
+      // Không redirect nếu đang ở trang public như trang chủ
+      const publicPaths = ['/', '/login', '/register'];
+      const currentPath = window.location.pathname;
+      
+      if (!publicPaths.includes(currentPath)) {
+        // Redirect to login chỉ khi không ở trang public
+        sessionStorage.clear();
+        window.location.href = "/login";
+      }
     }
 
     return Promise.reject(error);
