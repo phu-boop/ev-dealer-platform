@@ -13,6 +13,7 @@
     "@ant-design/pro-components": "^2.8.10",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
+    "@react-oauth/google": "^0.13.4",
     "@tailwindcss/vite": "^4.1.12",
     "@tanstack/react-query": "^5.90.7",
     "antd": "^5.28.1",
@@ -47,4 +48,3 @@
     "vite": "^7.1.2"
   }
 }
-
