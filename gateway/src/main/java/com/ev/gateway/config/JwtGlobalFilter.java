@@ -30,6 +30,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
         private static final List<String> EXCLUDED_PATHS = List.of(
             "/auth",
             "/users",
+            "/oauth2",  // OAuth2 authentication flow
             "/sendmail",
             "/ws",
             "/payments/payment/return",

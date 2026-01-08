@@ -30,12 +30,15 @@ public class SecurityConfig {
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final String urlFrontend;
     private final RateLimitFilter rateLimitFilter;
+    private final org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver;
 
     SecurityConfig(RateLimitFilter rateLimitFilter, OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
-            @Value("${frontend.url}") String urlFrontend) {
+            @Value("${frontend.url}") String urlFrontend,
+            org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver) {
         this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
         this.urlFrontend = urlFrontend;
         this.rateLimitFilter = rateLimitFilter;
+        this.customAuthorizationRequestResolver = customAuthorizationRequestResolver;
     }
 
     @Bean
@@ -64,6 +67,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/oauth2/success").authenticated()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestResolver(customAuthorizationRequestResolver))
                         .successHandler(oAuth2LoginSuccessHandler))
                 .exceptionHandling(ex -> ex.accessDeniedHandler((req, res, e) -> {
                     throw e;
