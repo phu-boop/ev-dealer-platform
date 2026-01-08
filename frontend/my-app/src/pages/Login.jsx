@@ -364,7 +364,7 @@ export default function Login() {
             {/* reCAPTCHA */}
             <div className="flex justify-center">
               <ReCAPTCHA
-                sitekey="6LddMtArAAAAACt_Fw82js63yEEUFnRGUpSkBn4Q"
+                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
                 onChange={handleCaptchaChange}
                 theme="dark"
               />

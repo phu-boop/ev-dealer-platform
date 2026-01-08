@@ -166,7 +166,7 @@ Application
 ### Bước 1: Clone repository
 
 ```bash
-git clone https://github.com/phu-boop/ev-dealer-platform.git
+git clone https://github.com/BinhLN1105/VMS-Commerce.git
 cd ev-dealer-management
 ```
 

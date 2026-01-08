@@ -30,6 +30,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
         private static final List<String> EXCLUDED_PATHS = List.of(
             "/auth",
             "/users",
+            "/oauth2",  // OAuth2 authentication flow
             "/sendmail",
             "/ws",
             "/payments/payment/return",
@@ -37,8 +38,9 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             "/payments/payment/pay-url",
             "/payments/api/v1/payments/gateway/callback/vnpay-return",
             "/payments/api/v1/payments/gateway/callback/vnpay-ipn",
-            "/favicon.ico"
-
+            "/favicon.ico",          
+            "/vehicles/vehicle-catalog",
+            "/sales/promotions/active"
         );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {

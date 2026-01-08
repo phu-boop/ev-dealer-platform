@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 // user-service
                                 "/auth/**",
                                 "/users/**",
+                                "/oauth2/**",  // OAuth2 authentication flow
 
                                 // customer-service
                                 "/customers/**",
