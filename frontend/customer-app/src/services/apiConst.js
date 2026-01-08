@@ -45,8 +45,15 @@ apiConst.interceptors.response.use(
           return apiConst(originalRequest);
         }
       } catch (refreshError) {
-        sessionStorage.clear();
-        window.location.href = "/login";
+        // Chỉ redirect đến login nếu user đang ở trang yêu cầu authentication
+        // Không redirect nếu đang ở trang public như trang chủ
+        const publicPaths = ['/', '/login', '/register'];
+        const currentPath = window.location.pathname;
+        
+        if (!publicPaths.includes(currentPath)) {
+          sessionStorage.clear();
+          window.location.href = "/login";
+        }
         return Promise.reject(refreshError);
       }
     }

@@ -37,7 +37,10 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             "/payments/payment/pay-url",
             "/payments/api/v1/payments/gateway/callback/vnpay-return",
             "/payments/api/v1/payments/gateway/callback/vnpay-ipn",
-            "/favicon.ico"
+            "/favicon.ico",
+            // Public APIs cho customer app (không yêu cầu đăng nhập)
+            "/vehicles/vehicle-catalog",
+            "/sales/promotions/active"
 
         );
 
