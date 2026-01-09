@@ -219,6 +219,20 @@ public class VehicleCatalogController {
     }
 
     /**
+     * Public endpoint for customers to compare vehicles
+     * No authentication required
+     */
+    @PostMapping("/public/compare")
+    public ResponseEntity<ApiRespond<List<ComparisonDto>>> getPublicComparisonDetails(
+            @RequestBody List<Long> variantIds) {
+        
+        // For public comparison, we don't need dealer-specific inventory data
+        // Just return the vehicle details without inventory information
+        List<ComparisonDto> results = vehicleCatalogService.getComparisonData(variantIds, null, new HttpHeaders());
+        return ResponseEntity.ok(ApiRespond.success("Fetched comparison data successfully", results));
+    }
+
+    /**
      * Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
      */
     @GetMapping("/variants/paginated")
