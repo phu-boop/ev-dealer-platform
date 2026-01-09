@@ -14,12 +14,14 @@ import com.ev.user_service.dto.respond.UserRespond;
 import com.ev.user_service.entity.Role;
 import com.ev.user_service.entity.User;
 import com.ev.user_service.enums.RoleName;
+import com.ev.user_service.enums.UserStatus;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.user_service.mapper.UserMapper;
 import com.ev.user_service.repository.RoleRepository;
 import com.ev.user_service.repository.UserRepository;
+import com.ev.user_service.service.CustomerProfileService;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -33,14 +35,16 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final String urlFrontend;
+    private final CustomerProfileService customerProfileService;
 
 
-    OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, @Value("${frontend.url}") String urlFrontend) {
+    OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, @Value("${frontend.url}") String urlFrontend, CustomerProfileService customerProfileService) {
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.userMapper = userMapper;
         this.urlFrontend = urlFrontend;
+        this.customerProfileService = customerProfileService;
     }
 
 
@@ -58,15 +62,24 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         Set<Role> roles = new HashSet<>();
         User user = userRepository.findByEmail(email).orElseGet(() -> {
-            roles.add(roleRepository.findByName(RoleName.EVM_STAFF.getRoleName())
+            // Assign CUSTOMER role for customer-app OAuth users
+            roles.add(roleRepository.findByName(RoleName.CUSTOMER.getRoleName())
                     .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR)));
+            
             User newUser = User.builder()
                     .email(email)
                     .name(givenName)
                     .fullName(name)
                     .roles(roles)
+                    .status(UserStatus.ACTIVE)
                     .build();
-            return userRepository.save(newUser);
+            
+            User savedUser = userRepository.save(newUser);
+            
+            // Create customer profile with Bronze tier
+            customerProfileService.saveCustomerProfile(savedUser, null);
+            
+            return savedUser;
         });
 
         String accessToken = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), null);
@@ -86,7 +99,46 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         ApiRespond<Object> apiResponse = ApiRespond.success("Login with Google success", loginRespond);
 
-        response.sendRedirect(urlFrontend + "/oauth-success?accessToken=" + accessToken);
+        // Lấy redirect_uri từ state parameter (format: originalState|base64(redirect_uri))
+        String redirectUri = extractRedirectUriFromRequest(request);
+        
+        System.out.println("[OAuth2LoginSuccessHandler] redirect_uri from state: " + redirectUri);
+        System.out.println("[OAuth2LoginSuccessHandler] fallback URL: " + urlFrontend);
+        
+        if (redirectUri == null || redirectUri.isEmpty()) {
+            redirectUri = urlFrontend;
+            System.out.println("[OAuth2LoginSuccessHandler] ⚠️ Using fallback URL: " + redirectUri);
+        } else {
+            System.out.println("[OAuth2LoginSuccessHandler] ✅ Using state URL: " + redirectUri);
+        }
+        
+        System.out.println("[OAuth2LoginSuccessHandler] Final redirect: " + redirectUri + "/oauth-success");
+        response.sendRedirect(redirectUri + "/oauth-success?accessToken=" + accessToken);
 
+    }
+    
+    private String extractRedirectUriFromRequest(HttpServletRequest request) {
+        try {
+            // Get state parameter from request (sent back by Google OAuth)
+            String state = request.getParameter("state");
+            System.out.println("[OAuth2LoginSuccessHandler] State from request: " + state);
+            
+            if (state != null && state.contains("|")) {
+                // Format: originalState|base64(redirect_uri)
+                String[] parts = state.split("\\|", 2);
+                if (parts.length == 2) {
+                    String encodedRedirectUri = parts[1];
+                    byte[] decodedBytes = java.util.Base64.getUrlDecoder().decode(encodedRedirectUri);
+                    String redirectUri = new String(decodedBytes);
+                    System.out.println("[OAuth2LoginSuccessHandler] Decoded redirect_uri: " + redirectUri);
+                    return redirectUri;
+                }
+            }
+            
+            return null;
+        } catch (Exception e) {
+            System.err.println("[OAuth2LoginSuccessHandler] Error extracting redirect_uri: " + e.getMessage());
+            return null;
+        }
     }
 }
