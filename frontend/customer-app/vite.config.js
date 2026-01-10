@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     port: 5174,
     strictPort: true,
+    // host: '0.0.0.0', // Dùng cho host public chung vlan
   },
   define: {
     global: "globalThis",

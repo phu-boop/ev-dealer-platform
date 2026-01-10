@@ -475,4 +475,16 @@ public class TestDriveController {
         List<TestDriveResponse> appointments = testDriveService.getAppointmentsWithFeedback(dealerId);
         return ResponseEntity.ok(ApiResponse.success(appointments));
     }
+
+    /**
+     * Public endpoint for customers to book test drive (no authentication required)
+     */
+    @PostMapping("/public")
+    public ResponseEntity<ApiResponse<TestDriveResponse>> createPublicTestDrive(
+            @Valid @RequestBody com.ev.customer_service.dto.request.PublicTestDriveRequest request) {
+        TestDriveResponse appointment = testDriveService.createPublicAppointment(request);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Test drive appointment created successfully", appointment));
+    }
 }

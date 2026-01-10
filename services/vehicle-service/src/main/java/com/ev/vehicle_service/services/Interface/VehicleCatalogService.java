@@ -29,6 +29,23 @@ public interface VehicleCatalogService {
     List<ModelSummaryDto> getAllModels(Sort sort);
 
     /**
+     * Get all models with pagination - OPTIMIZED
+     */
+    Page<ModelSummaryDto> getAllModelsPaginated(Pageable pageable);
+
+    /**
+     * Search models with filters - OPTIMIZED
+     */
+    Page<ModelSummaryDto> searchModels(
+            String keyword,
+            String status,
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice,
+            Integer minRange,
+            Integer maxRange,
+            Pageable pageable);
+
+    /**
      * Lấy TẤT CẢ ID của các phiên bản (không phân trang)
      */
     List<Long> getAllVariantIds();

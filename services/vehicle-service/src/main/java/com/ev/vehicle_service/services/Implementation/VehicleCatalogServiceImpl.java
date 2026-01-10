@@ -75,6 +75,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.math.BigDecimal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +111,79 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     @Override
-    @Cacheable(value = "models", key = "#modelId")
+    // Removed @Cacheable - Page objects don't serialize/deserialize well in Redis
+    public Page<ModelSummaryDto> getAllModelsPaginated(Pageable pageable) {
+        Page<VehicleModel> modelsPage = modelRepository.findAll(pageable);
+        return modelsPage.map(this::mapToModelSummaryDto);
+    }
+
+    @Override
+    // Removed @Cacheable - Page objects don't serialize/deserialize well in Redis
+    public Page<ModelSummaryDto> searchModels(
+            String keyword,
+            String status,
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice,
+            Integer minRange,
+            Integer maxRange,
+            Pageable pageable) {
+
+        // Use repository search method
+        Page<VehicleModel> modelsPage = modelRepository.searchModels(keyword, status, pageable);
+
+        // Apply additional filters if needed
+        List<VehicleModel> filteredModels = modelsPage.getContent().stream()
+                .filter(model -> {
+                    // Filter by price range if specified
+                    if (minPrice != null || maxPrice != null) {
+                        boolean matchesPrice = model.getVariants().stream()
+                                .anyMatch(v -> {
+                                    if (v.getPrice() == null)
+                                        return false;
+                                    if (minPrice != null && v.getPrice().compareTo(minPrice) < 0)
+                                        return false;
+                                    if (maxPrice != null && v.getPrice().compareTo(maxPrice) > 0)
+                                        return false;
+                                    return true;
+                                });
+                        if (!matchesPrice)
+                            return false;
+                    }
+
+                    // Filter by range if specified
+                    if (minRange != null || maxRange != null) {
+                        Integer modelRange = model.getBaseRangeKm();
+                        if (modelRange == null) {
+                            // Check variants
+                            modelRange = model.getVariants().stream()
+                                    .map(VehicleVariant::getRangeKm)
+                                    .filter(java.util.Objects::nonNull)
+                                    .findFirst()
+                                    .orElse(null);
+                        }
+                        if (modelRange == null)
+                            return false;
+                        if (minRange != null && modelRange < minRange)
+                            return false;
+                        if (maxRange != null && modelRange > maxRange)
+                            return false;
+                    }
+
+                    return true;
+                })
+                .collect(Collectors.toList());
+
+        // Create new page with filtered content
+        Page<VehicleModel> filteredPage = new org.springframework.data.domain.PageImpl<>(
+                filteredModels,
+                pageable,
+                filteredModels.size());
+
+        return filteredPage.map(this::mapToModelSummaryDto);
+    }
+
+    @Override
+    // Removed @Cacheable - Complex DTOs don't serialize/deserialize well in Redis
     public ModelDetailDto getModelDetails(Long modelId) {
         VehicleModel model = modelRepository.findModelWithDetailsById(modelId)
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
@@ -118,7 +191,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     @Override
-    @Cacheable(value = "variants", key = "#variantId")
+    // Removed @Cacheable - Complex DTOs don't serialize/deserialize well in Redis
     public VariantDetailDto getVariantDetails(Long variantId) {
         VehicleVariant variant = findVariantById(variantId);
         return mapToVariantDetailDto(variant);
@@ -606,6 +679,21 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setModelName(model.getModelName());
         dto.setBrand(model.getBrand());
         dto.setStatus(model.getStatus());
+        dto.setThumbnailUrl(model.getThumbnailUrl());
+        dto.setBaseRangeKm(model.getBaseRangeKm());
+        dto.setBaseBatteryCapacity(model.getBaseBatteryCapacity());
+        dto.setBaseChargingTime(model.getBaseChargingTime());
+        dto.setBaseMotorPower(model.getBaseMotorPower());
+
+        // Tìm giá thấp nhất từ các variants còn active
+        BigDecimal minPrice = model.getVariants().stream()
+                .filter(v -> v.getStatus() == VehicleStatus.IN_PRODUCTION || v.getStatus() == VehicleStatus.COMING_SOON)
+                .filter(v -> v.getPrice() != null)
+                .map(v -> v.getPrice())
+                .min(BigDecimal::compareTo)
+                .orElse(null);
+        dto.setBasePrice(minPrice);
+
         return dto;
     }
 

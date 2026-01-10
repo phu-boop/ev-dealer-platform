@@ -20,7 +20,8 @@ const RecommendedSection = ({ vehicles = [], onVehicleSelect }) => {
   
   const formatPrice = (price) => {
     if (!price) return "Liên hệ";
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price * 1000000);
+    // API trả về giá theo VNĐ, không cần nhân 1000000
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
   
   const handleImageError = (e) => { 
@@ -54,7 +55,7 @@ const RecommendedSection = ({ vehicles = [], onVehicleSelect }) => {
             >
               <div className="relative h-48 rounded-xl overflow-hidden mb-3">
                 <img
-                  src={vehicle.imageUrl || vehicle.image || "https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&q=80&w=1000"}
+                  src={vehicle.thumbnailUrl || vehicle.imageUrl || vehicle.image || "https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&q=80&w=1000"}
                   alt={vehicle.modelName || vehicle.name}
                   onError={handleImageError}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
@@ -66,8 +67,10 @@ const RecommendedSection = ({ vehicles = [], onVehicleSelect }) => {
               
               <div className="px-2">
                 <h3 className="font-bold text-gray-900 text-lg truncate">{vehicle.modelName || vehicle.name || "Xe điện"}</h3>
-                <p className="text-xs text-gray-500 mb-3">{vehicle.variantName || vehicle.version || ""}</p>
-                <div className="flex items-center justify-between text-blue-600 border-t border-gray-50 pt-2">
+                {vehicle.brand && (
+                  <p className="text-xs text-gray-500 mb-1">{vehicle.brand}</p>
+                )}
+                <div className="flex items-center justify-between text-blue-600 border-t border-gray-50 pt-2 mt-3">
                   <span className="font-extrabold">{formatPrice(vehicle.basePrice || vehicle.price)}</span>
                   <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <ArrowRight className="w-4 h-4" />
