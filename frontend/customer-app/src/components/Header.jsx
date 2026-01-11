@@ -4,26 +4,53 @@ import { useAuth } from "../auth/AuthProvider";
 import {
   Menu,
   X,
-  ChevronDown,
   User,
   ShoppingBag,
-  MessageSquare,
-  Calculator,
-  MapPin,
-  Settings,
   LogOut,
   Car,
   GitCompare,
   Zap,
+  Shield,
+  MoreHorizontal,
+  MessageSquare,
+  Calculator,
+  Wrench,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getCartItemCount } from "../services/cartService";
+import { useComparison } from "../utils/useComparison";
 
 export default function Header() {
-  const { isAuthenticated, logout, name } = useAuth();
+  const { isAuthenticated, logout, name, hasRole, memberId } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isFeaturesMenuOpen, setIsFeaturesMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const { count: compareCount } = useComparison();
+
+  // Fetch cart item count - only if user is authenticated AND has a valid memberId
+  const { data: cartCount } = useQuery({
+    queryKey: ['cart-count', memberId],
+    queryFn: async () => {
+      // Double check memberId exists before making API call
+      if (!memberId) {
+        console.warn("[Cart] No memberId available, skipping cart count fetch");
+        return 0;
+      }
+      try {
+        const response = await getCartItemCount(memberId);
+        return response.data || 0;
+      } catch (error) {
+        console.error("Error fetching cart count:", error);
+        return 0;
+      }
+    },
+    enabled: isAuthenticated() && !!memberId, // Only fetch when both authenticated and has valid memberId
+    refetchInterval: 30000,
+  });
+
+  const isAdmin = hasRole(['ADMIN', 'EVM_STAFF', 'DEALER_MANAGER']);
 
   const handleLogout = () => {
     logout();
@@ -47,6 +74,7 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6">
+            {/* Main Navigation Links */}
             <Link
               to="/"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -58,157 +86,186 @@ export default function Header() {
               Trang chủ
             </Link>
 
-            {/* Features Dropdown */}
+            <Link
+              to="/vehicles"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive("/vehicles")
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+              }`}
+            >
+              Xe điện
+            </Link>
+
+            <Link
+              to="/test-drive"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive("/test-drive")
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+              }`}
+            >
+              Đặt lái thử
+            </Link>
+
+            <Link
+              to="/charging-stations"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive("/charging-stations")
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+              }`}
+            >
+              Trạm sạc
+            </Link>
+
+            {/* More Menu (Extended Features) */}
             <div className="relative">
               <button
-                onClick={() => setIsFeaturesMenuOpen(!isFeaturesMenuOpen)}
+                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
                 className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isFeaturesMenuOpen
+                  isMoreMenuOpen
                     ? "text-blue-600 bg-blue-50"
                     : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
                 }`}
               >
-                Tính năng
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform ${
-                    isFeaturesMenuOpen ? "rotate-180" : ""
-                  }`}
-                />
+                <MoreHorizontal className="w-5 h-5" />
               </button>
-              {isFeaturesMenuOpen && (
+              {isMoreMenuOpen && (
                 <>
                   <div
                     className="fixed inset-0 z-10"
-                    onClick={() => setIsFeaturesMenuOpen(false)}
+                    onClick={() => setIsMoreMenuOpen(false)}
                   ></div>
-                  <div className="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
-                    <Link
-                      to="/test-drive"
-                      onClick={() => setIsFeaturesMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <Car className="w-4 h-4" />
-                      Đặt Lái Thử
-                    </Link>
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
                     <Link
                       to="/configure"
-                      onClick={() => setIsFeaturesMenuOpen(false)}
+                      onClick={() => setIsMoreMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                     >
-                      <Settings className="w-4 h-4" />
-                      Cấu Hình Xe
-                    </Link>
-                    <Link
-                      to="/compare"
-                      onClick={() => setIsFeaturesMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <GitCompare className="w-4 h-4" />
-                      So Sánh Xe
-                    </Link>
-                    <Link
-                      to="/charging-stations"
-                      onClick={() => setIsFeaturesMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <MapPin className="w-4 h-4" />
-                      Trạm Sạc
+                      <Wrench className="w-4 h-4" />
+                      Cấu hình xe
                     </Link>
                     <Link
                       to="/chatbot"
-                      onClick={() => setIsFeaturesMenuOpen(false)}
+                      onClick={() => setIsMoreMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                     >
                       <MessageSquare className="w-4 h-4" />
-                      Tư Vấn AI
+                      Tư vấn AI
                     </Link>
-                    <div className="border-t border-gray-200 my-2"></div>
                     <Link
                       to="/financing"
-                      onClick={() => setIsFeaturesMenuOpen(false)}
+                      onClick={() => setIsMoreMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                     >
                       <Calculator className="w-4 h-4" />
-                      Tính Trả Góp
+                      Tính trả góp
                     </Link>
                     <Link
                       to="/tco-calculator"
-                      onClick={() => setIsFeaturesMenuOpen(false)}
+                      onClick={() => setIsMoreMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                     >
                       <Calculator className="w-4 h-4" />
-                      Tính Chi Phí
+                      Tính chi phí
                     </Link>
                   </div>
                 </>
               )}
             </div>
 
-            {isAuthenticated() ? (
-              <div className="flex items-center gap-4">
+            <div className="h-6 w-px bg-gray-300"></div>
+
+            {/* Action Icons */}
+            {isAuthenticated() && (
+              <>
+                {/* Compare Icon */}
                 <Link
-                  to="/orders"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/orders")
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`}
+                  to="/compare"
+                  className="relative p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
+                  title="So sánh xe"
                 >
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4" />
-                    Đơn hàng
-                  </div>
+                  <GitCompare className="w-5 h-5" />
+                  {compareCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {compareCount}
+                    </span>
+                  )}
                 </Link>
 
-                {/* User Menu */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-                  >
-                    <User className="w-4 h-4" />
-                    <span>{name || "Tài khoản"}</span>
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform ${
-                        isUserMenuOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {isUserMenuOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      ></div>
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
-                        <Link
-                          to="/profile"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                        >
-                          <User className="w-4 h-4" />
-                          Thông tin tài khoản
-                        </Link>
-                        <Link
-                          to="/orders"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                        >
-                          <ShoppingBag className="w-4 h-4" />
-                          Đơn hàng của tôi
-                        </Link>
-                        <div className="border-t border-gray-200 my-2"></div>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          Đăng xuất
-                        </button>
-                      </div>
-                    </>
+                {/* Cart Icon */}
+                <Link
+                  to="/cart"
+                  className="relative p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
+                  title="Giỏ hàng"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
                   )}
-                </div>
+                </Link>
+
+                {/* Admin Link */}
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                    title="Quản trị"
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+              </>
+            )}
+
+            {/* User Menu or Login/Register */}
+            {isAuthenticated() ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="max-w-[120px] truncate">{name || "Tài khoản"}</span>
+                </button>
+                {isUserMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    ></div>
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        Tài khoản
+                      </Link>
+                      <Link
+                        to="/orders"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        Đơn hàng
+                      </Link>
+                      <div className="border-t border-gray-200 my-2"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Đăng xuất
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-3">
@@ -257,36 +314,64 @@ export default function Header() {
                 Trang chủ
               </Link>
               <Link
-                to="/test-drive"
+                to="/vehicles"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/vehicles")
+                    ? "text-blue-600 bg-blue-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
               >
-                <Car className="w-4 h-4" />
-                Đặt Lái Thử
+                Xe điện
               </Link>
               <Link
-                to="/configure"
+                to="/test-drive"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/test-drive")
+                    ? "text-blue-600 bg-blue-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
               >
-                <Settings className="w-4 h-4" />
-                Cấu Hình Xe
+                Đặt lái thử
               </Link>
+              <Link
+                to="/charging-stations"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive("/charging-stations")
+                    ? "text-blue-600 bg-blue-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Trạm sạc
+              </Link>
+
+              <div className="border-t border-gray-200 my-2"></div>
+              <div className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">
+                Thêm tính năng
+              </div>
+
               <Link
                 to="/compare"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
                 <GitCompare className="w-4 h-4" />
-                So Sánh Xe
+                So sánh xe
+                {compareCount > 0 && (
+                  <span className="ml-auto bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {compareCount}
+                  </span>
+                )}
               </Link>
               <Link
-                to="/charging-stations"
+                to="/configure"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
-                <MapPin className="w-4 h-4" />
-                Trạm Sạc
+                <Wrench className="w-4 h-4" />
+                Cấu hình xe
               </Link>
               <Link
                 to="/chatbot"
@@ -294,7 +379,7 @@ export default function Header() {
                 className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
                 <MessageSquare className="w-4 h-4" />
-                Tư Vấn AI
+                Tư vấn AI
               </Link>
               <Link
                 to="/financing"
@@ -302,7 +387,7 @@ export default function Header() {
                 className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
                 <Calculator className="w-4 h-4" />
-                Tính Trả Góp
+                Tính trả góp
               </Link>
               <Link
                 to="/tco-calculator"
@@ -310,11 +395,25 @@ export default function Header() {
                 className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
                 <Calculator className="w-4 h-4" />
-                Tính Chi Phí
+                Tính chi phí
               </Link>
+
               {isAuthenticated() ? (
                 <>
                   <div className="border-t border-gray-200 my-2"></div>
+                  <Link
+                    to="/cart"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    Giỏ hàng
+                    {cartCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {cartCount > 99 ? '99+' : cartCount}
+                      </span>
+                    )}
+                  </Link>
                   <Link
                     to="/orders"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -331,6 +430,16 @@ export default function Header() {
                     <User className="w-4 h-4" />
                     Tài khoản
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-4 py-2 rounded-md text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2"
+                    >
+                      <Shield className="w-4 h-4" />
+                      Quản trị
+                    </Link>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="px-4 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 text-left"

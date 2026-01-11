@@ -21,6 +21,7 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.user_service.mapper.UserMapper;
 import com.ev.user_service.repository.RoleRepository;
 import com.ev.user_service.repository.UserRepository;
+import com.ev.user_service.repository.CustomerProfileRepository;
 import com.ev.user_service.service.CustomerProfileService;
 
 import java.io.IOException;
@@ -36,15 +37,17 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final UserMapper userMapper;
     private final String urlFrontend;
     private final CustomerProfileService customerProfileService;
+    private final CustomerProfileRepository customerProfileRepository;
 
 
-    OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, @Value("${frontend.url}") String urlFrontend, CustomerProfileService customerProfileService) {
+    OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, @Value("${frontend.url}") String urlFrontend, CustomerProfileService customerProfileService, CustomerProfileRepository customerProfileRepository) {
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.userMapper = userMapper;
         this.urlFrontend = urlFrontend;
         this.customerProfileService = customerProfileService;
+        this.customerProfileRepository = customerProfileRepository;
     }
 
 
@@ -94,7 +97,26 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         cookie.setMaxAge(30 * 24 * 60 * 60);
         response.addCookie(cookie);
 
+        // Map user to UserRespond
         UserRespond userRespond = userMapper.usertoUserRespond(user);
+        
+        // Fetch customer profile and set memberId if user is a CUSTOMER
+        try {
+            if (user.getRoleToString().contains("CUSTOMER")) {
+                // Explicitly fetch customer profile from repository (avoid lazy loading issue)
+                var customerProfile = customerProfileRepository.findByUserId(user.getId());
+                if (customerProfile.isPresent()) {
+                    userRespond.setMemberId(customerProfile.get().getCustomerId());
+                    System.out.println("[OAuth2LoginSuccessHandler] ✅ Set memberId: " + customerProfile.get().getCustomerId());
+                } else {
+                    System.out.println("[OAuth2LoginSuccessHandler] ⚠️ No customer profile found for user: " + user.getEmail());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[OAuth2LoginSuccessHandler] ❌ Error fetching customer profile: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         LoginRespond loginRespond = new LoginRespond(userRespond, accessToken);
 
         ApiRespond<Object> apiResponse = ApiRespond.success("Login with Google success", loginRespond);

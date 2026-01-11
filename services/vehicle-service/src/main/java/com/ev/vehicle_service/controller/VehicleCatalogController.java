@@ -1,13 +1,18 @@
 package com.ev.vehicle_service.controller;
 
 import com.ev.common_lib.dto.respond.ApiRespond;
+import com.ev.common_lib.dto.vehicle.ComparisonDto;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.vehicle_service.dto.request.CreateFeatureRequest;
 import com.ev.vehicle_service.dto.request.CreateModelRequest;
 import com.ev.vehicle_service.dto.request.CreateVariantRequest;
+import com.ev.vehicle_service.dto.request.FeatureRequest;
+import com.ev.vehicle_service.dto.request.UpdateFeatureRequest;
 import com.ev.vehicle_service.dto.request.UpdateModelRequest;
 import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
 import com.ev.vehicle_service.dto.response.ModelDetailDto;
 import com.ev.vehicle_service.dto.response.ModelSummaryDto;
+import com.ev.vehicle_service.model.VehicleFeature;
 import com.ev.vehicle_service.model.VehicleModel;
 import com.ev.vehicle_service.model.VehicleVariant;
 import com.ev.vehicle_service.services.Interface.VehicleCatalogService;
@@ -17,12 +22,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/vehicle-catalog")
@@ -199,6 +207,181 @@ public class VehicleCatalogController {
             @PathVariable Long variantId,
             @RequestHeader("X-User-Email") String email) {
         vehicleCatalogService.deactivateVariant(variantId, email);
-        return ResponseEntity.ok(ApiRespond.success("Variant deleted successfully", null));
+        return ResponseEntity.ok(ApiRespond.success("Variant has been discontinued", null));
+    }
+
+    /**
+     * Lấy chi tiết của nhiều phiên bản xe dựa trên danh sách ID.
+     */
+    @PostMapping("/variants/details-by-ids")
+    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getVariantDetailsByIds(
+            @RequestBody List<Long> variantIds) {
+        List<VariantDetailDto> variants = vehicleCatalogService.getVariantDetailsByIds(variantIds);
+        return ResponseEntity.ok(ApiRespond.success("Fetched variant details successfully", variants));
+    }
+
+    /**
+     * Lấy dữ liệu gộp để so sánh các phiên bản.
+     * Nhận vào danh sách các ID của phiên bản cần so sánh.
+     */
+    @PostMapping("/compare")
+    // THÊM CHÚ THÍCH @PreAuthorize NÀY:
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF','DEALER_MANAGER', 'DEALER_STAFF') or " +
+            "( (hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')) and " +
+            "  #dealerId.toString() == authentication.details['profileId'] )")
+    public ResponseEntity<ApiRespond<List<ComparisonDto>>> getComparisonDetails(
+            @RequestBody List<Long> variantIds,
+            @RequestHeader("X-User-ProfileId") UUID dealerId,
+            @RequestHeader(value = "X-User-Email", required = false) String email,
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) String userId) {
+        // Tạo HttpHeaders để chuyển tiếp các header xác thực đến inventory-service
+        HttpHeaders headers = new HttpHeaders();
+        if (email != null)
+            headers.set("X-User-Email", email);
+        if (role != null)
+            headers.set("X-User-Role", role);
+        if (userId != null)
+            headers.set("X-User-Id", userId);
+        if (dealerId != null)
+            headers.set("X-User-ProfileId", dealerId.toString());
+
+        List<ComparisonDto> results = vehicleCatalogService.getComparisonData(variantIds, dealerId, headers);
+        return ResponseEntity.ok(ApiRespond.success("Fetched comparison data successfully", results));
+    }
+
+    /**
+     * Public endpoint for customers to compare vehicles
+     * No authentication required
+     */
+    @PostMapping("/public/compare")
+    public ResponseEntity<ApiRespond<List<ComparisonDto>>> getPublicComparisonDetails(
+            @RequestBody List<Long> variantIds) {
+        
+        // For public comparison, we don't need dealer-specific inventory data
+        // Just return the vehicle details without inventory information
+        List<ComparisonDto> results = vehicleCatalogService.getComparisonData(variantIds, null, new HttpHeaders());
+        return ResponseEntity.ok(ApiRespond.success("Fetched comparison data successfully", results));
+    }
+
+    /**
+     * Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
+     */
+    @GetMapping("/variants/paginated")
+    public ResponseEntity<ApiRespond<Page<VariantDetailDto>>> getAllVariantsPaginated(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+
+            // Lọc theo khoảng giá
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @PageableDefault(size = 10, sort = "variantId") Pageable pageable) {
+
+        // Truyền 'status' xuống service
+        Page<VariantDetailDto> results = vehicleCatalogService.getAllVariantsPaginated(search, status, minPrice,
+                maxPrice, pageable);
+        return ResponseEntity.ok(ApiRespond.success("Fetched paginated variants successfully", results));
+    }
+
+    /**
+     * Lấy TẤT CẢ các phiên bản (không phân trang).
+     * Phục vụ riêng cho việc backfill cache của reporting-service.
+     */
+    @GetMapping("/variants/all-for-backfill")
+    public ResponseEntity<ApiRespond<List<VariantDetailDto>>> getAllVariantsForBackfill() {
+        List<VariantDetailDto> results = vehicleCatalogService.getAllVariantsForBackfill();
+        return ResponseEntity.ok(ApiRespond.success("Fetched all variants for backfill", results));
+    }
+
+    /**
+     * Lấy TẤT CẢ các ID của phiên bản (dùng cho giao tiếp nội bộ)
+     */
+    @GetMapping("/variants/all-ids")
+    @PreAuthorize("hasAnyRole('ADMIN','EVM_STAFF')") // Chỉ nội bộ
+    public ResponseEntity<ApiRespond<List<Long>>> getAllVariantIds() {
+        List<Long> ids = vehicleCatalogService.getAllVariantIds();
+        return ResponseEntity.ok(ApiRespond.success("Fetched all variant IDs", ids));
+    }
+
+    // ==========================================================
+    // ENDPOINTS FOR FEATURES
+    // ==========================================================
+
+    /**
+     * Lấy danh sách tất cả các tính năng có sẵn.
+     */
+    @GetMapping("/features")
+    public ResponseEntity<ApiRespond<List<VehicleFeature>>> getAllFeatures() {
+        List<VehicleFeature> features = vehicleCatalogService.getAllFeatures();
+        return ResponseEntity.ok(ApiRespond.success("Fetched all features successfully", features));
+    }
+
+    /**
+     * Gán một tính năng cho một phiên bản.
+     */
+    @PostMapping("/variants/{variantId}/features")
+    public ResponseEntity<ApiRespond<VariantDetailDto>> assignFeature(
+            @PathVariable Long variantId,
+            @Valid @RequestBody FeatureRequest request,
+            @RequestHeader("X-User-Email") String email) {
+
+        vehicleCatalogService.assignFeatureToVariant(variantId, request, email);
+        VariantDetailDto updatedVariant = vehicleCatalogService.getVariantDetails(variantId);
+        return ResponseEntity.ok(ApiRespond.success("Feature assigned successfully", updatedVariant));
+    }
+
+    /**
+     * Bỏ gán một tính năng khỏi một phiên bản.
+     */
+    @DeleteMapping("/variants/{variantId}/features/{featureId}")
+    public ResponseEntity<ApiRespond<Void>> unassignFeature(
+            @PathVariable Long variantId,
+            @PathVariable Long featureId,
+            @RequestHeader("X-User-Email") String email) {
+
+        vehicleCatalogService.unassignFeatureFromVariant(variantId, featureId, email);
+        return ResponseEntity.ok(ApiRespond.success("Feature unassigned successfully", null));
+    }
+
+    /**
+     * Tạo một tính năng mới trong thư viện (dành cho Admin).
+     */
+    @PostMapping("/features")
+    @PreAuthorize("hasAnyRole('ADMIN')") // Bảo mật
+    public ResponseEntity<ApiRespond<VehicleFeature>> createFeature(
+            @Valid @RequestBody CreateFeatureRequest request,
+            @RequestHeader("X-User-Email") String email) {
+
+        VehicleFeature createdFeature = vehicleCatalogService.createFeature(request, email);
+        return new ResponseEntity<>(
+                ApiRespond.success("Feature created successfully", createdFeature),
+                HttpStatus.CREATED);
+    }
+
+    /**
+     * Cập nhật thông tin một tính năng trong thư viện (dành cho Admin).
+     */
+    @PutMapping("/features/{featureId}")
+    @PreAuthorize("hasAnyRole('ADMIN')") // Bảo mật
+    public ResponseEntity<ApiRespond<VehicleFeature>> updateFeature(
+            @PathVariable Long featureId,
+            @Valid @RequestBody UpdateFeatureRequest request,
+            @RequestHeader("X-User-Email") String email) {
+
+        VehicleFeature updatedFeature = vehicleCatalogService.updateFeature(featureId, request, email);
+        return ResponseEntity.ok(ApiRespond.success("Feature updated successfully", updatedFeature));
+    }
+
+    /**
+     * Xóa một tính năng khỏi thư viện (dành cho Admin).
+     */
+    @DeleteMapping("/features/{featureId}")
+    @PreAuthorize("hasAnyRole('ADMIN')") // Bảo mật
+    public ResponseEntity<ApiRespond<Void>> deleteFeature(
+            @PathVariable Long featureId,
+            @RequestHeader("X-User-Email") String email) {
+
+        vehicleCatalogService.deleteFeature(featureId, email);
+        return ResponseEntity.ok(ApiRespond.success("Feature deleted successfully", null));
     }
 }

@@ -50,6 +50,16 @@ public class TestDriveController {
     }
 
     /**
+     * Lấy danh sách lịch hẹn của customer (cho customer app)
+     */
+    @GetMapping("/customer/{customerId}")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER', 'CUSTOMER')")
+    public ResponseEntity<ApiResponse<List<TestDriveResponse>>> getTestDrivesByCustomer(@PathVariable Long customerId) {
+        List<TestDriveResponse> appointments = testDriveService.getAppointmentsByCustomerId(customerId);
+        return ResponseEntity.ok(ApiResponse.success(appointments));
+    }
+
+    /**
      * Lấy chi tiết một lịch hẹn
      */
     @GetMapping("/{id}")
@@ -93,6 +103,19 @@ public class TestDriveController {
     @DeleteMapping("/{id}/cancel")
     @PreAuthorize("hasRole('DEALER_STAFF')")
     public ResponseEntity<ApiResponse<Void>> cancelTestDrive(
+            @PathVariable Long id,
+            @Valid @RequestBody CancelTestDriveRequest request) {
+        testDriveService.cancelAppointment(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Test drive appointment cancelled successfully", null));
+    }
+
+    /**
+     * Hủy lịch hẹn lái thử (cho customer)
+     * Endpoint riêng cho customer có thể cancel lịch hẹn của mình
+     */
+    @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'CUSTOMER')")
+    public ResponseEntity<ApiResponse<Void>> cancelTestDriveByCustomer(
             @PathVariable Long id,
             @Valid @RequestBody CancelTestDriveRequest request) {
         testDriveService.cancelAppointment(id, request);

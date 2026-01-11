@@ -49,6 +49,13 @@ public class TestDriveService {
     }
 
     @Transactional(readOnly = true)
+    public List<TestDriveResponse> getAppointmentsByCustomerId(Long customerId) {
+        return appointmentRepository.findByCustomerCustomerId(customerId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public TestDriveResponse getAppointmentById(Long id) {
         TestDriveAppointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
