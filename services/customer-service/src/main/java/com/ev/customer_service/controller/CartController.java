@@ -109,13 +109,14 @@ public class CartController {
 
     /**
      * Đếm số lượng items trong giỏ hàng
-     * GET /cart/{customerId}/count
+     * GET /cart/{profileId}/count
+     * @param profileId UUID of the customer's profile from User Service
      */
-    @GetMapping("/{customerId}/count")
-    public ResponseEntity<ApiRespond<Long>> getCartItemCount(@PathVariable Long customerId) {
-        log.info("Getting cart item count for customer {}", customerId);
+    @GetMapping("/{profileId}/count")
+    public ResponseEntity<ApiRespond<Long>> getCartItemCount(@PathVariable String profileId) {
+        log.info("Getting cart item count for profile {}", profileId);
         
-        Long count = cartService.getCartItemCount(customerId);
+        Long count = cartService.getCartItemCountByProfileId(profileId);
         return ResponseEntity.ok(ApiRespond.success("Đếm sản phẩm thành công", count));
     }
 }

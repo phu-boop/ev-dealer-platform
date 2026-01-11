@@ -199,4 +199,15 @@ public class CartServiceImpl implements CartService {
                 .updatedAt(cartItem.getUpdatedAt())
                 .build();
     }
+
+    @Override
+    public Long getCartItemCountByProfileId(String profileId) {
+        log.info("Getting cart item count for profile {}", profileId);
+
+        // Find customer by profileId
+        Customer customer = customerRepository.findByProfileId(profileId)
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+
+        return getCartItemCount(customer.getCustomerId());
+    }
 }

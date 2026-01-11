@@ -41,6 +41,11 @@ public class SecurityConfig {
 
                                 // customer-service
                                 "/customers/**",
+                                "/cart/**",  // Cart endpoints
+                                "/test-drives/**",
+                                "/feedback/**",
+                                "/complaints/**",
+                                "/charging-stations/**",
 
                                 // dealer-service
                                 "/dealers/**",

@@ -3,28 +3,31 @@ import { useAuth } from "../auth/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { getCartItemCount } from "../services/cartService";
 import { useComparison } from "../utils/useComparison";
+import { Shield } from "lucide-react";
 
 export default function Header() {
-  const { isAuthenticated, logout, name, user } = useAuth();
+  const { isAuthenticated, logout, name, hasRole, memberId } = useAuth();
   const navigate = useNavigate();
   const { count: compareCount } = useComparison();
 
   // Fetch cart item count
   const { data: cartCount } = useQuery({
-    queryKey: ['cart-count', user?.memberId],
+    queryKey: ['cart-count', memberId],
     queryFn: async () => {
-      if (!user?.memberId) return 0;
+      if (!isAuthenticated() || !memberId) return 0;
       try {
-        const response = await getCartItemCount(user.memberId);
+        const response = await getCartItemCount(memberId);
         return response.data || 0;
       } catch (error) {
         console.error("Error fetching cart count:", error);
         return 0;
       }
     },
-    enabled: !!user?.memberId,
+    enabled: isAuthenticated() && !!memberId,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  const isAdmin = hasRole(['ADMIN', 'EVM_STAFF', 'DEALER_MANAGER']);
 
   const handleLogout = () => {
     logout();
@@ -124,6 +127,18 @@ export default function Header() {
                 </Link>
 
                 {/* Divider */}
+                {/* Admin Link - only show for admin roles */}
+                {isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+                    title="Quản trị"
+                  >
+                    <Shield size={18} />
+                    <span>Quản trị</span>
+                  </Link>
+                )}
+
                 <div className="h-6 w-px bg-gray-300"></div>
 
                 <Link to="/profile" className="text-blue-600 font-medium hover:text-blue-700 transition">

@@ -44,4 +44,9 @@ public interface CartService {
      * Đếm số lượng items trong giỏ hàng
      */
     Long getCartItemCount(Long customerId);
+
+    /**
+     * Đếm số lượng items trong giỏ hàng bằng profileId
+     */
+    Long getCartItemCountByProfileId(String profileId);
 }

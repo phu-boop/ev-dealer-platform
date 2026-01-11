@@ -9,9 +9,34 @@ const api = axios.create({
 // Lấy token từ sessionStorage
 api.interceptors.request.use((config) => {
   const token = sessionStorage.getItem("token");
+  console.log("[API] Request to:", config.url, "Token exists:", !!token);
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    
+    // Decode JWT to check expiry
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      const isExpired = payload.exp < now;
+      console.log("[API] Token info:", {
+        email: payload.sub || payload.email,
+        role: payload.role,
+        exp: new Date(payload.exp * 1000).toLocaleString(),
+        isExpired: isExpired
+      });
+      
+      if (isExpired) {
+        console.warn("[API] Token is expired! Clearing session...");
+        sessionStorage.clear();
+        window.location.href = "/login";
+        return Promise.reject(new Error("Token expired"));
+      }
+    } catch (e) {
+      console.error("[API] Failed to decode token:", e);
+    }
   }
+  
   return config;
 });
 

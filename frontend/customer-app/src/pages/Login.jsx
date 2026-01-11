@@ -42,23 +42,43 @@ export default function Login() {
 
     try {
       const response = await loginUser({ ...form });
+      console.log("Login response:", response);
 
-      if (response.code === "1000") {
-        const userData = response.data.userRespond;
-        const jwtToken = response.data.token;
-        const rolesArray = userData.roles.map((role) => role.name);
-
-        // Check if user is CUSTOMER
-        if (!rolesArray.includes("CUSTOMER")) {
-          setError("Tài khoản này không phải là khách hàng. Vui lòng đăng nhập tại cổng quản lý.");
+      // Backend có thể trả về code: "1000" hoặc code: 200
+      if (response.code === 200 || response.code === "1000") {
+        // Handle both response structures
+        const userData = response.result?.userRespond || response.data?.userRespond;
+        const jwtToken = response.result?.token || response.data?.token;
+        
+        console.log("User data:", userData);
+        
+        // Get roleName - handle both structures
+        let roleName;
+        if (userData.roleName) {
+          // New structure: roleName directly
+          roleName = userData.roleName;
+        } else if (userData.roles && userData.roles.length > 0) {
+          // Old structure: roles array with objects containing 'name' property
+          roleName = userData.roles[0].name;
+        }
+        
+        console.log("Extracted role name:", roleName);
+        
+        // Check if user has appropriate role for customer app
+        const allowedRoles = ["ADMIN", "EVM_STAFF", "DEALER_MANAGER", "CUSTOMER"];
+        
+        if (!roleName || !allowedRoles.includes(roleName)) {
+          console.error("Access denied for role:", roleName);
+          setError(`Tài khoản không có quyền truy cập hệ thống. Role: ${roleName || 'undefined'}`);
           setLoading(false);
           return;
         }
 
+        console.log("Calling login function...");
         login(
           jwtToken,
-          rolesArray,
-          userData.id,
+          [roleName], // Convert single role to array for consistency
+          userData.id || userData.userId,
           userData.email,
           userData.name,
           userData.fullName,
@@ -67,14 +87,24 @@ export default function Login() {
           userData.url
         );
 
+        console.log("Login function called, showing toast...");
         toast.success("Đăng nhập thành công!");
-        navigate("/");
+        
+        // Redirect based on role
+        const redirectPath = ["ADMIN", "EVM_STAFF", "DEALER_MANAGER"].includes(roleName) ? "/admin" : "/";
+        console.log("Redirecting to:", redirectPath);
+        
+        setTimeout(() => {
+          navigate(redirectPath);
+        }, 100);
       } else {
+        console.error("Login failed with code:", response.code);
         setError(response.message || "Đăng nhập thất bại");
+        setLoading(false);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Đăng nhập thất bại");
-    } finally {
+      console.error("Login error:", err);
+      setError(err.response?.data?.message || err.message || "Đăng nhập thất bại");
       setLoading(false);
     }
   };
