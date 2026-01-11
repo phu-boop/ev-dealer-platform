@@ -111,7 +111,7 @@ public class UserController {
                 .body(ApiRespond.success("Create User Successfully", userService.createUserDealerManager(userRequest)));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    // Không cần @PreAuthorize để tạo admin đầu tiên trong hệ thống
     @PostMapping("/register/admin")
     public ResponseEntity<ApiRespond<UserRespond>> createUserAdmin(@Validated(OnCreate.class) @RequestBody UserRequest userRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)

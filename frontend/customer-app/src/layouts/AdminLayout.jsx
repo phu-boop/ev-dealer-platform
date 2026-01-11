@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import {
@@ -19,19 +19,18 @@ import {
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { logout, name, user } = useAuth();
+  const { logout, name, roles, hasRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if user is admin
-  const isAdmin = user?.roles?.some(role => 
-    ['ADMIN', 'EVM_STAFF', 'DEALER_MANAGER'].includes(role)
-  );
+  // Check if user is admin using hasRole from useAuth
+  const isAdmin = hasRole(['ADMIN', 'EVM_STAFF', 'DEALER_MANAGER']);
 
-  if (!isAdmin) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate('/');
+    }
+  }, [isAdmin, navigate]);
 
   const handleLogout = () => {
     logout();

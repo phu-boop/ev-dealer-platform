@@ -25,6 +25,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final RedisService redisService;
 
+    // Danh sách các path không cần xác thực JWT
+    private static final List<String> PUBLIC_PATHS = List.of(
+        "/auth",
+        "/users/register",
+        "/payment",
+        "/v3/api-docs",
+        "/swagger-ui",
+        "/swagger"
+    );
+
     public JwtAuthenticationFilter(JwtUtil jwtUtil, RedisService redisService) {
         this.jwtUtil = jwtUtil;
         this.redisService = redisService;
@@ -33,6 +43,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String path = request.getRequestURI();
+        
+        // Bỏ qua JWT check cho public paths
+        boolean isPublicPath = PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+        if (isPublicPath) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String email = null;
