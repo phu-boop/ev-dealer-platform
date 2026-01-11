@@ -2,15 +2,21 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 
 export default function AdminRoute({ children }) {
-  const { isAuthenticated, hasRole } = useAuth();
+  const { isAuthenticated, hasRole, roles } = useAuth();
+
+  console.log('[AdminRoute] isAuthenticated:', isAuthenticated());
+  console.log('[AdminRoute] roles from sessionStorage:', sessionStorage.getItem('roles'));
+  console.log('[AdminRoute] roles from useAuth:', roles);
 
   // Check if user is authenticated
   if (!isAuthenticated()) {
+    console.log('[AdminRoute] Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   // Check if user has admin role
   const isAdmin = hasRole(['ADMIN', 'EVM_STAFF', 'DEALER_MANAGER']);
+  console.log('[AdminRoute] isAdmin:', isAdmin);
 
   if (!isAdmin) {
     return (
