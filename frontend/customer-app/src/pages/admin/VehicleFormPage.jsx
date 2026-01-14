@@ -8,7 +8,8 @@ import {
   getAllModels,
   uploadVehicleImage
 } from '../../services/adminVehicleService';
-import toast from 'react-hot-toast';
+import ColorImageManager from '../../components/admin/ColorImageManager';
+import { toast } from 'react-toastify';
 
 export default function VehicleFormPage() {
   const { variantId } = useParams();
@@ -37,7 +38,8 @@ export default function VehicleFormPage() {
     weight: '',
     warrantyYears: '',
     imageUrl: '',
-    description: ''
+    description: '',
+    colorImages: '' // JSON string of color images
   });
 
   useEffect(() => {
@@ -83,12 +85,12 @@ export default function VehicleFormPage() {
           weight: vehicle.weight || '',
           warrantyYears: vehicle.warrantyYears || '',
           imageUrl: vehicle.imageUrl || '',
-          description: vehicle.description || ''
+          description: vehicle.description || '',
+          colorImages: vehicle.colorImages || ''
         });
       }
     } catch (error) {
       toast.error('Không thể tải thông tin xe');
-      console.error('Error loading vehicle:', error);
     } finally {
       setLoading(false);
     }
@@ -153,9 +155,6 @@ export default function VehicleFormPage() {
       return;
     }
 
-    console.log('[FORM] Submitting form in', isEditMode ? 'EDIT' : 'CREATE', 'mode');
-    console.log('[FORM] Current form data:', formData);
-
     try {
       setLoading(true);
 
@@ -179,14 +178,13 @@ export default function VehicleFormPage() {
         weight: formData.weight ? parseInt(formData.weight) : null,
         warrantyYears: formData.warrantyYears ? parseInt(formData.warrantyYears) : null,
         description: formData.description || null,
+        colorImages: formData.colorImages || null,
       };
 
       let response;
       if (isEditMode) {
-        // Update request now accepts all fields
         response = await updateVehicle(variantId, basePayload);
       } else {
-        // Create request adds extras
         const createPayload = {
           ...basePayload,
           skuCode: formData.skuCode,
@@ -196,13 +194,11 @@ export default function VehicleFormPage() {
         response = await createVehicle(createPayload);
       }
 
-      console.log('[FORM] Response received:', response);
-      
-      if (response && (response.code == 1000 || response.code == 201)) {
+      if (response && (response.code === "1000" || response.code === 1000 || response.code === 201 || response.code === "201")) {
         toast.success(isEditMode ? 'Cập nhật xe thành công' : 'Thêm xe mới thành công');
         setTimeout(() => {
           navigate('/admin/vehicles');
-        }, 500);
+        }, 1500);
       } else {
         // Handle error response from backend
         console.error('[FORM] Unexpected response code:', response?.code);
@@ -210,9 +206,6 @@ export default function VehicleFormPage() {
         toast.error(errorMsg);
       }
     } catch (error) {
-      console.error('[FORM] Error caught:', error);
-      console.error('[FORM] Error response:', error.response);
-      
       let errorMsg = isEditMode ? 'Không thể cập nhật xe' : 'Không thể thêm xe';
       
       if (error.code === 'ECONNABORTED') {
@@ -575,6 +568,17 @@ export default function VehicleFormPage() {
               onChange={handleInputChange}
               placeholder="https://example.com/image.jpg"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
+            />
+          </div>
+
+          {/* Color Images Manager */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Hình ảnh theo màu
+            </label>
+            <ColorImageManager
+              colorImages={formData.colorImages}
+              onChange={(colorImages) => setFormData(prev => ({ ...prev, colorImages }))}
             />
           </div>
 

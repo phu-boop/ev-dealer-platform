@@ -48,20 +48,11 @@ export const createVehicle = async (vehicleData) => {
 // Update vehicle variant
 export const updateVehicle = async (variantId, vehicleData) => {
   try {
-    console.log('[UPDATE] Sending request to update vehicle:', variantId);
-    console.log('[UPDATE] Payload:', vehicleData);
     const response = await api.put(`/vehicles/vehicle-catalog/variants/${variantId}`, vehicleData, {
       baseURL: 'http://localhost:8080'
     });
-    console.log('[UPDATE] Response received:', response.data);
     return response.data;
   } catch (error) {
-    console.error('[UPDATE] Error details:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      headers: error.response?.headers
-    });
     throw error;
   }
 };

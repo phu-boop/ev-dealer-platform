@@ -328,10 +328,110 @@ export default function VehicleDetailPage() {
           </div>
         </div>
 
+        {/* Technical Specifications */}
+        {variantData && (
+          <div className="mt-8 space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Thông Số Kỹ Thuật Chi Tiết</h2>
+            
+            {/* Battery & Charging */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+                Pin & Phạm vi hoạt động
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-sm text-gray-600">Dung lượng pin</p>
+                  <p className="text-xl font-bold">{variantData.batteryCapacity || 'N/A'} kWh</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Phạm vi hoạt động</p>
+                  <p className="text-xl font-bold">{variantData.rangeKm || 'N/A'} km</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Thời gian sạc</p>
+                  <p className="text-xl font-bold">{variantData.chargingTime || 'N/A'} giờ</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Hiệu suất
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                  <p className="text-sm text-gray-600">Công suất động cơ</p>
+                  <p className="text-xl font-bold">{variantData.motorPower || 'N/A'} kW</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Mô-men xoắn</p>
+                  <p className="text-xl font-bold">{variantData.torque || 'N/A'} Nm</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Tăng tốc 0-100km/h</p>
+                  <p className="text-xl font-bold">{variantData.acceleration || 'N/A'} giây</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Tốc độ tối đa</p>
+                  <p className="text-xl font-bold">{variantData.topSpeed || 'N/A'} km/h</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Dimensions & Weight */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                Kích thước & Khối lượng
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm text-gray-600">Kích thước (DxRxC)</p>
+                  <p className="text-xl font-bold">{variantData.dimensions || 'N/A'} mm</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Trọng lượng</p>
+                  <p className="text-xl font-bold">{variantData.weight || 'N/A'} kg</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Warranty & Description */}
+            {(variantData.warrantyYears || variantData.description) && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Thông tin bổ sung</h3>
+                <div className="space-y-4">
+                  {variantData.warrantyYears && (
+                    <div>
+                      <p className="text-sm text-gray-600">Bảo hành</p>
+                      <p className="font-medium text-lg">{variantData.warrantyYears} năm</p>
+                    </div>
+                  )}
+                  {variantData.description && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Mô tả</p>
+                      <p className="text-gray-700 whitespace-pre-wrap">{variantData.description}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Extended Specs */}
         {modelData?.extendedSpecs && Object.keys(modelData.extendedSpecs).length > 0 && (
           <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Thông số kỹ thuật chi tiết</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Thông số bổ sung</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(modelData.extendedSpecs).map(([key, value]) => (
                 <div key={key} className="border-b pb-2">

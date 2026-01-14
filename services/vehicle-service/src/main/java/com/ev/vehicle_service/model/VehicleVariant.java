@@ -71,6 +71,11 @@ public class VehicleVariant {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    // Color images stored as JSON array
+    // Format: [{"color":"Red","colorCode":"#FF0000","imageUrl":"http://...","isPrimary":true}, ...]
+    @Column(name = "color_images", columnDefinition = "TEXT")
+    private String colorImages;
+
     private BigDecimal price;
 
     @Column(name = "wholesale_price")
