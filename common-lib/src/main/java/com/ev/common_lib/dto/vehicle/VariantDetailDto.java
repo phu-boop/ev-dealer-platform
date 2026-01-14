@@ -17,11 +17,21 @@ public class VariantDetailDto {
     private VehicleStatus status;
     private String imageUrl;
     private BigDecimal wholesalePrice;
-    private Integer batteryCapacity;
+    private Double batteryCapacity;
     private Float chargingTime;
     private Integer rangeKm;
     private Integer motorPower;
     private Long modelId;
-    
-    private List<FeatureDto> features; 
+
+    // Additional technical specifications
+    private Integer seatingCapacity;
+    private Integer torque; // Nm
+    private Float acceleration; // 0-100km/h in seconds
+    private Integer topSpeed; // km/h
+    private String dimensions; // e.g. "4750 x 1934 x 1667"
+    private Integer weight; // kg
+    private Integer warrantyYears;
+    private String description;
+
+    private List<FeatureDto> features;
 }

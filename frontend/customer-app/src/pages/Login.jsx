@@ -42,15 +42,12 @@ export default function Login() {
 
     try {
       const response = await loginUser({ ...form });
-      console.log("Login response:", response);
 
       // Backend có thể trả về code: "1000" hoặc code: 200
       if (response.code === 200 || response.code === "1000") {
         // Handle both response structures
         const userData = response.result?.userRespond || response.data?.userRespond;
         const jwtToken = response.result?.token || response.data?.token;
-        
-        console.log("User data:", userData);
         
         // Get roleName - handle both structures
         let roleName;
@@ -62,23 +59,17 @@ export default function Login() {
           roleName = userData.roles[0].name;
         }
         
-        console.log("Extracted role name:", roleName);
-        
         // Check if user has appropriate role for customer app
         const allowedRoles = ["ADMIN", "EVM_STAFF", "DEALER_MANAGER", "CUSTOMER"];
         
         if (!roleName || !allowedRoles.includes(roleName)) {
-          console.error("Access denied for role:", roleName);
           setError(`Tài khoản không có quyền truy cập hệ thống. Role: ${roleName || 'undefined'}`);
           setLoading(false);
           return;
         }
-
-        console.log("Calling login function...");
         
         // Extract memberId from customerProfile if available
         const memberId = userData.customerProfile?.customerId || userData.memberId || null;
-        console.log("Member ID:", memberId);
         
         login(
           jwtToken,
@@ -92,23 +83,19 @@ export default function Login() {
           userData.url
         );
 
-        console.log("Login function called, showing toast...");
         toast.success("Đăng nhập thành công!");
         
         // Redirect based on role
         const redirectPath = ["ADMIN", "EVM_STAFF", "DEALER_MANAGER"].includes(roleName) ? "/admin" : "/";
-        console.log("Redirecting to:", redirectPath);
         
         setTimeout(() => {
           navigate(redirectPath);
         }, 100);
       } else {
-        console.error("Login failed with code:", response.code);
         setError(response.message || "Đăng nhập thất bại");
         setLoading(false);
       }
     } catch (err) {
-      console.error("Login error:", err);
       setError(err.response?.data?.message || err.message || "Đăng nhập thất bại");
       setLoading(false);
     }

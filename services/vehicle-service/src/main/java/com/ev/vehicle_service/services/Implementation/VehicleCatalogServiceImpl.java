@@ -369,6 +369,24 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         if (request.getMotorPower() != null)
             variant.setMotorPower(request.getMotorPower());
 
+        // Update additional technical specifications
+        if (request.getSeatingCapacity() != null)
+            variant.setSeatingCapacity(request.getSeatingCapacity());
+        if (request.getTorque() != null)
+            variant.setTorque(request.getTorque());
+        if (request.getAcceleration() != null)
+            variant.setAcceleration(request.getAcceleration());
+        if (request.getTopSpeed() != null)
+            variant.setTopSpeed(request.getTopSpeed());
+        if (request.getDimensions() != null)
+            variant.setDimensions(request.getDimensions());
+        if (request.getWeight() != null)
+            variant.setWeight(request.getWeight());
+        if (request.getWarrantyYears() != null)
+            variant.setWarrantyYears(request.getWarrantyYears());
+        if (request.getDescription() != null)
+            variant.setDescription(request.getDescription());
+
         VehicleVariant savedVariant = variantRepository.save(variant);
 
         // Gửi message lên kafka
@@ -766,6 +784,16 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         // Xử lý Charging Time
         dto.setChargingTime(
                 (variant.getChargingTime() != null) ? variant.getChargingTime() : model.getBaseChargingTime());
+
+        // Map additional technical specifications (no inheritance from model)
+        dto.setSeatingCapacity(variant.getSeatingCapacity());
+        dto.setTorque(variant.getTorque());
+        dto.setAcceleration(variant.getAcceleration());
+        dto.setTopSpeed(variant.getTopSpeed());
+        dto.setDimensions(variant.getDimensions());
+        dto.setWeight(variant.getWeight());
+        dto.setWarrantyYears(variant.getWarrantyYears());
+        dto.setDescription(variant.getDescription());
 
         // Map các tính năng (features), logic này giữ nguyên
         if (variant.getFeatures() != null) {

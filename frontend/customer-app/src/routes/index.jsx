@@ -44,6 +44,7 @@ import AdminReviewsPage from "../pages/admin/ReviewsPage";
 import AdminReportsPage from "../pages/admin/ReportsPage";
 import VehicleFormPage from "../pages/admin/VehicleFormPage";
 import AdminOrderDetailPage from "../pages/admin/OrderDetailPage";
+import AdminVehicleDetailPage from "../pages/admin/VehicleDetailPage";
 
 export default function AppRoutes() {
   return (
@@ -105,6 +106,7 @@ export default function AppRoutes() {
           <Route index element={<AdminDashboard />} />
           <Route path="vehicles" element={<AdminVehiclesPage />} />
           <Route path="vehicles/new" element={<VehicleFormPage />} />
+          <Route path="vehicles/view/:variantId" element={<AdminVehicleDetailPage />} />
           <Route path="vehicles/edit/:variantId" element={<VehicleFormPage />} />
           <Route path="categories" element={<AdminCategoriesPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />
