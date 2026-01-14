@@ -39,6 +39,8 @@ public class UpdateVariantRequest {
     private Integer weight; // kg
     private Integer warrantyYears;
     private String description;
+    
+    private String colorImages; // JSON string
 
     private BigDecimal wholesalePrice;
 

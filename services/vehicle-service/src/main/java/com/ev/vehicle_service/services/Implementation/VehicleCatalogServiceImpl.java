@@ -386,6 +386,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             variant.setWarrantyYears(request.getWarrantyYears());
         if (request.getDescription() != null)
             variant.setDescription(request.getDescription());
+        if (request.getColorImages() != null)
+            variant.setColorImages(request.getColorImages());
 
         VehicleVariant savedVariant = variantRepository.save(variant);
 
@@ -794,6 +796,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setWeight(variant.getWeight());
         dto.setWarrantyYears(variant.getWarrantyYears());
         dto.setDescription(variant.getDescription());
+        dto.setColorImages(variant.getColorImages());
 
         // Map các tính năng (features), logic này giữ nguyên
         if (variant.getFeatures() != null) {

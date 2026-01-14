@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Edit, Calendar, DollarSign, Battery, Zap, Users, Gauge, Activity } from 'lucide-react';
 import { getVehicleDetailAdmin } from '../../services/adminVehicleService';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 
 export default function VehicleDetailPage() {
   const { variantId } = useParams();
@@ -247,6 +247,63 @@ export default function VehicleDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Color Images */}
+          {vehicle.colorImages && (() => {
+            try {
+              const colors = JSON.parse(vehicle.colorImages);
+              if (colors && colors.length > 0) {
+                return (
+                  <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">Màu sắc & Hình ảnh</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {colors.map((colorItem, index) => (
+                        <div key={index} className="border rounded-lg overflow-hidden hover:shadow-lg transition">
+                          {/* Image */}
+                          <div className="relative aspect-video bg-gray-100">
+                            {colorItem.imageUrl ? (
+                              <img
+                                src={colorItem.imageUrl}
+                                alt={colorItem.color}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                Chưa có hình
+                              </div>
+                            )}
+                            {colorItem.isPrimary && (
+                              <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                                Màu chính
+                              </span>
+                            )}
+                          </div>
+                          {/* Color Info */}
+                          <div className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-semibold text-gray-800">{colorItem.color || 'N/A'}</p>
+                                <p className="text-sm text-gray-500">{colorItem.colorCode}</p>
+                              </div>
+                              {colorItem.colorCode && (
+                                <div
+                                  className="w-10 h-10 rounded-full border-2 border-gray-300 shadow-sm"
+                                  style={{ backgroundColor: colorItem.colorCode }}
+                                  title={colorItem.colorCode}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+            } catch (e) {
+              return null;
+            }
+          })()}
 
           {/* Audit Info */}
           <div className="bg-white p-6 rounded-lg shadow-md">

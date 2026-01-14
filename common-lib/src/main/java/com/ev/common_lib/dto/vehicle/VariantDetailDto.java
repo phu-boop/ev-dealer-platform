@@ -32,6 +32,10 @@ public class VariantDetailDto {
     private Integer weight; // kg
     private Integer warrantyYears;
     private String description;
+    
+    // Color images stored as JSON string
+    // Frontend will parse: [{"color":"Red","colorCode":"#FF0000","imageUrl":"...","isPrimary":true}]
+    private String colorImages;
 
     private List<FeatureDto> features;
 }
