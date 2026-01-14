@@ -8,7 +8,10 @@ import api from './api';
 // Get all vehicles with pagination and filters
 export const getVehiclesAdmin = async (params) => {
   try {
-    const response = await api.get('/vehicles/variants/paginated', { params });
+    const response = await api.get('/vehicles/vehicle-catalog/variants/paginated', {
+      params,
+      baseURL: 'http://localhost:8080'
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching vehicles:', error);
@@ -19,7 +22,9 @@ export const getVehiclesAdmin = async (params) => {
 // Get vehicle detail by variant ID
 export const getVehicleDetailAdmin = async (variantId) => {
   try {
-    const response = await api.get(`/vehicles/variants/${variantId}`);
+    const response = await api.get(`/vehicles/vehicle-catalog/variants/${variantId}`, {
+      baseURL: 'http://localhost:8080'
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching vehicle detail:', error);
@@ -30,7 +35,9 @@ export const getVehicleDetailAdmin = async (variantId) => {
 // Create new vehicle variant
 export const createVehicle = async (vehicleData) => {
   try {
-    const response = await api.post('/vehicles/variants', vehicleData);
+    const response = await api.post(`/vehicles/vehicle-catalog/models/${vehicleData.modelId}/variants`, vehicleData, {
+      baseURL: 'http://localhost:8080'
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating vehicle:', error);
@@ -41,10 +48,20 @@ export const createVehicle = async (vehicleData) => {
 // Update vehicle variant
 export const updateVehicle = async (variantId, vehicleData) => {
   try {
-    const response = await api.put(`/vehicles/variants/${variantId}`, vehicleData);
+    console.log('[UPDATE] Sending request to update vehicle:', variantId);
+    console.log('[UPDATE] Payload:', vehicleData);
+    const response = await api.put(`/vehicles/vehicle-catalog/variants/${variantId}`, vehicleData, {
+      baseURL: 'http://localhost:8080'
+    });
+    console.log('[UPDATE] Response received:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error updating vehicle:', error);
+    console.error('[UPDATE] Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      headers: error.response?.headers
+    });
     throw error;
   }
 };
@@ -52,7 +69,9 @@ export const updateVehicle = async (variantId, vehicleData) => {
 // Delete vehicle variant
 export const deleteVehicle = async (variantId) => {
   try {
-    const response = await api.delete(`/vehicles/variants/${variantId}`);
+    const response = await api.delete(`/vehicles/vehicle-catalog/variants/${variantId}`, {
+      baseURL: 'http://localhost:8080'
+    });
     return response.data;
   } catch (error) {
     console.error('Error deleting vehicle:', error);
@@ -63,7 +82,9 @@ export const deleteVehicle = async (variantId) => {
 // Update vehicle stock/inventory
 export const updateVehicleStock = async (variantId, stockData) => {
   try {
-    const response = await api.patch(`/vehicles/variants/${variantId}/stock`, stockData);
+    const response = await api.patch(`/vehicles/vehicle-catalog/variants/${variantId}/stock`, stockData, {
+      baseURL: 'http://localhost:8080'
+    });
     return response.data;
   } catch (error) {
     console.error('Error updating stock:', error);
@@ -74,7 +95,9 @@ export const updateVehicleStock = async (variantId, stockData) => {
 // Get all models (for dropdown)
 export const getAllModels = async () => {
   try {
-    const response = await api.get('/vehicles/models');
+    const response = await api.get('/vehicles/vehicle-catalog/models', {
+      baseURL: 'http://localhost:8080'
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching models:', error);
@@ -85,7 +108,9 @@ export const getAllModels = async () => {
 // Get all features (for form)
 export const getAllFeatures = async () => {
   try {
-    const response = await api.get('/vehicles/features');
+    const response = await api.get('/vehicles/vehicle-catalog/features', {
+      baseURL: 'http://localhost:8080'
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching features:', error);
@@ -98,10 +123,12 @@ export const uploadVehicleImage = async (file) => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await api.post('/vehicles/upload/image', formData, {
+    // Use the correct endpoint for variant images
+    const response = await api.post('/vehicles/vehicle-catalog/images/variants', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      baseURL: 'http://localhost:8080'
     });
     return response.data;
   } catch (error) {
@@ -113,8 +140,14 @@ export const uploadVehicleImage = async (file) => {
 // Search vehicles
 export const searchVehiclesAdmin = async (keyword) => {
   try {
-    const response = await api.get('/vehicles/variants/search', {
-      params: { keyword }
+    // Use the paginated endpoint which supports search
+    const response = await api.get('/vehicles/vehicle-catalog/variants/paginated', {
+      params: {
+        search: keyword,
+        page: 0,
+        size: 100 // Get reasonable amount for search results
+      },
+      baseURL: 'http://localhost:8080'
     });
     return response.data;
   } catch (error) {

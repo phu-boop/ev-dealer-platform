@@ -27,9 +27,10 @@ export default function AdminVehiclesPage() {
         sort: 'variantId,desc'
       });
 
-      if (response.code === 200) {
-        setVehicles(response.result?.content || []);
-        setTotalPages(response.result?.totalPages || 0);
+      // Check code loosely or as string since backend returns string "1000"
+      if (response && response.code == 1000) {
+        setVehicles(response.data?.content || []);
+        setTotalPages(response.data?.totalPages || 0);
       }
     } catch (error) {
       toast.error('Không thể tải danh sách xe');
@@ -49,9 +50,9 @@ export default function AdminVehiclesPage() {
     try {
       setLoading(true);
       const response = await searchVehiclesAdmin(searchTerm);
-      if (response.code === 200) {
-        setVehicles(response.result || []);
-        setTotalPages(1);
+      if (response && response.code == 1000) {
+        setVehicles(response.data?.content || []);
+        setTotalPages(response.data?.totalPages || 0);
       }
     } catch (error) {
       toast.error('Không thể tìm kiếm xe');
@@ -70,7 +71,7 @@ export default function AdminVehiclesPage() {
 
     try {
       const response = await deleteVehicle(vehicleToDelete.variantId);
-      if (response.code === 200) {
+      if (response && response.code == 1000) {
         toast.success('Đã xóa xe thành công');
         setShowDeleteModal(false);
         setVehicleToDelete(null);
@@ -198,7 +199,7 @@ export default function AdminVehiclesPage() {
                       />
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">{vehicle.variantName}</div>
+                      <div className="font-medium text-gray-900">{vehicle.versionName}</div>
                       <div className="text-sm text-gray-500">{vehicle.modelName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -210,7 +211,7 @@ export default function AdminVehiclesPage() {
                       {vehicle.batteryCapacity} kWh
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {vehicle.range} km
+                      {vehicle.rangeKm} km
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStockBadgeColor(vehicle.stockQuantity || 0)}`}>
@@ -220,8 +221,7 @@ export default function AdminVehiclesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center gap-2">
                         <Link
-                          to={`/vehicles/${vehicle.variantId}`}
-                          target="_blank"
+                          to={`/admin/vehicles/view/${vehicle.variantId}`}
                           className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition"
                           title="Xem chi tiết"
                         >
@@ -282,7 +282,7 @@ export default function AdminVehiclesPage() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Xác nhận xóa</h3>
             <p className="text-gray-600 mb-6">
-              Bạn có chắc chắn muốn xóa xe <span className="font-medium">{vehicleToDelete?.variantName}</span>? 
+              Bạn có chắc chắn muốn xóa xe <span className="font-medium">{vehicleToDelete?.variantName}</span>?
               Hành động này không thể hoàn tác.
             </p>
             <div className="flex gap-3 justify-end">
