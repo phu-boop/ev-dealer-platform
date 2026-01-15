@@ -274,6 +274,23 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newVariant.setSkuCode(request.getSkuCode());
         newVariant.setImageUrl(request.getImageUrl());
 
+        // Set technical specifications
+        newVariant.setBatteryCapacity(request.getBatteryCapacity());
+        newVariant.setChargingTime(request.getChargingTime());
+        newVariant.setRangeKm(request.getRangeKm());
+        newVariant.setMotorPower(request.getMotorPower());
+        
+        // Set additional technical specifications
+        newVariant.setSeatingCapacity(request.getSeatingCapacity());
+        newVariant.setTorque(request.getTorque());
+        newVariant.setAcceleration(request.getAcceleration());
+        newVariant.setTopSpeed(request.getTopSpeed());
+        newVariant.setDimensions(request.getDimensions());
+        newVariant.setWeight(request.getWeight());
+        newVariant.setWarrantyYears(request.getWarrantyYears());
+        newVariant.setDescription(request.getDescription());
+        newVariant.setColorImages(request.getColorImages());
+
         // Thiết lập mối quan hệ với mẫu xe cha
         newVariant.setVehicleModel(parentModel);
 

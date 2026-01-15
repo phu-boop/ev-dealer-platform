@@ -188,10 +188,10 @@ export default function VehicleFormPage() {
         const createPayload = {
           ...basePayload,
           skuCode: formData.skuCode,
-          features: [],
-          modelId: formData.modelId
+          features: []
+          // modelId is in URL path, not in body
         };
-        response = await createVehicle(createPayload);
+        response = await createVehicle(formData.modelId, createPayload);
       }
 
       if (response && (response.code === "1000" || response.code === 1000 || response.code === 201 || response.code === "201")) {
