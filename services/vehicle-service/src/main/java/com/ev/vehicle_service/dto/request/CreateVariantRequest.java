@@ -37,6 +37,17 @@ public class CreateVariantRequest {
     private Integer rangeKm; // Keeping Integer based on DTO review
     private Integer motorPower;
 
+    // Additional technical specifications
+    private Integer seatingCapacity;
+    private Integer torque;
+    private Float acceleration;
+    private Integer topSpeed;
+    private String dimensions;
+    private Integer weight;
+    private Integer warrantyYears;
+    private String description;
+    private String colorImages; // JSON string for color images
+
     @Valid
     private List<FeatureRequest> features;
 }

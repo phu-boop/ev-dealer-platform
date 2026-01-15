@@ -15,6 +15,32 @@ const VehicleGrid = ({ vehicles, onVehicleSelect }) => {
     e.target.onerror = null;
   };
 
+  // Get primary image from variants colorImages or fallback to thumbnailUrl (same logic as admin)
+  const getPrimaryImage = (vehicle) => {
+    try {
+      // Try to get first variant with colorImages
+      if (vehicle.variants && vehicle.variants.length > 0) {
+        const firstVariant = vehicle.variants[0];
+        if (firstVariant.colorImages) {
+          const colorImagesData = JSON.parse(firstVariant.colorImages);
+          if (colorImagesData.length > 0) {
+            const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
+            if (primaryColor.imageUrl) {
+              return primaryColor.imageUrl;
+            }
+          }
+        }
+        // Fallback to variant imageUrl
+        if (firstVariant.imageUrl) {
+          return firstVariant.imageUrl;
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing colorImages:", e);
+    }
+    return vehicle.thumbnailUrl || vehicle.imageUrl || "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&q=80&w=1000";
+  };
+
   const getStatusLabel = (status) => {
     switch (status) {
       case 'AVAILABLE':
@@ -65,10 +91,10 @@ const VehicleGrid = ({ vehicles, onVehicleSelect }) => {
         >
           <div className="relative h-64 overflow-hidden bg-gray-100">
             <img
-              src={vehicle.thumbnailUrl || vehicle.imageUrl || "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&q=80&w=1000"}
+              src={getPrimaryImage(vehicle)}
               alt={vehicle.modelName || "Xe điện"}
               onError={handleImageError}
-              className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+              className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-700"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className={`absolute top-4 left-4 ${getStatusColor(vehicle.status)} backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm`}>

@@ -37,17 +37,48 @@ const CarConfigurator = () => {
     enabled: !!modelId,
   });
 
-  // Available colors (from variants or default)
-  const availableColors = [
-    { name: "Đen Bóng", code: "#1a1a1a", image: "black" },
-    { name: "Trắng Ngọc", code: "#f8f8f8", image: "white" },
-    { name: "Xám Titan", code: "#666666", image: "gray" },
-    { name: "Đỏ Cam", code: "#ff6b35", image: "red" },
-    { name: "Xanh Dương", code: "#0066cc", image: "blue" },
-    { name: "Vàng Đồng", code: "#b8860b", image: "gold" },
-    { name: "Xanh Đen", code: "#003366", image: "darkblue" },
-    { name: "Bạc", code: "#c0c0c0", image: "silver" },
-  ];
+  // Get available colors from variant's colorImages
+  const getAvailableColors = () => {
+    const variant = variantId
+      ? variantsData?.find((v) => v.variantId === parseInt(variantId))
+      : variantsData?.[0];
+
+    if (!variant) return [];
+
+    // Parse colorImages from backend
+    let colorImagesData = [];
+    try {
+      if (variant.colorImages) {
+        colorImagesData = JSON.parse(variant.colorImages);
+      }
+    } catch (e) {
+      console.error("Error parsing colorImages:", e);
+    }
+
+    // Use colorImages data as the source of truth for available colors
+    const allColors = [];
+    
+    if (colorImagesData.length > 0) {
+      // Use colors from colorImages (already includes all color options)
+      const colors = colorImagesData.map((c) => ({ ...c, isMainVariant: false }));
+      // Sort to put primary color first
+      colors.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+      allColors.push(...colors);
+    } else if (variant.color && variant.imageUrl) {
+      // Fallback to main variant color if no colorImages data
+      allColors.push({
+        color: variant.color,
+        colorCode: '#FFFFFF',
+        imageUrl: variant.imageUrl,
+        isPrimary: true,
+        isMainVariant: true,
+      });
+    }
+
+    return allColors;
+  };
+
+  const availableColors = getAvailableColors();
 
   // Available wheel options
   const wheelOptions = [
@@ -72,28 +103,31 @@ const CarConfigurator = () => {
         : variantsData[0];
 
       if (variant) {
-        // Set default color from variant
-        const color =
-          availableColors.find(
-            (c) =>
-              variant.color &&
-              variant.color
-                .toLowerCase()
-                .includes(c.name.toLowerCase().split(" ")[0])
-          ) || availableColors[0];
-        setSelectedColor(color);
+        // Set default color from colorImages
+        const colors = getAvailableColors();
+        // Select the primary color or first color
+        const defaultColor = colors.find(c => c.isPrimary) || colors[0];
+        
+        if (defaultColor) {
+          setSelectedColor(defaultColor);
+          setPreviewImage(defaultColor.imageUrl);
+        }
+        
         setSelectedWheels(wheelOptions[0]);
         setSelectedInterior(interiorOptions[0]);
-        updatePreviewImage(variant, color, wheelOptions[0], interiorOptions[0]);
       }
     }
   }, [variantsData, variantId]);
 
   const updatePreviewImage = (variant, color, wheels, interior) => {
-    // In real implementation, this would fetch image from Cloudinary
-    // For now, use variant image with color overlay effect
-    const baseImage = variant?.imageUrl || vehicleData?.thumbnailUrl || "";
-    setPreviewImage(baseImage);
+    // Use imageUrl from selected color
+    if (color?.imageUrl) {
+      setPreviewImage(color.imageUrl);
+    } else {
+      // Fallback to variant or vehicle image
+      const baseImage = variant?.imageUrl || vehicleData?.thumbnailUrl || "";
+      setPreviewImage(baseImage);
+    }
   };
 
   useEffect(() => {
@@ -210,14 +244,6 @@ const CarConfigurator = () => {
                     <div className="text-gray-400">Đang tải hình ảnh...</div>
                   </div>
                 )}
-
-                {/* Color overlay effect */}
-                {selectedColor && (
-                  <div
-                    className="absolute inset-0 mix-blend-overlay opacity-20"
-                    style={{ backgroundColor: selectedColor.code }}
-                  />
-                )}
               </div>
 
               {/* Price Summary */}
@@ -270,30 +296,36 @@ const CarConfigurator = () => {
                 <Palette className="w-5 h-5 text-blue-600" />
                 Màu Sơn
               </h2>
-              <div className="grid grid-cols-4 gap-4">
-                {availableColors.map((color) => (
-                  <button
-                    key={color.name}
-                    onClick={() => setSelectedColor(color)}
-                    className={`relative p-4 rounded-xl border-2 transition-all ${
-                      selectedColor?.name === color.name
-                        ? "border-blue-600 ring-2 ring-blue-200"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div
-                      className="w-full h-16 rounded-lg mb-2"
-                      style={{ backgroundColor: color.code }}
-                    />
-                    <div className="text-xs font-medium text-center">
-                      {color.name}
-                    </div>
-                    {selectedColor?.name === color.name && (
-                      <CheckCircle className="absolute top-2 right-2 w-5 h-5 text-blue-600" />
-                    )}
-                  </button>
-                ))}
-              </div>
+              {availableColors.length > 0 ? (
+                <div className="grid grid-cols-4 gap-4">
+                  {availableColors.map((color, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedColor(color)}
+                      className={`relative p-4 rounded-xl border-2 transition-all ${
+                        selectedColor?.color === color.color
+                          ? "border-blue-600 ring-2 ring-blue-200"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div
+                        className="w-full h-16 rounded-lg mb-2"
+                        style={{ backgroundColor: color.colorCode || "#000000" }}
+                      />
+                      <div className="text-xs font-medium text-center">
+                        {color.color}
+                      </div>
+                      {selectedColor?.color === color.color && (
+                        <CheckCircle className="absolute top-2 right-2 w-5 h-5 text-blue-600" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  Không có màu sơn nào được cấu hình
+                </p>
+              )}
             </div>
 
             {/* Wheel Selection */}

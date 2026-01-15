@@ -33,14 +33,18 @@ export const getVehicleDetailAdmin = async (variantId) => {
 };
 
 // Create new vehicle variant
-export const createVehicle = async (vehicleData) => {
+export const createVehicle = async (modelId, vehicleData) => {
   try {
-    const response = await api.post(`/vehicles/vehicle-catalog/models/${vehicleData.modelId}/variants`, vehicleData, {
+    console.log('[CREATE] Model ID:', modelId);
+    console.log('[CREATE] Payload being sent:', vehicleData);
+    const response = await api.post(`/vehicles/vehicle-catalog/models/${modelId}/variants`, vehicleData, {
       baseURL: 'http://localhost:8080'
     });
     return response.data;
   } catch (error) {
     console.error('Error creating vehicle:', error);
+    console.error('Error response data:', error.response?.data);
+    console.error('Error response status:', error.response?.status);
     throw error;
   }
 };

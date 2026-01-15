@@ -96,6 +96,24 @@ export default function AdminVehiclesPage() {
     return 'bg-green-100 text-green-800';
   };
 
+  // Get primary image from colorImages or fallback to imageUrl
+  const getPrimaryImage = (vehicle) => {
+    try {
+      if (vehicle.colorImages) {
+        const colorImagesData = JSON.parse(vehicle.colorImages);
+        if (colorImagesData.length > 0) {
+          const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
+          if (primaryColor.imageUrl) {
+            return primaryColor.imageUrl;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing colorImages:", e);
+    }
+    return vehicle.imageUrl || '/placeholder-car.png';
+  };
+
   return (
     <div>
       {/* Header */}
@@ -190,9 +208,9 @@ export default function AdminVehiclesPage() {
                   <tr key={vehicle.variantId} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <img
-                        src={vehicle.imageUrl || '/placeholder-car.png'}
+                        src={getPrimaryImage(vehicle)}
                         alt={vehicle.variantName}
-                        className="h-16 w-24 object-cover rounded"
+                        className="h-16 w-24 object-contain rounded"
                         onError={(e) => {
                           e.target.src = '/placeholder-car.png';
                         }}
