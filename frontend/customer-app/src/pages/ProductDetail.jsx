@@ -65,6 +65,10 @@ const ProductDetail = () => {
           if (colorImagesData.length > 0) {
             const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
             setSelectedColor(primaryColor.color);
+            // Also update the image to match the primary color
+            if (primaryColor.imageUrl) {
+              setSelectedImages([primaryColor.imageUrl]);
+            }
           } else {
             setSelectedColor(firstVariant.color);
           }
@@ -88,11 +92,6 @@ const ProductDetail = () => {
   const handleVariantSelect = (variant) => {
     setSelectedVariant(variant);
     
-    // Set main image from variant
-    if (variant.imageUrl) {
-      setSelectedImages([variant.imageUrl]);
-    }
-    
     // Try to get colorImages data
     let colorImagesData = [];
     try {
@@ -103,12 +102,20 @@ const ProductDetail = () => {
       console.error("Error parsing colorImages:", e);
     }
 
-    // Set selected color
+    // Set selected color and image based on primary color
     if (colorImagesData.length > 0) {
       const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
       setSelectedColor(primaryColor.color);
+      // Set image from primary color
+      if (primaryColor.imageUrl) {
+        setSelectedImages([primaryColor.imageUrl]);
+      }
     } else {
       setSelectedColor(variant.color);
+      // Fallback to variant image if no colorImages
+      if (variant.imageUrl) {
+        setSelectedImages([variant.imageUrl]);
+      }
     }
   };
 
@@ -161,23 +168,24 @@ const ProductDetail = () => {
     console.error("Error parsing colorImages:", e);
   }
 
-  // Combine main variant color with colorImages
+  // Use colorImages data as the source of truth for available colors
   const allColors = [];
   
-  // Add main variant color first
-  if (variant?.color && variant?.imageUrl) {
+  if (colorImagesData.length > 0) {
+    // Use colors from colorImages (already includes all color options)
+    const colors = colorImagesData.map(c => ({ ...c, isMainVariant: false }));
+    // Sort to put primary color first
+    colors.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+    allColors.push(...colors);
+  } else if (variant?.color && variant?.imageUrl) {
+    // Fallback to main variant color if no colorImages data
     allColors.push({
       color: variant.color,
-      colorCode: '#FFFFFF', // Default white, you can extract from variant if available
+      colorCode: '#FFFFFF',
       imageUrl: variant.imageUrl,
       isPrimary: true,
       isMainVariant: true
     });
-  }
-  
-  // Add additional colors from colorImages
-  if (colorImagesData.length > 0) {
-    allColors.push(...colorImagesData.map(c => ({ ...c, isMainVariant: false })));
   }
 
   return (
@@ -203,7 +211,7 @@ const ProductDetail = () => {
               <img
                 src={selectedImages[0] || variant?.imageUrl || vehicleData.thumbnailUrl || "https://via.placeholder.com/800"}
                 alt={vehicleData.modelName}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
             

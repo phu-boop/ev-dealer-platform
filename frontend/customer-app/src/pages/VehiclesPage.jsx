@@ -189,13 +189,8 @@ export default function VehiclesPage() {
           </div>
 
           {/* Active Filters Display */}
-          {(filters.brands.length > 0 || filters.colors.length > 0 || filters.minPrice || filters.maxPrice) && (
+          {(filters.colors.length > 0 || filters.minPrice || filters.maxPrice) && (
             <div className="mt-4 flex flex-wrap gap-2">
-              {filters.brands.map(brand => (
-                <span key={brand} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                  {brand}
-                </span>
-              ))}
               {filters.colors.map(color => (
                 <span key={color} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
                   {color}

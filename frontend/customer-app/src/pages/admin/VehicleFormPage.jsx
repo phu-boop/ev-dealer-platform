@@ -332,20 +332,6 @@ export default function VehicleFormPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Màu sắc
-              </label>
-              <input
-                type="text"
-                name="color"
-                value={formData.color}
-                onChange={handleInputChange}
-                placeholder="Đen, Trắng, Xanh..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Số chỗ ngồi
               </label>
               <input
@@ -516,66 +502,9 @@ export default function VehicleFormPage() {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Hình ảnh & Mô tả</h2>
 
-          {/* Image Upload */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Hình ảnh chính
-            </label>
-            {formData.imageUrl ? (
-              <div className="relative inline-block">
-                <img
-                  src={formData.imageUrl}
-                  alt="Vehicle"
-                  className="h-48 w-auto rounded-lg border"
-                />
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="mx-auto mb-2 text-gray-400" size={48} />
-                <p className="text-sm text-gray-600 mb-4">
-                  {uploadingImage ? 'Đang upload...' : 'Kéo thả hoặc click để chọn hình ảnh'}
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImage}
-                  className="hidden"
-                  id="image-upload"
-                />
-                <label
-                  htmlFor="image-upload"
-                  className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  Chọn hình ảnh
-                </label>
-              </div>
-            )}
-            <p className="text-xs text-gray-500 mt-2">
-              Hoặc nhập URL hình ảnh:
-            </p>
-            <input
-              type="url"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleInputChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
-            />
-          </div>
-
           {/* Color Images Manager */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Hình ảnh theo màu
-            </label>
+    
             <ColorImageManager
               colorImages={formData.colorImages}
               onChange={(colorImages) => setFormData(prev => ({ ...prev, colorImages }))}
