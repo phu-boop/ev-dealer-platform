@@ -10,6 +10,16 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import NotFound from "../pages/NotFound";
 import OAuthCallback from "../pages/OAuthCallback";
+import ProductDetail from "../pages/ProductDetail";
+import TestDriveBooking from "../pages/TestDriveBooking";
+import CarConfigurator from "../pages/CarConfigurator";
+import TCOCalculator from "../pages/TCOCalculator";
+import FinancingCalculator from "../pages/FinancingCalculator";
+import ProductComparison from "../pages/ProductComparison";
+import ChargingStationMap from "../pages/ChargingStationMap";
+import AIChatbot from "../pages/AIChatbot";
+import Payment from "../pages/Payment";
+import OrderTracking from "../pages/OrderTracking";
 import VehiclesPage from "../pages/VehiclesPage";
 import VehicleDetailPage from "../pages/VehicleDetailPage";
 import CartPage from "../pages/CartPage";
@@ -34,6 +44,7 @@ import AdminReviewsPage from "../pages/admin/ReviewsPage";
 import AdminReportsPage from "../pages/admin/ReportsPage";
 import VehicleFormPage from "../pages/admin/VehicleFormPage";
 import AdminOrderDetailPage from "../pages/admin/OrderDetailPage";
+import AdminVehicleDetailPage from "../pages/admin/VehicleDetailPage";
 
 export default function AppRoutes() {
   return (
@@ -42,10 +53,20 @@ export default function AppRoutes() {
         {/* Public Routes */}
         <Route path="/" element={<CustomerLayout />}>
           <Route index element={<Home />} />
+          <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="test-drive" element={<TestDriveBooking />} />
+          <Route path="configure" element={<CarConfigurator />} />
+          <Route path="tco-calculator" element={<TCOCalculator />} />
+          <Route path="financing" element={<FinancingCalculator />} />
+          <Route path="compare" element={<ProductComparison />} />
+          <Route path="charging-stations" element={<ChargingStationMap />} />
+          <Route path="chatbot" element={<AIChatbot />} />
+          <Route path="payment" element={<Payment />} />
+          <Route path="orders/:orderId" element={<OrderTracking />} />
+          <Route path="orders" element={<OrderTracking />} />
           <Route path="vehicles" element={<VehiclesPage />} />
           <Route path="vehicles/:variantId" element={<VehicleDetailPage />} />
           <Route path="compare" element={<CompareVehiclesPage />} />
-          <Route path="charging-stations" element={<ChargingStationsPage />} />
           <Route path="payment/return" element={<PaymentReturnPage />} />
         </Route>
 
@@ -85,6 +106,7 @@ export default function AppRoutes() {
           <Route index element={<AdminDashboard />} />
           <Route path="vehicles" element={<AdminVehiclesPage />} />
           <Route path="vehicles/new" element={<VehicleFormPage />} />
+          <Route path="vehicles/view/:variantId" element={<AdminVehicleDetailPage />} />
           <Route path="vehicles/edit/:variantId" element={<VehicleFormPage />} />
           <Route path="categories" element={<AdminCategoriesPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />

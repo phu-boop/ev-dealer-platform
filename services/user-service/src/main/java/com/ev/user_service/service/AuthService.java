@@ -48,6 +48,7 @@ public class AuthService {
     private final DealerManagerProfileRepository managerProfileRepository;
     private final DealerStaffProfileRepository staffProfileRepository;
     private final CustomerProfileService customerProfileService;
+    private final CustomerProfileRepository customerProfileRepository;
     private final RoleRepository roleRepository;
 
     public AuthService(UserRepository userRepository,
@@ -59,6 +60,7 @@ public class AuthService {
                        DealerManagerProfileRepository managerProfileRepository,
                        DealerStaffProfileRepository staffProfileRepository,
                        CustomerProfileService customerProfileService,
+                       CustomerProfileRepository customerProfileRepository,
                        RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -70,6 +72,7 @@ public class AuthService {
         this.managerProfileRepository = managerProfileRepository;
         this.staffProfileRepository = staffProfileRepository;
         this.customerProfileService = customerProfileService;
+        this.customerProfileRepository = customerProfileRepository;
         this.roleRepository = roleRepository;
     }
 
@@ -124,7 +127,22 @@ public class AuthService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         UserRespond userRespond = userMapper.usertoUserRespond(user);
-
+        
+        // Fetch customer profile and set memberId if user is a CUSTOMER (matches OAuth handler logic)
+        try {
+            if (user.getRoleToString().contains("CUSTOMER")) {
+                var customerProfile = customerProfileRepository.findByUserId(user.getId());
+                if (customerProfile.isPresent()) {
+                    userRespond.setMemberId(customerProfile.get().getCustomerId());
+                    System.out.println("[AuthService.getCurrentUser] ✅ Set memberId: " + customerProfile.get().getCustomerId());
+                } else {
+                    System.out.println("[AuthService.getCurrentUser] ⚠️ No customer profile found for user: " + user.getEmail());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[AuthService.getCurrentUser] ❌ Error fetching customer profile: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         return new LoginRespond(userRespond, null);
     }

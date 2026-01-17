@@ -23,6 +23,24 @@ export default function VehicleCard({ vehicle, onViewDetail }) {
     }).format(price);
   };
 
+  // Get primary image from colorImages or fallback to imageUrl (same as admin page)
+  const getPrimaryImage = () => {
+    try {
+      if (vehicle.colorImages) {
+        const colorImagesData = JSON.parse(vehicle.colorImages);
+        if (colorImagesData.length > 0) {
+          const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
+          if (primaryColor.imageUrl) {
+            return primaryColor.imageUrl;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing colorImages:", e);
+    }
+    return vehicle.imageUrl || null;
+  };
+
   return (
     <div
       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group"
@@ -30,11 +48,11 @@ export default function VehicleCard({ vehicle, onViewDetail }) {
     >
       {/* Image */}
       <div className="relative h-48 bg-gray-200 overflow-hidden">
-        {!imageError && vehicle.imageUrl ? (
+        {!imageError && getPrimaryImage() ? (
           <img
-            src={vehicle.imageUrl}
+            src={getPrimaryImage()}
             alt={vehicle.versionName || 'Vehicle'}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
             onError={() => setImageError(true)}
           />
         ) : (

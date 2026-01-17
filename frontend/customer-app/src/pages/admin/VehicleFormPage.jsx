@@ -8,7 +8,8 @@ import {
   getAllModels,
   uploadVehicleImage
 } from '../../services/adminVehicleService';
-import toast from 'react-hot-toast';
+import ColorImageManager from '../../components/admin/ColorImageManager';
+import { toast } from 'react-toastify';
 
 export default function VehicleFormPage() {
   const { variantId } = useParams();
@@ -22,6 +23,7 @@ export default function VehicleFormPage() {
   const [formData, setFormData] = useState({
     modelId: '',
     variantName: '',
+    skuCode: '', // Add skuCode
     price: '',
     color: '',
     batteryCapacity: '',
@@ -35,9 +37,9 @@ export default function VehicleFormPage() {
     dimensions: '',
     weight: '',
     warrantyYears: '',
-    stockQuantity: '',
     imageUrl: '',
-    description: ''
+    description: '',
+    colorImages: '' // JSON string of color images
   });
 
   useEffect(() => {
@@ -50,8 +52,9 @@ export default function VehicleFormPage() {
   const loadModels = async () => {
     try {
       const response = await getAllModels();
-      if (response.code === 200) {
-        setModels(response.result || []);
+      if (response && response.code == 1000) {
+        // Backend returns Page<ModelSummaryDto> in data
+        setModels(response.data?.content || []);
       }
     } catch (error) {
       toast.error('Không thể tải danh sách model');
@@ -62,15 +65,16 @@ export default function VehicleFormPage() {
     try {
       setLoading(true);
       const response = await getVehicleDetailAdmin(variantId);
-      if (response.code === 200) {
-        const vehicle = response.result;
+      if (response && response.code == 1000) {
+        const vehicle = response.data;
         setFormData({
           modelId: vehicle.modelId || '',
-          variantName: vehicle.variantName || '',
+          variantName: vehicle.versionName || '', // Map versionName to variantName for form
+          skuCode: vehicle.skuCode || '',
           price: vehicle.price || '',
           color: vehicle.color || '',
           batteryCapacity: vehicle.batteryCapacity || '',
-          range: vehicle.range || '',
+          range: vehicle.rangeKm || '', // Map rangeKm to range for form
           motorPower: vehicle.motorPower || '',
           seatingCapacity: vehicle.seatingCapacity || '',
           torque: vehicle.torque || '',
@@ -80,14 +84,13 @@ export default function VehicleFormPage() {
           dimensions: vehicle.dimensions || '',
           weight: vehicle.weight || '',
           warrantyYears: vehicle.warrantyYears || '',
-          stockQuantity: vehicle.stockQuantity || '',
           imageUrl: vehicle.imageUrl || '',
-          description: vehicle.description || ''
+          description: vehicle.description || '',
+          colorImages: vehicle.colorImages || ''
         });
       }
     } catch (error) {
       toast.error('Không thể tải thông tin xe');
-      console.error('Error loading vehicle:', error);
     } finally {
       setLoading(false);
     }
@@ -120,10 +123,10 @@ export default function VehicleFormPage() {
     try {
       setUploadingImage(true);
       const response = await uploadVehicleImage(file);
-      if (response.code === 200) {
+      if (response && response.code == 1000) {
         setFormData(prev => ({
           ...prev,
-          imageUrl: response.result.url
+          imageUrl: response.data
         }));
         toast.success('Upload hình ảnh thành công');
       }
@@ -139,7 +142,7 @@ export default function VehicleFormPage() {
     e.preventDefault();
 
     // Validation
-    if (!formData.modelId) {
+    if (!isEditMode && !formData.modelId) {
       toast.error('Vui lòng chọn model xe');
       return;
     }
@@ -154,35 +157,70 @@ export default function VehicleFormPage() {
 
     try {
       setLoading(true);
-      const payload = {
-        ...formData,
-        price: parseFloat(formData.price),
-        batteryCapacity: parseFloat(formData.batteryCapacity) || null,
-        range: parseFloat(formData.range) || null,
-        motorPower: parseFloat(formData.motorPower) || null,
-        seatingCapacity: parseInt(formData.seatingCapacity) || null,
-        torque: parseFloat(formData.torque) || null,
-        acceleration: parseFloat(formData.acceleration) || null,
-        topSpeed: parseFloat(formData.topSpeed) || null,
-        weight: parseFloat(formData.weight) || null,
-        warrantyYears: parseInt(formData.warrantyYears) || null,
-        stockQuantity: parseInt(formData.stockQuantity) || 0
+
+      // Common fields for both Create and Update
+      const basePayload = {
+        versionName: formData.variantName,
+        color: formData.color || 'N/A',
+        price: formData.price.toString(), // Send as string for BigDecimal
+        status: 'IN_PRODUCTION',
+        imageUrl: formData.imageUrl || null,
+        batteryCapacity: formData.batteryCapacity ? parseFloat(formData.batteryCapacity) : null,
+        chargingTime: formData.chargingTime ? parseFloat(formData.chargingTime) : null,
+        rangeKm: formData.range ? parseInt(formData.range) : null,
+        motorPower: formData.motorPower ? parseInt(formData.motorPower) : null,
+        // Additional technical specifications
+        seatingCapacity: formData.seatingCapacity ? parseInt(formData.seatingCapacity) : null,
+        torque: formData.torque ? parseInt(formData.torque) : null,
+        acceleration: formData.acceleration ? parseFloat(formData.acceleration) : null,
+        topSpeed: formData.topSpeed ? parseInt(formData.topSpeed) : null,
+        dimensions: formData.dimensions || null,
+        weight: formData.weight ? parseInt(formData.weight) : null,
+        warrantyYears: formData.warrantyYears ? parseInt(formData.warrantyYears) : null,
+        description: formData.description || null,
+        colorImages: formData.colorImages || null,
       };
 
       let response;
       if (isEditMode) {
-        response = await updateVehicle(variantId, payload);
+        response = await updateVehicle(variantId, basePayload);
       } else {
-        response = await createVehicle(payload);
+        const createPayload = {
+          ...basePayload,
+          skuCode: formData.skuCode,
+          features: []
+          // modelId is in URL path, not in body
+        };
+        response = await createVehicle(formData.modelId, createPayload);
       }
 
-      if (response.code === 200 || response.code === 201) {
+      if (response && (response.code === "1000" || response.code === 1000 || response.code === 201 || response.code === "201")) {
         toast.success(isEditMode ? 'Cập nhật xe thành công' : 'Thêm xe mới thành công');
-        navigate('/admin/vehicles');
+        setTimeout(() => {
+          navigate('/admin/vehicles');
+        }, 1500);
+      } else {
+        // Handle error response from backend
+        console.error('[FORM] Unexpected response code:', response?.code);
+        const errorMsg = response?.message || (isEditMode ? 'Không thể cập nhật xe' : 'Không thể thêm xe');
+        toast.error(errorMsg);
       }
     } catch (error) {
-      toast.error(isEditMode ? 'Không thể cập nhật xe' : 'Không thể thêm xe');
-      console.error('Error saving vehicle:', error);
+      let errorMsg = isEditMode ? 'Không thể cập nhật xe' : 'Không thể thêm xe';
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMsg = 'Yêu cầu bị timeout. Vui lòng kiểm tra kết nối và thử lại.';
+      } else if (error.response) {
+        // Server responded with error
+        errorMsg = error.response.data?.message || `Lỗi ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        // Request was made but no response
+        errorMsg = 'Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối.';
+      } else {
+        errorMsg = error.message || errorMsg;
+      }
+      
+      toast.error(errorMsg, { duration: 5000 });
     } finally {
       setLoading(false);
     }
@@ -262,6 +300,22 @@ export default function VehicleFormPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mã SKU <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="skuCode"
+                value={formData.skuCode}
+                onChange={handleInputChange}
+                placeholder="VD: VF8-PLUS-001"
+                required
+                disabled={isEditMode} // Cannot edit SKU
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Giá bán (VND) <span className="text-red-500">*</span>
               </label>
               <input
@@ -278,20 +332,6 @@ export default function VehicleFormPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Màu sắc
-              </label>
-              <input
-                type="text"
-                name="color"
-                value={formData.color}
-                onChange={handleInputChange}
-                placeholder="Đen, Trắng, Xanh..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Số chỗ ngồi
               </label>
               <input
@@ -302,21 +342,6 @@ export default function VehicleFormPage() {
                 placeholder="5"
                 min="2"
                 max="9"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Số lượng tồn kho
-              </label>
-              <input
-                type="number"
-                name="stockQuantity"
-                value={formData.stockQuantity}
-                onChange={handleInputChange}
-                placeholder="0"
-                min="0"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -476,59 +501,13 @@ export default function VehicleFormPage() {
         {/* Image & Description */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Hình ảnh & Mô tả</h2>
-          
-          {/* Image Upload */}
+
+          {/* Color Images Manager */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Hình ảnh chính
-            </label>
-            {formData.imageUrl ? (
-              <div className="relative inline-block">
-                <img
-                  src={formData.imageUrl}
-                  alt="Vehicle"
-                  className="h-48 w-auto rounded-lg border"
-                />
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="mx-auto mb-2 text-gray-400" size={48} />
-                <p className="text-sm text-gray-600 mb-4">
-                  {uploadingImage ? 'Đang upload...' : 'Kéo thả hoặc click để chọn hình ảnh'}
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImage}
-                  className="hidden"
-                  id="image-upload"
-                />
-                <label
-                  htmlFor="image-upload"
-                  className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  Chọn hình ảnh
-                </label>
-              </div>
-            )}
-            <p className="text-xs text-gray-500 mt-2">
-              Hoặc nhập URL hình ảnh:
-            </p>
-            <input
-              type="url"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleInputChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
+    
+            <ColorImageManager
+              colorImages={formData.colorImages}
+              onChange={(colorImages) => setFormData(prev => ({ ...prev, colorImages }))}
             />
           </div>
 
