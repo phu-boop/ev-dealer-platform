@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,8 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -60,7 +63,7 @@ public class DealerServiceClient {
                                 }
                                 return Mono.empty();
                             })
-                    .bodyToMono(DealerResponse.class)
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<DealerInfo>>() {})
                     .timeout(Duration.ofSeconds(5))
                     .map(response -> {
                         if (response != null && response.getData() != null) {
@@ -88,13 +91,37 @@ public class DealerServiceClient {
     }
 
     /**
+     * Lấy danh sách tất cả dealer
+     */
+    public List<DealerInfo> getAllDealers() {
+        try {
+            log.info("Fetching all dealers from: {}/api/dealers", dealerServiceUrl);
+            ApiResponse<List<DealerInfo>> response = webClientBuilder.build()
+                    .get()
+                    .uri(dealerServiceUrl + "/api/dealers")
+                    .acceptCharset(StandardCharsets.UTF_8)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<DealerInfo>>>() {})
+                    .timeout(Duration.ofSeconds(10))
+                    .block();
+
+            return response != null && response.getData() != null ? response.getData() : Collections.emptyList();
+
+        } catch (Exception e) {
+            log.error("Error fetching all dealers: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * Response wrapper từ Dealer Service
+     * Matches the structure: { "status": "...", "message": "...", "data": T }
      */
     @Data
-    private static class DealerResponse {
+    public static class ApiResponse<T> {
         private String status;
         private String message;
-        private DealerInfo data;
+        private T data;
     }
 
     /**

@@ -37,12 +37,11 @@ public interface VehicleModelRepository extends JpaRepository<VehicleModel, Long
      * Search models with pagination - Optimized query
      */
     @Query("SELECT DISTINCT m FROM VehicleModel m " +
-            "LEFT JOIN FETCH m.variants v " +
             "WHERE (:keyword IS NULL OR m.modelName LIKE %:keyword% OR m.brand LIKE %:keyword%) " +
             "AND (:status IS NULL OR m.status = :status)")
     Page<VehicleModel> searchModels(
             @Param("keyword") String keyword,
-            @Param("status") String status,
+            @Param("status") com.ev.common_lib.model.enums.VehicleStatus status,
             Pageable pageable);
 
     /**

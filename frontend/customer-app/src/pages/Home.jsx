@@ -80,10 +80,10 @@ const Home = () => {
       try {
         if (hasActiveFilters) {
           const response = await searchVehicles(searchParams);
-          return response.data; // Page object from API
+          return response.data || { content: [] }; // Page object from API
         } else {
           const response = await getVehicles(currentPage, pageSize);
-          return response.data; // Page object from API
+          return response.data || { content: [] }; // Page object from API
         }
       } catch (error) {
         console.error("Error fetching vehicles:", error);

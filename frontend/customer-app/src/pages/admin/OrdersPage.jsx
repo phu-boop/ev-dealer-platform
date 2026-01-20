@@ -32,7 +32,7 @@ export default function AdminOrdersPage() {
       const params = {
         page: currentPage,
         size: pageSize,
-        sort: 'createdAt,desc'
+        sort: 'orderDate,desc'
       };
 
       if (statusFilter !== 'ALL') {
