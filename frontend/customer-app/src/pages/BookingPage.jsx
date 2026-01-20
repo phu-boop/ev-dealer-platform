@@ -168,6 +168,10 @@ const BookingPage = () => {
     { color: 'Rose Pink', colorCode: '#DB2777', imageUrl: selectedVariant?.imageUrl },
   ];
 
+  // Phân loại màu dựa vào thuộc tính isPrimary
+  const basicColors = exteriorColors.filter(color => color.isPrimary === true);
+  const advancedColors = exteriorColors.filter(color => color.isPrimary !== true);
+
   // Interior colors
   const interiorColors = [
     { name: 'Da đen', color: '#000000' },
@@ -539,7 +543,7 @@ const BookingPage = () => {
                       <span className="text-sm text-gray-500">Màu cơ bản - Theo xe</span>
                     </div>
                     <div className="grid grid-cols-4 gap-3 mb-4">
-                      {exteriorColors.slice(0, 1).map((color, index) => (
+                      {basicColors.map((color, index) => (
                         <button
                           key={index}
                           onClick={() => handleColorSelect(color)}
@@ -557,29 +561,33 @@ const BookingPage = () => {
                         </button>
                       ))}
                     </div>
-                    <div className="mb-3">
-                      <span className="text-sm text-gray-500">Màu nâng cao </span>
-                      <span className="text-sm font-semibold text-red-600">+ {formatPrice(8000000)}</span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-3">
-                      {exteriorColors.slice(1).map((color, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleColorSelect(color)}
-                          className={`aspect-square rounded-lg border-2 transition-all hover:scale-105 ${
-                            selectedColor?.color === color.color
-                              ? 'border-blue-600 shadow-lg scale-105'
-                              : 'border-gray-300'
-                          }`}
-                          style={{ backgroundColor: color.colorCode }}
-                          title={color.color}
-                        >
-                          {selectedColor?.color === color.color && (
-                            <CheckCircle className="w-6 h-6 text-white mx-auto drop-shadow-lg" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
+                    {advancedColors.length > 0 && (
+                      <>
+                        <div className="mb-3">
+                          <span className="text-sm text-gray-500">Màu nâng cao </span>
+                          <span className="text-sm font-semibold text-red-600">+ {formatPrice(8000000)}</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-3">
+                          {advancedColors.map((color, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleColorSelect(color)}
+                              className={`aspect-square rounded-lg border-2 transition-all hover:scale-105 ${
+                                selectedColor?.color === color.color
+                                  ? 'border-blue-600 shadow-lg scale-105'
+                                  : 'border-gray-300'
+                              }`}
+                              style={{ backgroundColor: color.colorCode }}
+                              title={color.color}
+                            >
+                              {selectedColor?.color === color.color && (
+                                <CheckCircle className="w-6 h-6 text-white mx-auto drop-shadow-lg" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Divider */}
