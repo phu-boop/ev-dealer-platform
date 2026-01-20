@@ -11,6 +11,7 @@ import Register from "../pages/Register";
 import NotFound from "../pages/NotFound";
 import OAuthCallback from "../pages/OAuthCallback";
 import ProductDetail from "../pages/ProductDetail";
+import BookingPage from "../pages/BookingPage";
 import TestDriveBooking from "../pages/TestDriveBooking";
 import CarConfigurator from "../pages/CarConfigurator";
 import TCOCalculator from "../pages/TCOCalculator";
@@ -54,6 +55,7 @@ export default function AppRoutes() {
         <Route path="/" element={<CustomerLayout />}>
           <Route index element={<Home />} />
           <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="booking/:id" element={<BookingPage />} />
           <Route path="test-drive" element={<TestDriveBooking />} />
           <Route path="configure" element={<CarConfigurator />} />
           <Route path="tco-calculator" element={<TCOCalculator />} />

@@ -70,16 +70,24 @@ export default function AdminVehiclesPage() {
     if (!vehicleToDelete) return;
 
     try {
+      console.log('Deleting vehicle with variantId:', vehicleToDelete.variantId);
       const response = await deleteVehicle(vehicleToDelete.variantId);
+      console.log('Delete response:', response);
+      
       if (response && response.code == 1000) {
-        toast.success('Đã xóa xe thành công');
+        toast.success('Đã ngừng sản xuất xe thành công');
         setShowDeleteModal(false);
         setVehicleToDelete(null);
-        loadVehicles();
+        // Reload page to see updated status
+        setTimeout(() => {
+          loadVehicles();
+        }, 500);
+      } else {
+        toast.error(response?.message || 'Không thể xóa xe');
       }
     } catch (error) {
-      toast.error('Không thể xóa xe');
       console.error('Error deleting vehicle:', error);
+      toast.error(error.response?.data?.message || 'Không thể xóa xe');
     }
   };
 
@@ -298,10 +306,10 @@ export default function AdminVehiclesPage() {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Xác nhận xóa</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Xác nhận ngừng sản xuất</h3>
             <p className="text-gray-600 mb-6">
-              Bạn có chắc chắn muốn xóa xe <span className="font-medium">{vehicleToDelete?.variantName}</span>?
-              Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn ngừng sản xuất xe <span className="font-medium">{vehicleToDelete?.versionName}</span>?
+              Xe sẽ được đánh dấu là "Ngừng sản xuất" và không còn được bán.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -317,7 +325,7 @@ export default function AdminVehiclesPage() {
                 onClick={handleDeleteConfirm}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
               >
-                Xóa
+                Ngừng sản xuất
               </button>
             </div>
           </div>
