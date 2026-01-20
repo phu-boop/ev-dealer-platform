@@ -83,6 +83,12 @@ public class KnowledgeBaseLoader implements CommandLineRunner {
                     if (d.getEmail() != null) sb.append("- Email: ").append(d.getEmail()).append("\n");
                     
                     String docContent = sb.toString();
+                    
+                    if (d.getId() == null) {
+                        log.warn("Skipping dealer with null ID: {}", d.getDealerName());
+                        continue;
+                    }
+
                     String stableId = "dealer_" + d.getId();
                     
                     documents.add(new Document(stableId, docContent, Map.of(

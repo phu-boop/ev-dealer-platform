@@ -5,7 +5,7 @@ import apiConstSaleService from "../../../../services/apiConstSaleService";
  * @param {object} params - ví dụ: { status: 'PENDING', page: 0, size: 10 }
  */
 export const getB2BOrders = (params) => {
-  return apiConstSaleService.get("/sales-orders/b2b", { params });
+  return apiConstSaleService.get("/api/v1/sales-orders/b2b", { params });
 };
 
 /**
@@ -13,7 +13,7 @@ export const getB2BOrders = (params) => {
  * @param {string} orderId - UUID của đơn hàng
  */
 export const approveB2BOrder = (orderId) => {
-  return apiConstSaleService.put(`/sales-orders/${orderId}/approve`);
+  return apiConstSaleService.put(`/api/v1/sales-orders/${orderId}/approve`);
 };
 
 /**
@@ -22,7 +22,7 @@ export const approveB2BOrder = (orderId) => {
  * @param {object} shipmentData - Dữ liệu ShipmentRequestDto (chứa danh sách VIN)
  */
 export const shipB2BOrder = (orderId, shipmentData) => {
-  return apiConstSaleService.put(`/sales-orders/${orderId}/ship`, shipmentData);
+  return apiConstSaleService.put(`/api/v1/sales-orders/${orderId}/ship`, shipmentData);
 };
 
 /**
@@ -30,12 +30,12 @@ export const shipB2BOrder = (orderId, shipmentData) => {
  * @param {object} orderData - Dữ liệu của CreateB2BOrderRequest
  */
 export const createB2BOrder = (orderData) => {
-  return apiConstSaleService.post("/sales-orders/b2b", orderData);
+  return apiConstSaleService.post("/api/v1/sales-orders/b2b", orderData);
 };
 
 // Hàm cho Staff/Admin đặt hộ
 export const createB2BOrderByStaff = (payload) => {
-  return apiConstSaleService.post("/sales-orders/b2b/staff-placement", payload);
+  return apiConstSaleService.post("/api/v1/sales-orders/b2b/staff-placement", payload);
 };
 
 /**
@@ -43,7 +43,7 @@ export const createB2BOrderByStaff = (payload) => {
  * @param {string} orderId
  */
 export const cancelOrderByStaff = (orderId) => {
-  return apiConstSaleService.put(`/sales-orders/${orderId}/cancel-by-staff`);
+  return apiConstSaleService.put(`/api/v1/sales-orders/${orderId}/cancel-by-staff`);
 };
 
 /**
@@ -51,7 +51,7 @@ export const cancelOrderByStaff = (orderId) => {
  * @param {string} orderId - UUID của đơn hàng
  */
 export const deleteOrder = (orderId) => {
-  return apiConstSaleService.delete(`/sales-orders/${orderId}`);
+  return apiConstSaleService.delete(`/api/v1/sales-orders/${orderId}`);
 };
 
 // /**

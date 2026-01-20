@@ -31,7 +31,7 @@ import com.ev.sales_service.mapper.SalesOrderMapperB2B;
 import com.ev.sales_service.service.Interface.SalesOrderServiceB2B;
 
 @RestController
-@RequestMapping("/sales-orders")
+@RequestMapping("/api/v1/sales-orders")
 @RequiredArgsConstructor
 public class SalesOrderControllerB2B {
 

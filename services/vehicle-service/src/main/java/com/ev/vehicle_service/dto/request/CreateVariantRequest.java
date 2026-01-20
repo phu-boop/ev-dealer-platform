@@ -31,7 +31,23 @@ public class CreateVariantRequest {
     private VehicleStatus status; // Cập nhật trạng thái của Vehicle
 
     private String imageUrl;
-    
+
+    private Double batteryCapacity;
+    private Float chargingTime;
+    private Integer rangeKm; // Keeping Integer based on DTO review
+    private Integer motorPower;
+
+    // Additional technical specifications
+    private Integer seatingCapacity;
+    private Integer torque;
+    private Float acceleration;
+    private Integer topSpeed;
+    private String dimensions;
+    private Integer weight;
+    private Integer warrantyYears;
+    private String description;
+    private String colorImages; // JSON string for color images
+
     @Valid
-    private List<FeatureRequest> features; 
+    private List<FeatureRequest> features;
 }

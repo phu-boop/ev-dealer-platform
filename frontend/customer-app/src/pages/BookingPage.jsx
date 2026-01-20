@@ -1,0 +1,954 @@
+import { useState, useEffect, useRef } from "react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, CheckCircle, ChevronUp, ChevronDown } from "lucide-react";
+import { getVehicleById, getVariants, getVehicles } from "../services/vehicleService";
+import { toast } from "react-toastify";
+import Button from "../components/ui/Button";
+
+const BookingPage = () => {
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('personal'); // 'personal' or 'service'
+  const [currentStep, setCurrentStep] = useState(1); // 1: Lựa chọn xe, 2: Nhập thông tin, 3: Đặt cọc xe
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedInterior, setSelectedInterior] = useState(null);
+  const [rotation, setRotation] = useState(0);
+  const vehicleListRef = useRef(null);
+  const sidebarRef = useRef(null);
+  
+  // Form data for step 2
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    email: '',
+    idCard: '',
+    promoCode: '',
+    showroomCity: '',
+    showroom: '',
+    notes: ''
+  });
+
+  // Showroom data by city
+  const showroomData = {
+    'Hà Nội': [
+      { id: 1, name: 'VinFast Hà Nội - Phạm Hùng' },
+      { id: 2, name: 'VinFast Hà Nội - Lê Văn Lương' },
+      { id: 3, name: 'VinFast Hà Nội - Trần Dân' },
+    ],
+    'TP HCM': [
+      { id: 4, name: 'VinFast TP.HCM - Nguyễn Văn Linh' },
+      { id: 5, name: 'VinFast TP.HCM - Lê Văn Việt' },
+      { id: 6, name: 'VinFast TP.HCM - Xa lộ Hà Nội' },
+    ],
+    'Đà Nẵng': [
+      { id: 7, name: 'VinFast Đà Nẵng - Nguyễn Văn Linh' },
+      { id: 8, name: 'VinFast Đà Nẵng - Điện Biên Phủ' },
+    ],
+    'Hải Phòng': [
+      { id: 9, name: 'VinFast Hải Phòng - Lạch Tray' },
+      { id: 10, name: 'VinFast Hải Phòng - Nguyễn Bỉnh Khiêm' },
+    ],
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+      // Reset showroom when city changes
+      if (name === 'showroomCity') {
+        newData.showroom = '';
+      }
+      return newData;
+    });
+  };
+
+  // Fetch vehicle model details
+  const { data: vehicleData, isLoading } = useQuery({
+    queryKey: ['vehicle', id],
+    queryFn: async () => {
+      try {
+        const response = await getVehicleById(id);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching vehicle:", error);
+        toast.error("Không thể tải thông tin xe");
+        return null;
+      }
+    },
+  });
+
+  // Fetch variants
+  const { data: variantsData } = useQuery({
+    queryKey: ['variants', id],
+    queryFn: async () => {
+      try {
+        const response = await getVariants(id);
+        return response.data || [];
+      } catch (error) {
+        console.error("Error fetching variants:", error);
+        return [];
+      }
+    },
+    enabled: !!id,
+  });
+
+  // Fetch all vehicles for sidebar list
+  const { data: allVehiclesData } = useQuery({
+    queryKey: ['allVehicles'],
+    queryFn: async () => {
+      try {
+        const response = await getVehicles(0, 10);
+        return response.data?.content || [];
+      } catch (error) {
+        console.error("Error fetching all vehicles:", error);
+        return [];
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (variantsData && variantsData.length > 0) {
+      const variantId = searchParams.get('variantId');
+      const variant = variantId 
+        ? variantsData.find(v => v.variantId === parseInt(variantId))
+        : variantsData[0];
+      
+      setSelectedVariant(variant || variantsData[0]);
+      
+      // Set initial color
+      try {
+        if (variant?.colorImages) {
+          const colorImagesData = JSON.parse(variant.colorImages);
+          if (colorImagesData.length > 0) {
+            const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
+            setSelectedColor(primaryColor);
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing colorImages:", e);
+      }
+
+      // Set default interior
+      setSelectedInterior({ name: 'Da đen', color: '#000000' });
+    }
+  }, [variantsData, searchParams]);
+
+  const formatPrice = (price) => {
+    if (!price) return "Liên hệ";
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
+
+  // Parse color images
+  let colorOptions = [];
+  try {
+    if (selectedVariant?.colorImages) {
+      colorOptions = JSON.parse(selectedVariant.colorImages);
+    }
+  } catch (e) {
+    console.error("Error parsing colorImages:", e);
+  }
+
+  // Exterior colors
+  const exteriorColors = colorOptions.length > 0 ? colorOptions : [
+    { color: 'Infinity Blanc', colorCode: '#FFFFFF', imageUrl: selectedVariant?.imageUrl, isPrimary: true },
+    { color: 'Storm Grey', colorCode: '#6B7280', imageUrl: selectedVariant?.imageUrl },
+    { color: 'Passion Red', colorCode: '#DC2626', imageUrl: selectedVariant?.imageUrl },
+    { color: 'Forest Green', colorCode: '#065F46', imageUrl: selectedVariant?.imageUrl },
+    { color: 'Sunrise Yellow', colorCode: '#F59E0B', imageUrl: selectedVariant?.imageUrl },
+    { color: 'Ocean Blue', colorCode: '#1E40AF', imageUrl: selectedVariant?.imageUrl },
+    { color: 'Rose Pink', colorCode: '#DB2777', imageUrl: selectedVariant?.imageUrl },
+  ];
+
+  // Phân loại màu dựa vào thuộc tính isPrimary
+  const basicColors = exteriorColors.filter(color => color.isPrimary === true);
+  const advancedColors = exteriorColors.filter(color => color.isPrimary !== true);
+
+  // Interior colors
+  const interiorColors = [
+    { name: 'Da đen', color: '#000000' },
+  ];
+
+  const handleRotateLeft = () => {
+    setRotation(prev => prev - 45);
+  };
+
+  const handleRotateRight = () => {
+    setRotation(prev => prev + 45);
+  };
+
+  const handleColorSelect = (color) => {
+    setSelectedColor(color);
+  };
+
+  const handleNextStep = () => {
+    // Validation for step 1
+    if (currentStep === 1) {
+      if (!selectedVariant) {
+        toast.error('Vui lòng chọn phiên bản xe');
+        return;
+      }
+      if (!selectedColor) {
+        toast.error('Vui lòng chọn màu xe');
+        return;
+      }
+      if (!selectedInterior) {
+        toast.error('Vui lòng chọn nội thất');
+        return;
+      }
+    }
+
+    // Validation for step 2
+    if (currentStep === 2) {
+      if (!formData.fullName.trim()) {
+        toast.error('Vui lòng nhập họ tên');
+        return;
+      }
+      if (!formData.phone.trim()) {
+        toast.error('Vui lòng nhập số điện thoại');
+        return;
+      }
+      // Validate phone number format (Vietnamese phone numbers)
+      const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+      if (!phoneRegex.test(formData.phone.trim())) {
+        toast.error('Số điện thoại không hợp lệ');
+        return;
+      }
+      if (!formData.email.trim()) {
+        toast.error('Vui lòng nhập email');
+        return;
+      }
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        toast.error('Email không hợp lệ');
+        return;
+      }
+      if (!formData.idCard.trim()) {
+        toast.error('Vui lòng nhập số CCCD');
+        return;
+      }
+      // Validate ID card (12 digits for new CCCD)
+      if (formData.idCard.trim().length !== 12 || !/^\d+$/.test(formData.idCard.trim())) {
+        toast.error('Số CCCD phải gồm 12 chữ số');
+        return;
+      }
+      if (!formData.showroomCity) {
+        toast.error('Vui lòng chọn thành phố/tỉnh');
+        return;
+      }
+      if (!formData.showroom) {
+        toast.error('Vui lòng chọn showroom');
+        return;
+      }
+    }
+
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải thông tin xe...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!vehicleData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Không tìm thấy thông tin xe</p>
+          <Button onClick={() => navigate('/')}>Về trang chủ</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const priceAddition = selectedColor?.isPrimary === false ? 8000000 : 0;
+  const totalPrice = (selectedVariant?.price || 0) + priceAddition;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className="max-w-full mx-auto px-2 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+          {/* Left Sidebar - Vehicle List */}
+          <div className="lg:col-span-2 relative">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Danh sách xe</h3>
+              <div className="flex gap-1">
+                
+              </div>
+            </div>
+            <div 
+              ref={vehicleListRef}
+              onWheel={(e) => {
+                if (vehicleListRef.current) {
+                  e.preventDefault();
+                  vehicleListRef.current.scrollBy({ top: e.deltaY, behavior: 'auto' });
+                }
+              }}
+              className="space-y-3 max-h-[calc(100vh-180px)] overflow-y-hidden pr-2"
+              style={{ overflowY: 'scroll', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {allVehiclesData && allVehiclesData.map((vehicle) => (
+                <button
+                  key={vehicle.modelId}
+                  onClick={() => navigate(`/booking/${vehicle.modelId}`)}
+                  className={`w-full text-left transition-all ${
+                    parseInt(id) === vehicle.modelId
+                      ? 'bg-blue-50 border-2 border-blue-600'
+                      : 'bg-white border-2 border-gray-200 hover:border-blue-400'
+                  } rounded-lg overflow-hidden`}
+                >
+                  <div className="aspect-video relative">
+                    <img
+                      src={vehicle.thumbnailUrl || 'https://via.placeholder.com/200x150'}
+                      alt={vehicle.modelName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <h4 className={`font-semibold text-sm ${
+                      parseInt(id) === vehicle.modelId ? 'text-blue-600' : 'text-gray-900'
+                    }`}>
+                      {vehicle.modelName}
+                    </h4>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <style jsx>{`
+              div::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+          </div>
+
+          {/* Center - Vehicle Display */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Tabs */}
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="flex border-b">
+                <button
+                  onClick={() => setActiveTab('personal')}
+                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+                    activeTab === 'personal'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Dòng xe cá nhân
+                </button>
+                <button
+                  onClick={() => setActiveTab('service')}
+                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+                    activeTab === 'service'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Dòng xe dịch vụ
+                </button>
+              </div>
+
+              {/* Vehicle 3D View */}
+              <div className="p-8">
+                <div className="relative bg-gradient-to-b from-gray-50 to-white rounded-2xl p-8">
+                  {/* Rotation Controls */}
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                    <button
+                      onClick={handleRotateLeft}
+                      className="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-colors"
+                    >
+                      <ChevronLeft className="w-6 h-6 text-gray-700" />
+                    </button>
+                  </div>
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
+                    <button
+                      onClick={handleRotateRight}
+                      className="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-colors"
+                    >
+                      <ChevronRight className="w-6 h-6 text-gray-700" />
+                    </button>
+                  </div>
+
+                  {/* Vehicle Image */}
+                  <div className="aspect-[4/3] flex items-center justify-center">
+                    <img
+                      src={selectedColor?.imageUrl || selectedVariant?.imageUrl || vehicleData.thumbnailUrl}
+                      alt={vehicleData.modelName}
+                      className="max-w-full max-h-full object-contain transition-transform duration-500"
+                      style={{ transform: `rotate(${rotation}deg)` }}
+                    />
+                  </div>
+
+                  {/* Vehicle Badge */}
+                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                        </svg>
+                      </div>
+                      <span className="font-semibold text-sm">{vehicleData.modelName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vehicle Specs */}
+                <div className="grid grid-cols-3 gap-6 mt-6 text-center">
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">Công suất tối đa</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {selectedVariant?.motorPower || vehicleData.baseMotorPower || 30} kW
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">Dung lượng pin khả dụng</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {selectedVariant?.batteryCapacity || vehicleData.baseBatteryCapacity || 18.64} kWh
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">Quãng đường di chuyển</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {selectedVariant?.rangeKm || vehicleData.baseRangeKm || 215} km
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-400 text-center mt-4 px-4">
+                  Quãng đường di chuyển được tính toán dựa trên kết quả kiểm định theo quy chuẩn toàn cầu của WNEDC. 
+                  Quãng đường di chuyển thực tế có thể ảnh hưởng bởi điều kiện, thói quen sử dụng của người lái, chế 
+                  độ lái xe đã được cài đặt, số lượng hành khách và các điều kiện giao thông khác.
+                </p>
+
+                <p className="text-sm text-gray-500 text-center mt-4">
+                  Các thông tin sản phẩm có thể thay đổi mà không cần báo trước
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Sidebar - Configuration */}
+          <div 
+            ref={sidebarRef}
+            onWheel={(e) => {
+              if (sidebarRef.current) {
+                e.preventDefault();
+                sidebarRef.current.scrollBy({ top: e.deltaY, behavior: 'auto' });
+              }
+            }}
+            className="lg:col-span-3 space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto"
+            style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e0 #f7fafc' }}
+          >
+            {/* Progress Steps */}
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className={`flex items-center gap-2 ${currentStep === 1 ? 'text-blue-600 font-semibold' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+                    {currentStep > 1 ? <CheckCircle className="w-5 h-5" /> : '1'}
+                  </div>
+                  <span className="text-xs">Lựa chọn xe</span>
+                </div>
+                <div className="h-px flex-1 bg-gray-300"></div>
+                <div className={`flex items-center gap-2 ${currentStep === 2 ? 'text-blue-600 font-semibold' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 2 ? 'bg-blue-600 text-white' : currentStep > 2 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+                    {currentStep > 2 ? <CheckCircle className="w-5 h-5" /> : '2'}
+                  </div>
+                  <span className="text-xs">Nhập thông tin</span>
+                </div>
+                <div className="h-px flex-1 bg-gray-300"></div>
+                <div className={`flex items-center gap-2 ${currentStep === 3 ? 'text-blue-600 font-semibold' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 3 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+                    3
+                  </div>
+                  <span className="text-xs">Đặt cọc xe</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Conditional Content Based on Step */}
+            {currentStep === 1 ? (
+              <>
+                {/* Step 1 Description */}
+                <div className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-4">
+                  <p className="text-sm text-gray-700">
+                    Xin mời Quý khách vui lòng chọn phiên bản, nội thất và ngoại thất xe.
+                  </p>
+                </div>
+
+                {/* All Configuration in One Card */}
+                <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+                  {/* Vehicle Version Selection */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Phiên bản xe</h3>
+                    <div className="space-y-2">
+                      {variantsData && variantsData.map((variant) => (
+                        <button
+                          key={variant.variantId}
+                          onClick={() => setSelectedVariant(variant)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                            selectedVariant?.variantId === variant.variantId
+                              ? 'border-blue-600 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            selectedVariant?.variantId === variant.variantId
+                              ? 'border-blue-600'
+                              : 'border-gray-300'
+                          }`}>
+                            {selectedVariant?.variantId === variant.variantId && (
+                              <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                            )}
+                          </div>
+                          <span className="font-medium text-gray-900">{variant.versionName}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Exterior Color Selection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-gray-900">Ngoại thất</h3>
+                      <span className="text-sm text-gray-600">{selectedColor?.color || 'Infinity Blanc'}</span>
+                    </div>
+                    <div className="mb-3">
+                      <span className="text-sm text-gray-500">Màu cơ bản - Theo xe</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3 mb-4">
+                      {basicColors.map((color, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleColorSelect(color)}
+                          className={`aspect-square rounded-lg border-2 transition-all hover:scale-105 ${
+                            selectedColor?.color === color.color
+                              ? 'border-blue-600 shadow-lg scale-105'
+                              : 'border-gray-300'
+                          }`}
+                          style={{ backgroundColor: color.colorCode }}
+                          title={color.color}
+                        >
+                          {selectedColor?.color === color.color && (
+                            <CheckCircle className="w-6 h-6 text-blue-600 mx-auto drop-shadow-lg" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {advancedColors.length > 0 && (
+                      <>
+                        <div className="mb-3">
+                          <span className="text-sm text-gray-500">Màu nâng cao </span>
+                          <span className="text-sm font-semibold text-red-600">+ {formatPrice(8000000)}</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-3">
+                          {advancedColors.map((color, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleColorSelect(color)}
+                              className={`aspect-square rounded-lg border-2 transition-all hover:scale-105 ${
+                                selectedColor?.color === color.color
+                                  ? 'border-blue-600 shadow-lg scale-105'
+                                  : 'border-gray-300'
+                              }`}
+                              style={{ backgroundColor: color.colorCode }}
+                              title={color.color}
+                            >
+                              {selectedColor?.color === color.color && (
+                                <CheckCircle className="w-6 h-6 text-white mx-auto drop-shadow-lg" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Interior Color Selection */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Nội thất</h3>
+                    <div className="grid grid-cols-4 gap-3">
+                      {interiorColors.map((color, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedInterior(color)}
+                          className={`aspect-square rounded-lg border-2 transition-all hover:scale-105 ${
+                            selectedInterior?.name === color.name
+                              ? 'border-blue-600 shadow-lg scale-105'
+                              : 'border-gray-300'
+                          }`}
+                          style={{ backgroundColor: color.color }}
+                          title={color.name}
+                        >
+                          {selectedInterior?.name === color.name && (
+                            <CheckCircle className="w-6 h-6 text-white mx-auto drop-shadow-lg" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Installment Plan */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-900">Dự toán Trả góp & Giá lăn bánh</h3>
+                    <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                      Chi tiết
+                    </button>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Price Summary */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Giá xe</span>
+                      <span className="font-medium">{formatPrice(selectedVariant?.price || 0)}</span>
+                    </div>
+                    {priceAddition > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Màu nâng cao</span>
+                        <span className="font-medium text-red-600">+ {formatPrice(priceAddition)}</span>
+                      </div>
+                    )}
+                    <div className="border-t pt-3 flex justify-between">
+                      <span className="font-semibold text-gray-900">Tổng cộng</span>
+                      <span className="font-bold text-blue-600 text-xl">{formatPrice(totalPrice)}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : currentStep === 2 ? (
+              <>
+                {/* Step 2 Description */}
+                <div className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-4">
+                  <p className="text-sm text-gray-700">
+                    Tiếp theo, Quý khách hãy cung cấp thông tin chủ xe và lựa chọn Showroom nhận xe
+                  </p>
+                </div>
+
+                {/* Customer Information Form */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">Thông tin khách hàng</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Họ và tên <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Nhập họ và tên"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Số điện thoại <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Nhập số điện thoại"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Nhập email"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Số CCCD <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="idCard"
+                        value={formData.idCard}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Nhập số CCCD"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Mã ưu đãi
+                      </label>
+                      <input
+                        type="text"
+                        name="promoCode"
+                        value={formData.promoCode}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Nhập mã ưu đãi (nếu có)"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Showroom nhận xe <span className="text-red-500">*</span>
+                      </label>
+                      <div className="space-y-3">
+                        <select
+                          name="showroomCity"
+                          value={formData.showroomCity}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="">Chọn tỉnh thành</option>
+                          <option value="Hà Nội">Hà Nội</option>
+                          <option value="TP HCM">TP Hồ Chí Minh</option>
+                          <option value="Đà Nẵng">Đà Nẵng</option>
+                          <option value="Hải Phòng">Hải Phòng</option>
+                        </select>
+                        <select
+                          name="showroom"
+                          value={formData.showroom}
+                          onChange={handleInputChange}
+                          disabled={!formData.showroomCity}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        >
+                          <option value="">Chọn showroom</option>
+                          {formData.showroomCity && showroomData[formData.showroomCity]?.map(showroom => (
+                            <option key={showroom.id} value={showroom.name}>
+                              {showroom.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ghi chú
+                      </label>
+                      <textarea
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Ghi chú thêm (nếu có)"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Selected Vehicle Summary */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">Thông tin xe đã chọn</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Mẫu xe</span>
+                      <span className="font-medium">{vehicleData.modelName}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Phiên bản</span>
+                      <span className="font-medium">{selectedVariant?.versionName}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Màu ngoại thất</span>
+                      <span className="font-medium">{selectedColor?.color}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Màu nội thất</span>
+                      <span className="font-medium">{selectedInterior?.name}</span>
+                    </div>
+                    <div className="border-t pt-3 flex justify-between">
+                      <span className="font-semibold text-gray-900">Tổng cộng</span>
+                      <span className="font-bold text-blue-600 text-xl">{formatPrice(totalPrice)}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Step 3 Description */}
+                <div className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-4">
+                  <p className="text-sm text-gray-700">
+                    Quý khách kiểm tra lại thông tin đơn hàng và thực hiện thanh toán khoản đặt cọc cho xe
+                  </p>
+                </div>
+
+                {/* Order Information */}
+                <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+                  <h3 className="font-semibold text-gray-900 text-lg">Thông tin đơn hàng</h3>
+
+                  {/* Vehicle Information */}
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Thông tin xe</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">{vehicleData.modelName} {selectedVariant?.versionName}</span>
+                        <span className="font-semibold text-gray-900">{formatPrice(selectedVariant?.price || 0)}</span>
+                      </div>
+                      <p className="text-xs text-gray-500">Giá xe đã bao gồm VAT.</p>
+                      <p className="text-xs text-blue-600">Kèm pin</p>
+                      <div className="grid grid-cols-2 gap-4 mt-3">
+                        <div>
+                          <p className="text-sm text-gray-600">Ngoại thất</p>
+                          <p className="font-medium text-gray-900">{selectedColor?.color || 'Infinity Blanc'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Nội thất</p>
+                          <p className="font-medium text-gray-900">{selectedInterior?.name || 'Da đen'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Customer Information */}
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Thông tin chủ xe</h4>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-sm text-gray-600">Chủ xe</p>
+                        <p className="font-medium text-gray-900">{formData.fullName}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="font-medium text-gray-900">{formData.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Số điện thoại</p>
+                        <p className="font-medium text-gray-900">{formData.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Số CCCD</p>
+                        <p className="font-medium text-gray-900">{formData.idCard}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Showroom nhận xe</p>
+                        <p className="font-medium text-gray-900">{formData.showroom}</p>
+                        <p className="text-xs text-gray-500">{formData.showroomCity}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Payment Method */}
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Hình thức thanh toán</h4>
+                    <p className="text-sm text-gray-600 mb-3">Quý khách vui lòng chọn cổng thanh toán</p>
+                    
+                    <div className="space-y-3">
+                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                        <input type="radio" name="paymentMethod" value="international-card" className="w-4 h-4 text-blue-600" defaultChecked />
+                        <div className="ml-3 flex-1">
+                          <p className="font-medium text-gray-900">Thẻ thanh toán quốc tế</p>
+                        </div>
+                      </label>
+
+                      <div className="ml-7 space-y-2">
+                        <label className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer">
+                          <input type="radio" name="paymentGateway" value="onepay" className="w-4 h-4 text-blue-600" defaultChecked />
+                          <span className="ml-3 text-sm text-gray-900">Cổng OnePay</span>
+                        </label>
+                        <label className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer">
+                          <input type="radio" name="paymentGateway" value="payoo" className="w-4 h-4 text-blue-600" />
+                          <span className="ml-3 text-sm text-gray-900">Cổng Payoo</span>
+                        </label>
+                      </div>
+
+                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                        <input type="radio" name="paymentMethod" value="atm" className="w-4 h-4 text-blue-600" />
+                        <div className="ml-3 flex-1">
+                          <p className="font-medium text-gray-900">Thẻ ATM nội địa/ Internet Banking</p>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                        <input type="radio" name="paymentMethod" value="bank-transfer" className="w-4 h-4 text-blue-600" />
+                        <div className="ml-3 flex-1">
+                          <p className="font-medium text-gray-900">Chuyển khoản ngân hàng</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Deposit Amount */}
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-700 font-medium">Số tiền đặt cọc</span>
+                      <span className="text-2xl font-bold text-blue-600">30.000.000 VNĐ</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              {currentStep > 1 && (
+                <Button
+                  onClick={handlePrevStep}
+                  variant="outline"
+                  className="flex-1 py-3"
+                >
+                  Quay lại
+              </Button>
+            )}
+            <Button
+              onClick={handleNextStep}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold"
+            >
+              {currentStep === 3 ? 'Thanh toán đặt cọc' : 'Tiếp tục'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+};
+
+export default BookingPage;
+

@@ -50,12 +50,33 @@ const ProductDetail = () => {
     if (variantsData && variantsData.length > 0) {
       const firstVariant = variantsData[0];
       setSelectedVariant(firstVariant);
-      setSelectedColor(firstVariant.color);
-      // Set images from variant or model
+      
+      // Set main image from variant first
       if (firstVariant.imageUrl) {
         setSelectedImages([firstVariant.imageUrl]);
       } else if (vehicleData?.thumbnailUrl) {
         setSelectedImages([vehicleData.thumbnailUrl]);
+      }
+      
+      // Set initial selected color from colorImages if available
+      try {
+        if (firstVariant.colorImages) {
+          const colorImagesData = JSON.parse(firstVariant.colorImages);
+          if (colorImagesData.length > 0) {
+            const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
+            setSelectedColor(primaryColor.color);
+            // Also update the image to match the primary color
+            if (primaryColor.imageUrl) {
+              setSelectedImages([primaryColor.imageUrl]);
+            }
+          } else {
+            setSelectedColor(firstVariant.color);
+          }
+        } else {
+          setSelectedColor(firstVariant.color);
+        }
+      } catch (e) {
+        setSelectedColor(firstVariant.color);
       }
     }
   }, [variantsData, vehicleData]);
@@ -70,9 +91,38 @@ const ProductDetail = () => {
 
   const handleVariantSelect = (variant) => {
     setSelectedVariant(variant);
-    setSelectedColor(variant.color);
-    if (variant.imageUrl) {
-      setSelectedImages([variant.imageUrl]);
+    
+    // Try to get colorImages data
+    let colorImagesData = [];
+    try {
+      if (variant.colorImages) {
+        colorImagesData = JSON.parse(variant.colorImages);
+      }
+    } catch (e) {
+      console.error("Error parsing colorImages:", e);
+    }
+
+    // Set selected color and image based on primary color
+    if (colorImagesData.length > 0) {
+      const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
+      setSelectedColor(primaryColor.color);
+      // Set image from primary color
+      if (primaryColor.imageUrl) {
+        setSelectedImages([primaryColor.imageUrl]);
+      }
+    } else {
+      setSelectedColor(variant.color);
+      // Fallback to variant image if no colorImages
+      if (variant.imageUrl) {
+        setSelectedImages([variant.imageUrl]);
+      }
+    }
+  };
+
+  const handleColorSelect = (colorItem) => {
+    setSelectedColor(colorItem.color);
+    if (colorItem.imageUrl) {
+      setSelectedImages([colorItem.imageUrl]);
     }
   };
 
@@ -82,6 +132,10 @@ const ProductDetail = () => {
 
   const handleConfigure = () => {
     navigate(`/configure?modelId=${id}&variantId=${selectedVariant?.variantId || ''}`);
+  };
+
+  const handleBooking = () => {
+    navigate(`/booking/${id}?variantId=${selectedVariant?.variantId || ''}`);
   };
 
   if (isLoading) {
@@ -108,6 +162,36 @@ const ProductDetail = () => {
 
   const variant = selectedVariant || variantsData?.[0];
 
+  // Parse colorImages for the selected variant
+  let colorImagesData = [];
+  try {
+    if (variant?.colorImages) {
+      colorImagesData = JSON.parse(variant.colorImages);
+    }
+  } catch (e) {
+    console.error("Error parsing colorImages:", e);
+  }
+
+  // Use colorImages data as the source of truth for available colors
+  const allColors = [];
+  
+  if (colorImagesData.length > 0) {
+    // Use colors from colorImages (already includes all color options)
+    const colors = colorImagesData.map(c => ({ ...c, isMainVariant: false }));
+    // Sort to put primary color first
+    colors.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+    allColors.push(...colors);
+  } else if (variant?.color && variant?.imageUrl) {
+    // Fallback to main variant color if no colorImages data
+    allColors.push({
+      color: variant.color,
+      colorCode: '#FFFFFF',
+      imageUrl: variant.imageUrl,
+      isPrimary: true,
+      isMainVariant: true
+    });
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -131,10 +215,44 @@ const ProductDetail = () => {
               <img
                 src={selectedImages[0] || variant?.imageUrl || vehicleData.thumbnailUrl || "https://via.placeholder.com/800"}
                 alt={vehicleData.modelName}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
-            {/* Thumbnail gallery can be added here */}
+            
+            {/* Color Selection Dots */}
+            {allColors.length > 0 && (
+              <div className="flex items-center justify-center gap-3 py-2">
+                {allColors.map((colorItem, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleColorSelect(colorItem)}
+                    className={`relative w-12 h-12 rounded-full border-2 transition-all hover:scale-110 ${
+                      selectedColor === colorItem.color
+                        ? 'border-blue-600 shadow-lg scale-110'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    style={{ backgroundColor: colorItem.colorCode }}
+                    title={colorItem.color}
+                  >
+                    {selectedColor === colorItem.color && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-white drop-shadow-lg" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {/* Selected Color Name */}
+            {selectedColor && allColors.length > 0 && (
+              <div className="text-center">
+                <p className="text-sm text-gray-600 inline-flex items-center gap-2">
+                  <Palette className="w-4 h-4" />
+                  <span className="font-medium">{selectedColor}</span>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
@@ -232,22 +350,31 @@ const ProductDetail = () => {
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col gap-4 pt-4">
               <Button
-                onClick={handleTestDrive}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold"
+                onClick={handleBooking}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold"
               >
-                <Calendar className="w-5 h-5 inline mr-2" />
-                Đặt Lái Thử
+                <CheckCircle className="w-5 h-5 inline mr-2" />
+                Đặt Cọc Xe
               </Button>
-              <Button
-                onClick={handleConfigure}
-                variant="outline"
-                className="flex-1 py-4 text-lg font-semibold"
-              >
-                <Settings className="w-5 h-5 inline mr-2" />
-                Cấu Hình Xe
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  onClick={handleTestDrive}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold"
+                >
+                  <Calendar className="w-5 h-5 inline mr-2" />
+                  Đặt Lái Thử
+                </Button>
+                <Button
+                  onClick={handleConfigure}
+                  variant="outline"
+                  className="flex-1 py-4 text-lg font-semibold"
+                >
+                  <Settings className="w-5 h-5 inline mr-2" />
+                  Cấu Hình Xe
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -255,67 +382,87 @@ const ProductDetail = () => {
         {/* Detailed Specifications */}
         <div className="bg-white rounded-2xl p-8 mb-8">
           <h2 className="text-2xl font-bold mb-6">Thông Số Kỹ Thuật Chi Tiết</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            {/* Battery & Range */}
             <div>
-              <h3 className="font-semibold text-gray-700 mb-3">Pin & Sạc</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Dung lượng pin:</span>
-                  <span className="font-semibold">
+              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <Battery className="w-5 h-5" />
+                Pin & Phạm vi hoạt động
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Dung lượng pin</span>
+                  <p className="text-lg font-semibold">
                     {variant?.batteryCapacity || vehicleData.baseBatteryCapacity || "N/A"} kWh
-                  </span>
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Quãng đường (WLTP):</span>
-                  <span className="font-semibold">
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Phạm vi hoạt động</span>
+                  <p className="text-lg font-semibold">
                     {variant?.rangeKm || vehicleData.baseRangeKm || "N/A"} km
-                  </span>
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sạc nhanh (80%):</span>
-                  <span className="font-semibold">
-                    {variant?.chargingTime ? `${variant.chargingTime} phút` : "N/A"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sạc thường (100%):</span>
-                  <span className="font-semibold">
-                    {variant?.chargingTime ? `${Math.round(variant.chargingTime * 1.5)} phút` : "N/A"}
-                  </span>
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Thời gian sạc</span>
+                  <p className="text-lg font-semibold">
+                    {variant?.chargingTime || "N/A"} giờ
+                  </p>
                 </div>
               </div>
             </div>
 
+            {/* Performance */}
             <div>
-              <h3 className="font-semibold text-gray-700 mb-3">Hiệu Suất</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Công suất động cơ:</span>
-                  <span className="font-semibold">
+              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                Hiệu suất
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Công suất động cơ</span>
+                  <p className="text-lg font-semibold">
                     {variant?.motorPower || vehicleData.baseMotorPower || "N/A"} kW
-                  </span>
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Mô-men xoắn:</span>
-                  <span className="font-semibold">N/A</span>
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Mô-men xoắn</span>
+                  <p className="text-lg font-semibold">
+                    {variant?.torque || "N/A"} Nm
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tăng tốc 0-100km/h:</span>
-                  <span className="font-semibold">N/A</span>
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Tăng tốc 0-100km/h</span>
+                  <p className="text-lg font-semibold">
+                    {variant?.acceleration || "N/A"} giây
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Tốc độ tối đa</span>
+                  <p className="text-lg font-semibold">
+                    {variant?.topSpeed || "N/A"} km/h
+                  </p>
                 </div>
               </div>
             </div>
 
+            {/* Dimensions & Weight */}
             <div>
-              <h3 className="font-semibold text-gray-700 mb-3">Kích Thước</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Số chỗ ngồi:</span>
-                  <span className="font-semibold">5</span>
+              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Kích thước & Khối lượng
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Kích thước (DxRxC)</span>
+                  <p className="text-lg font-semibold">
+                    {variant?.dimensions || "N/A"} mm
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Dung tích khoang hành lý:</span>
-                  <span className="font-semibold">N/A</span>
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-600">Trọng lượng</span>
+                  <p className="text-lg font-semibold">
+                    {variant?.weight || "N/A"} kg
+                  </p>
                 </div>
               </div>
             </div>

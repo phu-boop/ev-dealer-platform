@@ -56,7 +56,10 @@ public class RagChatService {
                Yêu cầu:
                1. Trả lời bằng TIẾNG VIỆT.
                2. Tự động nhận diện tên xe (ví dụ: "VF9" = "VF 9", hoặc vf9 = "VF 9").
-               3. Nếu có thông tin trong Context, hãy tổng hợp và trả lời chi tiết.
+               3. Nếu có thông tin trong Context, hãy tổng hợp và trả lời chi tiết. SỬ DỤNG FORMAT MARKDOWN ĐỂ TRÌNH BÀY ĐẸP MẮT:
+                  - Sử dụng **Bảng (Table)** khi so sánh các thông số hoặc giá cả.
+                  - Sử dụng **In đậm (Bold)** cho các từ khóa quan trọng hoặc tên xe.
+                  - Sử dụng *Danh sách (List)* để liệt kê tính năng.
                4. Chỉ nói "Xin lỗi !! Tôi không tìm thấy thông tin" nếu Context hoàn toàn trống hoặc không liên quan.
                """.replace("{context}", context);
 

@@ -7,7 +7,7 @@ import apiConstPaymentService from "../../../../../services/apiConstPaymentServi
 
 const BASE_QUOTATION_URL = "/api/v1/quotations";
 const BASE_ORDER_B2C_URL = "/api/v1/sales-orders/b2c";
-const BASE_ORDER_B2B_URL = "/sales-orders/my-orders";
+const BASE_ORDER_B2B_URL = "/api/v1/sales-orders/my-orders";
 const BASE_PAYMENT_URL = "/api/v1/payments/customer";
 
 /**

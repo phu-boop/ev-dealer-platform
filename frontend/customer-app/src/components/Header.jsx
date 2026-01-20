@@ -77,103 +77,44 @@ export default function Header() {
             {/* Main Navigation Links */}
             <Link
               to="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive("/")
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-              }`}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/")
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                }`}
             >
               Trang chủ
             </Link>
 
             <Link
               to="/vehicles"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive("/vehicles")
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-              }`}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/vehicles")
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                }`}
             >
               Xe điện
             </Link>
 
             <Link
               to="/test-drive"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive("/test-drive")
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-              }`}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/test-drive")
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                }`}
             >
               Đặt lái thử
             </Link>
 
             <Link
               to="/charging-stations"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive("/charging-stations")
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-              }`}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/charging-stations")
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                }`}
             >
               Trạm sạc
             </Link>
 
-            {/* More Menu (Extended Features) */}
-            <div className="relative">
-              <button
-                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isMoreMenuOpen
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
-              >
-                <MoreHorizontal className="w-5 h-5" />
-              </button>
-              {isMoreMenuOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setIsMoreMenuOpen(false)}
-                  ></div>
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
-                    <Link
-                      to="/configure"
-                      onClick={() => setIsMoreMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <Wrench className="w-4 h-4" />
-                      Cấu hình xe
-                    </Link>
-                    <Link
-                      to="/chatbot"
-                      onClick={() => setIsMoreMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      Tư vấn AI
-                    </Link>
-                    <Link
-                      to="/financing"
-                      onClick={() => setIsMoreMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <Calculator className="w-4 h-4" />
-                      Tính trả góp
-                    </Link>
-                    <Link
-                      to="/tco-calculator"
-                      onClick={() => setIsMoreMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <Calculator className="w-4 h-4" />
-                      Tính chi phí
-                    </Link>
-                  </div>
-                </>
-              )}
-            </div>
 
             <div className="h-6 w-px bg-gray-300"></div>
 
@@ -283,6 +224,61 @@ export default function Header() {
                 </Link>
               </div>
             )}
+
+            {/* More Menu (Extended Features) */}
+            <div className="relative">
+              <button
+                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isMoreMenuOpen
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                  }`}
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              {isMoreMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                  ></div>
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                    <Link
+                      to="/configure"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      <Wrench className="w-4 h-4" />
+                      Cấu hình xe
+                    </Link>
+                    <Link
+                      to="/chatbot"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Tư vấn AI
+                    </Link>
+                    <Link
+                      to="/financing"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      <Calculator className="w-4 h-4" />
+                      Tính trả góp
+                    </Link>
+                    <Link
+                      to="/tco-calculator"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      <Calculator className="w-4 h-4" />
+                      Tính chi phí
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -305,44 +301,40 @@ export default function Header() {
               <Link
                 to="/"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/")
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/")
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 Trang chủ
               </Link>
               <Link
                 to="/vehicles"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/vehicles")
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/vehicles")
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 Xe điện
               </Link>
               <Link
                 to="/test-drive"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/test-drive")
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/test-drive")
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 Đặt lái thử
               </Link>
               <Link
                 to="/charging-stations"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/charging-stations")
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/charging-stations")
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 Trạm sạc
               </Link>

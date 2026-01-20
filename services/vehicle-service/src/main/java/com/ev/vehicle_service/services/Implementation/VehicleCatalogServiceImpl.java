@@ -128,8 +128,25 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             Integer maxRange,
             Pageable pageable) {
 
+        // Convert String status to Enum
+        VehicleStatus statusEnum = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                if ("AVAILABLE".equalsIgnoreCase(status)) {
+                    statusEnum = VehicleStatus.IN_PRODUCTION;
+                } else {
+                    statusEnum = VehicleStatus.valueOf(status.toUpperCase());
+                }
+            } catch (IllegalArgumentException e) {
+                // If invalid status passed, maybe ignore or throw?
+                // For search safety, we can ignore invalid status or log it.
+                // Assuming we treat invalid status as "no filter" or just pass null.
+                log.warn("Invalid status parameter: {}", status);
+            }
+        }
+
         // Use repository search method
-        Page<VehicleModel> modelsPage = modelRepository.searchModels(keyword, status, pageable);
+        Page<VehicleModel> modelsPage = modelRepository.searchModels(keyword, statusEnum, pageable);
 
         // Apply additional filters if needed
         List<VehicleModel> filteredModels = modelsPage.getContent().stream()
@@ -274,6 +291,23 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newVariant.setSkuCode(request.getSkuCode());
         newVariant.setImageUrl(request.getImageUrl());
 
+        // Set technical specifications
+        newVariant.setBatteryCapacity(request.getBatteryCapacity());
+        newVariant.setChargingTime(request.getChargingTime());
+        newVariant.setRangeKm(request.getRangeKm());
+        newVariant.setMotorPower(request.getMotorPower());
+        
+        // Set additional technical specifications
+        newVariant.setSeatingCapacity(request.getSeatingCapacity());
+        newVariant.setTorque(request.getTorque());
+        newVariant.setAcceleration(request.getAcceleration());
+        newVariant.setTopSpeed(request.getTopSpeed());
+        newVariant.setDimensions(request.getDimensions());
+        newVariant.setWeight(request.getWeight());
+        newVariant.setWarrantyYears(request.getWarrantyYears());
+        newVariant.setDescription(request.getDescription());
+        newVariant.setColorImages(request.getColorImages());
+
         // Thiết lập mối quan hệ với mẫu xe cha
         newVariant.setVehicleModel(parentModel);
 
@@ -368,6 +402,26 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             variant.setRangeKm(request.getRangeKm());
         if (request.getMotorPower() != null)
             variant.setMotorPower(request.getMotorPower());
+
+        // Update additional technical specifications
+        if (request.getSeatingCapacity() != null)
+            variant.setSeatingCapacity(request.getSeatingCapacity());
+        if (request.getTorque() != null)
+            variant.setTorque(request.getTorque());
+        if (request.getAcceleration() != null)
+            variant.setAcceleration(request.getAcceleration());
+        if (request.getTopSpeed() != null)
+            variant.setTopSpeed(request.getTopSpeed());
+        if (request.getDimensions() != null)
+            variant.setDimensions(request.getDimensions());
+        if (request.getWeight() != null)
+            variant.setWeight(request.getWeight());
+        if (request.getWarrantyYears() != null)
+            variant.setWarrantyYears(request.getWarrantyYears());
+        if (request.getDescription() != null)
+            variant.setDescription(request.getDescription());
+        if (request.getColorImages() != null)
+            variant.setColorImages(request.getColorImages());
 
         VehicleVariant savedVariant = variantRepository.save(variant);
 
@@ -736,6 +790,15 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         // Lấy đối tượng Model cha để sử dụng cho việc kế thừa
         VehicleModel model = variant.getVehicleModel();
         VariantDetailDto dto = new VariantDetailDto();
+        
+        // Ensure model is not null before accessing its properties
+        if (model == null) {
+             // Handle orphan variant case if necessary, or just basic mapping
+             dto.setVariantId(variant.getVariantId());
+             dto.setVersionName(variant.getVersionName());
+             dto.setColor(variant.getColor());
+             return dto;
+        }
 
         // Map các thông tin cơ bản, không cần logic kế thừa
         dto.setVariantId(variant.getVariantId());
@@ -760,12 +823,25 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
                 (variant.getMotorPower() != null) ? variant.getMotorPower() : model.getBaseMotorPower());
 
         // Xử lý Battery Capacity
+        // Handle Integer to Double conversion explicitly
         dto.setBatteryCapacity(
-                (variant.getBatteryCapacity() != null) ? variant.getBatteryCapacity() : model.getBaseBatteryCapacity());
+                (variant.getBatteryCapacity() != null) ? variant.getBatteryCapacity() : 
+                (model.getBaseBatteryCapacity() != null ? model.getBaseBatteryCapacity().doubleValue() : null));
 
         // Xử lý Charging Time
         dto.setChargingTime(
                 (variant.getChargingTime() != null) ? variant.getChargingTime() : model.getBaseChargingTime());
+
+        // Map additional technical specifications (no inheritance from model)
+        dto.setSeatingCapacity(variant.getSeatingCapacity());
+        dto.setTorque(variant.getTorque());
+        dto.setAcceleration(variant.getAcceleration());
+        dto.setTopSpeed(variant.getTopSpeed());
+        dto.setDimensions(variant.getDimensions());
+        dto.setWeight(variant.getWeight());
+        dto.setWarrantyYears(variant.getWarrantyYears());
+        dto.setDescription(variant.getDescription());
+        dto.setColorImages(variant.getColorImages());
 
         // Map các tính năng (features), logic này giữ nguyên
         if (variant.getFeatures() != null) {
@@ -780,9 +856,13 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     private FeatureDto mapToFeatureDto(VariantFeature variantFeature) {
         FeatureDto dto = new FeatureDto();
         VehicleFeature feature = variantFeature.getVehicleFeature();
-        dto.setFeatureId(feature.getFeatureId());
-        dto.setFeatureName(feature.getFeatureName());
-        dto.setCategory(feature.getCategory());
+        
+        if (feature != null) {
+            dto.setFeatureId(feature.getFeatureId());
+            dto.setFeatureName(feature.getFeatureName());
+            dto.setCategory(feature.getCategory());
+        }
+        
         dto.setStandard(variantFeature.isStandard());
         dto.setAdditionalCost(variantFeature.getAdditionalCost());
         return dto;

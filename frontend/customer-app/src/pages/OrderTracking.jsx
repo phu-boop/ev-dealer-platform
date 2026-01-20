@@ -17,7 +17,7 @@ const OrderTracking = () => {
     queryFn: async () => {
       if (!orderId) return null;
       try {
-        const response = await apiPublic.get(`/sales/api/v1/sales-orders/b2c/${orderId}`);
+        const response = await apiPublic.get(`/api/v1/sales-orders/b2c/${orderId}`);
         return response.data?.data || response.data;
       } catch (error) {
         console.error("Error fetching order:", error);

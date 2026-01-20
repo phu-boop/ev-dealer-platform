@@ -52,7 +52,15 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             // Sales service endpoints (before rewrite)
             "/sales/promotions/active",
             // Cart endpoints
-            "/cart"
+            "/cart",
+            // Dealer service endpoints
+            "/dealers",
+            // Customer service endpoints (public)
+            "/customers/api/test-drives/public",
+            "/customers/api/test-drives/public",
+            "/test-drives/public",
+            // AI Chatbot endpoint (Gateway handles rate limiting)
+            "/ai/chat/ask"
         );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {

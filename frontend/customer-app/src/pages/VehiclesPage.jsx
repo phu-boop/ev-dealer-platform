@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import VehicleCard from "../components/vehicles/VehicleCard";
+import VehicleGrid from "../components/home/VehicleGrid";
 import VehicleFilterSidebar from "../components/vehicles/VehicleFilterSidebar";
-import { searchVehicles } from "../services/vehicleService";
+import { searchVehicles, getVehicles } from "../services/vehicleService";
 import { toast } from "react-toastify";
 
 export default function VehiclesPage() {
@@ -16,31 +16,68 @@ export default function VehiclesPage() {
     status: null,
     page: 0,
     size: 12,
-    sort: 'price,asc'
+    sort: null // No default sort, let backend use its default
   });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Check if we have active filters (including sort selection)
+  const hasActiveFilters = useMemo(() => {
+    return !!(
+      searchTerm ||
+      filters.minPrice ||
+      filters.maxPrice ||
+      filters.minRange ||
+      filters.maxRange ||
+      filters.brands.length > 0 ||
+      filters.colors.length > 0 ||
+      filters.status ||
+      filters.sort // Any sort selection is considered an active filter
+    );
+  }, [filters, searchTerm]);
+
+  // Convert filters to API parameters
+  const searchParams = useMemo(() => {
+    const params = {
+      page: filters.page,
+      size: filters.size,
+    };
+
+    // Only add sort parameters if sort is selected
+    if (filters.sort) {
+      const [sortField, sortDirection] = filters.sort.split(',');
+      params.sortBy = sortField === 'price' ? 'basePrice' :
+        sortField === 'rangeKm' ? 'baseRangeKm' :
+          sortField === 'motorPower' ? 'motorPower' : 'modelName';
+      params.direction = sortDirection?.toUpperCase() || 'ASC';
+    }
+
+    if (searchTerm) params.keyword = searchTerm;
+    if (filters.minPrice) params.minPrice = filters.minPrice;
+    if (filters.maxPrice) params.maxPrice = filters.maxPrice;
+    if (filters.minRange) params.minRange = filters.minRange;
+    if (filters.maxRange) params.maxRange = filters.maxRange;
+    if (filters.status) params.status = filters.status;
+
+    return params;
+  }, [filters, searchTerm]);
+
   // Fetch vehicles with filters
   const { data: vehiclesData, isLoading, error, refetch } = useQuery({
-    queryKey: ['vehicles', filters, searchTerm],
+    queryKey: ['vehicles', searchParams, hasActiveFilters],
     queryFn: async () => {
       try {
-        const params = {
-          ...filters,
-          brands: filters.brands.length > 0 ? filters.brands.join(',') : undefined,
-          colors: filters.colors.length > 0 ? filters.colors.join(',') : undefined,
-          search: searchTerm || undefined
-        };
-        
-        // Remove null/undefined values
-        Object.keys(params).forEach(key => 
-          (params[key] === null || params[key] === undefined || params[key] === '') && delete params[key]
-        );
-
-        const response = await searchVehicles(params);
-        return response.data || { content: [], totalElements: 0 };
+        if (hasActiveFilters) {
+          // Use searchVehicles when filters are active
+          const response = await searchVehicles(searchParams);
+          return response.data || { content: [], totalElements: 0 };
+        } else {
+          // Use getVehicles without sort parameter (backend doesn't support 'price,asc' format)
+          // Backend will use default sorting
+          const response = await getVehicles(filters.page, filters.size, null);
+          return response.data || { content: [], totalElements: 0 };
+        }
       } catch (error) {
         console.error("Error fetching vehicles:", error);
         toast.error("Không thể tải danh sách xe");
@@ -82,7 +119,7 @@ export default function VehiclesPage() {
       status: null,
       page: 0,
       size: 12,
-      sort: 'price,asc'
+      sort: null
     });
     setSearchTerm("");
   };
@@ -131,10 +168,11 @@ export default function VehiclesPage() {
 
             {/* Sort */}
             <select
-              value={filters.sort}
-              onChange={(e) => handleSortChange(e.target.value)}
+              value={filters.sort || ""}
+              onChange={(e) => handleSortChange(e.target.value || null)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
+              <option value="">Sắp xếp mặc định</option>
               <option value="price,asc">Giá: Thấp đến Cao</option>
               <option value="price,desc">Giá: Cao đến Thấp</option>
               <option value="rangeKm,desc">Phạm vi: Cao nhất</option>
@@ -151,13 +189,8 @@ export default function VehiclesPage() {
           </div>
 
           {/* Active Filters Display */}
-          {(filters.brands.length > 0 || filters.colors.length > 0 || filters.minPrice || filters.maxPrice) && (
+          {(filters.colors.length > 0 || filters.minPrice || filters.maxPrice) && (
             <div className="mt-4 flex flex-wrap gap-2">
-              {filters.brands.map(brand => (
-                <span key={brand} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                  {brand}
-                </span>
-              ))}
               {filters.colors.map(color => (
                 <span key={color} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
                   {color}
@@ -247,11 +280,7 @@ export default function VehiclesPage() {
             {/* Vehicle Grid */}
             {!isLoading && vehicles.length > 0 && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {vehicles.map((vehicle) => (
-                    <VehicleCard key={vehicle.variantId} vehicle={vehicle} />
-                  ))}
-                </div>
+                <VehicleGrid vehicles={vehicles} />
 
                 {/* Pagination */}
                 {totalPages > 1 && (
@@ -264,21 +293,20 @@ export default function VehiclesPage() {
                       >
                         Trước
                       </button>
-                      
+
                       {[...Array(totalPages)].map((_, index) => (
                         <button
                           key={index}
                           onClick={() => handlePageChange(index)}
-                          className={`px-4 py-2 border rounded-lg transition-colors ${
-                            filters.page === index
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'border-gray-300 hover:bg-gray-50'
-                          }`}
+                          className={`px-4 py-2 border rounded-lg transition-colors ${filters.page === index
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 hover:bg-gray-50'
+                            }`}
                         >
                           {index + 1}
                         </button>
                       ))}
-                      
+
                       <button
                         onClick={() => handlePageChange(filters.page + 1)}
                         disabled={filters.page >= totalPages - 1}
@@ -294,6 +322,6 @@ export default function VehiclesPage() {
           </main>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

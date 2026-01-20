@@ -7,7 +7,7 @@ import apiConstPaymentService from "../../../../services/apiConstPaymentService"
 import apiConstCustomerService from "../../../../services/apiConstCustomerService";
 import { dealerService } from "../../manageDealer/dealers/services/dealerService";
 
-const BASE_ORDER_B2B_URL = "/sales-orders/b2b";
+const BASE_ORDER_B2B_URL = "/api/v1/sales-orders/b2b";
 const BASE_ORDER_B2C_URL = "/api/v1/sales-orders/b2c";
 const BASE_PAYMENT_DEALER_URL = "/api/v1/payments/dealer";
 

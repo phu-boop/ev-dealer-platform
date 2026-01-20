@@ -8,7 +8,8 @@ import api from './api';
 // Get all orders with pagination and filters
 export const getOrdersAdmin = async (params) => {
   try {
-    const response = await api.get('/orders', { params });
+    // Backend endpoint for Admin/Staff to list B2B orders
+    const response = await api.get('/api/v1/sales-orders/b2b', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -19,7 +20,7 @@ export const getOrdersAdmin = async (params) => {
 // Get order detail by ID
 export const getOrderDetailAdmin = async (orderId) => {
   try {
-    const response = await api.get(`/orders/${orderId}`);
+    const response = await api.get(`/api/v1/sales-orders/${orderId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching order detail:', error);
@@ -27,10 +28,13 @@ export const getOrderDetailAdmin = async (orderId) => {
   }
 };
 
-// Update order status
+// Update order status (Generic placeholder, may need adjustment based on specific actions like ship/approve)
 export const updateOrderStatus = async (orderId, status) => {
   try {
-    const response = await api.patch(`/orders/${orderId}/status`, { status });
+    // Note: Backend has specific endpoints for approve/ship/deliver. 
+    // This might not work if specifically looking for a PATCH status endpoint.
+    // For now keeping consistent path base.
+    const response = await api.patch(`/api/v1/sales-orders/${orderId}/status`, { status });
     return response.data;
   } catch (error) {
     console.error('Error updating order status:', error);
@@ -41,7 +45,8 @@ export const updateOrderStatus = async (orderId, status) => {
 // Cancel order
 export const cancelOrder = async (orderId, reason) => {
   try {
-    const response = await api.post(`/orders/${orderId}/cancel`, { reason });
+    // Backend endpoint for Staff to cancel
+    const response = await api.put(`/api/v1/sales-orders/${orderId}/cancel-by-staff`, { reason });
     return response.data;
   } catch (error) {
     console.error('Error cancelling order:', error);
@@ -52,7 +57,8 @@ export const cancelOrder = async (orderId, reason) => {
 // Confirm order
 export const confirmOrder = async (orderId) => {
   try {
-    const response = await api.post(`/orders/${orderId}/confirm`);
+     // Backend endpoint for accept/approve
+    const response = await api.put(`/api/v1/sales-orders/${orderId}/approve`);
     return response.data;
   } catch (error) {
     console.error('Error confirming order:', error);
@@ -63,7 +69,7 @@ export const confirmOrder = async (orderId) => {
 // Export invoice (PDF)
 export const exportInvoice = async (orderId) => {
   try {
-    const response = await api.get(`/orders/${orderId}/invoice`, {
+    const response = await api.get(`/api/v1/sales-orders/${orderId}/invoice`, {
       responseType: 'blob'
     });
     return response.data;
@@ -76,7 +82,7 @@ export const exportInvoice = async (orderId) => {
 // Get order statistics
 export const getOrderStatistics = async (params) => {
   try {
-    const response = await api.get('/orders/statistics', { params });
+    const response = await api.get('/api/v1/sales-orders/statistics', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching order statistics:', error);
@@ -87,7 +93,7 @@ export const getOrderStatistics = async (params) => {
 // Search orders
 export const searchOrders = async (keyword) => {
   try {
-    const response = await api.get('/orders/search', {
+    const response = await api.get('/api/v1/sales-orders/search', {
       params: { keyword }
     });
     return response.data;

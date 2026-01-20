@@ -11,15 +11,7 @@ export default function VehicleFilterSidebar({ filters, onFilterChange, onClearF
     max: filters.maxRange || ''
   });
 
-  const brands = ["VinFast", "Tesla", "BMW", "Mercedes", "Audi", "Porsche", "BYD", "Hyundai"];
   const colors = ["Đen", "Trắng", "Xám", "Đỏ", "Xanh", "Bạc", "Nâu"];
-
-  const handleBrandToggle = (brand) => {
-    const newBrands = filters.brands.includes(brand)
-      ? filters.brands.filter(b => b !== brand)
-      : [...filters.brands, brand];
-    onFilterChange({ brands: newBrands });
-  };
 
   const handleColorToggle = (color) => {
     const newColors = filters.colors.includes(color)
@@ -82,24 +74,6 @@ export default function VehicleFilterSidebar({ filters, onFilterChange, onClearF
           </div>
           <div className="mt-2 text-xs text-gray-500">
             VNĐ
-          </div>
-        </div>
-
-        {/* Brand Filter */}
-        <div>
-          <h3 className="font-semibold text-gray-900 mb-3">Hãng xe</h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {brands.map(brand => (
-              <label key={brand} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
-                <input
-                  type="checkbox"
-                  checked={filters.brands.includes(brand)}
-                  onChange={() => handleBrandToggle(brand)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">{brand}</span>
-              </label>
-            ))}
           </div>
         </div>
 

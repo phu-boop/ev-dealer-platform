@@ -47,7 +47,7 @@ public class CartServiceImpl implements CartService {
             // Update quantity if item exists
             cartItem = existingItem.get();
             cartItem.setQuantity(cartItem.getQuantity() + request.getQuantity());
-            
+
             // Update other fields if provided
             if (request.getSelectedFeatures() != null) {
                 cartItem.setSelectedFeatures(request.getSelectedFeatures());
@@ -55,7 +55,7 @@ public class CartServiceImpl implements CartService {
             if (request.getNotes() != null) {
                 cartItem.setNotes(request.getNotes());
             }
-            
+
             log.info("Updated existing cart item, new quantity: {}", cartItem.getQuantity());
         } else {
             // Create new cart item
@@ -70,7 +70,7 @@ public class CartServiceImpl implements CartService {
                     .selectedFeatures(request.getSelectedFeatures())
                     .notes(request.getNotes())
                     .build();
-            
+
             log.info("Created new cart item");
         }
 
@@ -82,7 +82,7 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public List<CartItemResponse> getCartItems(Long customerId) {
         log.info("Getting cart items for customer {}", customerId);
-        
+
         List<CartItem> cartItems = cartItemRepository.findByCustomerCustomerIdOrderByCreatedAtDesc(customerId);
         return cartItems.stream()
                 .map(this::mapToResponse)
@@ -93,21 +93,21 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public CartSummaryResponse getCartSummary(Long customerId) {
         log.info("Getting cart summary for customer {}", customerId);
-        
+
         List<CartItem> cartItems = cartItemRepository.findByCustomerCustomerIdOrderByCreatedAtDesc(customerId);
-        
+
         List<CartItemResponse> itemResponses = cartItems.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
-        
+
         BigDecimal totalAmount = cartItems.stream()
                 .map(CartItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
         // Calculate 10% VAT
         BigDecimal tax = totalAmount.multiply(new BigDecimal("0.10"));
         BigDecimal estimatedTotal = totalAmount.add(tax);
-        
+
         return CartSummaryResponse.builder()
                 .customerId(customerId)
                 .items(itemResponses)
@@ -121,25 +121,25 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartItemResponse updateCartItem(Long customerId, Long cartItemId, UpdateCartItemRequest request) {
         log.info("Updating cart item {} for customer {}", cartItemId, customerId);
-        
+
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_FOUND));
-        
+
         // Verify ownership
         if (!cartItem.getCustomer().getCustomerId().equals(customerId)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
-        
+
         // Update fields
         cartItem.setQuantity(request.getQuantity());
-        
+
         if (request.getSelectedFeatures() != null) {
             cartItem.setSelectedFeatures(request.getSelectedFeatures());
         }
         if (request.getNotes() != null) {
             cartItem.setNotes(request.getNotes());
         }
-        
+
         CartItem updatedItem = cartItemRepository.save(cartItem);
         return mapToResponse(updatedItem);
     }
@@ -147,15 +147,15 @@ public class CartServiceImpl implements CartService {
     @Override
     public void removeCartItem(Long customerId, Long cartItemId) {
         log.info("Removing cart item {} for customer {}", cartItemId, customerId);
-        
+
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_FOUND));
-        
+
         // Verify ownership
         if (!cartItem.getCustomer().getCustomerId().equals(customerId)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
-        
+
         cartItemRepository.delete(cartItem);
         log.info("Cart item removed successfully");
     }
@@ -163,12 +163,12 @@ public class CartServiceImpl implements CartService {
     @Override
     public void clearCart(Long customerId) {
         log.info("Clearing cart for customer {}", customerId);
-        
+
         // Verify customer exists
         if (!customerRepository.existsById(customerId)) {
             throw new AppException(ErrorCode.CUSTOMER_NOT_FOUND);
         }
-        
+
         cartItemRepository.deleteByCustomerCustomerId(customerId);
         log.info("Cart cleared successfully");
     }
@@ -205,9 +205,14 @@ public class CartServiceImpl implements CartService {
         log.info("Getting cart item count for profile {}", profileId);
 
         // Find customer by profileId
-        Customer customer = customerRepository.findByProfileId(profileId)
-                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+        Optional<Customer> customerOpt = customerRepository.findByProfileId(profileId);
 
-        return getCartItemCount(customer.getCustomerId());
+        // If customer doesn't exist yet, return 0 (cart is empty)
+        if (customerOpt.isEmpty()) {
+            log.info("Customer not found for profile {}, returning 0", profileId);
+            return 0L;
+        }
+
+        return getCartItemCount(customerOpt.get().getCustomerId());
     }
 }
