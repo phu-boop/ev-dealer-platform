@@ -134,6 +134,10 @@ const ProductDetail = () => {
     navigate(`/configure?modelId=${id}&variantId=${selectedVariant?.variantId || ''}`);
   };
 
+  const handleBooking = () => {
+    navigate(`/booking/${id}?variantId=${selectedVariant?.variantId || ''}`);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -346,22 +350,31 @@ const ProductDetail = () => {
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col gap-4 pt-4">
               <Button
-                onClick={handleTestDrive}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold"
+                onClick={handleBooking}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold"
               >
-                <Calendar className="w-5 h-5 inline mr-2" />
-                Đặt Lái Thử
+                <CheckCircle className="w-5 h-5 inline mr-2" />
+                Đặt Cọc Xe
               </Button>
-              <Button
-                onClick={handleConfigure}
-                variant="outline"
-                className="flex-1 py-4 text-lg font-semibold"
-              >
-                <Settings className="w-5 h-5 inline mr-2" />
-                Cấu Hình Xe
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  onClick={handleTestDrive}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold"
+                >
+                  <Calendar className="w-5 h-5 inline mr-2" />
+                  Đặt Lái Thử
+                </Button>
+                <Button
+                  onClick={handleConfigure}
+                  variant="outline"
+                  className="flex-1 py-4 text-lg font-semibold"
+                >
+                  <Settings className="w-5 h-5 inline mr-2" />
+                  Cấu Hình Xe
+                </Button>
+              </div>
             </div>
           </div>
         </div>
