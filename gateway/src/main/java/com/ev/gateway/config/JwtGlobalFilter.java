@@ -29,7 +29,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     //  Danh sách path được bỏ qua xác thực (không yêu cầu token)
         private static final List<String> EXCLUDED_PATHS = List.of(
             "/auth",
-            "/users",
+            "/users",           
             "/oauth2",  // OAuth2 authentication flow
             "/sendmail",
             "/ws",
