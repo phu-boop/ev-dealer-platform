@@ -61,6 +61,7 @@ public class SecurityConfig {
 
                                 // "/sales/**"
                                 "/sales/**",
+                                "/orders/**",
 
                                 // vehicle-service
                                 "/vehicles/**",
