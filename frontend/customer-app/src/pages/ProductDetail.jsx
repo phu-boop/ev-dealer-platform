@@ -194,23 +194,19 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Quay lại</span>
-          </button>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Image Gallery */}
-          <div className="space-y-4">
+          <div className="space-y-4 relative">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate(-1)}
+              className="absolute -left-24 top-2 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Quay lại</span>
+            </button>
+            
             <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100">
               <img
                 src={selectedImages[0] || variant?.imageUrl || vehicleData.thumbnailUrl || "https://via.placeholder.com/800"}

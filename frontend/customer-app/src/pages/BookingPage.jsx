@@ -18,6 +18,11 @@ const BookingPage = () => {
   const [rotation, setRotation] = useState(0);
   const vehicleListRef = useRef(null);
   const sidebarRef = useRef(null);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   // Form data for step 2
   const [formData, setFormData] = useState({
@@ -294,12 +299,18 @@ const BookingPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
           {/* Left Sidebar - Vehicle List */}
           <div className="lg:col-span-2 relative">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Danh sách xe</h3>
-              <div className="flex gap-1">
-                
-              </div>
-            </div>
+            {/* Scroll Up Button */}
+            <button
+              onClick={() => {
+                if (vehicleListRef.current) {
+                  vehicleListRef.current.scrollBy({ top: -150, behavior: 'smooth' });
+                }
+              }}
+              className="w-full flex items-center justify-center py-2 mb-3 hover:opacity-70 transition-opacity"
+            >
+              <ChevronUp className="w-10 h-10 text-gray-700" strokeWidth={3} />
+            </button>
+
             <div 
               ref={vehicleListRef}
               onWheel={(e) => {
@@ -308,36 +319,53 @@ const BookingPage = () => {
                   vehicleListRef.current.scrollBy({ top: e.deltaY, behavior: 'auto' });
                 }
               }}
-              className="space-y-3 max-h-[calc(100vh-180px)] overflow-y-hidden pr-2"
-              style={{ overflowY: 'scroll', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              className="space-y-3 overflow-y-hidden pr-2"
+              style={{ 
+                overflowY: 'scroll', 
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none',
+                height: '480px'
+              }}
             >
               {allVehiclesData && allVehiclesData.map((vehicle) => (
                 <button
                   key={vehicle.modelId}
                   onClick={() => navigate(`/booking/${vehicle.modelId}`)}
-                  className={`w-full text-left transition-all ${
+                  className={`w-full transition-all ${
                     parseInt(id) === vehicle.modelId
-                      ? 'bg-blue-50 border-2 border-blue-600'
-                      : 'bg-white border-2 border-gray-200 hover:border-blue-400'
-                  } rounded-lg overflow-hidden`}
+                      ? 'bg-gray-50 opacity-100'
+                      : 'bg-gray-50 hover:bg-gray-100 opacity-40 hover:opacity-60'
+                  } rounded-lg overflow-hidden py-3`}
                 >
-                  <div className="aspect-video relative">
+                  <div className="flex items-center justify-center px-3 mb-2">
                     <img
                       src={vehicle.thumbnailUrl || 'https://via.placeholder.com/200x150'}
                       alt={vehicle.modelName}
-                      className="w-full h-full object-cover"
+                      className="w-full h-auto object-contain max-h-[100px]"
+                      style={{ mixBlendMode: 'multiply' }}
                     />
                   </div>
-                  <div className="p-3">
-                    <h4 className={`font-semibold text-sm ${
-                      parseInt(id) === vehicle.modelId ? 'text-blue-600' : 'text-gray-900'
-                    }`}>
+                  <div className="text-center">
+                    <h4 className="font-semibold text-sm text-gray-900">
                       {vehicle.modelName}
                     </h4>
                   </div>
                 </button>
               ))}
             </div>
+
+            {/* Scroll Down Button */}
+            <button
+              onClick={() => {
+                if (vehicleListRef.current) {
+                  vehicleListRef.current.scrollBy({ top: 150, behavior: 'smooth' });
+                }
+              }}
+              className="w-full flex items-center justify-center py-2 mt-3 hover:opacity-70 transition-opacity"
+            >
+              <ChevronDown className="w-10 h-10 text-gray-700" strokeWidth={3} />
+            </button>
+
             <style jsx>{`
               div::-webkit-scrollbar {
                 display: none;
@@ -346,68 +374,45 @@ const BookingPage = () => {
           </div>
 
           {/* Center - Vehicle Display */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Tabs */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="flex border-b">
-                <button
-                  onClick={() => setActiveTab('personal')}
-                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
-                    activeTab === 'personal'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Dòng xe cá nhân
-                </button>
-                <button
-                  onClick={() => setActiveTab('service')}
-                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
-                    activeTab === 'service'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Dòng xe dịch vụ
-                </button>
-              </div>
-
+          <div className="lg:col-span-7 space-y-4">
+            {/* Vehicle Display */}
+            <div className="rounded-lg shadow-sm">
               {/* Vehicle 3D View */}
-              <div className="p-8">
-                <div className="relative bg-gradient-to-b from-gray-50 to-white rounded-2xl p-8">
+              <div className="p-4">
+                <div className="relative rounded-2xl p-4">
                   {/* Rotation Controls */}
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
                     <button
                       onClick={handleRotateLeft}
-                      className="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-colors"
+                      className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
                     >
-                      <ChevronLeft className="w-6 h-6 text-gray-700" />
+                      <ChevronLeft className="w-5 h-5 text-gray-700" />
                     </button>
                   </div>
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10">
                     <button
                       onClick={handleRotateRight}
-                      className="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-colors"
+                      className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
                     >
-                      <ChevronRight className="w-6 h-6 text-gray-700" />
+                      <ChevronRight className="w-5 h-5 text-gray-700" />
                     </button>
                   </div>
 
                   {/* Vehicle Image */}
-                  <div className="aspect-[4/3] flex items-center justify-center">
+                  <div className="aspect-[16/9] flex items-center justify-center">
                     <img
                       src={selectedColor?.imageUrl || selectedVariant?.imageUrl || vehicleData.thumbnailUrl}
                       alt={vehicleData.modelName}
-                      className="max-w-full max-h-full object-contain transition-transform duration-500"
-                      style={{ transform: `rotate(${rotation}deg)` }}
+                      className="max-w-[70%] max-h-[70%] object-contain transition-transform duration-500"
+                      style={{ transform: `rotate(${rotation}deg)`, mixBlendMode: 'multiply' }}
                     />
                   </div>
 
                   {/* Vehicle Badge */}
-                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
                         </svg>
                       </div>
@@ -417,28 +422,28 @@ const BookingPage = () => {
                 </div>
 
                 {/* Vehicle Specs */}
-                <div className="grid grid-cols-3 gap-6 mt-6 text-center">
+                <div className="grid grid-cols-3 gap-4 mt-4 text-center">
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Công suất tối đa</div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-xs text-gray-500 mb-1">Công suất tối đa</div>
+                    <div className="text-xl font-bold text-gray-900">
                       {selectedVariant?.motorPower || vehicleData.baseMotorPower || 30} kW
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Dung lượng pin khả dụng</div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-xs text-gray-500 mb-1">Dung lượng pin khả dụng</div>
+                    <div className="text-xl font-bold text-gray-900">
                       {selectedVariant?.batteryCapacity || vehicleData.baseBatteryCapacity || 18.64} kWh
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Quãng đường di chuyển</div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-xs text-gray-500 mb-1">Quãng đường di chuyển</div>
+                    <div className="text-xl font-bold text-gray-900">
                       {selectedVariant?.rangeKm || vehicleData.baseRangeKm || 215} km
                     </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-400 text-center mt-4 px-4">
+                <p className="text-xs text-gray-400 text-center mt-3 px-2">
                   Quãng đường di chuyển được tính toán dựa trên kết quả kiểm định theo quy chuẩn toàn cầu của WNEDC. 
                   Quãng đường di chuyển thực tế có thể ảnh hưởng bởi điều kiện, thói quen sử dụng của người lái, chế 
                   độ lái xe đã được cài đặt, số lượng hành khách và các điều kiện giao thông khác.
