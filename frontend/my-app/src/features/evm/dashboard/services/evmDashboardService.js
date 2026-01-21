@@ -7,7 +7,7 @@ import apiConstInventoryService from "../../../../services/apiConstInventoryServ
 import { getB2BOrders } from "../../inventory/services/evmSalesService";
 import { getAllInventory } from "../../inventory/services/inventoryService";
 
-const BASE_ORDER_B2B_URL = "/sales-orders/b2b";
+const BASE_ORDER_B2B_URL = "/api/v1/sales-orders/b2b";
 
 /**
  * Hàm constant để fetch tất cả dữ liệu EVM Staff dashboard

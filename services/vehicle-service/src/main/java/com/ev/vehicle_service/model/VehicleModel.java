@@ -76,6 +76,7 @@ public class VehicleModel {
     // --- Relationships ---
     // <<< Mối quan hệ mới: Một Model có nhiều Variants >>>
     @OneToMany(mappedBy = "vehicleModel", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 20)
     private Set<VehicleVariant> variants = new HashSet<>();
 
 }

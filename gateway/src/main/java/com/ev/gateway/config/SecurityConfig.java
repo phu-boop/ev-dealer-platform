@@ -61,6 +61,10 @@ public class SecurityConfig {
 
                                 // "/sales/**"
                                 "/sales/**",
+                                "/orders/**",
+                                
+                                "/sales-orders/**",
+                                "/api/v1/sales-orders/**",
 
                                 // vehicle-service
                                 "/vehicles/**",

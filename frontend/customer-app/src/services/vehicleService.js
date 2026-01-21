@@ -37,11 +37,6 @@ export const searchVehicles = ({
     .get("/vehicles/vehicle-catalog/models/search", { params })
     .then((res) => res.data);
 };
-/**
- * Vehicle Service
- * Provides API methods for vehicle catalog operations
- */
-
 
 // B2C: lấy danh sách model xe điện (PUBLIC - không cần auth)
 export const getVehicleModels = () =>
