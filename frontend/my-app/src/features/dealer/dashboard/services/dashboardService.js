@@ -6,7 +6,7 @@ import apiConstSaleService from "../../../../services/apiConstSaleService";
 
 const BASE_QUOTATION_URL = "/api/v1/quotations";
 const BASE_ORDER_B2C_URL = "/api/v1/sales-orders/b2c";
-const BASE_ORDER_B2B_URL = "/sales-orders/my-orders"; // Controller có @RequestMapping("/sales-orders")
+const BASE_ORDER_B2B_URL = "/api/v1/sales-orders/my-orders"; // Controller có @RequestMapping("/api/v1/sales-orders")
 
 /**
  * Hàm constant để fetch tất cả dữ liệu dashboard

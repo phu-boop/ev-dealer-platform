@@ -102,5 +102,6 @@ public class VehicleVariant {
     private Set<PriceHistory> priceHistories = new HashSet<>();
 
     @OneToMany(mappedBy = "vehicleVariant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 20)
     private Set<VariantFeature> features = new HashSet<>();
 }

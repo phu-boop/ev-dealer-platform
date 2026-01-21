@@ -27,6 +27,8 @@ const TestDriveBooking = () => {
   });
 
   const [dealers, setDealers] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedModelId, setSelectedModelId] = useState(modelId || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Mock dealers data (fallback when API fails or requires auth)
@@ -80,6 +82,23 @@ const TestDriveBooking = () => {
     fetchDealers();
   }, []);
 
+  // Fetch vehicles if modelId is not provided in URL
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      if (!modelId) {
+        try {
+          const response = await apiPublic.get('/vehicles/vehicle-catalog/models');
+          const vehiclesList = response.data?.data?.content || response.data?.content || [];
+          setVehicles(vehiclesList);
+        } catch (error) {
+          console.error("Error fetching vehicles:", error);
+          toast.error("Đã xảy ra lỗi khi tải danh sách xe");
+        }
+      }
+    };
+    fetchVehicles();
+  }, [modelId]);
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
@@ -89,8 +108,8 @@ const TestDriveBooking = () => {
       // Get customer ID from auth (if logged in) or create guest booking
       const payload = {
         customerId: null, // Will be set by backend if user is logged in
-        dealerId: data.dealerId,
-        modelId: modelId ? parseInt(modelId) : null,
+        dealerId: parseInt(data.dealerId),
+        modelId: selectedModelId ? parseInt(selectedModelId) : null,
         variantId: variantId ? parseInt(variantId) : null,
         appointmentDate: appointmentDateTime.toISOString(),
         durationMinutes: parseInt(data.durationMinutes),
@@ -101,6 +120,8 @@ const TestDriveBooking = () => {
         customerEmail: data.email,
       };
 
+      console.log('Test drive payload:', payload);
+
       // Call customer service to create test drive
       const response = await apiPublic.post('/customers/api/test-drives/public', payload);
       
@@ -108,6 +129,8 @@ const TestDriveBooking = () => {
       navigate('/');
     } catch (error) {
       console.error("Error booking test drive:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Validation errors:", JSON.stringify(error.response?.data?.data, null, 2));
       toast.error(error.response?.data?.message || "Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
@@ -203,6 +226,38 @@ const TestDriveBooking = () => {
                 )}
               </div>
             </div>
+
+            {/* Vehicle Selection - only show if modelId not in URL */}
+            {!modelId && (
+              <div className="space-y-4 pt-6 border-t">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Chọn Xe Lái Thử
+                </h2>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mẫu xe <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={selectedModelId}
+                    onChange={(e) => setSelectedModelId(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">-- Chọn mẫu xe --</option>
+                    {vehicles.map((vehicle) => (
+                      <option key={vehicle.modelId} value={vehicle.modelId}>
+                        {vehicle.modelName}
+                      </option>
+                    ))}
+                  </select>
+                  {!selectedModelId && (
+                    <p className="text-sm text-gray-500 mt-1">Vui lòng chọn mẫu xe bạn muốn lái thử</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Appointment Details */}
             <div className="space-y-4 pt-6 border-t">
