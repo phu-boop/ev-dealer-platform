@@ -3,12 +3,14 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { useAuth } from "../auth/AuthProvider";
 import Button from "../components/ui/Button";
 import apiPublic from "../services/apiPublic";
 
 const TestDriveBooking = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { memberId, isAuthenticated } = useAuth();
   const modelId = searchParams.get('modelId');
   const variantId = searchParams.get('variantId');
   const [activeTab, setActiveTab] = useState('car'); // 'car' or 'electric-bike'
@@ -145,21 +147,48 @@ const TestDriveBooking = () => {
       return;
     }
 
+    // Validate date and time
+    if (!data.appointmentDate) {
+      toast.error('Vui lòng chọn ngày');
+      return;
+    }
+    if (!data.appointmentTime) {
+      toast.error('Vui lòng chọn giờ');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Combine date and time
-      const appointmentDateTime = new Date(`${data.appointmentDate}T${data.appointmentTime}`);
+      // Extract start time from time slot (e.g., "09:00 - 11:00" -> "09:00")
+      const startTime = data.appointmentTime.split(' - ')[0];
+      
+      // Combine date and time - ensure proper format
+      const dateTimeString = `${data.appointmentDate}T${startTime}:00`;
+      const appointmentDateTime = new Date(dateTimeString);
+      
+      // Validate the date object
+      if (isNaN(appointmentDateTime.getTime())) {
+        toast.error('Ngày hoặc giờ không hợp lệ');
+        setIsSubmitting(false);
+        return;
+      }
       
       // Find a dealer in the selected city (use first dealer from that city)
       const dealerInCity = dealers.find(d => d.city === data.city) || dealers[0];
       
-      // Get customer ID from auth (if logged in) or create guest booking
+      // Find selected vehicle info
+      const selectedVehicle = vehicles.find(v => v.modelId === parseInt(selectedModelId));
+      
+      // Get profileId if user is logged in
       const payload = {
-        customerId: null, // Will be set by backend if user is logged in
+        profileId: isAuthenticated() && memberId ? memberId : null,
         dealerId: dealerInCity ? parseInt(dealerInCity.dealerId || dealerInCity.id) : 1,
         modelId: parseInt(selectedModelId),
         variantId: variantId ? parseInt(variantId) : null,
+        vehicleModelName: selectedVehicle?.modelName || 'Xe điện',
+        vehicleVariantName: selectedVehicle?.variantName || null,
         appointmentDate: appointmentDateTime.toISOString(),
+        appointmentTime: data.appointmentTime, // Slot string: "09:00 - 11:00"
         durationMinutes: parseInt(data.durationMinutes),
         testDriveLocation: `${data.city} - ${data.detailedAddress}`,
         customerNotes: data.notes || '',
@@ -263,11 +292,6 @@ const TestDriveBooking = () => {
               msOverflowStyle: 'none'
             }}
           >
-            <style jsx>{`
-              #booking-form::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
             {/* Header */}
             <div className="text-center mb-6">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">ĐĂNG KÝ LÁI THỬ</h1>

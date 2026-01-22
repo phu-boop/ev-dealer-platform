@@ -50,6 +50,16 @@ public class TestDriveController {
     }
 
     /**
+     * Lấy danh sách lịch hẹn của customer theo profileId (UUID) (cho customer app)
+     */
+    @GetMapping("/profile/{profileId}")
+    public ResponseEntity<ApiResponse<List<TestDriveResponse>>> getMyTestDrives(@PathVariable String profileId) {
+        log.info("Getting test drives for profileId: {}", profileId);
+        List<TestDriveResponse> appointments = testDriveService.getAppointmentsByProfileId(profileId);
+        return ResponseEntity.ok(ApiResponse.success(appointments));
+    }
+
+    /**
      * Lấy danh sách lịch hẹn của customer (cho customer app)
      */
     @GetMapping("/customer/{customerId}")

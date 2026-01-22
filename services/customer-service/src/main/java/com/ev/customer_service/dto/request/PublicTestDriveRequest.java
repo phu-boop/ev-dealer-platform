@@ -37,6 +37,8 @@ public class PublicTestDriveRequest {
     @NotNull(message = "Appointment date is required")
     @Future(message = "Appointment date must be in the future")
     private LocalDateTime appointmentDate;
+    
+    private String appointmentTime; // Time slot: "09:00 - 11:00"
 
     @Min(value = 15, message = "Duration must be at least 15 minutes")
     @Max(value = 240, message = "Duration cannot exceed 240 minutes")
@@ -46,4 +48,7 @@ public class PublicTestDriveRequest {
     private String testDriveLocation;
 
     private String customerNotes;
+    
+    // ProfileId from logged-in user (UUID from user-service)
+    private String profileId;
 }
