@@ -33,6 +33,7 @@ public class TestDriveResponse {
     private String staffName;
     private String staffPhone;
     private LocalDateTime appointmentDate;
+    private String appointmentTime; // Time slot: "09:00 - 11:00"
     private Integer durationMinutes;
     private LocalDateTime endTime; // Tính toán từ appointmentDate + durationMinutes
     private String testDriveLocation;

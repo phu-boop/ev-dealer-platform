@@ -30,6 +30,7 @@ import OrderDetailPage from "../pages/OrderDetailPage";
 import PaymentReturnPage from "../pages/PaymentReturnPage";
 import TestDriveBookingPage from "../pages/TestDriveBookingPage";
 import MyTestDrivesPage from "../pages/MyTestDrivesPage";
+import TestDriveDetailPage from "../pages/TestDriveDetailPage";
 import MyReviewsPage from "../pages/MyReviewsPage";
 import CompareVehiclesPage from "../pages/CompareVehiclesPage";
 import ChargingStationsPage from "../pages/ChargingStationsPage";
@@ -93,6 +94,7 @@ export default function AppRoutes() {
           <Route path="orders/:orderId" element={<OrderDetailPage />} />
           <Route path="test-drive/book" element={<TestDriveBookingPage />} />
           <Route path="my-test-drives" element={<MyTestDrivesPage />} />
+          <Route path="test-drives/:appointmentId" element={<TestDriveDetailPage />} />
           <Route path="my-reviews" element={<MyReviewsPage />} />
         </Route>
 

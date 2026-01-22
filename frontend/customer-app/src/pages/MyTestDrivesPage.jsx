@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../auth/AuthProvider';
 import testDriveService from '../services/testDriveService';
 
 const MyTestDrivesPage = () => {
   const navigate = useNavigate();
+  const { memberId, email, isAuthenticated } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL'); // ALL, SCHEDULED, CONFIRMED, COMPLETED, CANCELLED
@@ -12,28 +14,35 @@ const MyTestDrivesPage = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [cancellationReason, setCancellationReason] = useState('');
 
-  // Get customer info from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const customerId = user.customerId;
-
   useEffect(() => {
-    if (customerId) {
-      loadAppointments();
-    } else {
-      navigate('/auth/login');
+    if (!isAuthenticated() || !memberId) {
+      navigate('/login');
+      return;
     }
-  }, [customerId]);
+    loadAppointments();
+  }, [memberId, isAuthenticated]);
 
   const loadAppointments = async () => {
+    if (!memberId) return;
+    
     setLoading(true);
     try {
-      const response = await testDriveService.getMyAppointments(customerId);
-      if (response.code === 200) {
-        setAppointments(response.result || []);
+      const response = await testDriveService.getMyAppointments(memberId);
+      console.log('Appointments response:', response);
+      
+      // Handle different response formats
+      if (response.success || response.code === 200) {
+        const appointments = response.data || response.result || [];
+        console.log('Loaded appointments:', appointments);
+        setAppointments(appointments);
+      } else {
+        console.error('Failed to load appointments:', response);
+        setAppointments([]);
       }
     } catch (error) {
       console.error('Error loading appointments:', error);
       toast.error('Không thể tải danh sách lịch hẹn');
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
@@ -49,7 +58,8 @@ const MyTestDrivesPage = () => {
       SCHEDULED: { label: 'Đã đặt', color: 'bg-yellow-100 text-yellow-800' },
       CONFIRMED: { label: 'Đã xác nhận', color: 'bg-green-100 text-green-800' },
       COMPLETED: { label: 'Hoàn thành', color: 'bg-blue-100 text-blue-800' },
-      CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800' }
+      CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800' },
+      EXPIRED: { label: 'Hết hạn', color: 'bg-gray-100 text-gray-800' }
     };
 
     const config = statusConfig[status] || { label: status, color: 'bg-gray-100 text-gray-800' };
@@ -61,15 +71,21 @@ const MyTestDrivesPage = () => {
     );
   };
 
-  const formatDateTime = (dateString) => {
+  const formatDateTime = (dateString, timeSlot) => {
     const date = new Date(dateString);
-    return date.toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
+    const day = date.toLocaleDateString('vi-VN', {
       day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    
+    // Use appointmentTime from backend if available
+    const displayTime = timeSlot || date.toLocaleTimeString('vi-VN', {
       hour: '2-digit',
       minute: '2-digit'
     });
+    
+    return `${day}, ${displayTime}`;
   };
 
   const handleCancelClick = (appointment) => {
@@ -85,7 +101,7 @@ const MyTestDrivesPage = () => {
 
     try {
       const response = await testDriveService.cancelAppointment(
-        selectedAppointment.appointmentId,
+        tedAppointment.appointmentId,
         cancellationReason,
         user.email || 'customer'
       );
@@ -122,7 +138,7 @@ const MyTestDrivesPage = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Lịch lái thử của tôi</h1>
         <button
-          onClick={() => navigate('/test-drive/book')}
+          onClick={() => navigate('/test-drive')}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           Đặt lịch mới
@@ -172,7 +188,7 @@ const MyTestDrivesPage = () => {
           </p>
           {filter === 'ALL' && (
             <button
-              onClick={() => navigate('/test-drive/book')}
+              onClick={() => navigate('/test-drive')}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Đặt lịch ngay
@@ -200,10 +216,7 @@ const MyTestDrivesPage = () => {
                 <div>
                   <p className="text-sm text-gray-500 mb-1">📅 Thời gian</p>
                   <p className="text-sm font-medium text-gray-800">
-                    {formatDateTime(appointment.appointmentDate)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    ({appointment.durationMinutes} phút)
+                    {formatDateTime(appointment.appointmentDate, appointment.appointmentTime)}
                   </p>
                 </div>
                 <div>

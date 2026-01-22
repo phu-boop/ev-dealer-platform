@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Calculator,
   Wrench,
+  Calendar,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getCartItemCount } from "../services/cartService";
@@ -275,6 +276,14 @@ export default function Header() {
                       <Calculator className="w-4 h-4" />
                       Tính chi phí
                     </Link>
+                    <Link
+                      to="/my-test-drives"
+                      onClick={() => setIsMoreMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Lịch lái thử
+                    </Link>
                   </div>
                 </>
               )}
@@ -388,6 +397,14 @@ export default function Header() {
               >
                 <Calculator className="w-4 h-4" />
                 Tính chi phí
+              </Link>
+              <Link
+                to="/my-test-drives"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                Lịch lái thử
               </Link>
 
               {isAuthenticated() ? (
