@@ -17,6 +17,8 @@ import com.ev.sales_service.service.Interface.SalesOrderServiceB2C;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -528,6 +530,27 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         log.info("Sales order {} marked as EDITED by staff {}", orderId, staffId);
 
         return mapToResponse(updatedOrder);
+    }
+
+    @Override
+    public Page<SalesOrderB2CResponse> getAllB2COrders(String status, Pageable pageable) {
+        Page<SalesOrder> orderPage;
+        
+        if (status != null && !status.isBlank()) {
+            try {
+                OrderStatusB2C statusEnum = OrderStatusB2C.valueOf(status.toUpperCase());
+                orderPage = salesOrderRepository.findByTypeOderAndOrderStatusB2C(
+                    SaleOderType.B2C, statusEnum, pageable
+                );
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+        } else {
+            // Lấy tất cả đơn hàng B2C
+            orderPage = salesOrderRepository.findByTypeOder(SaleOderType.B2C, pageable);
+        }
+        
+        return orderPage.map(this::mapToResponse);
     }
 
 
