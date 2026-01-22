@@ -8,7 +8,11 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +25,21 @@ import java.util.UUID;
 public class SalesOrderB2CController {
 
     private final SalesOrderServiceB2C salesOrderServiceB2C;
+
+    /**
+     * Admin/Staff lấy tất cả đơn hàng B2C với phân trang
+     * GET /api/v1/sales-orders/b2c?status=PENDING&page=0&size=10
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+    public ResponseEntity<ApiRespond<Page<SalesOrderB2CResponse>>> getAllB2COrders(
+            @RequestParam(value = "status", required = false) String status,
+            @PageableDefault(size = 10, sort = "orderDate") Pageable pageable) {
+        
+        log.info("Fetching all B2C sales orders with status: {} and pageable: {}", status, pageable);
+        Page<SalesOrderB2CResponse> orderPage = salesOrderServiceB2C.getAllB2COrders(status, pageable);
+        return ResponseEntity.ok(ApiRespond.success("Lấy danh sách đơn hàng B2C thành công", orderPage));
+    }
 
     @PostMapping("/from-quotation/{quotationId}")
     public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> createSalesOrderFromQuotation(@PathVariable UUID quotationId) {

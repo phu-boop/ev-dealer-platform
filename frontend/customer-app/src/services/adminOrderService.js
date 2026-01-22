@@ -5,11 +5,12 @@ import api from './api';
  * API methods for admin order management
  */
 
-// Get all orders with pagination and filters
+// Get all orders with pagination and filters  
 export const getOrdersAdmin = async (params) => {
   try {
-    // Backend endpoint for Admin/Staff to list B2B orders
-    const response = await api.get('/api/v1/sales-orders/b2b', { params });
+    // Backend endpoint for Admin/Staff to list B2C orders
+    // Gateway passes through /api/v1/sales-orders/** without rewriting
+    const response = await api.get('/api/v1/sales-orders/b2c', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -20,7 +21,8 @@ export const getOrdersAdmin = async (params) => {
 // Get order detail by ID
 export const getOrderDetailAdmin = async (orderId) => {
   try {
-    const response = await api.get(`/api/v1/sales-orders/${orderId}`);
+    // Gateway passes through /api/v1/sales-orders/** without rewriting
+    const response = await api.get(`/api/v1/sales-orders/b2c/${orderId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching order detail:', error);
