@@ -4,6 +4,7 @@ import VehicleGrid from "../components/home/VehicleGrid";
 import VehicleFilterSidebar from "../components/vehicles/VehicleFilterSidebar";
 import { searchVehicles, getVehicles } from "../services/vehicleService";
 import { toast } from "react-toastify";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 
 export default function VehiclesPage() {
   const [filters, setFilters] = useState({
@@ -20,7 +21,16 @@ export default function VehiclesPage() {
   });
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(localSearchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [localSearchTerm]);
 
   // Check if we have active filters (including sort selection)
   const hasActiveFilters = useMemo(() => {
@@ -127,86 +137,128 @@ export default function VehiclesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">Khám phá Xe Điện</h1>
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white py-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="container mx-auto px-4 relative z-10">
+          <h1 className="text-5xl font-bold mb-4 drop-shadow-lg">Khám phá Xe Điện</h1>
           <p className="text-lg text-blue-100">
             Tìm kiếm và so sánh các mẫu xe điện hiện đại nhất
           </p>
+          <div className="mt-4 flex items-center gap-4 text-sm">
+            <span className="bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm">
+              🌍 Thân thiện môi trường
+            </span>
+            <span className="bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm">
+              ⚡ Hiệu suất cao
+            </span>
+            <span className="bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm">
+              💸 Tiết kiệm chi phí
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
         {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Tìm kiếm xe điện..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Tìm kiếm theo tên xe, hãng xe..."
+                  value={localSearchTerm}
+                  onChange={(e) => setLocalSearchTerm(e.target.value)}
+                  className="w-full px-4 py-3 pl-12 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
-                <svg
-                  className="absolute left-3 top-3 w-5 h-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                {localSearchTerm && (
+                  <button
+                    onClick={() => setLocalSearchTerm("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+                {localSearchTerm && localSearchTerm !== searchTerm && (
+                  <div className="absolute right-12 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Sort */}
-            <select
-              value={filters.sort || ""}
-              onChange={(e) => handleSortChange(e.target.value || null)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Sắp xếp mặc định</option>
-              <option value="price,asc">Giá: Thấp đến Cao</option>
-              <option value="price,desc">Giá: Cao đến Thấp</option>
-              <option value="rangeKm,desc">Phạm vi: Cao nhất</option>
-              <option value="motorPower,desc">Công suất: Cao nhất</option>
-            </select>
+            <div className="md:w-64">
+              <select
+                value={filters.sort || ""}
+                onChange={(e) => handleSortChange(e.target.value || null)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-all"
+              >
+                <option value="">Sắp xếp mặc định</option>
+                <option value="price,asc">Giá: Thấp → Cao</option>
+                <option value="price,desc">Giá: Cao → Thấp</option>
+                <option value="rangeKm,desc">Phạm vi: Xa nhất</option>
+                <option value="motorPower,desc">Công suất: Mạnh nhất</option>
+              </select>
+            </div>
 
             {/* Filter Toggle (Mobile) */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="md:hidden px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="md:hidden flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md font-medium"
             >
+              <SlidersHorizontal className="w-5 h-5" />
               {showFilters ? 'Ẩn bộ lọc' : 'Hiển thị bộ lọc'}
+              {hasActiveFilters && (
+                <span className="bg-white/30 px-2 py-0.5 rounded-full text-xs">
+                  {[searchTerm, filters.minPrice, filters.maxPrice, filters.minRange, filters.maxRange, ...filters.colors].filter(v => v).length}
+                </span>
+              )}
             </button>
           </div>
 
           {/* Active Filters Display */}
-          {(filters.colors.length > 0 || filters.minPrice || filters.maxPrice) && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {filters.colors.map(color => (
-                <span key={color} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-                  {color}
-                </span>
-              ))}
-              {(filters.minPrice || filters.maxPrice) && (
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                  {filters.minPrice?.toLocaleString('vi-VN')} - {filters.maxPrice?.toLocaleString('vi-VN')} VNĐ
-                </span>
-              )}
-              <button
-                onClick={clearFilters}
-                className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm hover:bg-red-200 transition-colors"
-              >
-                Xóa bộ lọc
-              </button>
+          {(filters.colors.length > 0 || filters.minPrice || filters.maxPrice || filters.minRange || filters.maxRange || filters.status) && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700">Bộ lọc đang áp dụng:</h3>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-1 hover:bg-red-50 px-3 py-1 rounded-lg transition-all"
+                >
+                  <X className="w-4 h-4" />
+                  Xóa tất cả
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {searchTerm && (
+                  <span className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm flex items-center gap-2 shadow-sm">
+                    🔍 {searchTerm}
+                  </span>
+                )}
+                {filters.colors.map(color => (
+                  <span key={color} className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full text-sm shadow-sm">
+                    🎨 {color}
+                  </span>
+                ))}
+                {(filters.minPrice || filters.maxPrice) && (
+                  <span className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm shadow-sm">
+                    💰 {filters.minPrice?.toLocaleString('vi-VN') || '0'} - {filters.maxPrice?.toLocaleString('vi-VN') || '∞'} VNĐ
+                  </span>
+                )}
+                {(filters.minRange || filters.maxRange) && (
+                  <span className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-sm shadow-sm">
+                    🔋 {filters.minRange || '0'} - {filters.maxRange || '∞'} km
+                  </span>
+                )}
+                {filters.status && (
+                  <span className="px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-full text-sm shadow-sm">
+                    {filters.status === 'AVAILABLE' ? '✅' : '❌'} {filters.status === 'AVAILABLE' ? 'Còn hàng' : 'Ngừng sản xuất'}
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -224,10 +276,18 @@ export default function VehiclesPage() {
           {/* Vehicle Grid */}
           <main className="flex-1">
             {/* Results Count */}
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-gray-600">
-                Tìm thấy <span className="font-semibold text-gray-900">{totalVehicles}</span> xe điện
+            <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+              <p className="text-gray-700 flex items-center gap-2">
+                <span className="text-2xl"></span>
+                Tìm thấy <span className="font-bold text-blue-600 text-lg">{totalVehicles}</span> xe điện
+                {hasActiveFilters && <span className="text-sm text-gray-500">(đang lọc)</span>}
               </p>
+              {isLoading && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  Đang tải...
+                </div>
+              )}
             </div>
 
             {/* Loading State */}

@@ -37,5 +37,13 @@ public class VariantDetailDto {
     // Frontend will parse: [{"color":"Red","colorCode":"#FF0000","imageUrl":"...","isPrimary":true}]
     private String colorImages;
 
+    // Exterior images stored as JSON array of URLs
+    // Format: ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
+    private String exteriorImages;
+
+    // Interior images stored as JSON array of URLs
+    // Format: ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
+    private String interiorImages;
+
     private List<FeatureDto> features;
 }

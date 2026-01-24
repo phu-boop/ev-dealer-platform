@@ -148,7 +148,7 @@ const TestDriveDetailPage = () => {
           onClick={() => navigate('/my-test-drives')}
           className="text-blue-600 hover:text-blue-700 mb-4 flex items-center gap-2"
         >
-          ← Quay lại danh sách
+          ← Quay lại 
         </button>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">Chi tiết lịch lái thử</h1>
