@@ -296,6 +296,14 @@ const BookingPage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="max-w-full mx-auto px-2 py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="text-blue-600 hover:text-blue-700 mb-6 ml-2 flex items-center gap-2 transition-colors"
+        >
+          ← Quay lại
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
           {/* Left Sidebar - Vehicle List */}
           <div className="lg:col-span-2 relative">

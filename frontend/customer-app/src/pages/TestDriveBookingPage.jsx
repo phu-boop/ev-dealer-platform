@@ -109,6 +109,14 @@ const TestDriveBookingPage = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="text-blue-600 hover:text-blue-700 mb-6 flex items-center gap-2 transition-colors"
+      >
+        ← Quay lại
+      </button>
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Đặt lịch lái thử</h1>
 

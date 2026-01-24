@@ -41,6 +41,8 @@ public class UpdateVariantRequest {
     private String description;
     
     private String colorImages; // JSON string
+    private String exteriorImages; // JSON array of exterior image URLs
+    private String interiorImages; // JSON array of interior image URLs
 
     private BigDecimal wholesalePrice;
 
