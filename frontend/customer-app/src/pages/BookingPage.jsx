@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, CheckCircle, ChevronUp, ChevronDown } from "
 import { getVehicleById, getVariants, getVehicles } from "../services/vehicleService";
 import { toast } from "react-toastify";
 import Button from "../components/ui/Button";
+import { initiateVNPayBooking } from "../services/paymentService";
 
 const BookingPage = () => {
   const { id } = useParams();
@@ -18,10 +19,25 @@ const BookingPage = () => {
   const [rotation, setRotation] = useState(0);
   const vehicleListRef = useRef(null);
   const sidebarRef = useRef(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [customerId, setCustomerId] = useState(null);
 
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Get customerId from token if available
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.profileId) {
+          setCustomerId(payload.profileId);
+        }
+      } catch (e) {
+        console.error('Error parsing token:', e);
+      }
+    }
   }, []);
   
   // Form data for step 2
@@ -194,7 +210,30 @@ const BookingPage = () => {
     setSelectedColor(color);
   };
 
-  const handleNextStep = () => {
+  const handleVariantSelect = (variant) => {
+    setSelectedVariant(variant);
+    
+    // Try to get colorImages data
+    let colorImagesData = [];
+    try {
+      if (variant.colorImages) {
+        colorImagesData = JSON.parse(variant.colorImages);
+      }
+    } catch (e) {
+      console.error("Error parsing colorImages:", e);
+    }
+
+    // Set selected color and image based on primary color
+    if (colorImagesData.length > 0) {
+      const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
+      setSelectedColor(primaryColor);
+    } else {
+      // Fallback to default if no colorImages
+      setSelectedColor({ color: 'Infinity Blanc', colorCode: '#FFFFFF', imageUrl: variant.imageUrl, isPrimary: true });
+    }
+  };
+
+  const handleNextStep = async () => {
     // Validation for step 1
     if (currentStep === 1) {
       if (!selectedVariant) {
@@ -256,8 +295,61 @@ const BookingPage = () => {
       }
     }
 
+    // Handle payment for step 3
+    if (currentStep === 3) {
+      await handlePayment();
+      return;
+    }
+
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+
+    try {
+      const depositAmount = 30000000; // 30 triệu VNĐ
+      const bookingData = {
+        variantId: selectedVariant?.variantId,
+        modelId: id,
+        // customerId: customerId || null, // Không cần cho guest booking
+        customerName: formData.fullName,
+        customerPhone: formData.phone,
+        customerEmail: formData.email,
+        customerIdCard: formData.idCard,
+        exteriorColor: selectedColor?.color,
+        interiorColor: selectedInterior?.name,
+        showroom: formData.showroom,
+        showroomCity: formData.showroomCity,
+        notes: formData.notes,
+        promoCode: formData.promoCode,
+        totalAmount: totalPrice,
+        depositAmount: depositAmount,
+        returnUrl: `${window.location.origin}/payment/result`,
+        orderInfo: `Dat coc xe ${vehicleData.modelName} - ${formData.fullName}`
+      };
+
+      console.log('Booking data:', bookingData); // Debug log
+
+      // Call API to initiate VNPay payment
+      const response = await initiateVNPayBooking(bookingData);
+      
+      if (response && response.url) {
+        // Redirect to VNPay payment page
+        window.location.href = response.url;
+      } else {
+        toast.error('Không thể khởi tạo thanh toán. Vui lòng thử lại.');
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      console.error('Error response:', error.response); // Debug log
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.');
+      setIsProcessing(false);
     }
   };
 
@@ -373,12 +465,6 @@ const BookingPage = () => {
             >
               <ChevronDown className="w-10 h-10 text-gray-700" strokeWidth={3} />
             </button>
-
-            <style jsx>{`
-              div::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
           </div>
 
           {/* Center - Vehicle Display */}
@@ -521,7 +607,7 @@ const BookingPage = () => {
                       {variantsData && variantsData.map((variant) => (
                         <button
                           key={variant.variantId}
-                          onClick={() => setSelectedVariant(variant)}
+                          onClick={() => handleVariantSelect(variant)}
                           className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                             selectedVariant?.variantId === variant.variantId
                               ? 'border-blue-600 bg-blue-50'
@@ -888,40 +974,39 @@ const BookingPage = () => {
                   {/* Payment Method */}
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-3">Hình thức thanh toán</h4>
-                    <p className="text-sm text-gray-600 mb-3">Quý khách vui lòng chọn cổng thanh toán</p>
+                    <p className="text-sm text-gray-600 mb-3">Thanh toán trực tuyến qua cổng VNPay</p>
                     
                     <div className="space-y-3">
-                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                        <input type="radio" name="paymentMethod" value="international-card" className="w-4 h-4 text-blue-600" defaultChecked />
+                      <label className="flex items-center p-4 border-2 border-blue-600 bg-blue-50 rounded-lg">
+                        <input type="radio" name="paymentMethod" value="vnpay" className="w-4 h-4 text-blue-600" defaultChecked />
                         <div className="ml-3 flex-1">
-                          <p className="font-medium text-gray-900">Thẻ thanh toán quốc tế</p>
+                          <div className="flex items-center gap-3">
+                            <div className="bg-white px-3 py-1 rounded">
+                              <span className="font-bold text-blue-600 text-lg">VNPAY</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">Cổng thanh toán VNPay</p>
+                              <p className="text-xs text-gray-600 mt-0.5">Hỗ trợ thẻ ATM, Visa, MasterCard, JCB, QR Code</p>
+                            </div>
+                          </div>
                         </div>
                       </label>
 
-                      <div className="ml-7 space-y-2">
-                        <label className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer">
-                          <input type="radio" name="paymentGateway" value="onepay" className="w-4 h-4 text-blue-600" defaultChecked />
-                          <span className="ml-3 text-sm text-gray-900">Cổng OnePay</span>
-                        </label>
-                        <label className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer">
-                          <input type="radio" name="paymentGateway" value="payoo" className="w-4 h-4 text-blue-600" />
-                          <span className="ml-3 text-sm text-gray-900">Cổng Payoo</span>
-                        </label>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-start gap-2">
+                          <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-700 font-medium mb-1">Thanh toán an toàn và bảo mật</p>
+                            <ul className="text-xs text-gray-600 space-y-1">
+                              <li>• Sau khi nhấn "Thanh toán đặt cọc", bạn sẽ được chuyển đến trang VNPay</li>
+                              <li>• Chọn phương thức thanh toán phù hợp (Thẻ ATM, Visa/Master, QR Code...)</li>
+                              <li>• Hoàn tất thanh toán và quay lại trang xác nhận</li>
+                            </ul>
+                          </div>
+                        </div>
                       </div>
-
-                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                        <input type="radio" name="paymentMethod" value="atm" className="w-4 h-4 text-blue-600" />
-                        <div className="ml-3 flex-1">
-                          <p className="font-medium text-gray-900">Thẻ ATM nội địa/ Internet Banking</p>
-                        </div>
-                      </label>
-
-                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                        <input type="radio" name="paymentMethod" value="bank-transfer" className="w-4 h-4 text-blue-600" />
-                        <div className="ml-3 flex-1">
-                          <p className="font-medium text-gray-900">Chuyển khoản ngân hàng</p>
-                        </div>
-                      </label>
                     </div>
                   </div>
 
@@ -951,9 +1036,10 @@ const BookingPage = () => {
             )}
             <Button
               onClick={handleNextStep}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold"
+              disabled={isProcessing}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {currentStep === 3 ? 'Thanh toán đặt cọc' : 'Tiếp tục'}
+              {isProcessing ? 'Đang xử lý...' : (currentStep === 3 ? 'Thanh toán đặt cọc' : 'Tiếp tục')}
             </Button>
           </div>
         </div>

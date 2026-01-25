@@ -47,6 +47,7 @@ import AdminReportsPage from "../pages/admin/ReportsPage";
 import VehicleFormPage from "../pages/admin/VehicleFormPage";
 import AdminOrderDetailPage from "../pages/admin/OrderDetailPage";
 import AdminVehicleDetailPage from "../pages/admin/VehicleDetailPage";
+import PaymentResultPage from "../pages/PaymentResultPage";
 
 export default function AppRoutes() {
   return (
@@ -71,6 +72,7 @@ export default function AppRoutes() {
           <Route path="vehicles/:variantId" element={<VehicleDetailPage />} />
           <Route path="compare" element={<CompareVehiclesPage />} />
           <Route path="payment/return" element={<PaymentReturnPage />} />
+          <Route path="payment/result" element={<PaymentResultPage />} />
         </Route>
 
         {/* Auth Routes */}

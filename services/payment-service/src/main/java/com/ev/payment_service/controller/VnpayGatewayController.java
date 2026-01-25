@@ -31,6 +31,7 @@ public class VnpayGatewayController {
      * ENDPOINT MỚI: Nhận yêu cầu từ Frontend
      */
     @PostMapping("/initiate-b2c")
+    @PermitAll // CHO PHÉP TRUY CẬP KHÔNG CẦN XÁC THỰC
     public ResponseEntity<Map<String, String>> initiateB2CPayment(
             @RequestBody VnpayInitiateRequest body,
             HttpServletRequest request) {
