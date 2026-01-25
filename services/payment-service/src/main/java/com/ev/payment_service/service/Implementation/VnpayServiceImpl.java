@@ -58,16 +58,43 @@ public class VnpayServiceImpl implements IVnpayService {
     @Transactional
     public String initiateB2CPayment(VnpayInitiateRequest request, String ipAddr) {
         try {
+            log.info("Initiating B2C payment - Amount: {}, OrderInfo: {}", 
+                    request.getPaymentAmount(), request.getOrderInfo());
+
             // 1. Tìm hoặc tạo PaymentRecord (công nợ)
-            PaymentRecord record = paymentRecordService.findOrCreateRecord(
-                    request.getOrderId(),
-                    request.getCustomerId(),
-                    request.getTotalAmount()
-            );
+            PaymentRecord record = null;
+            if (request.getOrderId() != null) {
+                log.info("Creating PaymentRecord for orderId: {}", request.getOrderId());
+                record = paymentRecordService.findOrCreateRecord(
+                        request.getOrderId(),
+                        request.getCustomerId(),
+                        request.getTotalAmount()
+                );
+            } else {
+                // Tạo PaymentRecord tạm cho booking deposit (chưa có orderId)
+                log.info("No orderId provided - Creating temporary PaymentRecord for booking deposit");
+                UUID tempOrderId = UUID.randomUUID();
+                record = PaymentRecord.builder()
+                        .orderId(tempOrderId)  // Tạm thời, sẽ update sau khi có order thật
+                        .customerId(request.getCustomerId())
+                        .totalAmount(request.getTotalAmount())
+                        .amountPaid(BigDecimal.ZERO)
+                        .remainingAmount(request.getTotalAmount())
+                        .status("PENDING_DEPOSIT")  // Trạng thái đặc biệt cho booking deposit
+                        .build();
+                record = paymentRecordRepository.save(record);
+                log.info("Created temporary PaymentRecord {} for booking deposit with temp orderId: {}", 
+                        record.getRecordId(), tempOrderId);
+            }
 
             // 2. Tìm PaymentMethod cho VNPAY
+            log.info("Looking for VNPAY payment method...");
             PaymentMethod vnpayMethod = paymentMethodRepository.findByMethodName("VNPAY")
-                    .orElseThrow(() -> new AppException(ErrorCode.INTERNAL_ERROR));
+                    .orElseThrow(() -> {
+                        log.error("VNPAY payment method not found in database!");
+                        return new AppException(ErrorCode.DATA_NOT_FOUND);
+                    });
+            log.info("Found VNPAY payment method: {}", vnpayMethod.getMethodId());
 
             // 3. Tạo Transaction (lịch sử) ở trạng thái PENDING
             Transaction transaction = new Transaction();
@@ -80,22 +107,35 @@ public class VnpayServiceImpl implements IVnpayService {
 
             log.info("Created PENDING transaction: {}", savedTransaction.getTransactionId());
 
-            // 4. Tạo VNPAY URL theo đúng logic cũ
+            // 4. Tạo VNPAY URL với orderInfo từ request
+            String orderInfo = request.getOrderInfo() != null 
+                ? request.getOrderInfo() 
+                : "ThanhToanDonHang_" + (request.getOrderId() != null ? request.getOrderId().toString() : savedTransaction.getTransactionId().toString());
+            
+            // Sử dụng configured return URL (đã được VNPay phê duyệt)
+            // Frontend return URL sẽ được lưu trong metadata và xử lý trong IPN callback
+            String configuredReturnUrl = vnpayConfig.getVnpReturnUrl();
+            log.info("Using configured return URL: {}", configuredReturnUrl);
+            
             String paymentUrl = createPaymentUrl(
                     savedTransaction.getTransactionId().toString(),
-                    request.getOrderId().toString(),
+                    orderInfo,
                     request.getPaymentAmount().longValue(),
-                    request.getReturnUrl(),
+                    configuredReturnUrl,
                     ipAddr
             );
 
-            log.info("VNPAY Payment URL created - TransactionId: {}, Amount: {}",
-                    savedTransaction.getTransactionId(), request.getPaymentAmount());
+            log.info("VNPAY Payment URL created successfully - TransactionId: {}, Amount: {}, OrderInfo: {}",
+                    savedTransaction.getTransactionId(), request.getPaymentAmount(), orderInfo);
 
             return paymentUrl;
 
+        } catch (AppException e) {
+            log.error("AppException in initiateB2CPayment - Code: {}, Message: {}", 
+                    e.getErrorCode(), e.getMessage(), e);
+            throw e;
         } catch (Exception e) {
-            log.error("Error creating VNPAY payment URL - Error: {}", e.getMessage(), e);
+            log.error("Unexpected error creating VNPAY payment URL - Error: {}", e.getMessage(), e);
             throw new AppException(ErrorCode.INTERNAL_ERROR);
         }
     }
@@ -149,9 +189,10 @@ public class VnpayServiceImpl implements IVnpayService {
 
             long amountInLong = amount.setScale(0, RoundingMode.HALF_UP).longValueExact();
 
+            String orderInfo = "ThanhToanHoaDon_" + invoiceId.toString();
             String paymentUrl = createPaymentUrl(
                     savedTransaction.getDealerTransactionId().toString(),
-                    invoiceId.toString(),
+                    orderInfo,
                     amountInLong,
                     returnUrl,
                     ipAddr
@@ -169,8 +210,9 @@ public class VnpayServiceImpl implements IVnpayService {
 
     /**
      * Tạo URL thanh toán VNPAY theo đúng logic cũ từ PaymentService
+     * @param orderInfo - Thông tin đơn hàng để hiển thị trên VNPay
      */
-    private String createPaymentUrl(String transactionId, String orderId, Long amount, String returnUrl, String ipAddr) {
+    private String createPaymentUrl(String transactionId, String orderInfo, Long amount, String returnUrl, String ipAddr) {
         Map<String, String> params = new HashMap<>();
         params.put("vnp_Version", vnpayConfig.getVnpVersion());
         params.put("vnp_Command", vnpayConfig.getVnpCommand());
@@ -178,7 +220,7 @@ public class VnpayServiceImpl implements IVnpayService {
         params.put("vnp_Amount", String.valueOf(amount * 100)); // nhân 100
         params.put("vnp_CurrCode", vnpayConfig.getVnpCurrCode());
         params.put("vnp_TxnRef", transactionId);
-        params.put("vnp_OrderInfo", "ThanhToanDonHang_" + orderId);
+        params.put("vnp_OrderInfo", orderInfo);
         params.put("vnp_OrderType", vnpayConfig.getVnpOrderType());
 
         // Sử dụng returnUrl từ request
