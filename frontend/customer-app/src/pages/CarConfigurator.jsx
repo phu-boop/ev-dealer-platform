@@ -200,20 +200,14 @@ const CarConfigurator = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Quay lại</span>
-          </button>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="text-blue-600 hover:text-blue-700 mb-6 flex items-center gap-2 transition-colors"
+        >
+          ← Quay lại danh sách
+        </button>
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Cấu Hình Xe - {vehicleData.modelName}

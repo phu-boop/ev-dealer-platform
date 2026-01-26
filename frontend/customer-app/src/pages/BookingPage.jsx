@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, CheckCircle, ChevronUp, ChevronDown } from "
 import { getVehicleById, getVariants, getVehicles } from "../services/vehicleService";
 import { toast } from "react-toastify";
 import Button from "../components/ui/Button";
+import { initiateVNPayBooking } from "../services/paymentService";
 
 const BookingPage = () => {
   const { id } = useParams();
@@ -18,6 +19,26 @@ const BookingPage = () => {
   const [rotation, setRotation] = useState(0);
   const vehicleListRef = useRef(null);
   const sidebarRef = useRef(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [customerId, setCustomerId] = useState(null);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    
+    // Get customerId from token if available
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.profileId) {
+          setCustomerId(payload.profileId);
+        }
+      } catch (e) {
+        console.error('Error parsing token:', e);
+      }
+    }
+  }, []);
   
   // Form data for step 2
   const [formData, setFormData] = useState({
@@ -189,7 +210,30 @@ const BookingPage = () => {
     setSelectedColor(color);
   };
 
-  const handleNextStep = () => {
+  const handleVariantSelect = (variant) => {
+    setSelectedVariant(variant);
+    
+    // Try to get colorImages data
+    let colorImagesData = [];
+    try {
+      if (variant.colorImages) {
+        colorImagesData = JSON.parse(variant.colorImages);
+      }
+    } catch (e) {
+      console.error("Error parsing colorImages:", e);
+    }
+
+    // Set selected color and image based on primary color
+    if (colorImagesData.length > 0) {
+      const primaryColor = colorImagesData.find(c => c.isPrimary) || colorImagesData[0];
+      setSelectedColor(primaryColor);
+    } else {
+      // Fallback to default if no colorImages
+      setSelectedColor({ color: 'Infinity Blanc', colorCode: '#FFFFFF', imageUrl: variant.imageUrl, isPrimary: true });
+    }
+  };
+
+  const handleNextStep = async () => {
     // Validation for step 1
     if (currentStep === 1) {
       if (!selectedVariant) {
@@ -251,8 +295,61 @@ const BookingPage = () => {
       }
     }
 
+    // Handle payment for step 3
+    if (currentStep === 3) {
+      await handlePayment();
+      return;
+    }
+
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+
+    try {
+      const depositAmount = 30000000; // 30 triệu VNĐ
+      const bookingData = {
+        variantId: selectedVariant?.variantId,
+        modelId: id,
+        // customerId: customerId || null, // Không cần cho guest booking
+        customerName: formData.fullName,
+        customerPhone: formData.phone,
+        customerEmail: formData.email,
+        customerIdCard: formData.idCard,
+        exteriorColor: selectedColor?.color,
+        interiorColor: selectedInterior?.name,
+        showroom: formData.showroom,
+        showroomCity: formData.showroomCity,
+        notes: formData.notes,
+        promoCode: formData.promoCode,
+        totalAmount: totalPrice,
+        depositAmount: depositAmount,
+        returnUrl: `${window.location.origin}/payment/result`,
+        orderInfo: `Dat coc xe ${vehicleData.modelName} - ${formData.fullName}`
+      };
+
+      console.log('Booking data:', bookingData); // Debug log
+
+      // Call API to initiate VNPay payment
+      const response = await initiateVNPayBooking(bookingData);
+      
+      if (response && response.url) {
+        // Redirect to VNPay payment page
+        window.location.href = response.url;
+      } else {
+        toast.error('Không thể khởi tạo thanh toán. Vui lòng thử lại.');
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      console.error('Error response:', error.response); // Debug log
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.');
+      setIsProcessing(false);
     }
   };
 
@@ -291,15 +388,29 @@ const BookingPage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="max-w-full mx-auto px-2 py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="text-blue-600 hover:text-blue-700 mb-6 ml-2 flex items-center gap-2 transition-colors"
+        >
+          ← Quay lại
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
           {/* Left Sidebar - Vehicle List */}
           <div className="lg:col-span-2 relative">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Danh sách xe</h3>
-              <div className="flex gap-1">
-                
-              </div>
-            </div>
+            {/* Scroll Up Button */}
+            <button
+              onClick={() => {
+                if (vehicleListRef.current) {
+                  vehicleListRef.current.scrollBy({ top: -150, behavior: 'smooth' });
+                }
+              }}
+              className="w-full flex items-center justify-center py-2 mb-3 hover:opacity-70 transition-opacity"
+            >
+              <ChevronUp className="w-10 h-10 text-gray-700" strokeWidth={3} />
+            </button>
+
             <div 
               ref={vehicleListRef}
               onWheel={(e) => {
@@ -308,106 +419,94 @@ const BookingPage = () => {
                   vehicleListRef.current.scrollBy({ top: e.deltaY, behavior: 'auto' });
                 }
               }}
-              className="space-y-3 max-h-[calc(100vh-180px)] overflow-y-hidden pr-2"
-              style={{ overflowY: 'scroll', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              className="space-y-3 overflow-y-hidden pr-2"
+              style={{ 
+                overflowY: 'scroll', 
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none',
+                height: '480px'
+              }}
             >
               {allVehiclesData && allVehiclesData.map((vehicle) => (
                 <button
                   key={vehicle.modelId}
                   onClick={() => navigate(`/booking/${vehicle.modelId}`)}
-                  className={`w-full text-left transition-all ${
+                  className={`w-full transition-all ${
                     parseInt(id) === vehicle.modelId
-                      ? 'bg-blue-50 border-2 border-blue-600'
-                      : 'bg-white border-2 border-gray-200 hover:border-blue-400'
-                  } rounded-lg overflow-hidden`}
+                      ? 'bg-gray-50 opacity-100'
+                      : 'bg-gray-50 hover:bg-gray-100 opacity-40 hover:opacity-60'
+                  } rounded-lg overflow-hidden py-3`}
                 >
-                  <div className="aspect-video relative">
+                  <div className="flex items-center justify-center px-3 mb-2">
                     <img
                       src={vehicle.thumbnailUrl || 'https://via.placeholder.com/200x150'}
                       alt={vehicle.modelName}
-                      className="w-full h-full object-cover"
+                      className="w-full h-auto object-contain max-h-[100px]"
+                      style={{ mixBlendMode: 'multiply' }}
                     />
                   </div>
-                  <div className="p-3">
-                    <h4 className={`font-semibold text-sm ${
-                      parseInt(id) === vehicle.modelId ? 'text-blue-600' : 'text-gray-900'
-                    }`}>
+                  <div className="text-center">
+                    <h4 className="font-semibold text-sm text-gray-900">
                       {vehicle.modelName}
                     </h4>
                   </div>
                 </button>
               ))}
             </div>
-            <style jsx>{`
-              div::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
+
+            {/* Scroll Down Button */}
+            <button
+              onClick={() => {
+                if (vehicleListRef.current) {
+                  vehicleListRef.current.scrollBy({ top: 150, behavior: 'smooth' });
+                }
+              }}
+              className="w-full flex items-center justify-center py-2 mt-3 hover:opacity-70 transition-opacity"
+            >
+              <ChevronDown className="w-10 h-10 text-gray-700" strokeWidth={3} />
+            </button>
           </div>
 
           {/* Center - Vehicle Display */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Tabs */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="flex border-b">
-                <button
-                  onClick={() => setActiveTab('personal')}
-                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
-                    activeTab === 'personal'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Dòng xe cá nhân
-                </button>
-                <button
-                  onClick={() => setActiveTab('service')}
-                  className={`flex-1 py-4 px-6 font-semibold transition-colors ${
-                    activeTab === 'service'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Dòng xe dịch vụ
-                </button>
-              </div>
-
+          <div className="lg:col-span-7 space-y-4">
+            {/* Vehicle Display */}
+            <div className="rounded-lg shadow-sm">
               {/* Vehicle 3D View */}
-              <div className="p-8">
-                <div className="relative bg-gradient-to-b from-gray-50 to-white rounded-2xl p-8">
+              <div className="p-4">
+                <div className="relative rounded-2xl p-4">
                   {/* Rotation Controls */}
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
                     <button
                       onClick={handleRotateLeft}
-                      className="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-colors"
+                      className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
                     >
-                      <ChevronLeft className="w-6 h-6 text-gray-700" />
+                      <ChevronLeft className="w-5 h-5 text-gray-700" />
                     </button>
                   </div>
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10">
                     <button
                       onClick={handleRotateRight}
-                      className="bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-colors"
+                      className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
                     >
-                      <ChevronRight className="w-6 h-6 text-gray-700" />
+                      <ChevronRight className="w-5 h-5 text-gray-700" />
                     </button>
                   </div>
 
                   {/* Vehicle Image */}
-                  <div className="aspect-[4/3] flex items-center justify-center">
+                  <div className="aspect-[16/9] flex items-center justify-center">
                     <img
                       src={selectedColor?.imageUrl || selectedVariant?.imageUrl || vehicleData.thumbnailUrl}
                       alt={vehicleData.modelName}
-                      className="max-w-full max-h-full object-contain transition-transform duration-500"
-                      style={{ transform: `rotate(${rotation}deg)` }}
+                      className="max-w-[70%] max-h-[70%] object-contain transition-transform duration-500"
+                      style={{ transform: `rotate(${rotation}deg)`, mixBlendMode: 'multiply' }}
                     />
                   </div>
 
                   {/* Vehicle Badge */}
-                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
                         </svg>
                       </div>
@@ -417,28 +516,28 @@ const BookingPage = () => {
                 </div>
 
                 {/* Vehicle Specs */}
-                <div className="grid grid-cols-3 gap-6 mt-6 text-center">
+                <div className="grid grid-cols-3 gap-4 mt-4 text-center">
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Công suất tối đa</div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-xs text-gray-500 mb-1">Công suất tối đa</div>
+                    <div className="text-xl font-bold text-gray-900">
                       {selectedVariant?.motorPower || vehicleData.baseMotorPower || 30} kW
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Dung lượng pin khả dụng</div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-xs text-gray-500 mb-1">Dung lượng pin khả dụng</div>
+                    <div className="text-xl font-bold text-gray-900">
                       {selectedVariant?.batteryCapacity || vehicleData.baseBatteryCapacity || 18.64} kWh
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Quãng đường di chuyển</div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-xs text-gray-500 mb-1">Quãng đường di chuyển</div>
+                    <div className="text-xl font-bold text-gray-900">
                       {selectedVariant?.rangeKm || vehicleData.baseRangeKm || 215} km
                     </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-400 text-center mt-4 px-4">
+                <p className="text-xs text-gray-400 text-center mt-3 px-2">
                   Quãng đường di chuyển được tính toán dựa trên kết quả kiểm định theo quy chuẩn toàn cầu của WNEDC. 
                   Quãng đường di chuyển thực tế có thể ảnh hưởng bởi điều kiện, thói quen sử dụng của người lái, chế 
                   độ lái xe đã được cài đặt, số lượng hành khách và các điều kiện giao thông khác.
@@ -508,7 +607,7 @@ const BookingPage = () => {
                       {variantsData && variantsData.map((variant) => (
                         <button
                           key={variant.variantId}
-                          onClick={() => setSelectedVariant(variant)}
+                          onClick={() => handleVariantSelect(variant)}
                           className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                             selectedVariant?.variantId === variant.variantId
                               ? 'border-blue-600 bg-blue-50'
@@ -875,40 +974,39 @@ const BookingPage = () => {
                   {/* Payment Method */}
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-3">Hình thức thanh toán</h4>
-                    <p className="text-sm text-gray-600 mb-3">Quý khách vui lòng chọn cổng thanh toán</p>
+                    <p className="text-sm text-gray-600 mb-3">Thanh toán trực tuyến qua cổng VNPay</p>
                     
                     <div className="space-y-3">
-                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                        <input type="radio" name="paymentMethod" value="international-card" className="w-4 h-4 text-blue-600" defaultChecked />
+                      <label className="flex items-center p-4 border-2 border-blue-600 bg-blue-50 rounded-lg">
+                        <input type="radio" name="paymentMethod" value="vnpay" className="w-4 h-4 text-blue-600" defaultChecked />
                         <div className="ml-3 flex-1">
-                          <p className="font-medium text-gray-900">Thẻ thanh toán quốc tế</p>
+                          <div className="flex items-center gap-3">
+                            <div className="bg-white px-3 py-1 rounded">
+                              <span className="font-bold text-blue-600 text-lg">VNPAY</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">Cổng thanh toán VNPay</p>
+                              <p className="text-xs text-gray-600 mt-0.5">Hỗ trợ thẻ ATM, Visa, MasterCard, JCB, QR Code</p>
+                            </div>
+                          </div>
                         </div>
                       </label>
 
-                      <div className="ml-7 space-y-2">
-                        <label className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer">
-                          <input type="radio" name="paymentGateway" value="onepay" className="w-4 h-4 text-blue-600" defaultChecked />
-                          <span className="ml-3 text-sm text-gray-900">Cổng OnePay</span>
-                        </label>
-                        <label className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer">
-                          <input type="radio" name="paymentGateway" value="payoo" className="w-4 h-4 text-blue-600" />
-                          <span className="ml-3 text-sm text-gray-900">Cổng Payoo</span>
-                        </label>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-start gap-2">
+                          <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-700 font-medium mb-1">Thanh toán an toàn và bảo mật</p>
+                            <ul className="text-xs text-gray-600 space-y-1">
+                              <li>• Sau khi nhấn "Thanh toán đặt cọc", bạn sẽ được chuyển đến trang VNPay</li>
+                              <li>• Chọn phương thức thanh toán phù hợp (Thẻ ATM, Visa/Master, QR Code...)</li>
+                              <li>• Hoàn tất thanh toán và quay lại trang xác nhận</li>
+                            </ul>
+                          </div>
+                        </div>
                       </div>
-
-                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                        <input type="radio" name="paymentMethod" value="atm" className="w-4 h-4 text-blue-600" />
-                        <div className="ml-3 flex-1">
-                          <p className="font-medium text-gray-900">Thẻ ATM nội địa/ Internet Banking</p>
-                        </div>
-                      </label>
-
-                      <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                        <input type="radio" name="paymentMethod" value="bank-transfer" className="w-4 h-4 text-blue-600" />
-                        <div className="ml-3 flex-1">
-                          <p className="font-medium text-gray-900">Chuyển khoản ngân hàng</p>
-                        </div>
-                      </label>
                     </div>
                   </div>
 
@@ -938,9 +1036,10 @@ const BookingPage = () => {
             )}
             <Button
               onClick={handleNextStep}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold"
+              disabled={isProcessing}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {currentStep === 3 ? 'Thanh toán đặt cọc' : 'Tiếp tục'}
+              {isProcessing ? 'Đang xử lý...' : (currentStep === 3 ? 'Thanh toán đặt cọc' : 'Tiếp tục')}
             </Button>
           </div>
         </div>

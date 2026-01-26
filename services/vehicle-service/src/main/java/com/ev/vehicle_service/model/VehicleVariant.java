@@ -76,6 +76,16 @@ public class VehicleVariant {
     @Column(name = "color_images", columnDefinition = "TEXT")
     private String colorImages;
 
+    // Exterior images stored as JSON array of URLs
+    // Format: ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
+    @Column(name = "exterior_images", columnDefinition = "TEXT")
+    private String exteriorImages;
+
+    // Interior images stored as JSON array of URLs
+    // Format: ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
+    @Column(name = "interior_images", columnDefinition = "TEXT")
+    private String interiorImages;
+
     private BigDecimal price;
 
     @Column(name = "wholesale_price")

@@ -9,6 +9,7 @@ import {
   uploadVehicleImage
 } from '../../services/adminVehicleService';
 import ColorImageManager from '../../components/admin/ColorImageManager';
+import GalleryImageManager from '../../components/admin/GalleryImageManager';
 import { toast } from 'react-toastify';
 
 export default function VehicleFormPage() {
@@ -39,7 +40,9 @@ export default function VehicleFormPage() {
     warrantyYears: '',
     imageUrl: '',
     description: '',
-    colorImages: '' // JSON string of color images
+    colorImages: '', // JSON string of color images
+    exteriorImages: '', // JSON string for exterior images
+    interiorImages: '' // JSON string for interior images
   });
 
   useEffect(() => {
@@ -65,8 +68,12 @@ export default function VehicleFormPage() {
     try {
       setLoading(true);
       const response = await getVehicleDetailAdmin(variantId);
+      console.log('API Response:', response);
       if (response && response.code == 1000) {
         const vehicle = response.data;
+        console.log('Vehicle Data:', vehicle);
+        console.log('exteriorImages:', vehicle.exteriorImages);
+        console.log('interiorImages:', vehicle.interiorImages);
         setFormData({
           modelId: vehicle.modelId || '',
           variantName: vehicle.versionName || '', // Map versionName to variantName for form
@@ -86,10 +93,13 @@ export default function VehicleFormPage() {
           warrantyYears: vehicle.warrantyYears || '',
           imageUrl: vehicle.imageUrl || '',
           description: vehicle.description || '',
-          colorImages: vehicle.colorImages || ''
+          colorImages: vehicle.colorImages || '',
+          exteriorImages: vehicle.exteriorImages || '',
+          interiorImages: vehicle.interiorImages || ''
         });
       }
     } catch (error) {
+      console.error('Error loading vehicle data:', error);
       toast.error('Không thể tải thông tin xe');
     } finally {
       setLoading(false);
@@ -179,7 +189,11 @@ export default function VehicleFormPage() {
         warrantyYears: formData.warrantyYears ? parseInt(formData.warrantyYears) : null,
         description: formData.description || null,
         colorImages: formData.colorImages || null,
+        exteriorImages: formData.exteriorImages || null,
+        interiorImages: formData.interiorImages || null,
       };
+
+      console.log('Submit Payload:', basePayload);
 
       let response;
       if (isEditMode) {
@@ -508,6 +522,26 @@ export default function VehicleFormPage() {
             <ColorImageManager
               colorImages={formData.colorImages}
               onChange={(colorImages) => setFormData(prev => ({ ...prev, colorImages }))}
+            />
+          </div>
+
+          {/* Exterior Images Manager */}
+          <div className="mb-6">
+            <GalleryImageManager
+              images={formData.exteriorImages}
+              onChange={(exteriorImages) => setFormData(prev => ({ ...prev, exteriorImages }))}
+              title="Hình ảnh Ngoại thất"
+              type="Ngoại thất"
+            />
+          </div>
+
+          {/* Interior Images Manager */}
+          <div className="mb-6">
+            <GalleryImageManager
+              images={formData.interiorImages}
+              onChange={(interiorImages) => setFormData(prev => ({ ...prev, interiorImages }))}
+              title="Hình ảnh Nội thất"
+              type="Nội thất"
             />
           </div>
 

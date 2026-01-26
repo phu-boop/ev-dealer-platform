@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Battery, Zap, Clock, Users, ArrowLeft, Calendar, 
-  Settings, Palette, Car, CheckCircle, Star 
+  Settings, Palette, Car, CheckCircle, Star, ChevronLeft, ChevronRight 
 } from "lucide-react";
 import { getVehicleById, getVariants } from "../services/vehicleService";
 import { toast } from "react-toastify";
@@ -15,6 +15,33 @@ const ProductDetail = () => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedImages, setSelectedImages] = useState([]);
+  const [currentExteriorIndex, setCurrentExteriorIndex] = useState(0);
+  const [currentInteriorIndex, setCurrentInteriorIndex] = useState(0);
+  const [exteriorImages, setExteriorImages] = useState([]);
+  const [interiorImages, setInteriorImages] = useState([]);
+  const exteriorRef = useRef(null);
+  const interiorRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  // Auto-play for exterior images
+  useEffect(() => {
+    if (exteriorImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentExteriorIndex((prev) => (prev + 1) % exteriorImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [exteriorImages]);
+
+  // Auto-play for interior images
+  useEffect(() => {
+    if (interiorImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentInteriorIndex((prev) => (prev + 1) % interiorImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [interiorImages]);
 
   // Fetch vehicle model details
   const { data: vehicleData, isLoading } = useQuery({
@@ -50,6 +77,31 @@ const ProductDetail = () => {
     if (variantsData && variantsData.length > 0) {
       const firstVariant = variantsData[0];
       setSelectedVariant(firstVariant);
+      
+      // Load exterior and interior images from variant data
+      try {
+        if (firstVariant.exteriorImages) {
+          const parsedExterior = JSON.parse(firstVariant.exteriorImages);
+          setExteriorImages(Array.isArray(parsedExterior) ? parsedExterior : []);
+        } else {
+          setExteriorImages([]);
+        }
+      } catch (e) {
+        console.error("Error parsing exteriorImages:", e);
+        setExteriorImages([]);
+      }
+
+      try {
+        if (firstVariant.interiorImages) {
+          const parsedInterior = JSON.parse(firstVariant.interiorImages);
+          setInteriorImages(Array.isArray(parsedInterior) ? parsedInterior : []);
+        } else {
+          setInteriorImages([]);
+        }
+      } catch (e) {
+        console.error("Error parsing interiorImages:", e);
+        setInteriorImages([]);
+      }
       
       // Set main image from variant first
       if (firstVariant.imageUrl) {
@@ -91,6 +143,35 @@ const ProductDetail = () => {
 
   const handleVariantSelect = (variant) => {
     setSelectedVariant(variant);
+    
+    // Load exterior and interior images from variant data
+    try {
+      if (variant.exteriorImages) {
+        const parsedExterior = JSON.parse(variant.exteriorImages);
+        setExteriorImages(Array.isArray(parsedExterior) ? parsedExterior : []);
+      } else {
+        setExteriorImages([]);
+      }
+    } catch (e) {
+      console.error("Error parsing exteriorImages:", e);
+      setExteriorImages([]);
+    }
+
+    try {
+      if (variant.interiorImages) {
+        const parsedInterior = JSON.parse(variant.interiorImages);
+        setInteriorImages(Array.isArray(parsedInterior) ? parsedInterior : []);
+      } else {
+        setInteriorImages([]);
+      }
+    } catch (e) {
+      console.error("Error parsing interiorImages:", e);
+      setInteriorImages([]);
+    }
+    
+    // Reset gallery indices
+    setCurrentExteriorIndex(0);
+    setCurrentInteriorIndex(0);
     
     // Try to get colorImages data
     let colorImagesData = [];
@@ -194,23 +275,19 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Quay lại</span>
-          </button>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Back Button - Moved outside grid */}
+        <button
+          onClick={() => navigate(-1)}
+          className="text-blue-600 hover:text-blue-700 mb-6 flex items-center gap-2 transition-colors"
+        >
+          ← Quay lại
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Image Gallery */}
-          <div className="space-y-4">
+          <div className="space-y-4 relative">
+            
             <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100">
               <img
                 src={selectedImages[0] || variant?.imageUrl || vehicleData.thumbnailUrl || "https://via.placeholder.com/800"}
@@ -379,7 +456,198 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Detailed Specifications */}
+        {/* Ngoại thất Section */}
+        {exteriorImages.length > 0 && (
+          <div className="mb-12">
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-bold text-gray-900 mb-3">
+                Ngoại thất
+              </h2>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                Thiết kế bên ngoài của xe
+              </p>
+            </div>
+            
+            <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg group">
+              {/* Main Image */}
+              <div 
+                ref={exteriorRef}
+                className="aspect-[16/9] w-full cursor-grab active:cursor-grabbing"
+                onMouseDown={(e) => {
+                  setIsDragging(true);
+                  setStartX(e.pageX);
+                }}
+                onMouseMove={(e) => {
+                  if (!isDragging) return;
+                  const x = e.pageX;
+                  const walk = startX - x;
+                  if (Math.abs(walk) > 50) {
+                    if (walk > 0) {
+                      setCurrentExteriorIndex((prev) => (prev + 1) % exteriorImages.length);
+                    } else {
+                      setCurrentExteriorIndex((prev) => (prev - 1 + exteriorImages.length) % exteriorImages.length);
+                    }
+                    setIsDragging(false);
+                  }
+                }}
+                onMouseUp={() => setIsDragging(false)}
+                onMouseLeave={() => setIsDragging(false)}
+              >
+                <img
+                  src={exteriorImages[currentExteriorIndex]}
+                  alt={`Ngoại thất ${currentExteriorIndex + 1}`}
+                  className="w-full h-full object-cover transition-opacity duration-500"
+                  draggable="false"
+                />
+              </div>
+              
+              {/* Previous Button */}
+              {exteriorImages.length > 1 && (
+                <button
+                  onClick={() => setCurrentExteriorIndex((prev) => (prev - 1 + exteriorImages.length) % exteriorImages.length)}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Ảnh trước"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+              
+              {/* Next Button */}
+              {exteriorImages.length > 1 && (
+                <button
+                  onClick={() => setCurrentExteriorIndex((prev) => (prev + 1) % exteriorImages.length)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Ảnh tiếp theo"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
+              
+              {/* Image Counter */}
+              {exteriorImages.length > 1 && (
+                <div className="absolute top-4 right-4 bg-black/60 text-white text-sm px-3 py-1 rounded-full">
+                  {currentExteriorIndex + 1} / {exteriorImages.length}
+                </div>
+              )}
+              
+              {/* Dots Navigation */}
+              {exteriorImages.length > 1 && (
+                <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3">
+                  {exteriorImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentExteriorIndex(index)}
+                      className={`w-3 h-3 rounded-full transition-all ${
+                        currentExteriorIndex === index
+                          ? 'bg-white w-8'
+                          : 'bg-white/50 hover:bg-white/70'
+                      }`}
+                      aria-label={`Xem hình ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Nội thất Section */}
+        {interiorImages.length > 0 && (
+          <div className="mb-12">
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-bold text-gray-900 mb-3">
+                Nội thất
+              </h2>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                Thiết kế bên trong của xe
+              </p>
+            </div>
+            
+            <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg group">
+              {/* Main Image */}
+              <div 
+                ref={interiorRef}
+                className="aspect-[16/9] w-full cursor-grab active:cursor-grabbing"
+                onMouseDown={(e) => {
+                  setIsDragging(true);
+                  setStartX(e.pageX);
+                }}
+                onMouseMove={(e) => {
+                  if (!isDragging) return;
+                  const x = e.pageX;
+                  const walk = startX - x;
+                  if (Math.abs(walk) > 50) {
+                    if (walk > 0) {
+                      setCurrentInteriorIndex((prev) => (prev + 1) % interiorImages.length);
+                    } else {
+                      setCurrentInteriorIndex((prev) => (prev - 1 + interiorImages.length) % interiorImages.length);
+                    }
+                    setIsDragging(false);
+                  }
+                }}
+                onMouseUp={() => setIsDragging(false)}
+                onMouseLeave={() => setIsDragging(false)}
+              >
+                <img
+                  src={interiorImages[currentInteriorIndex]}
+                  alt={`Nội thất ${currentInteriorIndex + 1}`}
+                  className="w-full h-full object-cover transition-opacity duration-500"
+                  draggable="false"
+                />
+              </div>
+              
+              {/* Previous Button */}
+              {interiorImages.length > 1 && (
+                <button
+                  onClick={() => setCurrentInteriorIndex((prev) => (prev - 1 + interiorImages.length) % interiorImages.length)}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Ảnh trước"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+              
+              {/* Next Button */}
+              {interiorImages.length > 1 && (
+                <button
+                  onClick={() => setCurrentInteriorIndex((prev) => (prev + 1) % interiorImages.length)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Ảnh tiếp theo"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
+              
+              {/* Image Counter */}
+              {interiorImages.length > 1 && (
+                <div className="absolute top-4 right-4 bg-black/60 text-white text-sm px-3 py-1 rounded-full">
+                  {currentInteriorIndex + 1} / {interiorImages.length}
+                </div>
+              )}
+              
+              {/* Dots Navigation */}
+              {interiorImages.length > 1 && (
+                <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3">
+                  {interiorImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentInteriorIndex(index)}
+                      className={`w-3 h-3 rounded-full transition-all ${
+                        currentInteriorIndex === index
+                          ? 'bg-white w-8'
+                          : 'bg-white/50 hover:bg-white/70'
+                      }`}
+                      aria-label={`Xem hình ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+          
+
+         {/* Detailed Specifications */}
         <div className="bg-white rounded-2xl p-8 mb-8">
           <h2 className="text-2xl font-bold mb-6">Thông Số Kỹ Thuật Chi Tiết</h2>
           <div className="space-y-6">
