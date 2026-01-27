@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,6 +52,30 @@ public class TestDriveService {
     @Transactional(readOnly = true)
     public List<TestDriveResponse> getAppointmentsByCustomerId(Long customerId) {
         return appointmentRepository.findByCustomerCustomerId(customerId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TestDriveResponse> getAppointmentsByProfileId(String profileId) {
+        log.info("Getting appointments for profileId: {}", profileId);
+        
+        // Find customer by profileId first
+        Optional<Customer> customerOpt = customerRepository.findByProfileId(profileId);
+        
+        if (!customerOpt.isPresent()) {
+            // Customer not found - this is OK for new users who just registered
+            log.info("No customer found with profileId: {}. User has not booked test drives yet.", profileId);
+            return new ArrayList<>();
+        }
+        
+        Customer customer = customerOpt.get();
+        log.info("Found customer ID: {} for profileId: {}", customer.getCustomerId(), profileId);
+        
+        List<TestDriveAppointment> appointments = appointmentRepository.findByCustomerCustomerId(customer.getCustomerId());
+        log.info("Found {} appointments for customer ID: {}", appointments.size(), customer.getCustomerId());
+        
+        return appointments.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -141,11 +166,12 @@ public class TestDriveService {
      */
     @Transactional
     public TestDriveResponse createPublicAppointment(PublicTestDriveRequest request) {
-        // 1. Find or create customer
+        // 1. Find or create customer (with profileId if provided)
         Customer customer = findOrCreateCustomer(
             request.getCustomerName(),
             request.getCustomerPhone(),
-            request.getCustomerEmail()
+            request.getCustomerEmail(),
+            request.getProfileId()
         );
 
         // 2. Validate no conflicts (no staff ID for public bookings)
@@ -161,6 +187,7 @@ public class TestDriveService {
         appointment.setVehicleModelName(request.getVehicleModelName());
         appointment.setVehicleVariantName(request.getVehicleVariantName());
         appointment.setAppointmentDate(request.getAppointmentDate());
+        appointment.setAppointmentTime(request.getAppointmentTime());
         appointment.setDurationMinutes(request.getDurationMinutes() != null ? 
                                       request.getDurationMinutes() : 60);
         appointment.setTestDriveLocation(request.getTestDriveLocation());
@@ -204,22 +231,57 @@ public class TestDriveService {
     }
 
     /**
-     * Find existing customer by phone or email, or create new one
+     * Find existing customer by phone, email, or profileId; or create new one
      */
-    private Customer findOrCreateCustomer(String name, String phone, String email) {
+    private Customer findOrCreateCustomer(String name, String phone, String email, String profileId) {
+        // Try to find by profileId first (if provided and user is logged in)
+        if (profileId != null && !profileId.isEmpty()) {
+            Optional<Customer> existingByProfileId = customerRepository.findByProfileId(profileId);
+            if (existingByProfileId.isPresent()) {
+                // Update info if provided and different
+                Customer customer = existingByProfileId.get();
+                boolean updated = false;
+                
+                if (phone != null && !phone.isEmpty() && !phone.equals(customer.getPhone())) {
+                    customer.setPhone(phone);
+                    updated = true;
+                }
+                if (email != null && !email.isEmpty() && !email.equals(customer.getEmail())) {
+                    customer.setEmail(email);
+                    updated = true;
+                }
+                
+                if (updated) {
+                    customerRepository.save(customer);
+                }
+                return customer;
+            }
+        }
+        
         // Try to find by phone first
         if (phone != null && !phone.isEmpty()) {
             Optional<Customer> existingByPhone = customerRepository.findByPhone(phone);
             if (existingByPhone.isPresent()) {
-                // Update email if provided and different
+                // Update email and profileId if provided and different
                 Customer customer = existingByPhone.get();
+                boolean updated = false;
+                
                 if (email != null && !email.isEmpty() && 
                     (customer.getEmail() == null || !customer.getEmail().equals(email))) {
                     // Check if email is already taken
                     if (!customerRepository.existsByEmail(email)) {
                         customer.setEmail(email);
-                        customerRepository.save(customer);
+                        updated = true;
                     }
+                }
+                
+                if (profileId != null && !profileId.isEmpty() && customer.getProfileId() == null) {
+                    customer.setProfileId(profileId);
+                    updated = true;
+                }
+                
+                if (updated) {
+                    customerRepository.save(customer);
                 }
                 return customer;
             }
@@ -229,11 +291,22 @@ public class TestDriveService {
         if (email != null && !email.isEmpty()) {
             Optional<Customer> existingByEmail = customerRepository.findByEmail(email);
             if (existingByEmail.isPresent()) {
-                // Update phone if provided and different
+                // Update phone and profileId if provided and different
                 Customer customer = existingByEmail.get();
+                boolean updated = false;
+                
                 if (phone != null && !phone.isEmpty() && 
                     (customer.getPhone() == null || !customer.getPhone().equals(phone))) {
                     customer.setPhone(phone);
+                    updated = true;
+                }
+                
+                if (profileId != null && !profileId.isEmpty() && customer.getProfileId() == null) {
+                    customer.setProfileId(profileId);
+                    updated = true;
+                }
+                
+                if (updated) {
                     customerRepository.save(customer);
                 }
                 return customer;
@@ -248,6 +321,7 @@ public class TestDriveService {
         newCustomer.setLastName(nameParts.length > 1 ? nameParts[1] : "");
         newCustomer.setPhone(phone);
         newCustomer.setEmail(email);
+        newCustomer.setProfileId(profileId); // Set profileId if user is logged in
         newCustomer.setCustomerType(CustomerType.INDIVIDUAL);
         newCustomer.setStatus(CustomerStatus.NEW);
         
@@ -289,6 +363,9 @@ public class TestDriveService {
         // Cập nhật các trường
         if (request.getAppointmentDate() != null) {
             appointment.setAppointmentDate(request.getAppointmentDate());
+        }
+        if (request.getAppointmentTime() != null) {
+            appointment.setAppointmentTime(request.getAppointmentTime());
         }
         if (request.getDurationMinutes() != null) {
             appointment.setDurationMinutes(request.getDurationMinutes());
@@ -616,6 +693,7 @@ public class TestDriveService {
             .staffId(appointment.getStaffId())
             .staffName(appointment.getStaffName())
             .appointmentDate(appointment.getAppointmentDate())
+            .appointmentTime(appointment.getAppointmentTime())
             .durationMinutes(appointment.getDurationMinutes())
             .endTime(appointment.getEndTime())
             .testDriveLocation(appointment.getTestDriveLocation())

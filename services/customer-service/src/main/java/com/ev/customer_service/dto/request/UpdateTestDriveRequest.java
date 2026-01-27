@@ -26,6 +26,8 @@ public class UpdateTestDriveRequest {
     @Future(message = "Appointment date must be in the future")
     private LocalDateTime appointmentDate;
     
+    private String appointmentTime; // Time slot: "09:00 - 11:00"
+    
     @Min(value = 15, message = "Duration must be at least 15 minutes")
     private Integer durationMinutes;
     

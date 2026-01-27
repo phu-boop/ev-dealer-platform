@@ -57,6 +57,9 @@ public class TestDriveAppointment {
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDateTime appointmentDate;
+    
+    @Column(name = "appointment_time", length = 50)
+    private String appointmentTime; // Time slot: "09:00 - 11:00"
 
     @Column(name = "duration_minutes")
     private Integer durationMinutes;

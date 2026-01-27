@@ -49,7 +49,7 @@ const testDriveService = {
    */
   getMyAppointments: async (customerId) => {
     try {
-      const response = await api.get(`/customers/api/test-drives/customer/${customerId}`);
+      const response = await api.get(`/customers/api/test-drives/profile/${customerId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching customer appointments:', error);

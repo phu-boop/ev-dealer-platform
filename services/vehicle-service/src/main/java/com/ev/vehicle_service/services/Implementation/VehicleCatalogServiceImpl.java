@@ -307,6 +307,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newVariant.setWarrantyYears(request.getWarrantyYears());
         newVariant.setDescription(request.getDescription());
         newVariant.setColorImages(request.getColorImages());
+        newVariant.setExteriorImages(request.getExteriorImages());
+        newVariant.setInteriorImages(request.getInteriorImages());
 
         // Thiết lập mối quan hệ với mẫu xe cha
         newVariant.setVehicleModel(parentModel);
@@ -422,6 +424,10 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             variant.setDescription(request.getDescription());
         if (request.getColorImages() != null)
             variant.setColorImages(request.getColorImages());
+        if (request.getExteriorImages() != null)
+            variant.setExteriorImages(request.getExteriorImages());
+        if (request.getInteriorImages() != null)
+            variant.setInteriorImages(request.getInteriorImages());
 
         VehicleVariant savedVariant = variantRepository.save(variant);
 
@@ -842,6 +848,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setWarrantyYears(variant.getWarrantyYears());
         dto.setDescription(variant.getDescription());
         dto.setColorImages(variant.getColorImages());
+        dto.setExteriorImages(variant.getExteriorImages());
+        dto.setInteriorImages(variant.getInteriorImages());
 
         // Map các tính năng (features), logic này giữ nguyên
         if (variant.getFeatures() != null) {

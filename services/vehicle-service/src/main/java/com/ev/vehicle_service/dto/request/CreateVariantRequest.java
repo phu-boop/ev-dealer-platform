@@ -47,6 +47,8 @@ public class CreateVariantRequest {
     private Integer warrantyYears;
     private String description;
     private String colorImages; // JSON string for color images
+    private String exteriorImages; // JSON array of exterior image URLs
+    private String interiorImages; // JSON array of interior image URLs
 
     @Valid
     private List<FeatureRequest> features;
