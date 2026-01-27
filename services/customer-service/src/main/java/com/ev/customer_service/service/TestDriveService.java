@@ -43,7 +43,7 @@ public class TestDriveService {
     private final ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
-    public List<TestDriveResponse> getAppointmentsByDealerId(Long dealerId) {
+    public List<TestDriveResponse> getAppointmentsByDealerId(String dealerId) {
         return appointmentRepository.findByDealerId(dealerId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -547,10 +547,16 @@ public class TestDriveService {
     }
 
     @Transactional(readOnly = true)
-    public List<TestDriveCalendarResponse> getCalendarView(Long dealerId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<TestDriveAppointment> appointments = appointmentRepository.findByDealerIdAndDateRange(
-            dealerId, startDate, endDate
-        );
+    public List<TestDriveCalendarResponse> getCalendarView(String dealerId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<TestDriveAppointment> appointments;
+        
+        if (dealerId == null || dealerId.isEmpty()) {
+            // Admin viewing all dealers' appointments
+            appointments = appointmentRepository.findByDateRange(startDate, endDate);
+        } else {
+            // Dealer staff/manager viewing their dealer's appointments
+            appointments = appointmentRepository.findByDealerIdAndDateRange(dealerId, startDate, endDate);
+        }
 
         return appointments.stream()
                 .map(this::mapToCalendarResponse)
@@ -558,10 +564,16 @@ public class TestDriveService {
     }
 
     @Transactional(readOnly = true)
-    public TestDriveStatisticsResponse getStatistics(Long dealerId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<TestDriveAppointment> appointments = appointmentRepository.findByDealerIdAndDateRange(
-            dealerId, startDate, endDate
-        );
+    public TestDriveStatisticsResponse getStatistics(String dealerId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<TestDriveAppointment> appointments;
+        
+        if (dealerId == null || dealerId.isEmpty()) {
+            // Admin viewing all dealers' statistics
+            appointments = appointmentRepository.findByDateRange(startDate, endDate);
+        } else {
+            // Dealer manager viewing their dealer's statistics
+            appointments = appointmentRepository.findByDealerIdAndDateRange(dealerId, startDate, endDate);
+        }
 
         long total = appointments.size();
         long scheduled = appointments.stream().filter(a -> "SCHEDULED".equals(a.getStatus())).count();
@@ -778,7 +790,7 @@ public class TestDriveService {
      * Lấy danh sách appointments đã có feedback (để thống kê)
      */
     @Transactional(readOnly = true)
-    public List<TestDriveResponse> getAppointmentsWithFeedback(Long dealerId) {
+    public List<TestDriveResponse> getAppointmentsWithFeedback(String dealerId) {
         return appointmentRepository.findByDealerId(dealerId).stream()
                 .filter(apt -> apt.getFeedbackRating() != null)
                 .map(this::mapToResponse)

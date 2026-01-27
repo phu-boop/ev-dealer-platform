@@ -16,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TestDriveFilterRequest {
 
-    private Long dealerId;
+    private String dealerId; // Binary UUID as hex string
     
     private Long customerId;
     
