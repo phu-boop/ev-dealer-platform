@@ -14,7 +14,7 @@ public class TestDriveBookingRequest {
     private Long customerId;
     
     @NotNull(message = "Dealer ID is required")
-    private Long dealerId;
+    private String dealerId; // Binary UUID as hex string
     
     @NotNull(message = "Model ID is required")
     private Long modelId;

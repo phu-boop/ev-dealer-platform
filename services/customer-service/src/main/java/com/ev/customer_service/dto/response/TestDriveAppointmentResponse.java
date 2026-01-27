@@ -13,7 +13,7 @@ public class TestDriveAppointmentResponse {
     private String customerEmail;
     private String customerPhone;
     
-    private Long dealerId;
+    private String dealerId; // Binary UUID as hex string
     private Long modelId;
     private Long variantId;
     

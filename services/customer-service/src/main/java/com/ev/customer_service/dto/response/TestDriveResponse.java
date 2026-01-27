@@ -18,7 +18,7 @@ public class TestDriveResponse {
     private String customerName;
     private String customerPhone;
     private String customerEmail;
-    private Long dealerId;
+    private String dealerId; // Binary UUID as hex string
     private String dealerName;
     private Long modelId;
     private String modelName;
