@@ -17,8 +17,7 @@ import {
   Wrench,
   Calendar,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { getCartItemCount } from "../services/cartService";
+
 import { useComparison } from "../utils/useComparison";
 
 export default function Header() {
@@ -30,26 +29,7 @@ export default function Header() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const { count: compareCount } = useComparison();
 
-  // Fetch cart item count - only if user is authenticated AND has a valid memberId
-  const { data: cartCount } = useQuery({
-    queryKey: ['cart-count', memberId],
-    queryFn: async () => {
-      // Double check memberId exists before making API call
-      if (!memberId) {
-        console.warn("[Cart] No memberId available, skipping cart count fetch");
-        return 0;
-      }
-      try {
-        const response = await getCartItemCount(memberId);
-        return response.data || 0;
-      } catch (error) {
-        console.error("Error fetching cart count:", error);
-        return 0;
-      }
-    },
-    enabled: isAuthenticated() && !!memberId, // Only fetch when both authenticated and has valid memberId
-    refetchInterval: 30000,
-  });
+
 
   const isAdmin = hasRole(['ADMIN', 'EVM_STAFF', 'DEALER_MANAGER']);
 
@@ -136,19 +116,7 @@ export default function Header() {
                   )}
                 </Link>
 
-                {/* Cart Icon */}
-                <Link
-                  to="/cart"
-                  className="relative p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-                  title="Giỏ hàng"
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                      {cartCount > 99 ? '99+' : cartCount}
-                    </span>
-                  )}
-                </Link>
+
 
                 {/* Admin Link */}
                 {isAdmin && (
@@ -252,14 +220,7 @@ export default function Header() {
                       <Wrench className="w-4 h-4" />
                       Cấu hình xe
                     </Link>
-                    <Link
-                      to="/chatbot"
-                      onClick={() => setIsMoreMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      Tư vấn AI
-                    </Link>
+
                     <Link
                       to="/financing"
                       onClick={() => setIsMoreMenuOpen(false)}
@@ -374,14 +335,7 @@ export default function Header() {
                 <Wrench className="w-4 h-4" />
                 Cấu hình xe
               </Link>
-              <Link
-                to="/chatbot"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-              >
-                <MessageSquare className="w-4 h-4" />
-                Tư vấn AI
-              </Link>
+
               <Link
                 to="/financing"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -410,19 +364,7 @@ export default function Header() {
               {isAuthenticated() ? (
                 <>
                   <div className="border-t border-gray-200 my-2"></div>
-                  <Link
-                    to="/cart"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <ShoppingBag className="w-4 h-4" />
-                    Giỏ hàng
-                    {cartCount > 0 && (
-                      <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {cartCount > 99 ? '99+' : cartCount}
-                      </span>
-                    )}
-                  </Link>
+
                   <Link
                     to="/orders"
                     onClick={() => setIsMobileMenuOpen(false)}

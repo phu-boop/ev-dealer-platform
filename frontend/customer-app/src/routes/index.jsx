@@ -18,9 +18,7 @@ import TCOCalculator from "../pages/TCOCalculator";
 import FinancingCalculator from "../pages/FinancingCalculator";
 import ProductComparison from "../pages/ProductComparison";
 import ChargingStationMap from "../pages/ChargingStationMap";
-import AIChatbot from "../pages/AIChatbot";
 import Payment from "../pages/Payment";
-import OrderTracking from "../pages/OrderTracking";
 import VehiclesPage from "../pages/VehiclesPage";
 import VehicleDetailPage from "../pages/VehicleDetailPage";
 import CartPage from "../pages/CartPage";
@@ -33,7 +31,6 @@ import MyTestDrivesPage from "../pages/MyTestDrivesPage";
 import TestDriveDetailPage from "../pages/TestDriveDetailPage";
 import MyReviewsPage from "../pages/MyReviewsPage";
 import CompareVehiclesPage from "../pages/CompareVehiclesPage";
-import ChargingStationsPage from "../pages/ChargingStationsPage";
 import AdminDashboard from "../pages/admin/Dashboard";
 import AdminVehiclesPage from "../pages/admin/VehiclesPage";
 import AdminCategoriesPage from "../pages/admin/CategoriesPage";
@@ -64,10 +61,7 @@ export default function AppRoutes() {
           <Route path="financing" element={<FinancingCalculator />} />
           <Route path="compare" element={<ProductComparison />} />
           <Route path="charging-stations" element={<ChargingStationMap />} />
-          <Route path="chatbot" element={<AIChatbot />} />
           <Route path="payment" element={<Payment />} />
-          <Route path="orders/:orderId" element={<OrderTracking />} />
-          <Route path="orders" element={<OrderTracking />} />
           <Route path="vehicles" element={<VehiclesPage />} />
           <Route path="vehicles/:variantId" element={<VehicleDetailPage />} />
           <Route path="compare" element={<CompareVehiclesPage />} />
