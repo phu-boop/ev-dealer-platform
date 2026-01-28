@@ -68,15 +68,17 @@ public class CustomerPaymentController {
          * API 2: Xác nhận thanh toán (thủ công)
          */
         @PostMapping("/transactions/{transactionId}/confirm")
-        @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER')")
+        @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER', 'ADMIN')")
         public ResponseEntity<TransactionResponse> confirmManualPayment(
                         @PathVariable UUID transactionId,
                         @RequestBody(required = false) java.util.Map<String, String> request,
                         @AuthenticationPrincipal UserPrincipal principal) {
 
                 String notes = request != null ? request.get("notes") : null;
+                String action = request != null ? request.get("action") : "APPROVE"; // Default to APPROVE
+
                 TransactionResponse response = customerPaymentService.confirmManualPayment(
-                                transactionId, principal.getEmail(), principal.getProfileId(), notes);
+                                transactionId, principal.getEmail(), principal.getProfileId(), notes, action);
                 return ResponseEntity.ok(response);
         }
 

@@ -29,11 +29,11 @@ export const getPaymentStatistics = async (startDate, endDate) => {
 };
 
 // Xác nhận thanh toán manual (từ dealer/admin)
-export const confirmManualPayment = async (transactionId, notes) => {
+export const confirmManualPayment = async (transactionId, notes, action = 'APPROVE') => {
     try {
         const response = await api.post(
             `/payments/api/v1/payments/customer/transactions/${transactionId}/confirm`,
-            { notes }
+            { notes, action }
         );
         return response.data;
     } catch (error) {

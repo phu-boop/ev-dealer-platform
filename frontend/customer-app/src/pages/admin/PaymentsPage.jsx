@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import PaymentRecordsList from '../../components/admin/Payment/PaymentRecordsList';
 import PaymentStatistics from '../../components/admin/Payment/PaymentStatistics';
+import PaymentApprovalList from '../../components/admin/Payment/PaymentApprovalList';
 
 export default function AdminPaymentsPage() {
   const [activeTab, setActiveTab] = useState('records');
 
   const tabs = [
     { id: 'records', label: 'Danh sách thanh toán' },
-    { id: 'statistics', label: 'Thống kê & Báo cáo' }
+    { id: 'statistics', label: 'Thống kê & Báo cáo' },
+    { id: 'approvals', label: 'Duyệt yêu cầu' }
   ];
 
   return (
@@ -26,8 +28,8 @@ export default function AdminPaymentsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
             >
               {tab.label}
@@ -40,6 +42,7 @@ export default function AdminPaymentsPage() {
       <div>
         {activeTab === 'records' && <PaymentRecordsList />}
         {activeTab === 'statistics' && <PaymentStatistics />}
+        {activeTab === 'approvals' && <PaymentApprovalList />}
       </div>
     </div>
   );

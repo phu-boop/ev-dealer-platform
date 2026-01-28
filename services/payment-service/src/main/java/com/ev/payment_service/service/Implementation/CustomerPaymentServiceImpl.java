@@ -626,9 +626,9 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     @Override
     @Transactional
     public TransactionResponse confirmManualPayment(UUID transactionId, String userEmail, UUID userProfileId,
-            String notes) {
-        log.info("Confirming manual payment - TransactionId: {}, UserEmail: {}, Notes: {}", transactionId, userEmail,
-                notes);
+            String notes, String action) {
+        log.info("Processing manual payment - TransactionId: {}, Action: {}, UserEmail: {}, Notes: {}",
+                transactionId, action, userEmail, notes);
 
         // 1. Tìm giao dịch
         Transaction transaction = transactionRepository.findById(transactionId)
@@ -644,7 +644,20 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             throw new AppException(ErrorCode.INVALID_STATE);
         }
 
-        // 3. Kiểm tra PaymentRecord không được đã thanh toán đầy đủ
+        // HANDLE REJECT
+        if ("REJECT".equalsIgnoreCase(action)) {
+            transaction.setStatus("FAILED");
+            if (notes != null && !notes.isBlank()) {
+                transaction.setNotes(notes);
+            }
+            Transaction savedTransaction = transactionRepository.save(transaction);
+            log.info("Transaction REJECTED/FAILED - TransactionId: {}", transactionId);
+
+            return transactionMapper.toResponse(savedTransaction);
+        }
+
+        // HANDLE APPROVE
+        // 3. Kiểm tra PaymentRecord không được đã thanh toán đầy đủ cho action APPROVE
         PaymentRecord record = transaction.getPaymentRecord();
         if ("PAID".equals(record.getStatus())) {
             log.error("PaymentRecord is already PAID - RecordId: {}, OrderId: {}",
