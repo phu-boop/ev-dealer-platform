@@ -872,28 +872,40 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         }
 
         List<PaymentRecord> filteredRecords = recordStream.collect(java.util.stream.Collectors.toList());
+        log.info("Calculating statistics for {} filtered payment records", filteredRecords.size());
+
+        filteredRecords.forEach(r -> {
+            log.info("Record ID: {}, Status: '{}' (len={}), TotalAmount: {}",
+                    r.getRecordId(),
+                    r.getStatus(),
+                    r.getStatus() != null ? r.getStatus().length() : 0,
+                    r.getTotalAmount());
+        });
 
         // Tính toán thống kê
+        // Tính toán thống kê với null-check và ignore case
         long totalOrders = filteredRecords.size();
 
         long completedOrders = filteredRecords.stream()
-                .filter(r -> "PAID".equals(r.getStatus()))
+                .filter(r -> r.getStatus() != null && "PAID".equalsIgnoreCase(r.getStatus().trim()))
                 .count();
 
         long pendingOrders = filteredRecords.stream()
-                .filter(r -> "PENDING_DEPOSIT".equals(r.getStatus()) || "PENDING".equals(r.getStatus()))
+                .filter(r -> r.getStatus() != null &&
+                        ("PENDING_DEPOSIT".equalsIgnoreCase(r.getStatus().trim()) ||
+                                "PENDING".equalsIgnoreCase(r.getStatus().trim())))
                 .count();
 
         long failedOrders = filteredRecords.stream()
-                .filter(r -> "FAILED".equals(r.getStatus()))
+                .filter(r -> r.getStatus() != null && "FAILED".equalsIgnoreCase(r.getStatus().trim()))
                 .count();
 
         long cancelledOrders = filteredRecords.stream()
-                .filter(r -> "CANCELLED".equals(r.getStatus()))
+                .filter(r -> r.getStatus() != null && "CANCELLED".equalsIgnoreCase(r.getStatus().trim()))
                 .count();
 
         BigDecimal totalRevenue = filteredRecords.stream()
-                .filter(r -> "PAID".equals(r.getStatus()))
+                .filter(r -> r.getStatus() != null && "PAID".equalsIgnoreCase(r.getStatus().trim()))
                 .map(PaymentRecord::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -902,14 +914,17 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal pendingAmount = filteredRecords.stream()
-                .filter(r -> !"PAID".equals(r.getStatus()) && !"CANCELLED".equals(r.getStatus()))
+                .filter(r -> r.getStatus() != null &&
+                        !"PAID".equalsIgnoreCase(r.getStatus().trim()) &&
+                        !"CANCELLED".equalsIgnoreCase(r.getStatus().trim()))
                 .map(PaymentRecord::getRemainingAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Thống kê theo status
         Map<String, Long> ordersByStatus = filteredRecords.stream()
+                .filter(r -> r.getStatus() != null)
                 .collect(java.util.stream.Collectors.groupingBy(
-                        PaymentRecord::getStatus,
+                        r -> r.getStatus().trim().toUpperCase(),
                         java.util.stream.Collectors.counting()));
 
         // Thống kê theo payment method (cần join với transactions)
@@ -918,8 +933,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         for (PaymentRecord record : filteredRecords) {
             List<Transaction> transactions = transactionRepository.findByPaymentRecord_OrderId(record.getOrderId());
 
+            if (transactions == null || transactions.isEmpty())
+                continue;
+
             for (Transaction transaction : transactions) {
-                if ("SUCCESS".equals(transaction.getStatus())) {
+                if ("SUCCESS".equalsIgnoreCase(transaction.getStatus())) {
                     String methodName = transaction.getPaymentMethod() != null
                             ? transaction.getPaymentMethod().getMethodName()
                             : "UNKNOWN";
@@ -933,6 +951,9 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         double completionRate = totalOrders > 0
                 ? (completedOrders * 100.0 / totalOrders)
                 : 0.0;
+
+        // Log results
+        log.info("Statistics Calculated: Total Revenue={}, Orders={}", totalRevenue, totalOrders);
 
         return PaymentStatisticsResponse.builder()
                 .totalRevenue(totalRevenue)

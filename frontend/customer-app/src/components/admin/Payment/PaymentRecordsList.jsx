@@ -52,12 +52,20 @@ export default function PaymentRecordsList() {
                 sort: 'createdAt,desc'
             };
 
-            // Remove null/empty values
+            // Remove null/empty values and format dates
             Object.keys(params).forEach(key => {
                 if (params[key] === null || params[key] === '') {
                     delete params[key];
                 }
             });
+
+            // Format dates for backend (LocalDateTime)
+            if (params.startDate) {
+                params.startDate = `${params.startDate}T00:00:00`;
+            }
+            if (params.endDate) {
+                params.endDate = `${params.endDate}T23:59:59`;
+            }
 
             const response = await filterPaymentRecords(params);
             console.log('Payment records response:', response); // Debug log

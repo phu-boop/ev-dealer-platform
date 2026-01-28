@@ -17,8 +17,11 @@ export default function PaymentStatistics() {
     const loadStatistics = async () => {
         try {
             setLoading(true);
-            const response = await getPaymentStatistics(dateRange.startDate, dateRange.endDate);
-            setStats(response.data);
+            const startDate = dateRange.startDate ? `${dateRange.startDate}T00:00:00` : null;
+            const endDate = dateRange.endDate ? `${dateRange.endDate}T23:59:59` : null;
+
+            const data = await getPaymentStatistics(startDate, endDate);
+            setStats(data);
         } catch (error) {
             console.error('Error loading statistics:', error);
             setStats(null);
