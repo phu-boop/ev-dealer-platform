@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTestDriveById } from '../../../services/testDriveAdminService';
+import Loading from '../../../components/ui/Loading';
 
 const STATUS_COLORS = {
   SCHEDULED: 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -102,7 +103,9 @@ export default function TestDriveDetail({ appointmentId, onClose }) {
         {/* Content */}
         <div className="p-6">
           {loading ? (
-            <div className="text-center py-12 text-gray-500">⏳ Đang tải...</div>
+            <div className="text-center py-12">
+              <Loading message="Đang tải..." />
+            </div>
           ) : appointment ? (
             <div className="space-y-6">
               {/* Status */}
@@ -121,15 +124,15 @@ export default function TestDriveDetail({ appointmentId, onClose }) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-600">Họ tên</label>
-                    <p className="mt-1 text-gray-900">{appointment.customer?.fullName || 'N/A'}</p>
+                    <p className="mt-1 text-gray-900">{appointment.customerName || 'N/A'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600">Số điện thoại</label>
-                    <p className="mt-1 text-gray-900">{appointment.customer?.phoneNumber || 'N/A'}</p>
+                    <p className="mt-1 text-gray-900">{appointment.customerPhone || 'N/A'}</p>
                   </div>
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-600">Email</label>
-                    <p className="mt-1 text-gray-900">{appointment.customer?.email || 'N/A'}</p>
+                    <p className="mt-1 text-gray-900">{appointment.customerEmail || 'N/A'}</p>
                   </div>
                 </div>
               </div>

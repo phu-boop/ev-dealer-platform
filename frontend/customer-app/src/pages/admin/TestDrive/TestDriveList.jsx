@@ -21,7 +21,7 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     // Admin xem tất cả dealers, không filter theo dealerId
-    status: '',
+    statuses: [], // Changed from status string to statuses array
     startDate: null,
     endDate: null
   });
@@ -34,7 +34,16 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
   const loadAppointments = async () => {
     try {
       setLoading(true);
-      const response = await filterTestDrives(filters);
+
+      // Convert date strings to ISO datetime format for backend LocalDateTime
+      const filterRequest = {
+        ...filters,
+        statuses: filters.statuses.length > 0 ? filters.statuses : null,
+        startDate: filters.startDate ? `${filters.startDate}T00:00:00` : null,
+        endDate: filters.endDate ? `${filters.endDate}T23:59:59` : null
+      };
+
+      const response = await filterTestDrives(filterRequest);
       setAppointments(response.data || []);
     } catch (error) {
       console.error('Error loading appointments:', error);
@@ -46,7 +55,7 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
 
   const handleConfirm = async (id) => {
     if (!window.confirm('Xác nhận lịch hẹn này?')) return;
-    
+
     try {
       await confirmTestDrive(id);
       loadAppointments();
@@ -85,8 +94,8 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
-      apt.customer?.fullName?.toLowerCase().includes(search) ||
-      apt.customer?.phoneNumber?.includes(search) ||
+      apt.customerName?.toLowerCase().includes(search) ||
+      apt.customerPhone?.includes(search) ||
       apt.vehicleModelName?.toLowerCase().includes(search)
     );
   });
@@ -132,10 +141,13 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-          
+
           <select
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+            value={filters.statuses.length > 0 ? filters.statuses[0] : ''}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFilters({ ...filters, statuses: value ? [value] : [] });
+            }}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">Tất cả trạng thái</option>
@@ -150,7 +162,7 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
             onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-          
+
           <input
             type="date"
             onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
@@ -193,8 +205,8 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
                     <tr key={apt.appointmentId} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-mono">#{apt.appointmentId}</td>
                       <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900">{apt.customer?.fullName || 'N/A'}</div>
-                        <div className="text-xs text-gray-500">{apt.customer?.phoneNumber || ''}</div>
+                        <div className="text-sm font-medium text-gray-900">{apt.customerName || 'N/A'}</div>
+                        <div className="text-xs text-gray-500">{apt.customerPhone || ''}</div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm font-medium text-gray-900">{apt.vehicleModelName}</div>
@@ -222,7 +234,7 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
                           >
                             👁️
                           </button>
-                          
+
                           {apt.status === 'SCHEDULED' && (
                             <button
                               onClick={() => handleConfirm(apt.appointmentId)}
@@ -232,7 +244,7 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
                               ✅
                             </button>
                           )}
-                          
+
                           {(apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED') && (
                             <button
                               onClick={() => handleCancel(apt.appointmentId)}
@@ -242,7 +254,7 @@ export default function TestDriveList({ onViewDetail, onOpenCalendar }) {
                               ❌
                             </button>
                           )}
-                          
+
                           {apt.status === 'CONFIRMED' && (
                             <button
                               onClick={() => handleComplete(apt.appointmentId)}
