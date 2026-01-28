@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getStatistics } from '../../../services/testDriveAdminService';
+import Loading from '../../../components/ui/Loading';
 
 export default function TestDriveStatistics({ onClose }) {
   const [stats, setStats] = useState(null);
@@ -120,7 +121,9 @@ export default function TestDriveStatistics({ onClose }) {
         {/* Content */}
         <div className="p-6">
           {loading ? (
-            <div className="text-center py-12 text-gray-500">⏳ Đang tải thống kê...</div>
+            <div className="text-center py-12">
+              <Loading message="Đang tải thống kê..." />
+            </div>
           ) : stats ? (
             <div className="space-y-6">
               {/* Overview Cards */}
