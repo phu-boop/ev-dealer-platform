@@ -51,17 +51,38 @@
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  line-clamp: 1;
 }
 
 .line-clamp-2 {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .Toastify__toast-container {
   z-index: 9999 !important;
 }
 
+/* Hiệu ứng nhịp đập cho User */
+@keyframes pulse-ring {
+  0% { transform: scale(0.33); opacity: 1; }
+  80%, 100% { transform: scale(1.5); opacity: 0; }
+}
+
+.user-pulse-ring::before {
+  content: '';
+  position: absolute;
+  left: -12px; top: -12px; /* Căn chỉnh tâm */
+  height: 64px; width: 64px;
+  border-radius: 50%;
+  background-color: rgba(59, 130, 246, 0.4); /* Màu xanh blue */
+  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  z-index: -1;
+}
+
+/* Shadow tĩnh cho các marker khác để tạo độ nổi */
+.marker-shadow-bottom {
+  filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.4));
+}
