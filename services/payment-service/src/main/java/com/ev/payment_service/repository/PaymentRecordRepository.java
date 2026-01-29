@@ -1,6 +1,7 @@
 package com.ev.payment_service.repository;
 
 import com.ev.payment_service.entity.PaymentRecord;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.List;
@@ -16,4 +17,10 @@ public interface PaymentRecordRepository extends JpaRepository<PaymentRecord, UU
 
     // Tìm các sổ thanh toán theo trạng thái (ví dụ: PENDING, OVERDUE)
     List<PaymentRecord> findByStatus(String status);
+    
+    // Tìm theo status với sorting
+    List<PaymentRecord> findByStatus(String status, Sort sort);
+    
+    // Tìm theo nhiều status
+    List<PaymentRecord> findByStatusIn(List<String> statuses, Sort sort);
 }

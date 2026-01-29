@@ -41,12 +41,32 @@ const PaymentResultPage = () => {
     // VNPay response code: 00 = thành công, khác = thất bại
     if (responseCode === '00' && transactionStatus === '00') {
       setPaymentStatus('success');
+      
+      // GỌI CALLBACK API để update PaymentRecord
+      callPaymentCallback();
     } else if (responseCode) {
       setPaymentStatus('failed');
     } else {
       setPaymentStatus('processing');
     }
   }, [searchParams]);
+
+  const callPaymentCallback = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/v1/payments/gateway/callback/vnpay-return?${searchParams.toString()}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Payment callback successful:', data);
+      } else {
+        console.error('Payment callback failed:', response.status);
+      }
+    } catch (error) {
+      console.error('Error calling payment callback:', error);
+    }
+  };
 
   const formatPayDate = (dateString) => {
     // Format: YYYYMMDDHHmmss -> DD/MM/YYYY HH:mm:ss
@@ -63,10 +83,7 @@ const PaymentResultPage = () => {
   };
 
   const formatAmount = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
+    return new Intl.NumberFormat('vi-VN').format(amount) + ' VNĐ';
   };
 
   const getErrorMessage = (code) => {
@@ -152,13 +169,13 @@ const PaymentResultPage = () => {
           <div className="space-y-3">
             {paymentData?.txnRef && (
               <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-600">Mã đơn hàng</span>
-                <span className="font-medium text-gray-900">{paymentData.txnRef}</span>
+                <span className="text-gray-600">Mã giao dịch thanh toán</span>
+                <span className="font-medium text-gray-900 text-sm">{paymentData.txnRef}</span>
               </div>
             )}
             {paymentData?.transactionNo && (
               <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-600">Mã giao dịch</span>
+                <span className="text-gray-600">Mã giao dịch VNPAY</span>
                 <span className="font-medium text-gray-900">{paymentData.transactionNo}</span>
               </div>
             )}
@@ -188,10 +205,10 @@ const PaymentResultPage = () => {
           {paymentStatus === 'success' ? (
             <>
               <Button
-                onClick={() => navigate('/orders')}
+                onClick={() => navigate('/')}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold"
               >
-                Xem đơn hàng của tôi
+                Tiếp tục mua sắm
               </Button>
               <Button
                 onClick={() => navigate('/')}
@@ -201,6 +218,17 @@ const PaymentResultPage = () => {
                 <ArrowLeft className="w-4 h-4" />
                 Về trang chủ
               </Button>
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800 mb-2">
+                  <strong>📌 Lưu ý quan trọng:</strong>
+                </p>
+                <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+                  <li>Đây là giao dịch <strong>đặt cọc xe</strong>, chưa phải đơn hàng chính thức</li>
+                  <li>Đơn hàng sẽ được tạo sau khi staff xử lý booking của bạn</li>
+                  <li>Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất để hoàn tất</li>
+                  <li className="text-red-600 font-medium">⚠️ Mã giao dịch trên không thể dùng để theo dõi đơn hàng</li>
+                </ul>
+              </div>
             </>
           ) : (
             <>

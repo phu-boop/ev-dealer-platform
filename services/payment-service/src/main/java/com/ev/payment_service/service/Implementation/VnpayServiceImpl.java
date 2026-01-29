@@ -58,8 +58,9 @@ public class VnpayServiceImpl implements IVnpayService {
     @Transactional
     public String initiateB2CPayment(VnpayInitiateRequest request, String ipAddr) {
         try {
-            log.info("Initiating B2C payment - Amount: {}, OrderInfo: {}", 
-                    request.getPaymentAmount(), request.getOrderInfo());
+            log.info("Initiating B2C payment - Amount: {}, OrderInfo: {}, CustomerId: {}, OrderId: {}", 
+                    request.getPaymentAmount(), request.getOrderInfo(), 
+                    request.getCustomerId(), request.getOrderId());
 
             // 1. Tìm hoặc tạo PaymentRecord (công nợ)
             PaymentRecord record = null;
@@ -209,10 +210,55 @@ public class VnpayServiceImpl implements IVnpayService {
     }
 
     /**
+     * Sanitize orderInfo để chỉ giữ ký tự ASCII an toàn
+     * Loại bỏ dấu tiếng Việt và ký tự đặc biệt để tránh lỗi encoding với VNPAY
+     */
+    private String sanitizeOrderInfo(String input) {
+        if (input == null) return "";
+        
+        // Map các ký tự có dấu sang không dấu
+        String[][] replacements = {
+            {"à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ", "a"},
+            {"è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ", "e"},
+            {"ì|í|ị|ỉ|ĩ", "i"},
+            {"ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ", "o"},
+            {"ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ", "u"},
+            {"ỳ|ý|ỵ|ỷ|ỹ", "y"},
+            {"đ", "d"},
+            {"À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ", "A"},
+            {"È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ", "E"},
+            {"Ì|Í|Ị|Ỉ|Ĩ", "I"},
+            {"Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ", "O"},
+            {"Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ", "U"},
+            {"Ỳ|Ý|Ỵ|Ỷ|Ỹ", "Y"},
+            {"Đ", "D"}
+        };
+        
+        String result = input;
+        for (String[] replacement : replacements) {
+            result = result.replaceAll(replacement[0], replacement[1]);
+        }
+        
+        // Chỉ giữ ký tự ASCII an toàn: chữ, số, space, dấu gạch ngang
+        result = result.replaceAll("[^a-zA-Z0-9 -]", "");
+        
+        // Giới hạn độ dài
+        if (result.length() > 255) {
+            result = result.substring(0, 255);
+        }
+        
+        log.info("Sanitized orderInfo: {} -> {}", input, result);
+        return result;
+    }
+
+    /**
      * Tạo URL thanh toán VNPAY theo đúng logic cũ từ PaymentService
      * @param orderInfo - Thông tin đơn hàng để hiển thị trên VNPay
      */
     private String createPaymentUrl(String transactionId, String orderInfo, Long amount, String returnUrl, String ipAddr) {
+        // Sanitize orderInfo - chỉ giữ ký tự ASCII an toàn để tránh lỗi encoding
+        String sanitizedOrderInfo = sanitizeOrderInfo(orderInfo);
+        
         Map<String, String> params = new HashMap<>();
         params.put("vnp_Version", vnpayConfig.getVnpVersion());
         params.put("vnp_Command", vnpayConfig.getVnpCommand());
@@ -220,7 +266,7 @@ public class VnpayServiceImpl implements IVnpayService {
         params.put("vnp_Amount", String.valueOf(amount * 100)); // nhân 100
         params.put("vnp_CurrCode", vnpayConfig.getVnpCurrCode());
         params.put("vnp_TxnRef", transactionId);
-        params.put("vnp_OrderInfo", orderInfo);
+        params.put("vnp_OrderInfo", sanitizedOrderInfo);
         params.put("vnp_OrderType", vnpayConfig.getVnpOrderType());
 
         // Sử dụng returnUrl từ request
@@ -233,21 +279,21 @@ public class VnpayServiceImpl implements IVnpayService {
         params.put("vnp_IpAddr", ipAddr);
         params.put("vnp_Locale", vnpayConfig.getVnpLocale());
 
-        // Tạo query string và hash data
-        String queryString = buildQueryString(params, false); // false = for URL
-        String hashData = buildQueryString(params, true);     // true = for hash
+        // Tạo hash data và query string (cả 2 đều encode giống nhau theo tài liệu VNPAY)
+        String hashData = buildQueryString(params, true);
 
         // Tạo vnp_SecureHash
         String vnp_SecureHash = hmacSHA512(vnpayConfig.getHashSecret(), hashData);
 
         // Tạo URL cuối cùng
-        String finalUrl = vnpayConfig.getVnpUrl() + "?" + queryString
+        String finalUrl = vnpayConfig.getVnpUrl() + "?" + hashData
                 + "&vnp_SecureHash=" + vnp_SecureHash;
 
         // Log debug
+        log.info(">>> VNPAY TmnCode: {}", vnpayConfig.getTmnCode());
+        log.info(">>> VNPAY HashSecret: {}", vnpayConfig.getHashSecret());
         log.info(">>> VNPAY Params: {}", params);
         log.info(">>> VNPAY Hash Data String: {}", hashData);
-        log.info(">>> VNPAY Query String: {}", queryString);
         log.info(">>> VNPAY Generated vnp_SecureHash: {}", vnp_SecureHash);
         log.info(">>> VNPAY Client IP: {}", ipAddr);
         log.info(">>> VNPAY Return URL: {}", returnUrlToUse);
@@ -256,7 +302,7 @@ public class VnpayServiceImpl implements IVnpayService {
     }
 
     /**
-     * Xây dựng query string - Copy nguyên từ PaymentService.java
+     * Xây dựng query string theo đúng tài liệu VNPAY
      * @param forHash: true = cho hash data, false = cho URL
      */
     private String buildQueryString(Map<String, String> params, boolean forHash) {
@@ -271,17 +317,10 @@ public class VnpayServiceImpl implements IVnpayService {
                     sb.append("&");
                 }
 
-                if (forHash) {
-                    // Cho hash data: chỉ encode vnp_ReturnUrl
-                    if ("vnp_ReturnUrl".equals(key)) {
-                        sb.append(key).append("=").append(URLEncoder.encode(value, StandardCharsets.UTF_8));
-                    } else {
-                        sb.append(key).append("=").append(value);
-                    }
-                } else {
-                    // Cho URL: encode tất cả values
-                    sb.append(key).append("=").append(URLEncoder.encode(value, StandardCharsets.UTF_8));
-                }
+                // Theo tài liệu VNPAY: cả hash data và URL đều encode key và value
+                sb.append(URLEncoder.encode(key, StandardCharsets.UTF_8))
+                  .append("=")
+                  .append(URLEncoder.encode(value, StandardCharsets.UTF_8));
             }
         }
         return sb.toString();
@@ -459,18 +498,51 @@ public class VnpayServiceImpl implements IVnpayService {
         boolean isPaymentSuccess = "00".equals(responseCode) && "00".equals(transactionStatus);
 
         if (isPaymentSuccess) {
-            if (!"PENDING".equals(transaction.getStatus())) {
-                transaction.setStatus("PENDING");
+            // Cập nhật transaction
+            transaction.setStatus("SUCCESS");
+            transaction.setGatewayTransactionId(vnpTransactionNo);
+            transactionRepository.save(transaction);
+            
+            log.info("VNPAY Return callback - Customer payment successful - TransactionId: {}, VNPAY TransactionNo: {}",
+                    transactionId, vnpTransactionNo);
+
+            // Cập nhật PaymentRecord (giống IPN callback)
+            try {
+                PaymentRecord paymentRecord = transaction.getPaymentRecord();
+                if (paymentRecord != null) {
+                    BigDecimal currentPaid = paymentRecord.getAmountPaid() != null ? paymentRecord.getAmountPaid() : BigDecimal.ZERO;
+                    BigDecimal currentRemaining = paymentRecord.getRemainingAmount() != null
+                            ? paymentRecord.getRemainingAmount()
+                            : paymentRecord.getTotalAmount().subtract(currentPaid);
+
+                    BigDecimal newPaid = currentPaid.add(transaction.getAmount());
+                    BigDecimal newRemaining = currentRemaining.subtract(transaction.getAmount());
+
+                    paymentRecord.setAmountPaid(newPaid);
+                    paymentRecord.setRemainingAmount(newRemaining);
+
+                    if (newRemaining.compareTo(BigDecimal.ZERO) <= 0) {
+                        paymentRecord.setStatus("PAID");
+                    } else if (newPaid.compareTo(BigDecimal.ZERO) > 0) {
+                        paymentRecord.setStatus("PARTIALLY_PAID");
+                    }
+
+                    paymentRecordRepository.save(paymentRecord);
+                    log.info("VNPAY Return callback - PaymentRecord updated - RecordId: {}, AmountPaid: {}, Status: {}",
+                            paymentRecord.getRecordId(), newPaid, paymentRecord.getStatus());
+                }
+            } catch (Exception e) {
+                log.error("VNPAY Return callback - Error updating PaymentRecord - TransactionId: {}, Error: {}",
+                        transactionId, e.getMessage(), e);
             }
-            log.info("VNPAY Return callback - Customer payment pending confirmation - TransactionId: {}", transactionId);
         } else {
             transaction.setStatus("FAILED");
+            transaction.setGatewayTransactionId(vnpTransactionNo);
+            transactionRepository.save(transaction);
             log.warn("VNPAY Return callback - Customer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
                     transactionId, responseCode, transactionStatus);
         }
 
-        transaction.setGatewayTransactionId(vnpTransactionNo);
-        transactionRepository.save(transaction);
         return transactionId;
     }
 
