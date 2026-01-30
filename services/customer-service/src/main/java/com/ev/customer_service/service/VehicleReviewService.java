@@ -141,6 +141,47 @@ public class VehicleReviewService {
         reviewRepository.save(review);
     }
 
+    @Transactional(readOnly = true)
+    public List<VehicleReviewResponse> getAllReviews() {
+        return reviewRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VehicleReviewResponse> getReviewsByStatus(String status) {
+        return reviewRepository.findByStatusOrderByCreatedAtAsc(status).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public VehicleReviewResponse rejectReview(Long reviewId, String rejectedBy) {
+        VehicleReview review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
+
+        review.setStatus("REJECTED");
+        review.setIsApproved(false);
+        review.setApprovedBy(rejectedBy);
+        review.setApprovedAt(LocalDateTime.now());
+
+        VehicleReview savedReview = reviewRepository.save(review);
+        return mapToResponse(savedReview);
+    }
+
+    @Transactional
+    public VehicleReviewResponse hideReview(Long reviewId, String hiddenBy) {
+        VehicleReview review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
+
+        review.setStatus("HIDDEN");
+        review.setApprovedBy(hiddenBy);
+        review.setApprovedAt(LocalDateTime.now());
+
+        VehicleReview savedReview = reviewRepository.save(review);
+        return mapToResponse(savedReview);
+    }
+
     private VehicleReviewResponse mapToResponse(VehicleReview review) {
         return VehicleReviewResponse.builder()
                 .reviewId(review.getReviewId())
