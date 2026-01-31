@@ -32,7 +32,7 @@ export default function BookingDepositsPage() {
           sort: 'createdAt,desc'
         }
       });
-      
+
       if (response.data?.code === "1000" || response.data?.data) {
         setDeposits(response.data.data || response.data.result || []);
       }
@@ -53,40 +53,8 @@ export default function BookingDepositsPage() {
     setDeposits(filtered);
   };
 
-  const handleCreateOrder = async (deposit) => {
-    if (!confirm('Xác nhận tạo đơn hàng chính thức từ booking deposit này?')) {
-      return;
-    }
-
-    try {
-      const response = await apiAdmin.post('/api/v1/sales-orders/admin/from-booking-deposit', {
-        recordId: deposit.recordId,
-        customerId: deposit.customerId,
-        totalAmount: deposit.totalAmount,
-        depositAmount: deposit.amountPaid
-      });
-
-      if (response.data?.code === "1000" || response.data?.data) {
-        const orderId = response.data.data?.orderId || response.data.result?.orderId;
-        toast.success('Tạo đơn hàng thành công!');
-        
-        // Cập nhật orderId vào payment_record
-        await apiAdmin.put(`/api/v1/payments/admin/payment-records/${deposit.recordId}`, {
-          orderId: orderId,
-          status: 'COMPLETED'
-        });
-
-        loadDeposits();
-        
-        // Chuyển đến trang chi tiết đơn hàng
-        setTimeout(() => {
-          navigate(`/admin/orders/${orderId}`);
-        }, 1000);
-      }
-    } catch (error) {
-      toast.error('Không thể tạo đơn hàng');
-      console.error('Error creating order:', error);
-    }
+  const handleCreateOrder = (deposit) => {
+    navigate(`/admin/orders/create-from-booking/${deposit.recordId}`);
   };
 
   const formatPrice = (price) => {
@@ -101,7 +69,7 @@ export default function BookingDepositsPage() {
   const getStatusBadge = (status) => {
     const statusInfo = statusOptions.find(s => s.value === status) || statusOptions[0];
     const Icon = statusInfo.icon || Clock;
-    
+
     return (
       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-${statusInfo.color}-100 text-${statusInfo.color}-700`}>
         <Icon className="w-3 h-3" />
@@ -299,7 +267,7 @@ export default function BookingDepositsPage() {
                           Tạo đơn hàng
                         </button>
                         <button
-                          onClick={() => {/* View details */}}
+                          onClick={() => navigate(`/admin/booking-deposits/${deposit.recordId}`)}
                           className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                         >
                           <Eye className="w-4 h-4" />

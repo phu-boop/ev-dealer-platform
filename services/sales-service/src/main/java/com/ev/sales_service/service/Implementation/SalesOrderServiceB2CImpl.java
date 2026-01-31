@@ -4,6 +4,7 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.sales_service.client.CustomerClient;
+import com.ev.sales_service.dto.request.CreateOrderFromDepositRequest;
 import com.ev.sales_service.dto.request.SalesOrderB2CCreateRequest;
 import com.ev.sales_service.dto.response.*;
 import com.ev.sales_service.entity.*;
@@ -21,13 +22,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 @Transactional
@@ -41,6 +46,16 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     private final SalesContractService salesContractService;
     private final EmailService emailService;
     private final CustomerClient customerClient;
+    private final RestTemplate restTemplate;
+
+    @org.springframework.beans.factory.annotation.Value("${payment-service.url}")
+    private String paymentServiceUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${dealer-service.url}")
+    private String dealerServiceUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${vehicle-service.uri}")
+    private String vehicleServiceUri;
 
     @Override
     public SalesOrderB2CResponse createSalesOrderFromQuotation(UUID quotationId) {
@@ -96,6 +111,211 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         log.info("Created B2C sales order from quotation: {}", quotationId);
 
         return mapToResponse(savedSalesOrder);
+    }
+
+    @Override
+    @Transactional
+    public SalesOrderB2CResponse createOrderFromBookingDeposit(CreateOrderFromDepositRequest request) {
+        log.info("Creating sales order from booking deposit - RecordId: {}", request.getRecordId());
+        log.info("Using Payment Service URL: {}", paymentServiceUrl);
+
+        // 1. Fetch PaymentRecord from payment-service
+        Map<String, Object> paymentRecord;
+        try {
+            String url = paymentServiceUrl + "/api/v1/payments/admin/payment-records/" + request.getRecordId();
+            log.info("Calling Payment Service: {}", url);
+
+            // Create headers
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            // Simulate an internal system call or use the current user's context if
+            // available
+            // For now, using a system-level admin identity for this reliable internal
+            // operation
+            headers.set("X-User-Email", "system@vms.com");
+            headers.set("X-User-Role", "ADMIN");
+            headers.set("X-User-ProfileId", UUID.randomUUID().toString()); // Dummy ID for system
+
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
+
+            org.springframework.http.ResponseEntity<Map> responseEntity = restTemplate.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    entity,
+                    Map.class);
+
+            Map<String, Object> response = responseEntity.getBody();
+
+            if (response == null || !"1000".equals(response.get("code"))) {
+                log.error("Payment service response invalid: {}", response);
+                throw new AppException(ErrorCode.DATA_NOT_FOUND);
+            }
+
+            paymentRecord = (Map<String, Object>) response.get("data");
+            if (paymentRecord == null) {
+                log.error("Payment record data is null");
+                throw new AppException(ErrorCode.DATA_NOT_FOUND);
+            }
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.error("HTTP Error calling Payment Service: {} - Body: {}", e.getStatusCode(),
+                    e.getResponseBodyAsString());
+            throw new AppException(ErrorCode.INTERNAL_ERROR);
+        } catch (Exception e) {
+            log.error("Failed to fetch payment record: {}", request.getRecordId(), e);
+            throw new AppException(ErrorCode.INTERNAL_ERROR);
+        }
+
+        // 2. Validate Payment Record Status
+        String status = (String) paymentRecord.get("status");
+        if (!"PENDING_DEPOSIT".equals(status) && !"PARTIALLY_PAID".equals(status)) {
+            log.error("Invalid payment record status: {}", status);
+            throw new AppException(ErrorCode.INVALID_STATE);
+        }
+
+        // 3. Parse Metadata to get Vehicle Info
+        String metadataJson = (String) paymentRecord.get("metadata");
+        if (metadataJson == null) {
+            log.error("Payment record metadata is null");
+            throw new AppException(ErrorCode.DATA_NOT_FOUND);
+        }
+
+        Map<String, Object> metadata;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            metadata = mapper.readValue(metadataJson, new TypeReference<Map<String, Object>>() {
+            });
+        } catch (Exception e) {
+            log.error("Failed to parse metadata: {}", metadataJson, e);
+            throw new AppException(ErrorCode.INVALID_JSON_FORMAT);
+        }
+
+        if (metadata.get("variantId") == null) {
+            log.error("Variant ID missing in metadata");
+            throw new AppException(ErrorCode.INVALID_DATA);
+        }
+        Long variantId = ((Number) metadata.get("variantId")).longValue();
+        String customerName = (String) paymentRecord.get("customerName");
+        String customerPhone = (String) paymentRecord.get("customerPhone");
+        String customerEmail = (String) paymentRecord.get("customerEmail");
+        // 4. Create Sales Order
+        SalesOrder salesOrder = new SalesOrder();
+        salesOrder.setOrderDate(LocalDateTime.now());
+        salesOrder.setOrderStatusB2C(OrderStatusB2C.PENDING);
+        salesOrder.setPaymentStatus(PaymentStatus.PARTIALLY_PAID); // Đã cọc
+        salesOrder.setTypeOder(SaleOderType.B2C);
+        salesOrder.setPaymentMethod((String) paymentRecord.get("paymentMethodName"));
+
+        // 3. Get Dealer ID
+        if (request.getDealerId() != null) {
+            salesOrder.setDealerId(request.getDealerId());
+        } else if (metadata.containsKey("dealerId") && metadata.get("dealerId") != null) {
+            try {
+                salesOrder.setDealerId(UUID.fromString(metadata.get("dealerId").toString()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid dealerId UUID in metadata: {}", metadata.get("dealerId"));
+            }
+        } else if (metadata.containsKey("showroomId") && metadata.get("showroomId") != null) {
+            // ... legacy check
+            try {
+                salesOrder.setDealerId(UUID.fromString(metadata.get("showroomId").toString()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid showroomId UUID in metadata: {}", metadata.get("showroomId"));
+            }
+        }
+
+        if (salesOrder.getDealerId() == null && metadata.get("showroom") != null) {
+            String showroom = metadata.get("showroom").toString();
+            try {
+                // Try to parse as UUID first
+                salesOrder.setDealerId(UUID.fromString(showroom));
+            } catch (Exception e) {
+                log.warn("Showroom value is not a UUID: {}. Trying to find by name.", showroom);
+                // Fallback: Look up dealer by name
+                try {
+                    UUID dealerId = findDealerByName(showroom);
+                    if (dealerId != null) {
+                        salesOrder.setDealerId(dealerId);
+                        log.info("Resolved dealerId {} for showroom name: {}", dealerId, showroom);
+                    }
+                } catch (Exception ex) {
+                    log.error("Failed to resolve dealer by name: {}", showroom, ex);
+                }
+            }
+        }
+
+        if (salesOrder.getDealerId() == null) {
+            log.error("Dealer ID not found in metadata. Available keys: {}", metadata.keySet());
+            throw new AppException(ErrorCode.INVALID_DATA);
+        }
+
+        // Map amounts
+        BigDecimal totalAmount = new BigDecimal(paymentRecord.get("totalAmount").toString());
+        BigDecimal depositAmount = request.getDepositAmount(); // Or from payment record if partial
+
+        salesOrder.setTotalAmount(totalAmount);
+        salesOrder.setDownPayment(depositAmount); // Tiền đã cọc
+
+        // Customer info specific to B2C guest/user
+        salesOrder.setCustomerName(customerName);
+        salesOrder.setCustomerPhone(customerPhone);
+        salesOrder.setCustomerEmail(customerEmail);
+        salesOrder.setShippingAddress((String) paymentRecord.get("shippingAddress"));
+
+        // ... (Guest customer handling if needed)
+
+        // 5. Create Order Item
+        OrderItem orderItem = new OrderItem();
+        orderItem.setVariantId(variantId);
+        orderItem.setVariantName((String) metadata.get("variantName"));
+        orderItem.setModelName((String) metadata.get("modelName"));
+
+        // Combine colors if needed
+        String color = (String) metadata.get("exteriorColor");
+        if (metadata.get("interiorColor") != null) {
+            color += " / " + metadata.get("interiorColor");
+        }
+        orderItem.setColor(color);
+
+        String imageUrl = (String) metadata.get("imageUrl");
+        if (imageUrl == null || imageUrl.isBlank() || "/placeholder-car.png".equals(imageUrl)) {
+            // Try fetch from vehicle-service as fallback
+            try {
+                String variantUrl = vehicleServiceUri + "/vehicle-catalog/variants/" + variantId;
+                ApiRespond<Map<String, Object>> variantResponse = restTemplate.exchange(
+                        variantUrl,
+                        org.springframework.http.HttpMethod.GET,
+                        null,
+                        new org.springframework.core.ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {
+                        }).getBody();
+
+                if (variantResponse != null && variantResponse.getData() != null) {
+                    imageUrl = (String) variantResponse.getData().get("imageUrl");
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch fallback image for variant {}: {}", variantId, e.getMessage());
+            }
+        }
+        orderItem.setImageUrl(imageUrl);
+
+        orderItem.setQuantity(1);
+        orderItem.setUnitPrice(totalAmount); // Simplified
+        orderItem.setFinalPrice(totalAmount);
+        orderItem.setSalesOrder(salesOrder);
+
+        salesOrder.setOrderItems(List.of(orderItem));
+
+        // 6. Create Tracking
+        OrderTracking tracking = new OrderTracking();
+        tracking.setSalesOrder(salesOrder);
+        tracking.setStatusB2C(OrderTrackingStatus.CREATED);
+        tracking.setUpdateDate(LocalDateTime.now());
+        tracking.setNotes("Đơn hàng được tạo từ Booking Deposit: " + request.getRecordId());
+
+        salesOrder.setOrderTrackings(List.of(tracking));
+
+        // 7. Save
+        SalesOrder savedOrder = salesOrderRepository.save(salesOrder);
+
+        return mapToResponse(savedOrder);
     }
 
     @Override
@@ -166,7 +386,9 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         SalesOrder salesOrder = salesOrderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
 
-        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED) {
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED &&
+                salesOrder.getOrderStatusB2C() != OrderStatusB2C.PENDING &&
+                salesOrder.getOrderStatusB2C() != OrderStatusB2C.CONFIRMED) {
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
         }
 
@@ -194,7 +416,17 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         SalesOrder approvedSalesOrder = salesOrderRepository.save(salesOrder);
 
         // --- Lấy thông tin khách hàng ---
-        CustomerResponse customer = getCustomerInfo(salesOrder.getCustomerId());
+        CustomerResponse customer;
+        if (salesOrder.getCustomerId() != null) {
+            customer = getCustomerInfo(salesOrder.getCustomerId());
+        } else {
+            // Trường hợp khách vãng lai (guest) từ booking deposit
+            customer = CustomerResponse.builder()
+                    .firstName(salesOrder.getCustomerName())
+                    .email(salesOrder.getCustomerEmail())
+                    .phone(salesOrder.getCustomerPhone())
+                    .build();
+        }
 
         // --- Gửi email xác nhận ---
         try {
@@ -208,7 +440,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     }
 
     private SalesOrderB2CResponse mapToResponse(SalesOrder salesOrder) {
-        if (salesOrder == null) return null;
+        if (salesOrder == null)
+            return null;
 
         SalesOrderB2CResponse response = new SalesOrderB2CResponse();
         response.setOrderId(salesOrder.getOrderId());
@@ -225,6 +458,13 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         response.setTypeOder(salesOrder.getTypeOder());
         response.setApprovalDate(salesOrder.getApprovalDate());
         response.setPaymentStatus(salesOrder.getPaymentStatus()); // Payment status
+
+        response.setCustomerName(salesOrder.getCustomerName());
+        response.setCustomerEmail(salesOrder.getCustomerEmail());
+        response.setCustomerPhone(salesOrder.getCustomerPhone());
+        response.setShippingAddress(salesOrder.getShippingAddress());
+        response.setNotes(salesOrder.getNotes());
+        response.setPaymentMethod(salesOrder.getPaymentMethod());
 
         // Map Quotation
         if (salesOrder.getQuotation() != null) {
@@ -260,15 +500,25 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
                     .map(item -> {
                         OrderItemResponse itemResponse = new OrderItemResponse();
                         itemResponse.setVariantId(item.getVariantId());
+                        itemResponse.setVariantName(item.getVariantName());
+                        itemResponse.setModelName(item.getModelName());
+                        itemResponse.setColor(item.getColor());
+
+                        String imageUrl = item.getImageUrl();
+                        if (imageUrl == null || imageUrl.isBlank() || "/placeholder-car.png".equals(imageUrl)) {
+                            imageUrl = fetchVariantImage(item.getVariantId());
+                        }
+                        itemResponse.setImageUrl(imageUrl);
+
                         itemResponse.setQuantity(item.getQuantity());
                         itemResponse.setUnitPrice(item.getUnitPrice());
                         itemResponse.setDiscount(item.getDiscount());
                         itemResponse.setFinalPrice(item.getFinalPrice());
+                        itemResponse.setPrice(item.getFinalPrice()); // Frontend alias
                         return itemResponse;
                     }).toList();
             response.setOrderItems(itemResponses);
         }
-
 
         // Map OrderTrackings
         if (salesOrder.getOrderTrackings() != null) {
@@ -405,7 +655,6 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         return totalAmount.multiply(downPaymentPercentage);
     }
 
-
     private CustomerResponse getCustomerInfo(Long customerId) {
         try {
             ApiRespond<CustomerResponse> response = customerClient.getCustomerById(customerId);
@@ -431,14 +680,46 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         }
 
         salesOrder.setOrderStatusB2C(OrderStatusB2C.REJECTED);
-        //xử lý khi khách hàng từ chối
-        //salesOrder.setRejectReason(reason);
+        // xử lý khi khách hàng từ chối
+        // salesOrder.setRejectReason(reason);
         salesOrderRepository.save(salesOrder);
 
         log.info("Sales order {} rejected. Reason: {}", orderId, reason);
         return ApiRespond.success("Đơn hàng đã bị từ chối bởi quản lý.", salesOrder);
     }
 
+    private UUID findDealerByName(String name) {
+        try {
+            String url = dealerServiceUrl + "/api/dealers/list-all";
+            // Or use search endpoint: /api/dealers?search=name
+            // We use list-all here as it returns simpler DTOs and we can filter.
+            // Or better, search directly if API supports strict search.
+            // Based on DealerController, /api/dealers?search=... calls
+            // searchDealers(search)
+
+            String searchUrl = dealerServiceUrl + "/api/dealers?search="
+                    + java.net.URLEncoder.encode(name, java.nio.charset.StandardCharsets.UTF_8);
+            org.springframework.http.ResponseEntity<Map> responseEntity = restTemplate.exchange(
+                    searchUrl,
+                    org.springframework.http.HttpMethod.GET,
+                    null,
+                    Map.class);
+
+            Map<String, Object> response = responseEntity.getBody();
+            if (response != null && Boolean.TRUE.equals(response.get("success"))) {
+                List<Map<String, Object>> dealers = (List<Map<String, Object>>) response.get("data");
+                if (dealers != null && !dealers.isEmpty()) {
+                    // Pick the first one
+                    String idStr = (String) dealers.get(0).get("dealerId");
+                    return UUID.fromString(idStr);
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error calling Dealer Service to find dealer: {}", name, e);
+            return null;
+        }
+    }
 
     @Override
     @Transactional
@@ -450,7 +731,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         // Kiểm tra trạng thái đơn hàng
         if (order.getOrderStatusB2C() != OrderStatusB2C.CONFIRMED) {
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
-            // Nếu muốn thêm chi tiết, có thể dùng constructor: new AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
+            // Nếu muốn thêm chi tiết, có thể dùng constructor: new
+            // AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
         }
 
         // Kiểm tra hợp đồng đã tồn tại chưa
@@ -465,7 +747,6 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         return response;
     }
 
-
     @Override
     @Transactional
     public SalesOrderB2CResponse convertToComplete(UUID orderId) {
@@ -476,7 +757,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         // Kiểm tra trạng thái đơn hàng
         if (order.getOrderStatusB2C() != OrderStatusB2C.IN_PRODUCTION) {
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
-            // Nếu muốn thêm chi tiết, có thể dùng constructor: new AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
+            // Nếu muốn thêm chi tiết, có thể dùng constructor: new
+            // AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
         }
 
         // Kiểm tra hợp đồng đã tồn tại chưa
@@ -506,7 +788,6 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         salesOrderRepository.save(order);
     }
 
-
     @Override
     @Transactional
     public SalesOrderB2CResponse markOrderAsEdited(UUID orderId, UUID staffId) {
@@ -535,13 +816,12 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     @Override
     public Page<SalesOrderB2CResponse> getAllB2COrders(String status, Pageable pageable) {
         Page<SalesOrder> orderPage;
-        
+
         if (status != null && !status.isBlank()) {
             try {
                 OrderStatusB2C statusEnum = OrderStatusB2C.valueOf(status.toUpperCase());
                 orderPage = salesOrderRepository.findByTypeOderAndOrderStatusB2C(
-                    SaleOderType.B2C, statusEnum, pageable
-                );
+                        SaleOderType.B2C, statusEnum, pageable);
             } catch (IllegalArgumentException e) {
                 throw new AppException(ErrorCode.BAD_REQUEST);
             }
@@ -549,9 +829,29 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
             // Lấy tất cả đơn hàng B2C
             orderPage = salesOrderRepository.findByTypeOder(SaleOderType.B2C, pageable);
         }
-        
+
         return orderPage.map(this::mapToResponse);
     }
 
+    private String fetchVariantImage(Long variantId) {
+        if (variantId == null)
+            return "/placeholder-car.png";
+        try {
+            String variantUrl = vehicleServiceUri + "/vehicle-catalog/variants/" + variantId;
+            ApiRespond<Map<String, Object>> variantResponse = restTemplate.exchange(
+                    variantUrl,
+                    org.springframework.http.HttpMethod.GET,
+                    null,
+                    new org.springframework.core.ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {
+                    }).getBody();
+
+            if (variantResponse != null && variantResponse.getData() != null) {
+                return (String) ((Map<String, Object>) variantResponse.getData()).get("imageUrl");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch fallback image for variant {}: {}", variantId, e.getMessage());
+        }
+        return "/placeholder-car.png";
+    }
 
 }

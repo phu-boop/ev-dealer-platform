@@ -26,9 +26,11 @@ public class BookingDepositResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     // Transaction info
     private UUID transactionId;
     private String gatewayTransactionId;
+    private String paymentMethodName;
     private String orderInfo;
+    private String metadata;
 }
