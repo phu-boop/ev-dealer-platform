@@ -37,6 +37,8 @@ public class VnpayGatewayController {
             HttpServletRequest request) {
 
         try {
+            log.info("Received initiate-b2c request - CustomerId: {}, OrderId: {}, PaymentAmount: {}", 
+                    body.getCustomerId(), body.getOrderId(), body.getPaymentAmount());
             String ipAddr = getClientIpAddr(request); // Lấy IP
             String paymentUrl = vnpayService.initiateB2CPayment(body, ipAddr);
 

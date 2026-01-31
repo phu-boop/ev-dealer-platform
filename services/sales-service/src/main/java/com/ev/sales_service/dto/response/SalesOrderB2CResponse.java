@@ -27,6 +27,22 @@ public class SalesOrderB2CResponse {
     private LocalDateTime approvalDate;
     private PaymentStatus paymentStatus; // Trạng thái thanh toán
 
+    private String customerName;
+    private String customerPhone;
+    private String customerEmail;
+    private String shippingAddress;
+    private String notes;
+    private String paymentMethod;
+
+    // Compatibility aliases for Frontend Admin UI
+    public OrderStatusB2C getStatus() {
+        return orderStatusB2C;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return orderDate;
+    }
+
     // Additional details
     private QuotationResponse quotation;
     private SalesContractResponse salesContract;

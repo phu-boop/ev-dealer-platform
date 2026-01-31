@@ -44,6 +44,9 @@ import AdminReportsPage from "../pages/admin/ReportsPage";
 import VehicleFormPage from "../pages/admin/VehicleFormPage";
 import AdminOrderDetailPage from "../pages/admin/OrderDetailPage";
 import AdminVehicleDetailPage from "../pages/admin/VehicleDetailPage";
+import AdminBookingDepositsPage from "../pages/admin/BookingDepositsPage";
+import BookingDepositDetailPage from "../pages/admin/BookingDepositDetailPage";
+import OrderCreateFromBooking from "../pages/admin/OrderCreateFromBooking";
 import PaymentResultPage from "../pages/PaymentResultPage";
 
 export default function AppRoutes() {
@@ -111,6 +114,9 @@ export default function AppRoutes() {
           <Route path="categories" element={<AdminCategoriesPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="orders/:orderId" element={<AdminOrderDetailPage />} />
+          <Route path="orders/create-from-booking/:recordId" element={<OrderCreateFromBooking />} />
+          <Route path="booking-deposits" element={<AdminBookingDepositsPage />} />
+          <Route path="booking-deposits/:recordId" element={<BookingDepositDetailPage />} />
           <Route path="customers" element={<AdminCustomersPage />} />
           <Route path="test-drives" element={<AdminTestDrivesPage />} />
           <Route path="payments" element={<AdminPaymentsPage />} />

@@ -1,6 +1,7 @@
 package com.ev.sales_service.service.Interface;
 
 import com.ev.common_lib.dto.respond.ApiRespond;
+import com.ev.sales_service.dto.request.CreateOrderFromDepositRequest;
 import com.ev.sales_service.dto.request.OrderItemRequest;
 import com.ev.sales_service.dto.request.SalesOrderB2CCreateRequest;
 import com.ev.sales_service.dto.response.SalesContractResponse;
@@ -13,6 +14,8 @@ import java.util.UUID;
 
 public interface SalesOrderServiceB2C {
     SalesOrderB2CResponse createSalesOrderFromQuotation(UUID quotationId);
+
+    SalesOrderB2CResponse createOrderFromBookingDeposit(CreateOrderFromDepositRequest request);
 
     SalesOrderB2CResponse createSalesOrder(SalesOrderB2CCreateRequest request);
 
@@ -35,7 +38,6 @@ public interface SalesOrderServiceB2C {
 
     SalesContractResponse convertToContract(UUID orderId);
 
-
     SalesOrderB2CResponse convertToComplete(UUID orderId);
 
     void handleCustomerOrderConfirmation(UUID orderId, boolean confirmed);
@@ -44,7 +46,8 @@ public interface SalesOrderServiceB2C {
 
     /**
      * Admin/Staff lấy tất cả đơn hàng B2C với phân trang và filter theo status
-     * @param status Filter theo status (optional, null = lấy tất cả)
+     * 
+     * @param status   Filter theo status (optional, null = lấy tất cả)
      * @param pageable Pagination parameters
      * @return Page of B2C orders
      */
