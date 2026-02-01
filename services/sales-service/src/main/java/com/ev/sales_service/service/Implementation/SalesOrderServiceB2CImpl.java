@@ -397,6 +397,33 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+    
+    @Override
+    public List<SalesOrderB2CResponse> getSalesOrdersByProfileId(String profileId) {
+        log.info("Fetching orders for profileId: {}", profileId);
+        
+        // Get customer by profileId from customer-service
+        try {
+            ApiRespond<CustomerResponse> customerRespond = customerClient.getCustomerByProfileId(profileId);
+            
+            if (customerRespond == null || customerRespond.getData() == null) {
+                log.warn("No customer found for profileId: {}", profileId);
+                return List.of(); // Return empty list if customer not found
+            }
+            
+            CustomerResponse customer = customerRespond.getData();
+            Long customerId = customer.getCustomerId();
+            
+            log.info("Found customerId: {} for profileId: {}", customerId, profileId);
+            
+            // Fetch orders by customerId
+            return getSalesOrdersByCustomer(customerId);
+            
+        } catch (Exception e) {
+            log.error("Error fetching customer by profileId: {}", profileId, e);
+            return List.of(); // Return empty list on error
+        }
+    }
 
     @Override
     public SalesOrderB2CResponse updateSalesOrderStatus(UUID orderId, String status) {

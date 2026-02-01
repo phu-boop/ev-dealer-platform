@@ -37,6 +37,13 @@ public class CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
         return modelMapper.map(customer, CustomerResponse.class);
     }
+    
+    @Transactional(readOnly = true)
+    public CustomerResponse getCustomerByProfileId(String profileId) {
+        Customer customer = customerRepository.findByProfileId(profileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with profileId: " + profileId));
+        return modelMapper.map(customer, CustomerResponse.class);
+    }
 
     @Transactional(readOnly = true)
     public List<CustomerResponse> searchCustomers(String keyword) {

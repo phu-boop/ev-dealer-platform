@@ -14,5 +14,8 @@ public interface CustomerClient {
 
     @GetMapping("customers/{id}")
     ApiRespond<CustomerResponse> getCustomerById(@PathVariable("id") Long id);
+    
+    @GetMapping("customers/profile/{profileId}")
+    ApiRespond<CustomerResponse> getCustomerByProfileId(@PathVariable("profileId") String profileId);
 }
 

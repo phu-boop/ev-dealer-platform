@@ -64,6 +64,13 @@ public class CustomerController {
         CustomerResponse customer = customerService.getCustomerById(customerId);
         return ResponseEntity.ok(ApiRespond.success("Customer retrieved successfully", customer));
     }
+    
+    @GetMapping("/profile/{profileId}")
+    public ResponseEntity<ApiRespond<CustomerResponse>> getCustomerByProfileId(@PathVariable String profileId) {
+        log.info("Fetching customer by profileId: {}", profileId);
+        CustomerResponse customer = customerService.getCustomerByProfileId(profileId);
+        return ResponseEntity.ok(ApiRespond.success("Customer retrieved successfully", customer));
+    }
 
     @PostMapping
     public ResponseEntity<ApiRespond<CustomerResponse>> createCustomer(@Valid @RequestBody CustomerRequest request) {

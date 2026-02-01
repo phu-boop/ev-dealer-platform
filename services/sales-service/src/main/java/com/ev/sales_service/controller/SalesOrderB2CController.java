@@ -84,6 +84,14 @@ public class SalesOrderB2CController {
         List<SalesOrderB2CResponse> responses = salesOrderServiceB2C.getSalesOrdersByCustomer(customerId);
         return ResponseEntity.ok(ApiRespond.success("Sales orders fetched successfully", responses));
     }
+    
+    @GetMapping("/b2c/profile/{profileId}")
+    public ResponseEntity<ApiRespond<List<SalesOrderB2CResponse>>> getSalesOrdersByProfileId(
+            @PathVariable String profileId) {
+        log.info("Fetching B2C sales orders for profile: {}", profileId);
+        List<SalesOrderB2CResponse> responses = salesOrderServiceB2C.getSalesOrdersByProfileId(profileId);
+        return ResponseEntity.ok(ApiRespond.success("Sales orders fetched successfully", responses));
+    }
 
     @PutMapping("/b2c/{orderId}/status")
     public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> updateSalesOrderStatus(
