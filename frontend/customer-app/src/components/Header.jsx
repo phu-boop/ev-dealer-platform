@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { motion } from "framer-motion";
@@ -25,12 +25,15 @@ export default function Header() {
   const { isAuthenticated, logout, name, hasRole, memberId } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [hoveredPath, setHoveredPath] = useState(location.pathname);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const { count: compareCount } = useComparison();
 
-
+useEffect(() => {
+    setHoveredPath(location.pathname);
+  }, [location.pathname]);
 
   const isAdmin = hasRole(['ADMIN', 'EVM_STAFF', 'DEALER_MANAGER']);
 
@@ -73,6 +76,7 @@ export default function Header() {
                 <Link
                   key={tab.path}
                   to={tab.path}
+                  onMouseEnter={() => setHoveredPath(tab.path)}
                   className={`relative px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                     isActiveTab ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
                   }`}

@@ -30,13 +30,13 @@ export const getOrderDetailAdmin = async (orderId) => {
   }
 };
 
-// Update order status (Generic placeholder, may need adjustment based on specific actions like ship/approve)
+// Update order status (B2C)
 export const updateOrderStatus = async (orderId, status) => {
   try {
-    // Note: Backend has specific endpoints for approve/ship/deliver. 
-    // This might not work if specifically looking for a PATCH status endpoint.
-    // For now keeping consistent path base.
-    const response = await api.patch(`/api/v1/sales-orders/${orderId}/status`, { status });
+    // Backend B2C status endpoint is PUT and uses @RequestParam
+    const response = await api.put(`/api/v1/sales-orders/b2c/${orderId}/status`, null, {
+      params: { status }
+    });
     return response.data;
   } catch (error) {
     console.error('Error updating order status:', error);
@@ -56,11 +56,13 @@ export const cancelOrder = async (orderId, reason) => {
   }
 };
 
-// Confirm order
-export const confirmOrder = async (orderId) => {
+// Confirm order (B2C)
+export const confirmOrder = async (orderId, managerId) => {
   try {
-     // Backend endpoint for accept/approve
-    const response = await api.put(`/api/v1/sales-orders/${orderId}/approve`);
+    // Backend endpoint for B2C approve requires managerId
+    const response = await api.put(`/api/v1/sales-orders/b2c/${orderId}/approve`, null, {
+      params: { managerId }
+    });
     return response.data;
   } catch (error) {
     console.error('Error confirming order:', error);

@@ -15,19 +15,24 @@ export const initiateVNPayBooking = (bookingData) =>
     customerId: bookingData.customerId,
     totalAmount: bookingData.totalAmount,
     paymentAmount: bookingData.depositAmount,
+    // Thông tin khách hàng (cho guest booking)
+    customerName: bookingData.customerName,
+    customerPhone: bookingData.customerPhone,
+    customerEmail: bookingData.customerEmail,
+    customerIdCard: bookingData.customerIdCard,
     // Không gửi returnUrl, backend sẽ dùng configured URL từ .env
     orderInfo: `Dat coc xe ${bookingData.modelId} - ${bookingData.customerName}`,
     metadata: {
       variantId: bookingData.variantId,
+      variantName: bookingData.variantName,
       modelId: bookingData.modelId,
-      customerName: bookingData.customerName,
-      customerPhone: bookingData.customerPhone,
-      customerEmail: bookingData.customerEmail,
-      customerIdCard: bookingData.customerIdCard,
+      modelName: bookingData.modelName,
       exteriorColor: bookingData.exteriorColor,
       interiorColor: bookingData.interiorColor,
       showroom: bookingData.showroom,
+      dealerId: bookingData.dealerId, // Important: Send UUID to backend
       showroomCity: bookingData.showroomCity,
+      imageUrl: bookingData.imageUrl,
       notes: bookingData.notes,
       promoCode: bookingData.promoCode,
       frontendReturnUrl: bookingData.returnUrl // Lưu để redirect sau khi callback

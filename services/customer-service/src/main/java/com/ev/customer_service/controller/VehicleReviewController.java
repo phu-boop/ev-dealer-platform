@@ -85,12 +85,61 @@ public class VehicleReviewController {
      * Approve review (admin/staff only)
      */
     @PutMapping("/{reviewId}/approve")
-    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER')")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER', 'ADMIN')")
     public ResponseEntity<ApiResponse<VehicleReviewResponse>> approveReview(
             @PathVariable Long reviewId,
             @RequestParam String approvedBy) {
         log.info("Approving review {} by {}", reviewId, approvedBy);
         VehicleReviewResponse response = reviewService.approveReview(reviewId, approvedBy);
         return ResponseEntity.ok(ApiResponse.success("Review approved successfully", response));
+    }
+
+    /**
+     * Get all reviews (admin only)
+     */
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<VehicleReviewResponse>>> getAllReviews() {
+        log.info("Fetching all reviews for admin");
+        List<VehicleReviewResponse> reviews = reviewService.getAllReviews();
+        return ResponseEntity.ok(ApiResponse.success(reviews));
+    }
+
+    /**
+     * Get reviews by status (admin only)
+     */
+    @GetMapping("/admin/status/{status}")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<VehicleReviewResponse>>> getReviewsByStatus(
+            @PathVariable String status) {
+        log.info("Fetching reviews with status: {}", status);
+        List<VehicleReviewResponse> reviews = reviewService.getReviewsByStatus(status);
+        return ResponseEntity.ok(ApiResponse.success(reviews));
+    }
+
+    /**
+     * Reject review (admin/staff only)
+     */
+    @PutMapping("/{reviewId}/reject")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<VehicleReviewResponse>> rejectReview(
+            @PathVariable Long reviewId,
+            @RequestParam String rejectedBy) {
+        log.info("Rejecting review {} by {}", reviewId, rejectedBy);
+        VehicleReviewResponse response = reviewService.rejectReview(reviewId, rejectedBy);
+        return ResponseEntity.ok(ApiResponse.success("Review rejected", response));
+    }
+
+    /**
+     * Hide review (admin/staff only)
+     */
+    @PutMapping("/{reviewId}/hide")
+    @PreAuthorize("hasAnyRole('DEALER_STAFF', 'DEALER_MANAGER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<VehicleReviewResponse>> hideReview(
+            @PathVariable Long reviewId,
+            @RequestParam String hiddenBy) {
+        log.info("Hiding review {} by {}", reviewId, hiddenBy);
+        VehicleReviewResponse response = reviewService.hideReview(reviewId, hiddenBy);
+        return ResponseEntity.ok(ApiResponse.success("Review hidden", response));
     }
 }

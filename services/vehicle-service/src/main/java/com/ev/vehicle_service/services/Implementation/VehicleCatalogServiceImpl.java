@@ -296,7 +296,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newVariant.setChargingTime(request.getChargingTime());
         newVariant.setRangeKm(request.getRangeKm());
         newVariant.setMotorPower(request.getMotorPower());
-        
+
         // Set additional technical specifications
         newVariant.setSeatingCapacity(request.getSeatingCapacity());
         newVariant.setTorque(request.getTorque());
@@ -796,14 +796,14 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         // Lấy đối tượng Model cha để sử dụng cho việc kế thừa
         VehicleModel model = variant.getVehicleModel();
         VariantDetailDto dto = new VariantDetailDto();
-        
+
         // Ensure model is not null before accessing its properties
         if (model == null) {
-             // Handle orphan variant case if necessary, or just basic mapping
-             dto.setVariantId(variant.getVariantId());
-             dto.setVersionName(variant.getVersionName());
-             dto.setColor(variant.getColor());
-             return dto;
+            // Handle orphan variant case if necessary, or just basic mapping
+            dto.setVariantId(variant.getVariantId());
+            dto.setVersionName(variant.getVersionName());
+            dto.setColor(variant.getColor());
+            return dto;
         }
 
         // Map các thông tin cơ bản, không cần logic kế thừa
@@ -813,7 +813,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setColor(variant.getColor());
         dto.setSkuCode(variant.getSkuCode());
         dto.setPrice(variant.getPrice());
-        dto.setImageUrl(variant.getImageUrl());
+        dto.setImageUrl((variant.getImageUrl() != null && !variant.getImageUrl().isBlank()) ? variant.getImageUrl()
+                : model.getThumbnailUrl());
         dto.setStatus(variant.getStatus());
         dto.setWholesalePrice(variant.getWholesalePrice()); // Giá sỉ là của riêng variant, không kế thừa
 
@@ -831,8 +832,9 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         // Xử lý Battery Capacity
         // Handle Integer to Double conversion explicitly
         dto.setBatteryCapacity(
-                (variant.getBatteryCapacity() != null) ? variant.getBatteryCapacity() : 
-                (model.getBaseBatteryCapacity() != null ? model.getBaseBatteryCapacity().doubleValue() : null));
+                (variant.getBatteryCapacity() != null) ? variant.getBatteryCapacity()
+                        : (model.getBaseBatteryCapacity() != null ? model.getBaseBatteryCapacity().doubleValue()
+                                : null));
 
         // Xử lý Charging Time
         dto.setChargingTime(
@@ -864,13 +866,13 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     private FeatureDto mapToFeatureDto(VariantFeature variantFeature) {
         FeatureDto dto = new FeatureDto();
         VehicleFeature feature = variantFeature.getVehicleFeature();
-        
+
         if (feature != null) {
             dto.setFeatureId(feature.getFeatureId());
             dto.setFeatureName(feature.getFeatureName());
             dto.setCategory(feature.getCategory());
         }
-        
+
         dto.setStandard(variantFeature.isStandard());
         dto.setAdditionalCost(variantFeature.getAdditionalCost());
         return dto;

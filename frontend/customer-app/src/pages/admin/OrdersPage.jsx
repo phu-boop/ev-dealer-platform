@@ -16,9 +16,10 @@ export default function AdminOrdersPage() {
   const orderStatuses = [
     { value: 'ALL', label: 'Tất cả', color: 'gray' },
     { value: 'PENDING', label: 'Chờ xác nhận', color: 'yellow', icon: Clock },
-    { value: 'CONFIRMED', label: 'Đã xác nhận', color: 'blue', icon: CheckCircle },
-    { value: 'DELIVERING', label: 'Đang giao', color: 'indigo', icon: Truck },
-    { value: 'COMPLETED', label: 'Hoàn thành', color: 'green', icon: Package },
+    { value: 'APPROVED', label: 'Đã xác nhận', color: 'blue', icon: CheckCircle },
+    { value: 'CONFIRMED', label: 'Khách đã xác nhận', color: 'green', icon: CheckCircle },
+    { value: 'IN_PRODUCTION', label: 'Đang xử lý', color: 'indigo', icon: Package },
+    { value: 'DELIVERED', label: 'Đã giao xe', color: 'green', icon: Package },
     { value: 'CANCELLED', label: 'Đã hủy', color: 'red', icon: XCircle }
   ];
 
@@ -40,9 +41,10 @@ export default function AdminOrdersPage() {
       }
 
       const response = await getOrdersAdmin(params);
-      if (response.code === 200) {
-        setOrders(response.result?.content || []);
-        setTotalPages(response.result?.totalPages || 0);
+      if (response.code === 200 || response.code === "1000") {
+        const data = response.result || response.data;
+        setOrders(data?.content || []);
+        setTotalPages(data?.totalPages || 0);
       }
     } catch (error) {
       toast.error('Không thể tải danh sách đơn hàng');
@@ -62,9 +64,10 @@ export default function AdminOrdersPage() {
     try {
       setLoading(true);
       const response = await searchOrders(searchTerm);
-      if (response.code === 200) {
-        setOrders(response.result || []);
-        setTotalPages(1);
+      if (response.code === 200 || response.code === "1000") {
+        const data = response.result || response.data;
+        setOrders(Array.isArray(data) ? data : (data?.content || []));
+        setTotalPages(data?.totalPages || 1);
       }
     } catch (error) {
       toast.error('Không thể tìm kiếm đơn hàng');
@@ -76,7 +79,7 @@ export default function AdminOrdersPage() {
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       const response = await updateOrderStatus(orderId, newStatus);
-      if (response.code === 200) {
+      if (response.code === 200 || response.code === "1000") {
         toast.success('Cập nhật trạng thái thành công');
         loadOrders();
       }
@@ -98,7 +101,29 @@ export default function AdminOrdersPage() {
   };
 
   const getStatusBadge = (status) => {
-    const statusInfo = orderStatuses.find(s => s.value === status) || orderStatuses[0];
+    // Map backend statuses to the 6 simplified categories
+    const statusMap = {
+      'PENDING': 'PENDING',
+      'EDITED': 'PENDING',
+      'APPROVED': 'APPROVED',
+      'CONFIRMED': 'CONFIRMED',
+      'IN_PRODUCTION': 'IN_PRODUCTION',
+      'DELIVERED': 'DELIVERED',
+      'CANCELLED': 'CANCELLED',
+      'REJECTED': 'CANCELLED'
+    };
+
+    const displayStatus = statusMap[status] || status;
+    const statusInfo = orderStatuses.find(s => s.value === displayStatus);
+
+    if (!statusInfo) {
+      return (
+        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+          {status || 'N/A'}
+        </span>
+      );
+    }
+
     const colorClasses = {
       gray: 'bg-gray-100 text-gray-800',
       yellow: 'bg-yellow-100 text-yellow-800',
@@ -117,10 +142,12 @@ export default function AdminOrdersPage() {
 
   const getNextStatusOptions = (currentStatus) => {
     const statusFlow = {
-      'PENDING': ['CONFIRMED', 'CANCELLED'],
-      'CONFIRMED': ['DELIVERING', 'CANCELLED'],
-      'DELIVERING': ['COMPLETED', 'CANCELLED'],
-      'COMPLETED': [],
+      'PENDING': ['APPROVED', 'CANCELLED'],
+      'EDITED': ['APPROVED', 'CANCELLED'],
+      'CONFIRMED': ['APPROVED', 'CANCELLED'],
+      'APPROVED': ['IN_PRODUCTION', 'CANCELLED'],
+      'IN_PRODUCTION': ['DELIVERED', 'CANCELLED'],
+      'DELIVERED': [],
       'CANCELLED': []
     };
     return statusFlow[currentStatus] || [];
@@ -147,11 +174,10 @@ export default function AdminOrdersPage() {
                   setStatusFilter(status.value);
                   setCurrentPage(0);
                 }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition whitespace-nowrap ${
-                  statusFilter === status.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition whitespace-nowrap ${statusFilter === status.value
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 {Icon && <Icon size={18} />}
                 {status.label}
@@ -259,7 +285,7 @@ export default function AdminOrdersPage() {
                         >
                           <Eye size={18} />
                         </Link>
-                        
+
                         {getNextStatusOptions(order.status).length > 0 && (
                           <select
                             onChange={(e) => handleStatusChange(order.orderId, e.target.value)}
