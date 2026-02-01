@@ -315,6 +315,51 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         // 7. Save
         SalesOrder savedOrder = salesOrderRepository.save(salesOrder);
 
+        // 8. Send confirmation email to customer
+        try {
+            String fullName = savedOrder.getCustomerName();
+            String firstName = fullName;
+            String lastName = "";
+            if (fullName != null && fullName.trim().contains(" ")) {
+                int lastSpaceIndex = fullName.trim().lastIndexOf(" ");
+                firstName = fullName.trim().substring(0, lastSpaceIndex);
+                lastName = fullName.trim().substring(lastSpaceIndex + 1);
+            }
+
+            CustomerResponse customer = CustomerResponse.builder()
+                    .customerId(savedOrder.getCustomerId())
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .email(savedOrder.getCustomerEmail())
+                    .phone(savedOrder.getCustomerPhone())
+                    .build();
+
+            // Fetch showroom/dealer name
+            String showroomName = "N/A";
+            try {
+                String dealerUrl = dealerServiceUrl + "/api/dealers/" + savedOrder.getDealerId();
+                ApiRespond<Map<String, Object>> dealerResponse = restTemplate.exchange(
+                        dealerUrl,
+                        org.springframework.http.HttpMethod.GET,
+                        null,
+                        new org.springframework.core.ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {
+                        }).getBody();
+
+                if (dealerResponse != null && dealerResponse.getData() != null) {
+                    showroomName = (String) dealerResponse.getData().get("dealerName");
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch dealer name for email: {}", e.getMessage());
+            }
+
+            emailService.sendOrderConfirmedEmail(savedOrder, customer, showroomName);
+            log.info("Order confirmation email sent to: {} with showroom: {}", savedOrder.getCustomerEmail(),
+                    showroomName);
+        } catch (Exception e) {
+            log.error("Failed to send order confirmation email for order {}: {}", savedOrder.getOrderId(),
+                    e.getMessage());
+        }
+
         return mapToResponse(savedOrder);
     }
 
@@ -430,7 +475,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 
         // --- Gửi email xác nhận ---
         try {
-            emailService.sendOrderConfirmedEmail(salesOrder, customer);
+            emailService.sendOrderConfirmedEmail(salesOrder, customer, "EV Automotive Showroom");
             log.info("Order confirmation email sent to customer: {}", customer.getEmail());
         } catch (Exception e) {
             log.error("Failed to send confirmation email for order: {}", orderId, e);

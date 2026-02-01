@@ -63,10 +63,11 @@ const TestDriveBooking = () => {
   }, []);
 
   // Mock dealers data (fallback when API fails or requires auth)
+  // Using UUID format for dealerId (required by backend BINARY(16) storage)
   const mockDealers = [
-    { dealerId: '1', id: '1', dealerName: 'VinFast Hà Nội', address: '123 Đường ABC, Quận XYZ, Hà Nội', city: 'Hà Nội' },
-    { dealerId: '2', id: '2', dealerName: 'VinFast TP.HCM', address: '456 Đường DEF, Quận 1, TP.HCM', city: 'TP.HCM' },
-    { dealerId: '3', id: '3', dealerName: 'VinFast Đà Nẵng', address: '789 Đường GHI, Quận Hải Châu, Đà Nẵng', city: 'Đà Nẵng' },
+    { dealerId: '3ec76f92-7d44-49f4-ada1-b47d4f55b418', id: '3ec76f92-7d44-49f4-ada1-b47d4f55b418', dealerName: 'VinFast Hà Nội', address: '123 Đường ABC, Quận XYZ, Hà Nội', city: 'Hà Nội' },
+    { dealerId: '4fc87fa3-8e55-5af5-beb2-c58e5f66c529', id: '4fc87fa3-8e55-5af5-beb2-c58e5f66c529', dealerName: 'VinFast TP.HCM', address: '456 Đường DEF, Quận 1, TP.HCM', city: 'TP.HCM' },
+    { dealerId: '5gd98gb4-9f66-6bg6-cfg3-d69f6g77d63a', id: '5gd98gb4-9f66-6bg6-cfg3-d69f6g77d63a', dealerName: 'VinFast Đà Nẵng', address: '789 Đường GHI, Quận Hải Châu, Đà Nẵng', city: 'Đà Nẵng' },
   ];
 
   // Fetch dealers
@@ -179,10 +180,13 @@ const TestDriveBooking = () => {
       // Find selected vehicle info
       const selectedVehicle = vehicles.find(v => v.modelId === parseInt(selectedModelId));
       
+      // Validate dealerId format (must be UUID)
+      const dealerIdValue = dealerInCity ? (dealerInCity.dealerId || dealerInCity.id) : mockDealers[0].dealerId;
+      
       // Get profileId if user is logged in
       const payload = {
         profileId: isAuthenticated() && memberId ? memberId : null,
-        dealerId: dealerInCity ? parseInt(dealerInCity.dealerId || dealerInCity.id) : 1,
+        dealerId: dealerIdValue, // Keep as UUID string, don't parse to int
         modelId: parseInt(selectedModelId),
         variantId: variantId ? parseInt(variantId) : null,
         vehicleModelName: selectedVehicle?.modelName || 'Xe điện',
