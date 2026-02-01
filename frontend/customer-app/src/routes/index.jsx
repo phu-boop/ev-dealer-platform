@@ -41,6 +41,7 @@ import AdminPaymentsPage from "../pages/admin/PaymentsPage";
 import AdminPromotionsPage from "../pages/admin/PromotionsPage";
 import AdminReviewsPage from "../pages/admin/ReviewsPage";
 import AdminReportsPage from "../pages/admin/ReportsPage";
+import AdminSettingsPage from "../pages/admin/SettingsPage";
 import VehicleFormPage from "../pages/admin/VehicleFormPage";
 import AdminOrderDetailPage from "../pages/admin/OrderDetailPage";
 import AdminVehicleDetailPage from "../pages/admin/VehicleDetailPage";
@@ -123,6 +124,7 @@ export default function AppRoutes() {
           <Route path="promotions" element={<AdminPromotionsPage />} />
           <Route path="reviews" element={<AdminReviewsPage />} />
           <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
 
         {/* 404 */}

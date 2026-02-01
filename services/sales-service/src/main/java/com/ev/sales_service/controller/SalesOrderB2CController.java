@@ -42,6 +42,13 @@ public class SalesOrderB2CController {
         return ResponseEntity.ok(ApiRespond.success("Lấy danh sách đơn hàng B2C thành công", orderPage));
     }
 
+    @GetMapping("/internal/all-for-reporting")
+    public ResponseEntity<List<SalesOrderB2CResponse>> getAllSalesForReporting(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime since) {
+        log.info("Fetching sales orders for reporting sync since: {}", since);
+        return ResponseEntity.ok(salesOrderServiceB2C.getAllSalesForReporting(since));
+    }
+
     @PostMapping("/b2c/from-quotation/{quotationId}")
     public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> createSalesOrderFromQuotation(
             @PathVariable UUID quotationId) {

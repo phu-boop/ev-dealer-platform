@@ -4,6 +4,7 @@ import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.sales_service.config.EmailConfig;
 import com.ev.sales_service.dto.response.CustomerResponse;
+import com.ev.sales_service.entity.OrderItem;
 import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.service.Interface.EmailService;
@@ -86,14 +87,14 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendOrderConfirmedEmail(SalesOrder salesOrder, CustomerResponse customer) {
+    public void sendOrderConfirmedEmail(SalesOrder salesOrder, CustomerResponse customer, String showroomName) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(customer.getEmail());
             helper.setSubject("Xác nhận đơn hàng #" + salesOrder.getOrderId());
-            helper.setText(buildOrderConfirmedEmailContent(salesOrder, customer), true);
+            helper.setText(buildOrderConfirmedEmailContent(salesOrder, customer, showroomName), true);
 
             mailSender.send(message);
             log.info("Order confirmed email sent to: {}", customer.getEmail());
@@ -151,11 +152,13 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    private String buildOrderConfirmedEmailContent(SalesOrder salesOrder, CustomerResponse customer) {
+    private String buildOrderConfirmedEmailContent(SalesOrder salesOrder, CustomerResponse customer,
+            String showroomName) {
         try {
             Context context = new Context(new Locale("vi"));
             context.setVariable("customer", customer);
             context.setVariable("salesOrder", salesOrder);
+            context.setVariable("showroomName", showroomName);
             context.setVariable("confirmUrl", emailConfig.getOrderConfirmUrl(salesOrder.getOrderId().toString()));
             context.setVariable("orderDate",
                     salesOrder.getOrderDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
@@ -163,7 +166,7 @@ public class EmailServiceImpl implements EmailService {
             return templateEngine.process("order-confirmed-email", context);
         } catch (TemplateInputException e) {
             log.warn("Template 'order-confirmed-email' not found, using fallback content");
-            return buildFallbackOrderConfirmedEmailContent(salesOrder, customer);
+            return buildFallbackOrderConfirmedEmailContent(salesOrder, customer, showroomName);
         }
     }
 
@@ -189,8 +192,7 @@ public class EmailServiceImpl implements EmailService {
                 quotation.getBasePrice(),
                 quotation.getDiscountAmount(),
                 quotation.getFinalPrice(),
-                quotation.getTermsConditions()
-        );
+                quotation.getTermsConditions());
     }
 
     private String buildFallbackQuotationAcceptedEmailContent(Quotation quotation, CustomerResponse customer) {
@@ -200,8 +202,7 @@ public class EmailServiceImpl implements EmailService {
                         "Chúng tôi sẽ liên hệ với Quý khách trong thời gian sớm nhất.\n\n" +
                         "Trân trọng,\nĐội ngũ EV Automotive",
                 customer.getFullName(),
-                quotation.getQuotationId()
-        );
+                quotation.getQuotationId());
     }
 
     private String buildFallbackQuotationRejectedEmailContent(Quotation quotation, CustomerResponse customer) {
@@ -211,25 +212,40 @@ public class EmailServiceImpl implements EmailService {
                         "Nếu có thắc mắc, xin vui lòng liên hệ chúng tôi.\n\n" +
                         "Trân trọng,\nĐội ngũ EV Automotive",
                 customer.getFullName(),
-                quotation.getQuotationId()
-        );
+                quotation.getQuotationId());
     }
 
-    private String buildFallbackOrderConfirmedEmailContent(SalesOrder salesOrder, CustomerResponse customer) {
+    private String buildFallbackOrderConfirmedEmailContent(SalesOrder salesOrder, CustomerResponse customer,
+            String showroomName) {
         String confirmUrl = emailConfig.getOrderConfirmUrl(salesOrder.getOrderId().toString());
+        StringBuilder itemsInfo = new StringBuilder();
+        if (salesOrder.getOrderItems() != null && !salesOrder.getOrderItems().isEmpty()) {
+            for (OrderItem item : salesOrder.getOrderItems()) {
+                itemsInfo.append(String.format("- Xe: %s - Phiên bản: %s - Màu sắc: %s\n",
+                        item.getModelName(), item.getVariantName(), item.getColor()));
+            }
+        }
+
         return String.format(
                 "Kính gửi %s,\n\n" +
                         "Đơn hàng #%s của Quý khách đang chờ xác nhận.\n\n" +
                         "Chi tiết đơn hàng:\n" +
+                        "%s" +
+                        "- Showroom nhận xe: %s\n" +
                         "- Ngày tạo: %s\n" +
-                        "- Tổng tiền: %s VND\n\n" +
+                        "- Tổng tiền: %s VND\n" +
+                        "- Tiền đã cọc: %s VND\n" +
+                        "- Số tiền còn lại: %s VND\n\n" +
                         "Vui lòng nhấn vào liên kết sau để xác nhận đơn hàng: %s\n\n" +
                         "Trân trọng,\nĐội ngũ EV Automotive",
                 customer.getFullName(),
                 salesOrder.getOrderId(),
+                itemsInfo.toString(),
+                showroomName != null ? showroomName : "N/A",
                 salesOrder.getOrderDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
                 salesOrder.getTotalAmount(),
-                confirmUrl
-        );
+                salesOrder.getDownPayment(),
+                salesOrder.getTotalAmount().subtract(salesOrder.getDownPayment()),
+                confirmUrl);
     }
 }
