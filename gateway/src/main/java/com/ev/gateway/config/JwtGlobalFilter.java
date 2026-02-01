@@ -29,7 +29,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     //  Danh sách path được bỏ qua xác thực (không yêu cầu token)
         private static final List<String> EXCLUDED_PATHS = List.of(
             "/auth",
-            "/users",
+            "/users",           
             "/oauth2",  // OAuth2 authentication flow
             "/sendmail",
             "/ws",
@@ -38,9 +38,29 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             "/payments/payment/pay-url",
             "/payments/api/v1/payments/gateway/callback/vnpay-return",
             "/payments/api/v1/payments/gateway/callback/vnpay-ipn",
-            "/favicon.ico",          
+            "/favicon.ico",
+            // Vehicle service endpoints (after rewrite)
+            "/vehicle-catalog",
+            "/variants",
+            "/models",
+            // Vehicle service endpoints (before rewrite)
             "/vehicles/vehicle-catalog",
-            "/sales/promotions/active"
+            "/vehicles/variants",
+            "/vehicles/models",
+            // Sales service endpoints (after rewrite)
+            "/promotions/active",
+            // Sales service endpoints (before rewrite)
+            "/sales/promotions/active",
+            // Cart endpoints
+            "/cart",
+            // Dealer service endpoints
+            "/dealers",
+            // Customer service endpoints (public)
+            "/customers/api/test-drives/public",
+            "/customers/api/test-drives/public",
+            "/test-drives/public",
+            // AI Chatbot endpoint (Gateway handles rate limiting)
+            "/ai/chat/ask"
         );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {
@@ -51,9 +71,12 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
+        
+        log.info("[JwtGlobalFilter] Incoming request: {} {}", exchange.getRequest().getMethod(), path);
 
         // 1. Luôn cho phép các request OPTIONS (dùng cho CORS) đi qua
         if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
+            log.info("[JwtGlobalFilter] OPTIONS request allowed: {}", path);
             return chain.filter(exchange);
         }
 

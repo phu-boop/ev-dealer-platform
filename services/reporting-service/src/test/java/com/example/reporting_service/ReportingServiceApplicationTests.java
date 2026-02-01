@@ -8,6 +8,8 @@ import org.springframework.test.context.ActiveProfiles;
 // Điều này giúp môi trường Test (Test Context) khởi tạo mà không cần driver thực.
 @SpringBootTest(properties = {
     "spring.datasource.url=jdbc:h2:mem:testdb", // Dùng H2 DB ảo
+    "spring.datasource.driver-class-name=org.h2.Driver", // Dùng H2 driver
+    "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect", // H2 dialect
     "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @ActiveProfiles("test") 

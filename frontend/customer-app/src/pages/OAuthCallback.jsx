@@ -60,6 +60,10 @@ export default function OAuthCallback() {
             return;
           }
 
+          //Extract memberId from customerProfile if available
+          const memberId = userData.customerProfile?.customerId || userData.memberId || null;
+          console.log("[OAuth] Member ID:", memberId);
+
           // Store user data in AuthProvider
           login(
             accessToken,
@@ -68,7 +72,7 @@ export default function OAuthCallback() {
             userData.email,
             userData.name,
             userData.fullName,
-            userData.memberId,
+            memberId,
             userData,
             userData.url
           );

@@ -27,7 +27,7 @@ export const getB2BModelDetails = (modelId) => {
  * @param {object} orderData - Cấu trúc: { items: [{ variantId: 1, quantity: 10 }, ...] }
  */
 export const createB2BOrder = (orderData) => {
-  return apiConstSaleService.post("/sales-orders/b2b", orderData);
+  return apiConstSaleService.post("/api/v1/sales-orders/b2b", orderData);
 };
 
 /**
@@ -35,14 +35,14 @@ export const createB2BOrder = (orderData) => {
  */
 export const getMyB2BOrders = (params) => {
   // Giả sử có một endpoint an toàn cho đại lý xem đơn của chính họ
-  return apiConstSaleService.get("/sales-orders/my-orders", { params });
+  return apiConstSaleService.get("/api/v1/sales-orders/my-orders", { params });
 };
 
 /**
  * Đại lý xác nhận đã nhận hàng
  */
 export const confirmDelivery = (orderId) => {
-  return apiConstSaleService.put(`/sales-orders/${orderId}/deliver`);
+  return apiConstSaleService.put(`/api/v1/sales-orders/${orderId}/deliver`);
 };
 
 /**
@@ -57,7 +57,7 @@ export const getAllDealersList = () => {
  * @param {string} orderId
  */
 export const cancelOrderByDealer = (orderId) => {
-  return apiConstSaleService.put(`/sales-orders/${orderId}/cancel-by-dealer`);
+  return apiConstSaleService.put(`/api/v1/sales-orders/${orderId}/cancel-by-dealer`);
 };
 
 /**
@@ -67,7 +67,7 @@ export const cancelOrderByDealer = (orderId) => {
  */
 export const reportOrderIssue = (orderId, payload) => {
   return apiConstSaleService.put(
-    `/sales-orders/${orderId}/report-issue`,
+    `/api/v1/sales-orders/${orderId}/report-issue`,
     payload
   );
 };

@@ -41,6 +41,11 @@ public class SecurityConfig {
 
                                 // customer-service
                                 "/customers/**",
+                                "/cart/**",  // Cart endpoints
+                                "/test-drives/**",
+                                "/feedback/**",
+                                "/complaints/**",
+                                "/charging-stations/**",
 
                                 // dealer-service
                                 "/dealers/**",
@@ -50,12 +55,17 @@ public class SecurityConfig {
 
                                 // payment-service
                                 "/payments/**",
+                                "/api/v1/payments/**",
                                 "/favicon.ico",
                                 "/api/v1/payments/gateway/callback/vnpay-return",
                                 "/api/v1/payments/gateway/callback/vnpay-ipn",
 
                                 // "/sales/**"
                                 "/sales/**",
+                                "/orders/**",
+                                
+                                "/sales-orders/**",
+                                "/api/v1/sales-orders/**",
 
                                 // vehicle-service
                                 "/vehicles/**",

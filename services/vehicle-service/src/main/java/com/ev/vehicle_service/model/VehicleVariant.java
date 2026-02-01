@@ -11,7 +11,6 @@ import java.util.Set;
 import org.hibernate.annotations.CreationTimestamp;
 // import org.hibernate.annotations.UpdateTimestamp;
 
-
 @Entity
 @Table(name = "vehicle_variants")
 @Getter
@@ -21,8 +20,8 @@ public class VehicleVariant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "variant_id")
     private Long variantId;
-    
-    // Mối quan hệ ngược lại: Nhiều Variants thuộc về một Model 
+
+    // Mối quan hệ ngược lại: Nhiều Variants thuộc về một Model
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "model_id", nullable = false)
     private VehicleModel vehicleModel;
@@ -31,12 +30,12 @@ public class VehicleVariant {
     private String versionName;
 
     private String color;
-    
+
     @Column(name = "sku_code", unique = true) // Mã định danh sản phẩm
     private String skuCode;
 
     @Column(name = "battery_capacity")
-    private Integer batteryCapacity;
+    private Double batteryCapacity;
 
     @Column(name = "charging_time")
     private Float chargingTime;
@@ -46,6 +45,46 @@ public class VehicleVariant {
 
     @Column(name = "motor_power")
     private Integer motorPower;
+
+    // Additional technical specifications
+    @Column(name = "seating_capacity")
+    private Integer seatingCapacity;
+
+    @Column(name = "torque")
+    private Integer torque; // Nm
+
+    @Column(name = "acceleration")
+    private Float acceleration; // 0-100km/h in seconds
+
+    @Column(name = "top_speed")
+    private Integer topSpeed; // km/h
+
+    @Column(name = "dimensions")
+    private String dimensions; // e.g. "4750 x 1934 x 1667"
+
+    @Column(name = "weight")
+    private Integer weight; // kg
+
+    @Column(name = "warranty_years")
+    private Integer warrantyYears;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    // Color images stored as JSON array
+    // Format: [{"color":"Red","colorCode":"#FF0000","imageUrl":"http://...","isPrimary":true}, ...]
+    @Column(name = "color_images", columnDefinition = "TEXT")
+    private String colorImages;
+
+    // Exterior images stored as JSON array of URLs
+    // Format: ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
+    @Column(name = "exterior_images", columnDefinition = "TEXT")
+    private String exteriorImages;
+
+    // Interior images stored as JSON array of URLs
+    // Format: ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
+    @Column(name = "interior_images", columnDefinition = "TEXT")
+    private String interiorImages;
 
     private BigDecimal price;
 
@@ -65,7 +104,7 @@ public class VehicleVariant {
 
     @Column(name = "image_url")
     private String imageUrl;
-    
+
     // ... updatedBy, updatedDate ...
 
     // --- Relationships (đã được di chuyển) ---
@@ -73,5 +112,6 @@ public class VehicleVariant {
     private Set<PriceHistory> priceHistories = new HashSet<>();
 
     @OneToMany(mappedBy = "vehicleVariant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 20)
     private Set<VariantFeature> features = new HashSet<>();
 }

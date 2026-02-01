@@ -24,6 +24,18 @@ public class OrderItem {
     @Column(name = "variant_id", nullable = false)
     private Long variantId;
 
+    @Column(name = "variant_name", length = 200)
+    private String variantName;
+
+    @Column(name = "model_name", length = 200)
+    private String modelName;
+
+    @Column(name = "color", length = 100)
+    private String color;
+
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @Column(name = "quantity")
     private Integer quantity;
 

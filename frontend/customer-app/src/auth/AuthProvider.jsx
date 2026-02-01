@@ -100,7 +100,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   const isAuthenticated = () => {
-    return token !== null && roles.includes("CUSTOMER");
+    return token !== null;
+  };
+
+  const hasRole = (roleNames) => {
+    if (Array.isArray(roleNames)) {
+      return roleNames.some(role => roles.includes(role));
+    }
+    return roles.includes(roleNames);
   };
 
   return (
@@ -118,6 +125,7 @@ export function AuthProvider({ children }) {
         login,
         logout,
         isAuthenticated,
+        hasRole,
       }}
     >
       {children}

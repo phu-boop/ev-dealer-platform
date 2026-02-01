@@ -5,6 +5,9 @@ import com.ev.customer_service.dto.request.TestDriveFilterRequest;
 import com.ev.customer_service.dto.request.TestDriveRequest;
 import com.ev.customer_service.dto.request.TestDriveFeedbackRequest;
 import com.ev.customer_service.dto.request.UpdateTestDriveRequest;
+import com.ev.customer_service.dto.request.PublicTestDriveRequest;
+import com.ev.customer_service.enums.CustomerStatus;
+import com.ev.customer_service.enums.CustomerType;
 import com.ev.customer_service.dto.response.TestDriveCalendarResponse;
 import com.ev.customer_service.dto.response.TestDriveResponse;
 import com.ev.customer_service.dto.response.TestDriveStatisticsResponse;
@@ -22,8 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,8 +43,39 @@ public class TestDriveService {
     private final ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
-    public List<TestDriveResponse> getAppointmentsByDealerId(Long dealerId) {
+    public List<TestDriveResponse> getAppointmentsByDealerId(String dealerId) {
         return appointmentRepository.findByDealerId(dealerId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TestDriveResponse> getAppointmentsByCustomerId(Long customerId) {
+        return appointmentRepository.findByCustomerCustomerId(customerId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TestDriveResponse> getAppointmentsByProfileId(String profileId) {
+        log.info("Getting appointments for profileId: {}", profileId);
+        
+        // Find customer by profileId first
+        Optional<Customer> customerOpt = customerRepository.findByProfileId(profileId);
+        
+        if (!customerOpt.isPresent()) {
+            // Customer not found - this is OK for new users who just registered
+            log.info("No customer found with profileId: {}. User has not booked test drives yet.", profileId);
+            return new ArrayList<>();
+        }
+        
+        Customer customer = customerOpt.get();
+        log.info("Found customer ID: {} for profileId: {}", customer.getCustomerId(), profileId);
+        
+        List<TestDriveAppointment> appointments = appointmentRepository.findByCustomerCustomerId(customer.getCustomerId());
+        log.info("Found {} appointments for customer ID: {}", appointments.size(), customer.getCustomerId());
+        
+        return appointments.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -124,6 +160,181 @@ public class TestDriveService {
         return mapToResponse(savedAppointment);
     }
 
+    /**
+     * Create test drive appointment from public request (no authentication required)
+     * Finds or creates customer based on phone/email
+     */
+    @Transactional
+    public TestDriveResponse createPublicAppointment(PublicTestDriveRequest request) {
+        // 1. Find or create customer (with profileId if provided)
+        Customer customer = findOrCreateCustomer(
+            request.getCustomerName(),
+            request.getCustomerPhone(),
+            request.getCustomerEmail(),
+            request.getProfileId()
+        );
+
+        // 2. Validate no conflicts (no staff ID for public bookings)
+        validateNoConflicts(null, request.getModelId(), request.getVariantId(),
+                          request.getAppointmentDate(), request.getDurationMinutes(), null);
+
+        // 3. Create appointment
+        TestDriveAppointment appointment = new TestDriveAppointment();
+        appointment.setCustomer(customer);
+        appointment.setDealerId(request.getDealerId());
+        appointment.setModelId(request.getModelId());
+        appointment.setVariantId(request.getVariantId());
+        appointment.setVehicleModelName(request.getVehicleModelName());
+        appointment.setVehicleVariantName(request.getVehicleVariantName());
+        appointment.setAppointmentDate(request.getAppointmentDate());
+        appointment.setAppointmentTime(request.getAppointmentTime());
+        appointment.setDurationMinutes(request.getDurationMinutes() != null ? 
+                                      request.getDurationMinutes() : 60);
+        appointment.setTestDriveLocation(request.getTestDriveLocation());
+        appointment.setCustomerNotes(request.getCustomerNotes());
+        appointment.setStatus("SCHEDULED");
+        appointment.setNotificationSent(false);
+        appointment.setReminderSent(false);
+        appointment.setIsConfirmed(false);
+
+        // Generate confirmation token
+        String token = java.util.UUID.randomUUID().toString();
+        appointment.setConfirmationToken(token);
+        appointment.setConfirmationSentAt(LocalDateTime.now());
+        appointment.setConfirmationExpiresAt(LocalDateTime.now().plusDays(3));
+
+        TestDriveAppointment savedAppointment = appointmentRepository.save(appointment);
+
+        // 4. Send confirmation email
+        try {
+            String customerName = customer.getFirstName() + " " + customer.getLastName();
+            String email = customer.getEmail() != null ? customer.getEmail() : request.getCustomerEmail();
+            
+            if (email != null && !email.isEmpty()) {
+                emailConfirmationService.sendConfirmationEmail(
+                    savedAppointment,
+                    email,
+                    customerName,
+                    savedAppointment.getVehicleModelName(),
+                    savedAppointment.getVehicleVariantName(),
+                    null // No staff for public bookings
+                );
+                savedAppointment.setNotificationSent(true);
+                appointmentRepository.save(savedAppointment);
+                log.info("✅ Sent confirmation email for public appointment ID: {}", savedAppointment.getAppointmentId());
+            }
+        } catch (Exception e) {
+            log.error("❌ Failed to send confirmation email for public appointment", e);
+        }
+
+        return mapToResponse(savedAppointment);
+    }
+
+    /**
+     * Find existing customer by phone, email, or profileId; or create new one
+     */
+    private Customer findOrCreateCustomer(String name, String phone, String email, String profileId) {
+        // Try to find by profileId first (if provided and user is logged in)
+        if (profileId != null && !profileId.isEmpty()) {
+            Optional<Customer> existingByProfileId = customerRepository.findByProfileId(profileId);
+            if (existingByProfileId.isPresent()) {
+                // Update info if provided and different
+                Customer customer = existingByProfileId.get();
+                boolean updated = false;
+                
+                if (phone != null && !phone.isEmpty() && !phone.equals(customer.getPhone())) {
+                    customer.setPhone(phone);
+                    updated = true;
+                }
+                if (email != null && !email.isEmpty() && !email.equals(customer.getEmail())) {
+                    customer.setEmail(email);
+                    updated = true;
+                }
+                
+                if (updated) {
+                    customerRepository.save(customer);
+                }
+                return customer;
+            }
+        }
+        
+        // Try to find by phone first
+        if (phone != null && !phone.isEmpty()) {
+            Optional<Customer> existingByPhone = customerRepository.findByPhone(phone);
+            if (existingByPhone.isPresent()) {
+                // Update email and profileId if provided and different
+                Customer customer = existingByPhone.get();
+                boolean updated = false;
+                
+                if (email != null && !email.isEmpty() && 
+                    (customer.getEmail() == null || !customer.getEmail().equals(email))) {
+                    // Check if email is already taken
+                    if (!customerRepository.existsByEmail(email)) {
+                        customer.setEmail(email);
+                        updated = true;
+                    }
+                }
+                
+                if (profileId != null && !profileId.isEmpty() && customer.getProfileId() == null) {
+                    customer.setProfileId(profileId);
+                    updated = true;
+                }
+                
+                if (updated) {
+                    customerRepository.save(customer);
+                }
+                return customer;
+            }
+        }
+
+        // Try to find by email
+        if (email != null && !email.isEmpty()) {
+            Optional<Customer> existingByEmail = customerRepository.findByEmail(email);
+            if (existingByEmail.isPresent()) {
+                // Update phone and profileId if provided and different
+                Customer customer = existingByEmail.get();
+                boolean updated = false;
+                
+                if (phone != null && !phone.isEmpty() && 
+                    (customer.getPhone() == null || !customer.getPhone().equals(phone))) {
+                    customer.setPhone(phone);
+                    updated = true;
+                }
+                
+                if (profileId != null && !profileId.isEmpty() && customer.getProfileId() == null) {
+                    customer.setProfileId(profileId);
+                    updated = true;
+                }
+                
+                if (updated) {
+                    customerRepository.save(customer);
+                }
+                return customer;
+            }
+        }
+
+        // Create new customer
+        Customer newCustomer = new Customer();
+        // Parse name into first and last name
+        String[] nameParts = name != null ? name.trim().split("\\s+", 2) : new String[]{"", ""};
+        newCustomer.setFirstName(nameParts.length > 0 ? nameParts[0] : "");
+        newCustomer.setLastName(nameParts.length > 1 ? nameParts[1] : "");
+        newCustomer.setPhone(phone);
+        newCustomer.setEmail(email);
+        newCustomer.setProfileId(profileId); // Set profileId if user is logged in
+        newCustomer.setCustomerType(CustomerType.INDIVIDUAL);
+        newCustomer.setStatus(CustomerStatus.NEW);
+        
+        // Generate customer code
+        String datePrefix = java.time.LocalDate.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+        long count = customerRepository.count();
+        String sequence = String.format("%04d", (count % 10000) + 1);
+        newCustomer.setCustomerCode("CUS-" + datePrefix + "-" + sequence);
+
+        return customerRepository.save(newCustomer);
+    }
+
     @Transactional
     public TestDriveResponse updateAppointment(Long id, UpdateTestDriveRequest request) {
         TestDriveAppointment appointment = appointmentRepository.findById(id)
@@ -152,6 +363,9 @@ public class TestDriveService {
         // Cập nhật các trường
         if (request.getAppointmentDate() != null) {
             appointment.setAppointmentDate(request.getAppointmentDate());
+        }
+        if (request.getAppointmentTime() != null) {
+            appointment.setAppointmentTime(request.getAppointmentTime());
         }
         if (request.getDurationMinutes() != null) {
             appointment.setDurationMinutes(request.getDurationMinutes());
@@ -333,10 +547,16 @@ public class TestDriveService {
     }
 
     @Transactional(readOnly = true)
-    public List<TestDriveCalendarResponse> getCalendarView(Long dealerId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<TestDriveAppointment> appointments = appointmentRepository.findByDealerIdAndDateRange(
-            dealerId, startDate, endDate
-        );
+    public List<TestDriveCalendarResponse> getCalendarView(String dealerId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<TestDriveAppointment> appointments;
+        
+        if (dealerId == null || dealerId.isEmpty()) {
+            // Admin viewing all dealers' appointments
+            appointments = appointmentRepository.findByDateRange(startDate, endDate);
+        } else {
+            // Dealer staff/manager viewing their dealer's appointments
+            appointments = appointmentRepository.findByDealerIdAndDateRange(dealerId, startDate, endDate);
+        }
 
         return appointments.stream()
                 .map(this::mapToCalendarResponse)
@@ -344,10 +564,16 @@ public class TestDriveService {
     }
 
     @Transactional(readOnly = true)
-    public TestDriveStatisticsResponse getStatistics(Long dealerId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<TestDriveAppointment> appointments = appointmentRepository.findByDealerIdAndDateRange(
-            dealerId, startDate, endDate
-        );
+    public TestDriveStatisticsResponse getStatistics(String dealerId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<TestDriveAppointment> appointments;
+        
+        if (dealerId == null || dealerId.isEmpty()) {
+            // Admin viewing all dealers' statistics
+            appointments = appointmentRepository.findByDateRange(startDate, endDate);
+        } else {
+            // Dealer manager viewing their dealer's statistics
+            appointments = appointmentRepository.findByDealerIdAndDateRange(dealerId, startDate, endDate);
+        }
 
         long total = appointments.size();
         long scheduled = appointments.stream().filter(a -> "SCHEDULED".equals(a.getStatus())).count();
@@ -467,6 +693,7 @@ public class TestDriveService {
             .staffId(appointment.getStaffId())
             .staffName(appointment.getStaffName())
             .appointmentDate(appointment.getAppointmentDate())
+            .appointmentTime(appointment.getAppointmentTime())
             .durationMinutes(appointment.getDurationMinutes())
             .endTime(appointment.getEndTime())
             .testDriveLocation(appointment.getTestDriveLocation())
@@ -563,7 +790,7 @@ public class TestDriveService {
      * Lấy danh sách appointments đã có feedback (để thống kê)
      */
     @Transactional(readOnly = true)
-    public List<TestDriveResponse> getAppointmentsWithFeedback(Long dealerId) {
+    public List<TestDriveResponse> getAppointmentsWithFeedback(String dealerId) {
         return appointmentRepository.findByDealerId(dealerId).stream()
                 .filter(apt -> apt.getFeedbackRating() != null)
                 .map(this::mapToResponse)

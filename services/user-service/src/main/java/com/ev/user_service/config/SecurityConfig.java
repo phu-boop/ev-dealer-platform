@@ -70,6 +70,8 @@ public class SecurityConfig {
                         .authorizationEndpoint(authorization -> authorization
                                 .authorizationRequestResolver(customAuthorizationRequestResolver))
                         .successHandler(oAuth2LoginSuccessHandler))
+                // .httpBasic(AbstractHttpConfigurer::disable)
+                // .formLogin(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex -> ex.accessDeniedHandler((req, res, e) -> {
                     throw e;
                 }))

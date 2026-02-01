@@ -49,12 +49,38 @@ Hệ thống phục vụ 5 nhóm người dùng chính:
 
 ## 🚀 Tính năng
 
-### 1️⃣ Chức năng cho Đại lý (Dealer Staff, Dealer Manager)
+### 1️⃣ Chức năng cho Khách hàng (Customer B2C) - **HOÀN THÀNH**
+
+#### 🛒 a. Mua sắm trực tuyến
+- Xem danh mục xe điện với bộ lọc và tìm kiếm
+- Xem chi tiết xe (thông số, hình ảnh, tính năng)
+- So sánh xe (tối đa 3 xe cùng lúc)
+- Thêm vào giỏ hàng và thanh toán
+- Theo dõi đơn hàng
+- Thanh toán VNPay
+
+#### ⭐ b. Tương tác với sản phẩm
+- **Đánh giá và đánh sao** xe đã mua (5 sao + chi tiết)
+- Xem đánh giá từ người dùng khác
+- Thống kê rating trung bình và phân bố
+- **Đặt lịch lái thử** xe (chọn ngày, giờ, đại lý)
+- Quản lý lịch lái thử của bản thân
+
+#### 🔌 c. Dịch vụ hỗ trợ
+- **Bản đồ trạm sạc** với Google Maps
+- Tìm trạm sạc gần nhất
+- Xem thông tin chi tiết trạm (loại sạc, công suất, giá)
+- Chỉ đường đến trạm sạc
+
+---
+
+### 2️⃣ Chức năng cho Đại lý (Dealer Staff, Dealer Manager)
 
 #### 🔍 a. Truy vấn thông tin xe
 
 - Xem danh mục xe, cấu hình kỹ thuật, giá bán
 - So sánh các mẫu xe và tính năng
+- Duyệt đánh giá khách hàng
 
 #### 💼 b. Quản lý bán hàng
 

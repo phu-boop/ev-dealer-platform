@@ -43,38 +43,60 @@ export default function Login() {
     try {
       const response = await loginUser({ ...form });
 
-      if (response.code === "1000") {
-        const userData = response.data.userRespond;
-        const jwtToken = response.data.token;
-        const rolesArray = userData.roles.map((role) => role.name);
-
-        // Check if user is CUSTOMER
-        if (!rolesArray.includes("CUSTOMER")) {
-          setError("Tài khoản này không phải là khách hàng. Vui lòng đăng nhập tại cổng quản lý.");
+      // Backend có thể trả về code: "1000" hoặc code: 200
+      if (response.code === 200 || response.code === "1000") {
+        // Handle both response structures
+        const userData = response.result?.userRespond || response.data?.userRespond;
+        const jwtToken = response.result?.token || response.data?.token;
+        
+        // Get roleName - handle both structures
+        let roleName;
+        if (userData.roleName) {
+          // New structure: roleName directly
+          roleName = userData.roleName;
+        } else if (userData.roles && userData.roles.length > 0) {
+          // Old structure: roles array with objects containing 'name' property
+          roleName = userData.roles[0].name;
+        }
+        
+        // Check if user has appropriate role for customer app
+        const allowedRoles = ["ADMIN", "EVM_STAFF", "DEALER_MANAGER", "CUSTOMER"];
+        
+        if (!roleName || !allowedRoles.includes(roleName)) {
+          setError(`Tài khoản không có quyền truy cập hệ thống. Role: ${roleName || 'undefined'}`);
           setLoading(false);
           return;
         }
-
+        
+        // Extract memberId from customerProfile if available
+        const memberId = userData.customerProfile?.customerId || userData.memberId || null;
+        
         login(
           jwtToken,
-          rolesArray,
-          userData.id,
+          [roleName], // Convert single role to array for consistency
+          userData.id || userData.userId,
           userData.email,
           userData.name,
           userData.fullName,
-          userData.memberId,
+          memberId,
           userData,
           userData.url
         );
 
         toast.success("Đăng nhập thành công!");
-        navigate("/");
+        
+        // Redirect based on role
+        const redirectPath = ["ADMIN", "EVM_STAFF", "DEALER_MANAGER"].includes(roleName) ? "/admin" : "/";
+        
+        setTimeout(() => {
+          navigate(redirectPath);
+        }, 100);
       } else {
         setError(response.message || "Đăng nhập thất bại");
+        setLoading(false);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Đăng nhập thất bại");
-    } finally {
+      setError(err.response?.data?.message || err.message || "Đăng nhập thất bại");
       setLoading(false);
     }
   };

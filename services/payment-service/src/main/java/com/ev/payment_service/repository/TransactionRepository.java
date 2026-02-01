@@ -6,9 +6,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
+
+    // Lấy transaction mới nhất của một payment record
+    Optional<Transaction> findFirstByPaymentRecordOrderByTransactionDateDesc(com.ev.payment_service.entity.PaymentRecord paymentRecord);
 
     // Lấy tất cả giao dịch của một sổ thanh toán (PaymentRecord)
     List<Transaction> findByPaymentRecord_RecordId(UUID recordId);

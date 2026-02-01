@@ -206,7 +206,12 @@ public enum ErrorCode {
 
     CUSTOMER_NOT_FOUND("9002", "Không tìm thấy khách hàng", HttpStatus.NOT_FOUND),
 
-    CUSTOMER_SERVICE_UNAVAILABLE("9003", "Dịch vụ khách hàng tạm thời không khả dụng", HttpStatus.SERVICE_UNAVAILABLE);
+    // Cart errors
+    CART_ITEM_NOT_FOUND("9003", "Không tìm thấy sản phẩm trong giỏ hàng", HttpStatus.NOT_FOUND),
+    CART_EMPTY("9004", "Giỏ hàng trống", HttpStatus.BAD_REQUEST),
+    INVALID_CART_QUANTITY("9005", "Số lượng trong giỏ hàng không hợp lệ", HttpStatus.BAD_REQUEST),
+
+    CUSTOMER_SERVICE_UNAVAILABLE("9010", "Dịch vụ khách hàng tạm thời không khả dụng", HttpStatus.SERVICE_UNAVAILABLE);
 
     private final String code;
     private final String message;
