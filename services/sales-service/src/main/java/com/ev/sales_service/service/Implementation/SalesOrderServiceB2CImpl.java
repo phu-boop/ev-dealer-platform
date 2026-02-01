@@ -23,6 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import java.util.concurrent.CompletableFuture;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,6 +58,10 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 
     @org.springframework.beans.factory.annotation.Value("${vehicle-service.uri}")
     private String vehicleServiceUri;
+
+    @org.springframework.beans.factory.annotation.Value("${reporting-service.url}")
+    private String reportingServiceUrl;
+
 
     @Override
     public SalesOrderB2CResponse createSalesOrderFromQuotation(UUID quotationId) {
@@ -109,6 +115,10 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 
         SalesOrder savedSalesOrder = salesOrderRepository.save(salesOrder);
         log.info("Created B2C sales order from quotation: {}", quotationId);
+
+        // Async Report
+        String modelName = fetchModelName(quotation.getModelId());
+        sendSalesReport(savedSalesOrder, modelName, quotation.getVariantId(), null);
 
         return mapToResponse(savedSalesOrder);
     }
@@ -314,6 +324,13 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 
         // 7. Save
         SalesOrder savedOrder = salesOrderRepository.save(salesOrder);
+
+        // Async Report
+        Long rptVariantId = variantId;
+        String rptModelName = (String) metadata.get("modelName");
+        String rptDealerName = (metadata.get("dealerName") != null) ? (String) metadata.get("dealerName") : "N/A";
+        // Attempt to find region if possible, or leave null
+        sendSalesReport(savedOrder, rptModelName, rptVariantId, rptDealerName);
 
         // 8. Send confirmation email to customer
         try {
@@ -899,4 +916,63 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         return "/placeholder-car.png";
     }
 
+    @Override
+    public List<SalesOrderB2CResponse> getAllSalesForReporting(java.time.LocalDateTime since) {
+        List<com.ev.sales_service.entity.SalesOrder> orders;
+        if (since != null) {
+            // Assuming orderDate is the main timestamp. ideally we use updatedAt if available.
+            // Using orderDate for now as per entity definition availability.
+            orders = salesOrderRepository.findAll().stream()
+                    .filter(o -> o.getOrderDate().isAfter(since))
+                    .collect(Collectors.toList());
+        } else {
+            orders = salesOrderRepository.findAll();
+        }
+        
+        return orders.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private String fetchModelName(Long modelId) {
+        if (modelId == null) return "Unknown Model";
+        try {
+            String url = vehicleServiceUri + "/vehicle-catalog/models/" + modelId;
+            ApiRespond<Map<String, Object>> response = restTemplate.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    null,
+                    new org.springframework.core.ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {
+                    }).getBody();
+
+            if (response != null && response.getData() != null) {
+                return (String) response.getData().get("modelName");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch model name for id {}: {}", modelId, e.getMessage());
+        }
+        return "Unknown Model";
+    }
+
+    private void sendSalesReport(SalesOrder salesOrder, String modelName, Long variantId, String dealerName) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String url = reportingServiceUrl + "/api/reports/sales";
+                
+                Map<String, Object> body = new java.util.HashMap<>();
+                body.put("orderId", salesOrder.getOrderId());
+                body.put("totalAmount", salesOrder.getTotalAmount());
+                body.put("orderDate", salesOrder.getOrderDate());
+                body.put("modelName", modelName);
+                body.put("variantId", variantId);
+                body.put("dealerName", dealerName);
+                // Region could be inferred from dealer or address
+                
+                log.info("Sending sales report for Order ID: {}", salesOrder.getOrderId());
+                restTemplate.postForObject(url, body, String.class);
+            } catch (Exception e) {
+                log.error("Failed to send sales report: {}", e.getMessage());
+            }
+        });
+    }
 }

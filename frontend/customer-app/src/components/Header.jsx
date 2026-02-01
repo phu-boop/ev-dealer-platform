@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
+import { motion } from "framer-motion";
 import {
   Menu,
   X,
@@ -24,12 +25,15 @@ export default function Header() {
   const { isAuthenticated, logout, name, hasRole, memberId } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [hoveredPath, setHoveredPath] = useState(location.pathname);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const { count: compareCount } = useComparison();
 
-
+useEffect(() => {
+    setHoveredPath(location.pathname);
+  }, [location.pathname]);
 
   const isAdmin = hasRole(['ADMIN', 'EVM_STAFF', 'DEALER_MANAGER']);
 
@@ -43,6 +47,14 @@ export default function Header() {
     return location.pathname === path;
   };
 
+  // Danh sách các tabs điều hướng chính
+  const navTabs = [
+    { path: "/", label: "Trang chủ" },
+    { path: "/vehicles", label: "Xe điện" },
+    { path: "/test-drive", label: "Đặt lái thử" },
+    { path: "/charging-stations", label: "Trạm sạc" },
+  ];
+
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,50 +66,41 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-6">
-            {/* Main Navigation Links */}
-            <Link
-              to="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/")
-                ? "text-blue-600 bg-blue-50"
-                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
-            >
-              Trang chủ
-            </Link>
+          <nav 
+            className="hidden lg:flex items-center gap-2"
+            onMouseLeave={() => setHoveredPath(location.pathname)} // Khi chuột rời menu, quay về tab active
+          >
+            {navTabs.map((tab) => {
+              const isActiveTab = isActive(tab.path);
+              return (
+                <Link
+                  key={tab.path}
+                  to={tab.path}
+                  onMouseEnter={() => setHoveredPath(tab.path)}
+                  className={`relative px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                    isActiveTab ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+                  }`}
+                >
+                  {/* Chỉ hiển thị Background nếu tab này đang Active (đúng URL hiện tại) */}
+                  {isActiveTab && (
+                    <motion.div
+                      layoutId="navbar-pill"
+                      className="absolute inset-0 bg-blue-50 rounded-md"
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 300, 
+                        damping: 30 
+                      }}
+                      style={{ zIndex: -1 }} // Đặt zIndex âm để nằm dưới chữ
+                    />
+                  )}
+                  
+                  <span className="relative z-10">{tab.label}</span>
+                </Link>
+              );
+            })}
 
-            <Link
-              to="/vehicles"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/vehicles")
-                ? "text-blue-600 bg-blue-50"
-                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
-            >
-              Xe điện
-            </Link>
-
-            <Link
-              to="/test-drive"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/test-drive")
-                ? "text-blue-600 bg-blue-50"
-                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
-            >
-              Đặt lái thử
-            </Link>
-
-            <Link
-              to="/charging-stations"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive("/charging-stations")
-                ? "text-blue-600 bg-blue-50"
-                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                }`}
-            >
-              Trạm sạc
-            </Link>
-
-
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className="h-6 w-px bg-gray-300 mx-2"></div>
 
             {/* Action Icons */}
             {isAuthenticated() && (
@@ -115,8 +118,6 @@ export default function Header() {
                     </span>
                   )}
                 </Link>
-
-
 
                 {/* Admin Link */}
                 {isAdmin && (

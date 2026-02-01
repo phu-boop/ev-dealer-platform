@@ -15,7 +15,8 @@ import {
   X,
   LogOut,
   FolderTree,
-  DollarSign
+  DollarSign,
+  Settings
 } from 'lucide-react';
 
 export default function AdminLayout() {
@@ -50,6 +51,7 @@ export default function AdminLayout() {
     { icon: Tag, label: 'Khuyến mãi', path: '/admin/promotions' },
     { icon: Star, label: 'Đánh giá', path: '/admin/reviews' },
     { icon: BarChart3, label: 'Báo cáo', path: '/admin/reports' },
+    { icon: Settings, label: 'Cài đặt', path: '/admin/settings' },
   ];
 
   const isActive = (path) => {
