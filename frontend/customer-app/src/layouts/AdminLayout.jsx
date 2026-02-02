@@ -40,7 +40,7 @@ export default function AdminLayout() {
   };
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Tổng quan', path: '/admin' },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
     { icon: Car, label: 'Quản lý xe', path: '/admin/vehicles' },
     { icon: FolderTree, label: 'Danh mục', path: '/admin/categories' },
     { icon: ShoppingCart, label: 'Đơn hàng', path: '/admin/orders' },
