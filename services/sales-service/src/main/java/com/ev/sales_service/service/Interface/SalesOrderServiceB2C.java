@@ -55,4 +55,9 @@ public interface SalesOrderServiceB2C {
      */
     Page<SalesOrderB2CResponse> getAllB2COrders(String status, Pageable pageable);
 
+    /**
+     * Lấy tất cả đơn hàng cho mục đích báo cáo/sync (Internal)
+     * @param since Optional: Fetch orders modified/created after this date
+     */
+    List<SalesOrderB2CResponse> getAllSalesForReporting(java.time.LocalDateTime since);
 }

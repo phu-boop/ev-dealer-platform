@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -23,6 +25,7 @@ public class DealerInventoryDto {
     private String skuCode;
 
     // Thông tin từ Inventory Service
+    private UUID dealerId; // Added for sync
     private Integer availableQuantity;   // Hàng có sẵn để bán
     private Integer allocatedQuantity;   // Hàng đang trên đường tới (hoặc đang giữ)
     private Integer reorderLevel;        // Ngưỡng đặt lại
@@ -33,6 +36,7 @@ public class DealerInventoryDto {
         InventoryLevelStatus status = InventoryLevelStatus.OUT_OF_STOCK;
         int available = (allocation != null) ? allocation.getAvailableQuantity() : 0;
         int reorder = (allocation != null && allocation.getReorderLevel() != null) ? allocation.getReorderLevel() : 0;
+        UUID dealerId = (allocation != null) ? allocation.getDealerId() : null;
 
         if (available > reorder) {
             status = InventoryLevelStatus.IN_STOCK;
@@ -46,6 +50,7 @@ public class DealerInventoryDto {
                 .versionName(variant.getVersionName())
                 .color(variant.getColor())
                 .skuCode(variant.getSkuCode())
+                .dealerId(dealerId) // Set dealerId
                 .availableQuantity(available)
                 .allocatedQuantity((allocation != null) ? allocation.getAllocatedQuantity() : 0)
                 .reorderLevel(reorder)
