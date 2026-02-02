@@ -50,4 +50,8 @@ public class CustomerRequest {
 
     // UUID của nhân viên được phân công (từ User Service)
     private String assignedStaffId;
+    
+    // UUID từ User Service (để link với user account)
+    @Size(max = 36, message = "Profile ID must not exceed 36 characters")
+    private String profileId;
 }

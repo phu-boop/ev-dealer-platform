@@ -6,6 +6,8 @@ import { getVehicleById, getVariants, getVehicles } from "../services/vehicleSer
 import { toast } from "react-toastify";
 import Button from "../components/ui/Button";
 import { initiateVNPayBooking } from "../services/paymentService";
+import api from "../services/api";
+import { createCustomer } from "../services/customerService";
 
 const BookingPage = () => {
   const { id } = useParams();
@@ -26,18 +28,80 @@ const BookingPage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Get customerId from token if available
-    const token = sessionStorage.getItem('token');
-    if (token) {
+    // Fetch or create customer record if user is logged in
+    const fetchOrCreateCustomer = async () => {
+      const memberId = sessionStorage.getItem('memberId');
+      if (!memberId) return;
+
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.profileId) {
-          setCustomerId(payload.profileId);
+        // Try to fetch existing customer by profileId
+        const response = await api.get(`/customers/api/customers/profile/${memberId}`);
+        if (response.data?.data?.customerId) {
+          setCustomerId(response.data.data.customerId);
+          console.log('Fetched existing customerId:', response.data.data.customerId);
+          return;
         }
-      } catch (e) {
-        console.error('Error parsing token:', e);
+      } catch (error) {
+        // Customer not found (404) or database error (500)
+        if (error.response?.status === 404 || error.response?.status === 500) {
+          // Customer not found or error, create new one
+          console.log('Customer not found or error, creating new customer record...');
+          console.log('Error details:', error.response?.status, error.response?.data);
+          try {
+            // Get user info from sessionStorage
+            const userEmail = sessionStorage.getItem('email');
+            const userName = sessionStorage.getItem('name') || sessionStorage.getItem('fullName') || 'Customer';
+            const userPhone = sessionStorage.getItem('phone') || '';
+            
+            // Validate required fields
+            if (!userEmail) {
+              console.warn('Cannot create customer: email is required');
+              return;
+            }
+            
+            // Parse name into firstName and lastName
+            const nameParts = userName.trim().split(' ');
+            let firstName, lastName;
+            
+            if (nameParts.length === 1) {
+              firstName = nameParts[0];
+              lastName = nameParts[0]; // Use same as first name if no last name
+            } else {
+              lastName = nameParts[nameParts.length - 1];
+              firstName = nameParts.slice(0, -1).join(' ');
+            }
+
+            // Create customer with profileId
+            const newCustomerData = {
+              firstName: firstName || 'Customer',
+              lastName: lastName || 'User',
+              email: userEmail,
+              phone: userPhone || '',
+              customerType: 'INDIVIDUAL',
+              status: 'NEW',
+              profileId: memberId
+            };
+
+            console.log('Creating customer with data:', newCustomerData);
+            const createResponse = await api.post('/customers/api/customers', newCustomerData);
+            
+            if (createResponse.data?.data?.customerId) {
+              setCustomerId(createResponse.data.data.customerId);
+              console.log('✅ Created new customerId:', createResponse.data.data.customerId);
+              toast.success('Đã tạo hồ sơ khách hàng thành công!');
+            }
+          } catch (createError) {
+            console.error('Error creating customer:', createError);
+            console.error('Error details:', createError.response?.data);
+            toast.warning('Không thể tạo hồ sơ khách hàng. Bạn vẫn có thể đặt cọc như khách vãng lai.');
+          }
+        } else {
+          console.error('Error fetching customerId:', error);
+        }
       }
-    }
+    };
+
+    fetchOrCreateCustomer();
   }, []);
 
   // Form data for step 2
@@ -357,7 +421,7 @@ const BookingPage = () => {
         modelName: vehicleData.modelName,
         variantId: selectedVariant?.variantId,
         variantName: selectedVariant?.versionName,
-        // customerId: customerId || null, // Không cần cho guest booking
+        customerId: customerId || null, // Send customerId (Long) if user is logged in
         customerName: formData.fullName,
         customerPhone: formData.phone,
         customerEmail: formData.email,
@@ -376,7 +440,9 @@ const BookingPage = () => {
         orderInfo: `Dat coc xe ${vehicleData.modelName} - ${formData.fullName}`
       };
 
-      console.log('Booking data:', bookingData); // Debug log
+      console.log('🚀 Booking data:', bookingData);
+      console.log('📋 Customer ID:', customerId);
+      console.log('👤 User memberId:', sessionStorage.getItem('memberId')); // Debug log
 
       // Call API to initiate VNPay payment
       const response = await initiateVNPayBooking(bookingData);

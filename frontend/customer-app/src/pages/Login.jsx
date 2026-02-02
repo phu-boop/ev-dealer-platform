@@ -68,8 +68,14 @@ export default function Login() {
           return;
         }
         
-        // Extract memberId from customerProfile if available
-        const memberId = userData.customerProfile?.customerId || userData.memberId || null;
+        // Get memberId (UUID from user-service) and phone
+        const memberId = userData.memberId || userData.id || null;
+        const phone = userData.phone || '';
+        
+        // Store phone in sessionStorage for customer creation
+        if (phone) {
+          sessionStorage.setItem('phone', phone);
+        }
         
         login(
           jwtToken,

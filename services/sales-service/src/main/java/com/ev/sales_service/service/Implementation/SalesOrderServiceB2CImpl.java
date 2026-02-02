@@ -196,6 +196,18 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         String customerName = (String) paymentRecord.get("customerName");
         String customerPhone = (String) paymentRecord.get("customerPhone");
         String customerEmail = (String) paymentRecord.get("customerEmail");
+        
+        // 3.5 Get Customer ID from PaymentRecord if available
+        Long customerId = null;
+        if (paymentRecord.get("customerId") != null) {
+            try {
+                customerId = ((Number) paymentRecord.get("customerId")).longValue();
+                log.info("Found customerId {} in PaymentRecord for order from booking deposit", customerId);
+            } catch (Exception e) {
+                log.warn("Failed to parse customerId from PaymentRecord: {}", e.getMessage());
+            }
+        }
+        
         // 4. Create Sales Order
         SalesOrder salesOrder = new SalesOrder();
         salesOrder.setOrderDate(LocalDateTime.now());
@@ -203,6 +215,12 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         salesOrder.setPaymentStatus(PaymentStatus.PARTIALLY_PAID); // Đã cọc
         salesOrder.setTypeOder(SaleOderType.B2C);
         salesOrder.setPaymentMethod((String) paymentRecord.get("paymentMethodName"));
+        
+        // Link to customer if customerId exists
+        if (customerId != null) {
+            salesOrder.setCustomerId(customerId);
+            log.info("Linked SalesOrder to Customer ID: {}", customerId);
+        }
 
         // 3. Get Dealer ID
         if (request.getDealerId() != null) {
