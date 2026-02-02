@@ -54,23 +54,28 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (
-      error.response &&
-      error.response.status === 401 &&
-      !originalRequest._retry
-    ) {
-      originalRequest._retry = true;
+    // Ngăn trình duyệt hiện popup Basic Auth
+    if (error.response && error.response.status === 401) {
+      // Xóa WWW-Authenticate header để tránh popup
+      delete error.response.headers['www-authenticate'];
+      
+      if (!originalRequest._retry) {
+        originalRequest._retry = true;
 
-      // Chỉ redirect đến login nếu user đang ở trang yêu cầu authentication
-      // Không redirect nếu đang ở trang public như trang chủ
-      const publicPaths = ['/', '/login', '/register'];
-      const currentPath = window.location.pathname;
+        // Chỉ redirect đến login nếu user đang ở trang yêu cầu authentication
+        // Không redirect nếu đang ở trang public như trang chủ
+        const publicPaths = ['/', '/login', '/register', '/vehicles'];
+        const currentPath = window.location.pathname;
 
-      if (!publicPaths.includes(currentPath)) {
-        // Redirect to login chỉ khi không ở trang public
-        sessionStorage.clear();
-        window.location.href = "/login";
+        if (!publicPaths.includes(currentPath) && !currentPath.startsWith('/admin')) {
+          // Redirect to login chỉ khi không ở trang public
+          sessionStorage.clear();
+          window.location.href = "/login";
+        }
       }
+      
+      // Return rejected promise mà không throw error để tránh popup
+      return Promise.resolve({ data: { data: [] } });
     }
 
     return Promise.reject(error);

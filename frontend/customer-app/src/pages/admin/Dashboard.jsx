@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Car,
   ShoppingCart,
@@ -10,6 +11,22 @@ import {
   Package,
   Star
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
+import dashboardService from '../../services/dashboardService';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -23,25 +40,64 @@ export default function AdminDashboard() {
     pendingReviews: 0
   });
 
+  // Fetch dashboard statistics
+  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: dashboardService.getDashboardStats,
+    refetchInterval: 60000,
+    retry: false,
+    onError: (error) => {
+      console.error('Error loading dashboard stats:', error);
+    }
+  });
+
+  // Fetch revenue chart data
+  const { data: revenueData = [] } = useQuery({
+    queryKey: ['revenueChart'],
+    queryFn: dashboardService.getRevenueChartData,
+    refetchInterval: 300000,
+    retry: false
+  });
+
+  // Fetch top vehicles data
+  const { data: topVehiclesData = [] } = useQuery({
+    queryKey: ['topVehicles'],
+    queryFn: dashboardService.getTopVehicles,
+    refetchInterval: 300000,
+    retry: false
+  });
+
+  // Fetch order status data
+  const { data: orderStatusData = [] } = useQuery({
+    queryKey: ['orderStatus'],
+    queryFn: dashboardService.getOrderStatusData,
+    refetchInterval: 60000,
+    retry: false
+  });
+
+  // Update stats when data is loaded
   useEffect(() => {
-    // TODO: Fetch actual stats from API
-    setStats({
-      totalVehicles: 45,
-      totalOrders: 128,
-      totalCustomers: 356,
-      totalRevenue: 15750000000,
-      pendingOrders: 12,
-      pendingTestDrives: 8,
-      lowStockVehicles: 5,
-      pendingReviews: 15
-    });
-  }, []);
+    if (dashboardStats) {
+      setStats(dashboardStats);
+    }
+  }, [dashboardStats]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  // Calculate growth rate
+  const calculateGrowth = () => {
+    if (revenueData.length < 2) return '+0%';
+    const lastMonth = revenueData[revenueData.length - 1];
+    const prevMonth = revenueData[revenueData.length - 2];
+    if (!prevMonth || prevMonth.revenue === 0) return '+0%';
+    
+    const growth = ((lastMonth.revenue - prevMonth.revenue) / prevMonth.revenue * 100).toFixed(1);
+    return growth > 0 ? `+${growth}%` : `${growth}%`;
   };
 
   const statCards = [
@@ -79,7 +135,7 @@ export default function AdminDashboard() {
       label: 'Lịch lái thử',
       value: stats.pendingTestDrives,
       color: 'indigo',
-      badge: 'chờ xác nhận',
+      badge: stats.scheduledTestDrives > 0 ? `${stats.scheduledTestDrives} chờ xác nhận` : null,
       link: '/admin/test-drives'
     },
     {
@@ -101,7 +157,7 @@ export default function AdminDashboard() {
     {
       icon: TrendingUp,
       label: 'Tăng trưởng',
-      value: '+23%',
+      value: calculateGrowth(),
       color: 'teal',
       badge: 'so với tháng trước',
       link: '/admin/reports'
@@ -119,10 +175,19 @@ export default function AdminDashboard() {
     teal: 'bg-teal-100 text-teal-600'
   };
 
+  // Show loading state
+  if (statsLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Tổng quan</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
         <p className="text-gray-600">Chào mừng đến với trang quản trị VinPhust</p>
       </div>
 
@@ -182,6 +247,128 @@ export default function AdminDashboard() {
             <DollarSign className="mx-auto mb-2 text-purple-600" size={32} />
             <p className="font-medium">Tạo khuyến mãi</p>
           </Link>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Biểu đồ doanh thu */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Doanh thu theo tháng</h2>
+          {revenueData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={revenueData}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(value) => `${(value / 1000000000).toFixed(1)}B`} />
+                <Tooltip 
+                  formatter={(value) => formatCurrency(value)}
+                  labelStyle={{ color: '#1f2937' }}
+                />
+                <Legend />
+                <Area 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  name="Doanh thu"
+                  stroke="#3b82f6" 
+                  fillOpacity={1} 
+                  fill="url(#colorRevenue)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-500">
+              Chưa có dữ liệu
+            </div>
+          )}
+        </div>
+
+        {/* Biểu đồ xe bán chạy */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Top xe bán chạy</h2>
+          {topVehiclesData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={topVehiclesData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="sales" name="Số lượng bán" radius={[8, 8, 0, 0]}>
+                  {topVehiclesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-500">
+              Chưa có dữ liệu
+            </div>
+          )}
+        </div>
+
+        {/* Biểu đồ trạng thái đơn hàng */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Trạng thái đơn hàng</h2>
+          {orderStatusData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={orderStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {orderStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-500">
+              Chưa có dữ liệu
+            </div>
+          )}
+        </div>
+
+        {/* Biểu đồ số đơn hàng theo tháng */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Số lượng đơn hàng</h2>
+          {revenueData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar 
+                  dataKey="orders" 
+                  name="Đơn hàng" 
+                  fill="#10b981" 
+                  radius={[8, 8, 0, 0]} 
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-500">
+              Chưa có dữ liệu
+            </div>
+          )}
         </div>
       </div>
     </div>
