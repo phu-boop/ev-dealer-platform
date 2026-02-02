@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Clock, CheckCircle, XCircle, Package, Truck, FileCheck, ShoppingCart, DollarSign, AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
-import { getCustomerOrders, getOrderById, cancelOrder } from "../services/orderService";
+import { getOrdersByProfileId, getOrderById, cancelOrder } from "../services/orderService";
 import { toast } from "react-toastify";
 
 export default function OrdersPage() {
   const navigate = useNavigate();
   const { memberId } = useAuth();
-  const customerId = memberId;
+  const profileId = memberId; // memberId is the profileId (UUID from user-service)
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [orderIdSearch, setOrderIdSearch] = useState("");
   const [searchedOrder, setSearchedOrder] = useState(null);
@@ -17,22 +18,22 @@ export default function OrdersPage() {
 
   // Fetch customer orders (only if logged in)
   const { data: ordersData, isLoading } = useQuery({
-    queryKey: ['orders', customerId],
+    queryKey: ['orders', profileId],
     queryFn: async () => {
-      if (!customerId) return null;
+      if (!profileId) return null;
       try {
-        const response = await getCustomerOrders(customerId);
+        const response = await getOrdersByProfileId(profileId);
         return response.data;
       } catch (error) {
         console.error("Error fetching orders:", error);
         // Don't show error if user is not logged in
-        if (customerId) {
+        if (profileId) {
           toast.error("Không thể tải danh sách đơn hàng");
         }
         return [];
       }
     },
-    enabled: !!customerId,
+    enabled: !!profileId,
   });
 
   // Search order by ID
@@ -63,7 +64,7 @@ export default function OrdersPage() {
     mutationFn: ({ orderId, reason }) => cancelOrder(orderId, reason),
     onSuccess: () => {
       toast.success("Đơn hàng đã được hủy thành công");
-      queryClient.invalidateQueries(['orders', customerId]);
+      queryClient.invalidateQueries(['orders', profileId]);
     },
     onError: (error) => {
       console.error("Error cancelling order:", error);
@@ -98,34 +99,35 @@ export default function OrdersPage() {
   };
 
   const getStatusInfo = (status) => {
+    // Map backend statuses to simplified display statuses (like admin page)
     const statusMap = {
-      PENDING: { label: 'Chờ xử lý', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
-      EDITED: { label: 'Đã chỉnh sửa', color: 'bg-purple-100 text-purple-800', icon: '✏️' },
-      CONFIRMED: { label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-800', icon: '✅' },
-      APPROVED: { label: 'Đã duyệt', color: 'bg-green-100 text-green-800', icon: '👍' },
-      IN_PRODUCTION: { label: 'Đang sản xuất', color: 'bg-indigo-100 text-indigo-800', icon: '🏭' },
-      READY_FOR_DELIVERY: { label: 'Sẵn sàng giao', color: 'bg-teal-100 text-teal-800', icon: '📦' },
-      DELIVERED: { label: 'Đã giao hàng', color: 'bg-green-100 text-green-800', icon: '🚚' },
-      COMPLETED: { label: 'Hoàn thành', color: 'bg-emerald-100 text-emerald-800', icon: '🎉' },
-      CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: '❌' },
-      REJECTED: { label: 'Bị từ chối', color: 'bg-red-100 text-red-800', icon: '🚫' },
+      PENDING: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      EDITED: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      APPROVED: { label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
+      CONFIRMED: { label: 'Khách đã xác nhận', color: 'bg-green-100 text-green-800', icon: FileCheck },
+      IN_PRODUCTION: { label: 'Đang xử lý', color: 'bg-indigo-100 text-indigo-800', icon: Package },
+      READY_FOR_DELIVERY: { label: 'Đang xử lý', color: 'bg-indigo-100 text-indigo-800', icon: Package },
+      DELIVERED: { label: 'Đã giao xe', color: 'bg-green-100 text-green-800', icon: Truck },
+      COMPLETED: { label: 'Đã giao xe', color: 'bg-green-100 text-green-800', icon: Truck },
+      CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: XCircle },
+      REJECTED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: XCircle },
     };
-    return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: '❓' };
+    return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
   };
 
   const getPaymentStatusInfo = (status) => {
     const statusMap = {
-      NONE: { label: 'Chưa thanh toán', color: 'bg-gray-100 text-gray-600', icon: '⚪' },
-      PENDING: { label: 'Chờ thanh toán', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
-      PARTIALLY_PAID: { label: 'Đã cọc', color: 'bg-blue-100 text-blue-800', icon: '💰' },
-      PAID: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800', icon: '✅' },
-      FAILED: { label: 'Thất bại', color: 'bg-red-100 text-red-800', icon: '❌' },
-      REFUNDED: { label: 'Đã hoàn tiền', color: 'bg-purple-100 text-purple-800', icon: '↩️' },
+      NONE: { label: 'Chưa thanh toán', color: 'bg-gray-100 text-gray-600', icon: AlertCircle },
+      PENDING: { label: 'Chờ thanh toán', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      PARTIALLY_PAID: { label: 'Đã cọc', color: 'bg-blue-100 text-blue-800', icon: DollarSign },
+      PAID: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      FAILED: { label: 'Thất bại', color: 'bg-red-100 text-red-800', icon: XCircle },
+      REFUNDED: { label: 'Đã hoàn tiền', color: 'bg-purple-100 text-purple-800', icon: RefreshCw },
     };
-    return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: '❓' };
+    return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
   };
 
-  if (isLoading && customerId) {
+  if (isLoading && profileId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
@@ -140,9 +142,26 @@ export default function OrdersPage() {
     ? [searchedOrder, ...orders.filter(o => o.orderId !== searchedOrder.orderId)]
     : orders;
   
+  // Map backend statuses to simplified filter statuses
+  const mapToFilterStatus = (status) => {
+    const mapping = {
+      'PENDING': 'PENDING',
+      'EDITED': 'PENDING',
+      'APPROVED': 'APPROVED',
+      'CONFIRMED': 'CONFIRMED',
+      'IN_PRODUCTION': 'IN_PRODUCTION',
+      'READY_FOR_DELIVERY': 'IN_PRODUCTION',
+      'DELIVERED': 'DELIVERED',
+      'COMPLETED': 'DELIVERED',
+      'CANCELLED': 'CANCELLED',
+      'REJECTED': 'CANCELLED'
+    };
+    return mapping[status] || status;
+  };
+  
   const finalFilteredOrders = filterStatus === "ALL"
     ? displayOrders
-    : displayOrders.filter(order => order.orderStatusB2C === filterStatus);
+    : displayOrders.filter(order => mapToFilterStatus(order.orderStatusB2C) === filterStatus);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -150,10 +169,10 @@ export default function OrdersPage() {
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-bold">
-            {customerId ? 'Đơn hàng của tôi' : 'Tra cứu đơn hàng'}
+            {profileId ? 'Đơn hàng của tôi' : 'Tra cứu đơn hàng'}
           </h1>
           <p className="mt-2 text-blue-100">
-            {customerId ? 'Quản lý và theo dõi đơn hàng của bạn' : 'Nhập mã đơn hàng để tra cứu'}
+            {profileId ? 'Quản lý và theo dõi đơn hàng của bạn' : 'Nhập mã đơn hàng để tra cứu'}
           </p>
         </div>
       </div>
@@ -196,7 +215,7 @@ export default function OrdersPage() {
               )}
             </button>
           </div>
-          {!customerId && (
+          {!profileId && (
             <div className="mt-4 p-4 bg-blue-50 rounded-lg flex items-start gap-3">
               <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -219,7 +238,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Statistics Cards - Only show if logged in */}
-        {customerId && orders.length > 0 && (
+        {profileId && orders.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-lg shadow-md p-4">
               <div className="text-sm text-gray-600">Tổng đơn hàng</div>
@@ -234,7 +253,7 @@ export default function OrdersPage() {
             <div className="bg-white rounded-lg shadow-md p-4">
               <div className="text-sm text-gray-600">Đang xử lý</div>
               <div className="text-2xl font-bold text-blue-600">
-                {orders.filter(o => ['CONFIRMED', 'APPROVED', 'IN_PRODUCTION'].includes(o.orderStatusB2C)).length}
+                {orders.filter(o => ['CONFIRMED', 'APPROVED', 'IN_PRODUCTION', 'READY_FOR_DELIVERY'].includes(o.orderStatusB2C)).length}
               </div>
             </div>
             <div className="bg-white rounded-lg shadow-md p-4">
@@ -247,23 +266,30 @@ export default function OrdersPage() {
         )}
 
         {/* Filter Tabs - Only show if has orders */}
-        {((customerId && orders.length > 0) || searchedOrder) && (
+        {((profileId && orders.length > 0) || searchedOrder) && (
           <div className="bg-white rounded-lg shadow-md p-4 mb-6">
             <div className="flex flex-wrap gap-2">
-              {['ALL', 'PENDING', 'EDITED', 'CONFIRMED', 'APPROVED', 'IN_PRODUCTION', 'DELIVERED', 'COMPLETED', 'CANCELLED', 'REJECTED'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 ${
-                    filterStatus === status
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {status !== 'ALL' && <span>{getStatusInfo(status).icon}</span>}
-                  {status === 'ALL' ? 'Tất cả' : getStatusInfo(status).label}
-                </button>
-              ))}
+              {['ALL', 'PENDING', 'APPROVED', 'CONFIRMED', 'IN_PRODUCTION', 'DELIVERED', 'CANCELLED'].map((status) => {
+                const statusInfo = status === 'ALL' 
+                  ? { label: 'Tất cả', icon: ShoppingCart }
+                  : getStatusInfo(status);
+                const IconComponent = statusInfo.icon;
+                
+                return (
+                  <button
+                    key={status}
+                    onClick={() => setFilterStatus(status)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                      filterStatus === status
+                        ? 'bg-blue-600 text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <IconComponent size={18} />
+                    {statusInfo.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -285,14 +311,14 @@ export default function OrdersPage() {
               />
             </svg>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {customerId ? 'Chưa có đơn hàng' : 'Chưa tìm thấy đơn hàng'}
+              {profileId ? 'Chưa có đơn hàng' : 'Chưa tìm thấy đơn hàng'}
             </h2>
             <p className="text-gray-600 mb-6">
-              {customerId 
+              {profileId 
                 ? 'Bạn chưa có đơn hàng nào. Hãy khám phá và đặt xe điện ngay!' 
                 : 'Vui lòng nhập mã đơn hàng ở trên để tra cứu'}
             </p>
-            {customerId && (
+            {profileId && (
               <button
                 onClick={() => navigate('/vehicles')}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -321,11 +347,11 @@ export default function OrdersPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 ${statusInfo.color}`}>
-                        <span>{statusInfo.icon}</span>
+                        <statusInfo.icon size={16} />
                         {statusInfo.label}
                       </span>
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 ${paymentInfo.color}`}>
-                        <span>{paymentInfo.icon}</span>
+                        <paymentInfo.icon size={16} />
                         {paymentInfo.label}
                       </span>
                     </div>

@@ -144,7 +144,7 @@ export default function AdminOrdersPage() {
     const statusFlow = {
       'PENDING': ['APPROVED', 'CANCELLED'],
       'EDITED': ['APPROVED', 'CANCELLED'],
-      'CONFIRMED': ['APPROVED', 'CANCELLED'],
+      'CONFIRMED': ['APPROVED', 'IN_PRODUCTION', 'CANCELLED'],
       'APPROVED': ['IN_PRODUCTION', 'CANCELLED'],
       'IN_PRODUCTION': ['DELIVERED', 'CANCELLED'],
       'DELIVERED': [],

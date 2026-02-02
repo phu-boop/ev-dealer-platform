@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Clock, CheckCircle, XCircle, Package, Truck, FileCheck, DollarSign, AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { getOrderById, cancelOrder } from "../services/orderService";
 import { toast } from "react-toastify";
@@ -62,27 +63,32 @@ export default function OrderDetailPage() {
   };
 
   const getStatusInfo = (status) => {
+    // Map backend statuses to simplified display statuses
     const statusMap = {
-      PENDING: { label: 'Chờ xử lý', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
-      APPROVED: { label: 'Đã duyệt', color: 'bg-blue-100 text-blue-800', icon: '✓' },
-      PROCESSING: { label: 'Đang xử lý', color: 'bg-purple-100 text-purple-800', icon: '⚙️' },
-      SHIPPING: { label: 'Đang giao', color: 'bg-indigo-100 text-indigo-800', icon: '🚚' },
-      DELIVERED: { label: 'Đã giao', color: 'bg-green-100 text-green-800', icon: '📦' },
-      COMPLETED: { label: 'Hoàn thành', color: 'bg-green-100 text-green-800', icon: '✅' },
-      CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: '✕' },
-      REJECTED: { label: 'Từ chối', color: 'bg-red-100 text-red-800', icon: '✕' },
+      PENDING: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      EDITED: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      APPROVED: { label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
+      CONFIRMED: { label: 'Khách đã xác nhận', color: 'bg-green-100 text-green-800', icon: FileCheck },
+      IN_PRODUCTION: { label: 'Đang xử lý', color: 'bg-indigo-100 text-indigo-800', icon: Package },
+      READY_FOR_DELIVERY: { label: 'Đang xử lý', color: 'bg-indigo-100 text-indigo-800', icon: Package },
+      DELIVERED: { label: 'Đã giao xe', color: 'bg-green-100 text-green-800', icon: Truck },
+      COMPLETED: { label: 'Đã giao xe', color: 'bg-green-100 text-green-800', icon: Truck },
+      CANCELLED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: XCircle },
+      REJECTED: { label: 'Đã hủy', color: 'bg-red-100 text-red-800', icon: XCircle },
     };
-    return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: '?' };
+    return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
   };
 
   const getPaymentStatusInfo = (status) => {
     const statusMap = {
-      PENDING: { label: 'Chờ thanh toán', color: 'bg-yellow-100 text-yellow-800' },
-      PAID: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800' },
-      FAILED: { label: 'Thất bại', color: 'bg-red-100 text-red-800' },
-      REFUNDED: { label: 'Đã hoàn tiền', color: 'bg-gray-100 text-gray-800' },
+      NONE: { label: 'Chưa thanh toán', color: 'bg-gray-100 text-gray-600', icon: AlertCircle },
+      PENDING: { label: 'Chờ thanh toán', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      PARTIALLY_PAID: { label: 'Đã cọc', color: 'bg-blue-100 text-blue-800', icon: DollarSign },
+      PAID: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      FAILED: { label: 'Thất bại', color: 'bg-red-100 text-red-800', icon: XCircle },
+      REFUNDED: { label: 'Đã hoàn tiền', color: 'bg-purple-100 text-purple-800', icon: RefreshCw },
     };
-    return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800' };
+    return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
   };
 
   const handleCancelOrder = () => {
@@ -150,10 +156,12 @@ export default function OrderDetailPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-4">Trạng thái đơn hàng</h2>
               
               <div className="flex items-center gap-3 mb-6">
-                <span className={`px-4 py-2 rounded-full text-lg font-semibold ${statusInfo.color}`}>
-                  {statusInfo.icon} {statusInfo.label}
+                <span className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-1 ${statusInfo.color}`}>
+                  <statusInfo.icon size={16} />
+                  {statusInfo.label}
                 </span>
-                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${paymentInfo.color}`}>
+                <span className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-1 ${paymentInfo.color}`}>
+                  <paymentInfo.icon size={16} />
                   {paymentInfo.label}
                 </span>
               </div>
@@ -196,18 +204,40 @@ export default function OrderDetailPage() {
                 <div className="space-y-4">
                   {order.orderItems.map((item, index) => (
                     <div key={index} className="flex gap-4 pb-4 border-b last:border-b-0">
-                      <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                          <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
-                        </svg>
+                      <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                        {item.imageUrl && item.imageUrl !== '/placeholder-car.png' ? (
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.variantName || item.modelName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/placeholder-car.png';
+                            }}
+                          />
+                        ) : (
+                          <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                          </svg>
+                        )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">
-                          Variant ID: {item.variantId}
+                        <h3 className="font-semibold text-gray-900 text-lg mb-1">
+                          {item.modelName || `Xe điện - Variant ${item.variantId}`}
                         </h3>
+                        {item.variantName && (
+                          <div className="text-sm text-gray-700 mb-1">
+                            Phiên bản: {item.variantName}
+                          </div>
+                        )}
+                        {item.color && (
+                          <div className="text-sm text-gray-600 mb-1">
+                            Màu sắc: {item.color}
+                          </div>
+                        )}
                         <div className="text-sm text-gray-600 space-y-1">
-                          <p>Số lượng: {item.quantity}</p>
+                          <p>Số lượng: <span className="font-medium">{item.quantity}</span></p>
                           <p>Đơn giá: {formatPrice(item.unitPrice)}</p>
                           {item.discount > 0 && (
                             <p className="text-red-600">Giảm giá: -{formatPrice(item.discount)}</p>
@@ -257,7 +287,7 @@ export default function OrderDetailPage() {
                 )}
                 <div className="border-t pt-3 flex justify-between text-lg font-bold text-gray-900">
                   <span>Tổng cộng:</span>
-                  <span className="text-blue-600">{formatPrice(order.totalAmount)}</span>
+                  <span className="text-blue-600">{formatPrice(order.downPayment > 0 ? order.totalAmount - order.downPayment : order.totalAmount)}</span>
                 </div>
               </div>
 
