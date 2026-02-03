@@ -9,6 +9,10 @@ import api from "./api.js";
 export const getCustomerOrders = (customerId) =>
   api.get(`/api/v1/sales-orders/b2c/customer/${customerId}`).then((res) => res.data);
 
+// Get orders by profileId (UUID from user-service)
+export const getOrdersByProfileId = (profileId) =>
+  api.get(`/api/v1/sales-orders/b2c/profile/${profileId}`).then((res) => res.data);
+
 // Get order detail by ID
 export const getOrderById = (orderId) =>
   api.get(`/api/v1/sales-orders/b2c/${orderId}`).then((res) => res.data);
