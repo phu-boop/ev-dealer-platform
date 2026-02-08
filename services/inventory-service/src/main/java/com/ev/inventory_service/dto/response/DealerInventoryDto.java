@@ -9,8 +9,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+<<<<<<< HEAD
 import java.util.UUID;
 
+=======
+>>>>>>> newrepo/main
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,7 +28,10 @@ public class DealerInventoryDto {
     private String skuCode;
 
     // Thông tin từ Inventory Service
+<<<<<<< HEAD
     private UUID dealerId; // Added for sync
+=======
+>>>>>>> newrepo/main
     private Integer availableQuantity;   // Hàng có sẵn để bán
     private Integer allocatedQuantity;   // Hàng đang trên đường tới (hoặc đang giữ)
     private Integer reorderLevel;        // Ngưỡng đặt lại
@@ -36,7 +42,10 @@ public class DealerInventoryDto {
         InventoryLevelStatus status = InventoryLevelStatus.OUT_OF_STOCK;
         int available = (allocation != null) ? allocation.getAvailableQuantity() : 0;
         int reorder = (allocation != null && allocation.getReorderLevel() != null) ? allocation.getReorderLevel() : 0;
+<<<<<<< HEAD
         UUID dealerId = (allocation != null) ? allocation.getDealerId() : null;
+=======
+>>>>>>> newrepo/main
 
         if (available > reorder) {
             status = InventoryLevelStatus.IN_STOCK;
@@ -50,7 +59,10 @@ public class DealerInventoryDto {
                 .versionName(variant.getVersionName())
                 .color(variant.getColor())
                 .skuCode(variant.getSkuCode())
+<<<<<<< HEAD
                 .dealerId(dealerId) // Set dealerId
+=======
+>>>>>>> newrepo/main
                 .availableQuantity(available)
                 .allocatedQuantity((allocation != null) ? allocation.getAllocatedQuantity() : 0)
                 .reorderLevel(reorder)

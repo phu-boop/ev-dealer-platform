@@ -31,6 +31,7 @@ public class CreateVariantRequest {
     private VehicleStatus status; // Cập nhật trạng thái của Vehicle
 
     private String imageUrl;
+<<<<<<< HEAD
 
     private Double batteryCapacity;
     private Float chargingTime;
@@ -52,4 +53,9 @@ public class CreateVariantRequest {
 
     @Valid
     private List<FeatureRequest> features;
+=======
+    
+    @Valid
+    private List<FeatureRequest> features; 
+>>>>>>> newrepo/main
 }

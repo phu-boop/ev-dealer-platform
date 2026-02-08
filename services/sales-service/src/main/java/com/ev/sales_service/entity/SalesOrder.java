@@ -38,6 +38,7 @@ public class SalesOrder {
     @Column(name = "staff_id", columnDefinition = "BINARY(16)")
     private UUID staffId;
 
+<<<<<<< HEAD
     @Column(name = "customer_name")
     private String customerName;
 
@@ -50,6 +51,8 @@ public class SalesOrder {
     @Column(name = "shipping_address", columnDefinition = "TEXT")
     private String shippingAddress;
 
+=======
+>>>>>>> newrepo/main
     @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
 
@@ -83,12 +86,15 @@ public class SalesOrder {
     @Column(name = "approval_date")
     private LocalDateTime approvalDate;
 
+<<<<<<< HEAD
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
     @Column(name = "payment_method", length = 100)
     private String paymentMethod;
 
+=======
+>>>>>>> newrepo/main
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", length = 50)
     @Builder.Default
@@ -109,3 +115,7 @@ public class SalesOrder {
     @Builder.Default
     private List<OrderTracking> orderTrackings = new java.util.ArrayList<>();
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> newrepo/main

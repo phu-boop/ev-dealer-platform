@@ -17,11 +17,16 @@ public class VariantDetailDto {
     private VehicleStatus status;
     private String imageUrl;
     private BigDecimal wholesalePrice;
+<<<<<<< HEAD
     private Double batteryCapacity;
+=======
+    private Integer batteryCapacity;
+>>>>>>> newrepo/main
     private Float chargingTime;
     private Integer rangeKm;
     private Integer motorPower;
     private Long modelId;
+<<<<<<< HEAD
 
     // Additional technical specifications
     private Integer seatingCapacity;
@@ -46,4 +51,8 @@ public class VariantDetailDto {
     private String interiorImages;
 
     private List<FeatureDto> features;
+=======
+    
+    private List<FeatureDto> features; 
+>>>>>>> newrepo/main
 }

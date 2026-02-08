@@ -4,7 +4,10 @@ import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.sales_service.config.EmailConfig;
 import com.ev.sales_service.dto.response.CustomerResponse;
+<<<<<<< HEAD
 import com.ev.sales_service.entity.OrderItem;
+=======
+>>>>>>> newrepo/main
 import com.ev.sales_service.entity.Quotation;
 import com.ev.sales_service.entity.SalesOrder;
 import com.ev.sales_service.service.Interface.EmailService;
@@ -87,14 +90,22 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+<<<<<<< HEAD
     public void sendOrderConfirmedEmail(SalesOrder salesOrder, CustomerResponse customer, String showroomName) {
+=======
+    public void sendOrderConfirmedEmail(SalesOrder salesOrder, CustomerResponse customer) {
+>>>>>>> newrepo/main
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(customer.getEmail());
             helper.setSubject("Xác nhận đơn hàng #" + salesOrder.getOrderId());
+<<<<<<< HEAD
             helper.setText(buildOrderConfirmedEmailContent(salesOrder, customer, showroomName), true);
+=======
+            helper.setText(buildOrderConfirmedEmailContent(salesOrder, customer), true);
+>>>>>>> newrepo/main
 
             mailSender.send(message);
             log.info("Order confirmed email sent to: {}", customer.getEmail());
@@ -152,13 +163,20 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+<<<<<<< HEAD
     private String buildOrderConfirmedEmailContent(SalesOrder salesOrder, CustomerResponse customer,
             String showroomName) {
+=======
+    private String buildOrderConfirmedEmailContent(SalesOrder salesOrder, CustomerResponse customer) {
+>>>>>>> newrepo/main
         try {
             Context context = new Context(new Locale("vi"));
             context.setVariable("customer", customer);
             context.setVariable("salesOrder", salesOrder);
+<<<<<<< HEAD
             context.setVariable("showroomName", showroomName);
+=======
+>>>>>>> newrepo/main
             context.setVariable("confirmUrl", emailConfig.getOrderConfirmUrl(salesOrder.getOrderId().toString()));
             context.setVariable("orderDate",
                     salesOrder.getOrderDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
@@ -166,7 +184,11 @@ public class EmailServiceImpl implements EmailService {
             return templateEngine.process("order-confirmed-email", context);
         } catch (TemplateInputException e) {
             log.warn("Template 'order-confirmed-email' not found, using fallback content");
+<<<<<<< HEAD
             return buildFallbackOrderConfirmedEmailContent(salesOrder, customer, showroomName);
+=======
+            return buildFallbackOrderConfirmedEmailContent(salesOrder, customer);
+>>>>>>> newrepo/main
         }
     }
 
@@ -192,7 +214,12 @@ public class EmailServiceImpl implements EmailService {
                 quotation.getBasePrice(),
                 quotation.getDiscountAmount(),
                 quotation.getFinalPrice(),
+<<<<<<< HEAD
                 quotation.getTermsConditions());
+=======
+                quotation.getTermsConditions()
+        );
+>>>>>>> newrepo/main
     }
 
     private String buildFallbackQuotationAcceptedEmailContent(Quotation quotation, CustomerResponse customer) {
@@ -202,7 +229,12 @@ public class EmailServiceImpl implements EmailService {
                         "Chúng tôi sẽ liên hệ với Quý khách trong thời gian sớm nhất.\n\n" +
                         "Trân trọng,\nĐội ngũ EV Automotive",
                 customer.getFullName(),
+<<<<<<< HEAD
                 quotation.getQuotationId());
+=======
+                quotation.getQuotationId()
+        );
+>>>>>>> newrepo/main
     }
 
     private String buildFallbackQuotationRejectedEmailContent(Quotation quotation, CustomerResponse customer) {
@@ -212,6 +244,7 @@ public class EmailServiceImpl implements EmailService {
                         "Nếu có thắc mắc, xin vui lòng liên hệ chúng tôi.\n\n" +
                         "Trân trọng,\nĐội ngũ EV Automotive",
                 customer.getFullName(),
+<<<<<<< HEAD
                 quotation.getQuotationId());
     }
 
@@ -226,20 +259,34 @@ public class EmailServiceImpl implements EmailService {
             }
         }
 
+=======
+                quotation.getQuotationId()
+        );
+    }
+
+    private String buildFallbackOrderConfirmedEmailContent(SalesOrder salesOrder, CustomerResponse customer) {
+        String confirmUrl = emailConfig.getOrderConfirmUrl(salesOrder.getOrderId().toString());
+>>>>>>> newrepo/main
         return String.format(
                 "Kính gửi %s,\n\n" +
                         "Đơn hàng #%s của Quý khách đang chờ xác nhận.\n\n" +
                         "Chi tiết đơn hàng:\n" +
+<<<<<<< HEAD
                         "%s" +
                         "- Showroom nhận xe: %s\n" +
                         "- Ngày tạo: %s\n" +
                         "- Tổng tiền: %s VND\n" +
                         "- Tiền đã cọc: %s VND\n" +
                         "- Số tiền còn lại: %s VND\n\n" +
+=======
+                        "- Ngày tạo: %s\n" +
+                        "- Tổng tiền: %s VND\n\n" +
+>>>>>>> newrepo/main
                         "Vui lòng nhấn vào liên kết sau để xác nhận đơn hàng: %s\n\n" +
                         "Trân trọng,\nĐội ngũ EV Automotive",
                 customer.getFullName(),
                 salesOrder.getOrderId(),
+<<<<<<< HEAD
                 itemsInfo.toString(),
                 showroomName != null ? showroomName : "N/A",
                 salesOrder.getOrderDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
@@ -247,5 +294,11 @@ public class EmailServiceImpl implements EmailService {
                 salesOrder.getDownPayment(),
                 salesOrder.getTotalAmount().subtract(salesOrder.getDownPayment()),
                 confirmUrl);
+=======
+                salesOrder.getOrderDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                salesOrder.getTotalAmount(),
+                confirmUrl
+        );
+>>>>>>> newrepo/main
     }
 }

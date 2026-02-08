@@ -35,6 +35,7 @@
 
 ## 🎯 Actors
 
+<<<<<<< HEAD
 Hệ thống phục vụ 5 nhóm người dùng chính:
 
 | Actor              | Mô tả                         | Cổng truy cập |
@@ -44,11 +45,22 @@ Hệ thống phục vụ 5 nhóm người dùng chính:
 | **Dealer Manager** | Quản lý đại lý                | Port 5173     |
 | **EVM Staff**      | Nhân viên hãng xe điện        | Port 5173     |
 | **Admin**          | Quản trị viên hệ thống        | Port 5173     |
+=======
+Hệ thống phục vụ 4 nhóm người dùng chính:
+
+| Actor              | Mô tả                         |
+| ------------------ | ----------------------------- |
+| **Dealer Staff**   | Nhân viên bán hàng tại đại lý |
+| **Dealer Manager** | Quản lý đại lý                |
+| **EVM Staff**      | Nhân viên hãng xe điện        |
+| **Admin**          | Quản trị viên hệ thống        |
+>>>>>>> newrepo/main
 
 ---
 
 ## 🚀 Tính năng
 
+<<<<<<< HEAD
 ### 1️⃣ Chức năng cho Khách hàng (Customer B2C) - **HOÀN THÀNH**
 
 #### 🛒 a. Mua sắm trực tuyến
@@ -75,12 +87,18 @@ Hệ thống phục vụ 5 nhóm người dùng chính:
 ---
 
 ### 2️⃣ Chức năng cho Đại lý (Dealer Staff, Dealer Manager)
+=======
+### 1️⃣ Chức năng cho Đại lý (Dealer Staff, Dealer Manager)
+>>>>>>> newrepo/main
 
 #### 🔍 a. Truy vấn thông tin xe
 
 - Xem danh mục xe, cấu hình kỹ thuật, giá bán
 - So sánh các mẫu xe và tính năng
+<<<<<<< HEAD
 - Duyệt đánh giá khách hàng
+=======
+>>>>>>> newrepo/main
 
 #### 💼 b. Quản lý bán hàng
 
@@ -130,9 +148,13 @@ Hệ thống phục vụ 5 nhóm người dùng chính:
 ```
 Application
 ├── common-lib                # Lib For Project
+<<<<<<< HEAD
 ├── frontend/
 │   ├── my-app/              # React Frontend (Admin/Dealer - Port 5173)
 │   └── customer-app/        # React Frontend (B2C Customer - Port 5174)
+=======
+├── frontend/my-app/          # React Frontend
+>>>>>>> newrepo/main
 ├── gateway/                  # Spring Boot API Gateway
 ├── services/                 # Microservices
 │   ├── user-service/
@@ -160,11 +182,14 @@ Application
 - React Hook Form (Form Handling)
 - WebSocket / StompJS (Real-time features)
 
+<<<<<<< HEAD
 **Frontend Ports:**
 
 - Port 5173: Admin/Dealer Portal (`frontend/my-app/`)
 - Port 5174: Customer B2C Portal (`frontend/customer-app/`)
 
+=======
+>>>>>>> newrepo/main
 **Backend:**
 
 - Spring Boot 3.0+
@@ -192,19 +217,28 @@ Application
 ### Bước 1: Clone repository
 
 ```bash
+<<<<<<< HEAD
 git clone https://github.com/BinhLN1105/VMS-Commerce.git
+=======
+git clone https://github.com/phu-boop/ev-dealer-platform.git
+>>>>>>> newrepo/main
 cd ev-dealer-management
 ```
 
 ### Bước 2: Cài đặt dependencies
 
+<<<<<<< HEAD
 **Frontend (Admin/Dealer Portal):**
+=======
+**Frontend:**
+>>>>>>> newrepo/main
 
 ```bash
 cd frontend/my-app/
 npm install
 ```
 
+<<<<<<< HEAD
 **Frontend (Customer B2C Portal):**
 
 ```bash
@@ -212,6 +246,8 @@ cd frontend/customer-app/
 npm install
 ```
 
+=======
+>>>>>>> newrepo/main
 **Backend:**
 
 ```bash

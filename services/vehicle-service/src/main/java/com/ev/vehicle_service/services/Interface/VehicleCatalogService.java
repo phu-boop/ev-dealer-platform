@@ -29,6 +29,7 @@ public interface VehicleCatalogService {
     List<ModelSummaryDto> getAllModels(Sort sort);
 
     /**
+<<<<<<< HEAD
      * Get all models with pagination - OPTIMIZED
      */
     Page<ModelSummaryDto> getAllModelsPaginated(Pageable pageable);
@@ -46,6 +47,8 @@ public interface VehicleCatalogService {
             Pageable pageable);
 
     /**
+=======
+>>>>>>> newrepo/main
      * Lấy TẤT CẢ ID của các phiên bản (không phân trang)
      */
     List<Long> getAllVariantIds();

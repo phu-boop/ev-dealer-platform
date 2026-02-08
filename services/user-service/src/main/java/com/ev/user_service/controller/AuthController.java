@@ -17,8 +17,11 @@ import com.ev.common_lib.exception.ErrorCode;
 import com.ev.user_service.service.AuthService;
 import com.ev.user_service.service.LoginAttemptService;
 import com.ev.user_service.service.RecaptchaService;
+<<<<<<< HEAD
 import com.ev.user_service.dto.request.CustomerRegistrationRequest;
 import com.ev.user_service.dto.respond.UserRespond;
+=======
+>>>>>>> newrepo/main
 
 import java.util.Map;
 import java.util.UUID;
@@ -36,6 +39,7 @@ public class AuthController {
         this.authService = authService;
     }
 
+<<<<<<< HEAD
     @PostMapping("/register/customer")
     public ResponseEntity<ApiRespond<UserRespond>> registerCustomer(
             @Valid @RequestBody CustomerRegistrationRequest request) {
@@ -48,6 +52,8 @@ public class AuthController {
                 .body(ApiRespond.success("Customer registered successfully", userRespond));
     }
 
+=======
+>>>>>>> newrepo/main
     @PostMapping("/login")
     public ResponseEntity<ApiRespond<LoginRespond>> login(@RequestBody Map<String, String> credentials, HttpServletResponse response) {
         //Spam
@@ -71,7 +77,11 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Login successful", loginRespond));
     }
 
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF', 'CUSTOMER')")
+=======
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+>>>>>>> newrepo/main
     @GetMapping("/me")
     public ResponseEntity<ApiRespond<LoginRespond>> getCurrentUser() {
         LoginRespond loginRespond = authService.getCurrentUser();
@@ -79,7 +89,11 @@ public class AuthController {
     }
 
 
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF', 'CUSTOMER')")
+=======
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+>>>>>>> newrepo/main
     @PostMapping("/refresh")
     public ResponseEntity<ApiRespond<?>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         TokenPair tokenPair = authService.newRefreshTokenAndAccessToken(request);
@@ -94,7 +108,11 @@ public class AuthController {
                 ApiRespond.success("RefreshToken successful", tokenPair));
     }
 
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF', 'CUSTOMER')")
+=======
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+>>>>>>> newrepo/main
     @PostMapping("/logout")
     public ResponseEntity<ApiRespond<?>> logout(HttpServletRequest request, HttpServletResponse response) {
         authService.addTokenBlacklist(request);
@@ -126,7 +144,11 @@ public class AuthController {
         return ResponseEntity.ok(ApiRespond.success("Password updated successfully", null));
     }
 
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF', 'CUSTOMER')")
+=======
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEALER_STAFF', 'DEALER_MANAGER', 'EVM_STAFF')")
+>>>>>>> newrepo/main
     @PostMapping("/change-password")
     public ResponseEntity<ApiRespond<?>> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         authService.changePassword(changePasswordRequest.getEmail(), changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword());

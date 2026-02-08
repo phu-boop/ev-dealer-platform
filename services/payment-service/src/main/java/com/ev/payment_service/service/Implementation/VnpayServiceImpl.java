@@ -36,7 +36,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.math.RoundingMode;
+<<<<<<< HEAD
 import com.fasterxml.jackson.databind.ObjectMapper;
+=======
+>>>>>>> newrepo/main
 
 /**
  * VNPAY Payment Gateway Service Implementation
@@ -59,6 +62,7 @@ public class VnpayServiceImpl implements IVnpayService {
     @Transactional
     public String initiateB2CPayment(VnpayInitiateRequest request, String ipAddr) {
         try {
+<<<<<<< HEAD
             log.info("Initiating B2C payment - Amount: {}, OrderInfo: {}, CustomerId: {}, OrderId: {}",
                     request.getPaymentAmount(), request.getOrderInfo(),
                     request.getCustomerId(), request.getOrderId());
@@ -112,6 +116,18 @@ public class VnpayServiceImpl implements IVnpayService {
                         return new AppException(ErrorCode.DATA_NOT_FOUND);
                     });
             log.info("Found VNPAY payment method: {}", vnpayMethod.getMethodId());
+=======
+            // 1. Tìm hoặc tạo PaymentRecord (công nợ)
+            PaymentRecord record = paymentRecordService.findOrCreateRecord(
+                    request.getOrderId(),
+                    request.getCustomerId(),
+                    request.getTotalAmount()
+            );
+
+            // 2. Tìm PaymentMethod cho VNPAY
+            PaymentMethod vnpayMethod = paymentMethodRepository.findByMethodName("VNPAY")
+                    .orElseThrow(() -> new AppException(ErrorCode.INTERNAL_ERROR));
+>>>>>>> newrepo/main
 
             // 3. Tạo Transaction (lịch sử) ở trạng thái PENDING
             Transaction transaction = new Transaction();
@@ -124,6 +140,7 @@ public class VnpayServiceImpl implements IVnpayService {
 
             log.info("Created PENDING transaction: {}", savedTransaction.getTransactionId());
 
+<<<<<<< HEAD
             // 4. Tạo VNPAY URL với orderInfo từ request
             String orderInfo = request.getOrderInfo() != null
                     ? request.getOrderInfo()
@@ -153,6 +170,24 @@ public class VnpayServiceImpl implements IVnpayService {
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error creating VNPAY payment URL - Error: {}", e.getMessage(), e);
+=======
+            // 4. Tạo VNPAY URL theo đúng logic cũ
+            String paymentUrl = createPaymentUrl(
+                    savedTransaction.getTransactionId().toString(),
+                    request.getOrderId().toString(),
+                    request.getPaymentAmount().longValue(),
+                    request.getReturnUrl(),
+                    ipAddr
+            );
+
+            log.info("VNPAY Payment URL created - TransactionId: {}, Amount: {}",
+                    savedTransaction.getTransactionId(), request.getPaymentAmount());
+
+            return paymentUrl;
+
+        } catch (Exception e) {
+            log.error("Error creating VNPAY payment URL - Error: {}", e.getMessage(), e);
+>>>>>>> newrepo/main
             throw new AppException(ErrorCode.INTERNAL_ERROR);
         }
     }
@@ -160,10 +195,17 @@ public class VnpayServiceImpl implements IVnpayService {
     @Override
     @Transactional
     public String initiateDealerInvoicePayment(UUID invoiceId,
+<<<<<<< HEAD
             UUID dealerId,
             BigDecimal amount,
             String returnUrl,
             String ipAddr) {
+=======
+                                               UUID dealerId,
+                                               BigDecimal amount,
+                                               String returnUrl,
+                                               String ipAddr) {
+>>>>>>> newrepo/main
         try {
             DealerInvoice invoice = dealerInvoiceRepository.findById(invoiceId)
                     .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
@@ -182,8 +224,12 @@ public class VnpayServiceImpl implements IVnpayService {
             }
 
             if (amount.compareTo(remaining) > 0) {
+<<<<<<< HEAD
                 log.error("Attempt to pay more than remaining amount - Invoice: {}, Amount: {}, Remaining: {}",
                         invoiceId, amount, remaining);
+=======
+                log.error("Attempt to pay more than remaining amount - Invoice: {}, Amount: {}, Remaining: {}", invoiceId, amount, remaining);
+>>>>>>> newrepo/main
                 throw new AppException(ErrorCode.BAD_REQUEST);
             }
 
@@ -207,6 +253,7 @@ public class VnpayServiceImpl implements IVnpayService {
 
             long amountInLong = amount.setScale(0, RoundingMode.HALF_UP).longValueExact();
 
+<<<<<<< HEAD
             String orderInfo = "ThanhToanHoaDon_" + invoiceId.toString();
             String paymentUrl = createPaymentUrl(
                     savedTransaction.getDealerTransactionId().toString(),
@@ -217,17 +264,33 @@ public class VnpayServiceImpl implements IVnpayService {
 
             log.info("Created VNPAY transaction for dealer invoice - InvoiceId: {}, TransactionId: {}", invoiceId,
                     savedTransaction.getDealerTransactionId());
+=======
+            String paymentUrl = createPaymentUrl(
+                    savedTransaction.getDealerTransactionId().toString(),
+                    invoiceId.toString(),
+                    amountInLong,
+                    returnUrl,
+                    ipAddr
+            );
+
+            log.info("Created VNPAY transaction for dealer invoice - InvoiceId: {}, TransactionId: {}", invoiceId, savedTransaction.getDealerTransactionId());
+>>>>>>> newrepo/main
             return paymentUrl;
         } catch (AppException e) {
             throw e;
         } catch (Exception e) {
+<<<<<<< HEAD
             log.error("Error initiating dealer invoice payment via VNPAY - InvoiceId: {}, Error: {}", invoiceId,
                     e.getMessage(), e);
+=======
+            log.error("Error initiating dealer invoice payment via VNPAY - InvoiceId: {}, Error: {}", invoiceId, e.getMessage(), e);
+>>>>>>> newrepo/main
             throw new AppException(ErrorCode.INTERNAL_ERROR);
         }
     }
 
     /**
+<<<<<<< HEAD
      * Sanitize orderInfo để chỉ giữ ký tự ASCII an toàn
      * Loại bỏ dấu tiếng Việt và ký tự đặc biệt để tránh lỗi encoding với VNPAY
      */
@@ -280,6 +343,11 @@ public class VnpayServiceImpl implements IVnpayService {
         // Sanitize orderInfo - chỉ giữ ký tự ASCII an toàn để tránh lỗi encoding
         String sanitizedOrderInfo = sanitizeOrderInfo(orderInfo);
 
+=======
+     * Tạo URL thanh toán VNPAY theo đúng logic cũ từ PaymentService
+     */
+    private String createPaymentUrl(String transactionId, String orderId, Long amount, String returnUrl, String ipAddr) {
+>>>>>>> newrepo/main
         Map<String, String> params = new HashMap<>();
         params.put("vnp_Version", vnpayConfig.getVnpVersion());
         params.put("vnp_Command", vnpayConfig.getVnpCommand());
@@ -287,7 +355,11 @@ public class VnpayServiceImpl implements IVnpayService {
         params.put("vnp_Amount", String.valueOf(amount * 100)); // nhân 100
         params.put("vnp_CurrCode", vnpayConfig.getVnpCurrCode());
         params.put("vnp_TxnRef", transactionId);
+<<<<<<< HEAD
         params.put("vnp_OrderInfo", sanitizedOrderInfo);
+=======
+        params.put("vnp_OrderInfo", "ThanhToanDonHang_" + orderId);
+>>>>>>> newrepo/main
         params.put("vnp_OrderType", vnpayConfig.getVnpOrderType());
 
         // Sử dụng returnUrl từ request
@@ -300,14 +372,21 @@ public class VnpayServiceImpl implements IVnpayService {
         params.put("vnp_IpAddr", ipAddr);
         params.put("vnp_Locale", vnpayConfig.getVnpLocale());
 
+<<<<<<< HEAD
         // Tạo hash data và query string (cả 2 đều encode giống nhau theo tài liệu
         // VNPAY)
         String hashData = buildQueryString(params, true);
+=======
+        // Tạo query string và hash data
+        String queryString = buildQueryString(params, false); // false = for URL
+        String hashData = buildQueryString(params, true);     // true = for hash
+>>>>>>> newrepo/main
 
         // Tạo vnp_SecureHash
         String vnp_SecureHash = hmacSHA512(vnpayConfig.getHashSecret(), hashData);
 
         // Tạo URL cuối cùng
+<<<<<<< HEAD
         String finalUrl = vnpayConfig.getVnpUrl() + "?" + hashData
                 + "&vnp_SecureHash=" + vnp_SecureHash;
 
@@ -316,6 +395,15 @@ public class VnpayServiceImpl implements IVnpayService {
         log.info(">>> VNPAY HashSecret: {}", vnpayConfig.getHashSecret());
         log.info(">>> VNPAY Params: {}", params);
         log.info(">>> VNPAY Hash Data String: {}", hashData);
+=======
+        String finalUrl = vnpayConfig.getVnpUrl() + "?" + queryString
+                + "&vnp_SecureHash=" + vnp_SecureHash;
+
+        // Log debug
+        log.info(">>> VNPAY Params: {}", params);
+        log.info(">>> VNPAY Hash Data String: {}", hashData);
+        log.info(">>> VNPAY Query String: {}", queryString);
+>>>>>>> newrepo/main
         log.info(">>> VNPAY Generated vnp_SecureHash: {}", vnp_SecureHash);
         log.info(">>> VNPAY Client IP: {}", ipAddr);
         log.info(">>> VNPAY Return URL: {}", returnUrlToUse);
@@ -324,8 +412,12 @@ public class VnpayServiceImpl implements IVnpayService {
     }
 
     /**
+<<<<<<< HEAD
      * Xây dựng query string theo đúng tài liệu VNPAY
      * 
+=======
+     * Xây dựng query string - Copy nguyên từ PaymentService.java
+>>>>>>> newrepo/main
      * @param forHash: true = cho hash data, false = cho URL
      */
     private String buildQueryString(Map<String, String> params, boolean forHash) {
@@ -340,10 +432,24 @@ public class VnpayServiceImpl implements IVnpayService {
                     sb.append("&");
                 }
 
+<<<<<<< HEAD
                 // Theo tài liệu VNPAY: cả hash data và URL đều encode key và value
                 sb.append(URLEncoder.encode(key, StandardCharsets.UTF_8))
                         .append("=")
                         .append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+=======
+                if (forHash) {
+                    // Cho hash data: chỉ encode vnp_ReturnUrl
+                    if ("vnp_ReturnUrl".equals(key)) {
+                        sb.append(key).append("=").append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+                    } else {
+                        sb.append(key).append("=").append(value);
+                    }
+                } else {
+                    // Cho URL: encode tất cả values
+                    sb.append(key).append("=").append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+                }
+>>>>>>> newrepo/main
             }
         }
         return sb.toString();
@@ -361,8 +467,12 @@ public class VnpayServiceImpl implements IVnpayService {
             StringBuilder hash = new StringBuilder();
             for (byte b : bytes) {
                 String hex = Integer.toHexString(0xff & b);
+<<<<<<< HEAD
                 if (hex.length() == 1)
                     hash.append('0');
+=======
+                if (hex.length() == 1) hash.append('0');
+>>>>>>> newrepo/main
                 hash.append(hex);
             }
             return hash.toString();
@@ -397,14 +507,22 @@ public class VnpayServiceImpl implements IVnpayService {
 
             Optional<Transaction> paymentTransaction = transactionRepository.findById(transactionId);
             if (paymentTransaction.isPresent()) {
+<<<<<<< HEAD
                 return handleCustomerGatewayCallback(paymentTransaction.get(), vnpResponseCode, vnpTransactionStatus,
                         vnpTransactionNo);
+=======
+                return handleCustomerGatewayCallback(paymentTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTransactionNo);
+>>>>>>> newrepo/main
             }
 
             Optional<DealerTransaction> dealerTransaction = dealerTransactionRepository.findById(transactionId);
             if (dealerTransaction.isPresent()) {
+<<<<<<< HEAD
                 return handleDealerGatewayCallback(dealerTransaction.get(), vnpResponseCode, vnpTransactionStatus,
                         vnpTxnRef, vnpTransactionNo);
+=======
+                return handleDealerGatewayCallback(dealerTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTxnRef, vnpTransactionNo);
+>>>>>>> newrepo/main
             }
 
             log.error("VNPAY IPN callback - Transaction not found anywhere - TransactionId: {}", vnpTxnRef);
@@ -434,14 +552,22 @@ public class VnpayServiceImpl implements IVnpayService {
 
             Optional<Transaction> customerTransaction = transactionRepository.findById(transactionId);
             if (customerTransaction.isPresent()) {
+<<<<<<< HEAD
                 return handleCustomerReturnCallback(customerTransaction.get(), vnpResponseCode, vnpTransactionStatus,
                         vnpTransactionNo);
+=======
+                return handleCustomerReturnCallback(customerTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTransactionNo);
+>>>>>>> newrepo/main
             }
 
             Optional<DealerTransaction> dealerTransaction = dealerTransactionRepository.findById(transactionId);
             if (dealerTransaction.isPresent()) {
+<<<<<<< HEAD
                 return handleDealerReturnCallback(dealerTransaction.get(), vnpResponseCode, vnpTransactionStatus,
                         vnpTransactionNo);
+=======
+                return handleDealerReturnCallback(dealerTransaction.get(), vnpResponseCode, vnpTransactionStatus, vnpTransactionNo);
+>>>>>>> newrepo/main
             }
 
             log.warn("VNPAY Return callback - Transaction not found for id {}", transactionId);
@@ -458,9 +584,15 @@ public class VnpayServiceImpl implements IVnpayService {
     }
 
     private UUID handleCustomerGatewayCallback(Transaction transaction,
+<<<<<<< HEAD
             String responseCode,
             String transactionStatus,
             String vnpTransactionNo) {
+=======
+                                               String responseCode,
+                                               String transactionStatus,
+                                               String vnpTransactionNo) {
+>>>>>>> newrepo/main
         UUID transactionId = transaction.getTransactionId();
 
         if ("SUCCESS".equals(transaction.getStatus())) {
@@ -479,8 +611,12 @@ public class VnpayServiceImpl implements IVnpayService {
             try {
                 PaymentRecord paymentRecord = transaction.getPaymentRecord();
                 if (paymentRecord != null) {
+<<<<<<< HEAD
                     BigDecimal currentPaid = paymentRecord.getAmountPaid() != null ? paymentRecord.getAmountPaid()
                             : BigDecimal.ZERO;
+=======
+                    BigDecimal currentPaid = paymentRecord.getAmountPaid() != null ? paymentRecord.getAmountPaid() : BigDecimal.ZERO;
+>>>>>>> newrepo/main
                     BigDecimal currentRemaining = paymentRecord.getRemainingAmount() != null
                             ? paymentRecord.getRemainingAmount()
                             : paymentRecord.getTotalAmount().subtract(currentPaid);
@@ -513,21 +649,32 @@ public class VnpayServiceImpl implements IVnpayService {
         transaction.setGatewayTransactionId(vnpTransactionNo);
         transactionRepository.save(transaction);
 
+<<<<<<< HEAD
         log.warn(
                 "VNPAY IPN callback - Customer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
+=======
+        log.warn("VNPAY IPN callback - Customer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
+>>>>>>> newrepo/main
                 transactionId, responseCode, transactionStatus);
         return null;
     }
 
     private UUID handleCustomerReturnCallback(Transaction transaction,
+<<<<<<< HEAD
             String responseCode,
             String transactionStatus,
             String vnpTransactionNo) {
+=======
+                                              String responseCode,
+                                              String transactionStatus,
+                                              String vnpTransactionNo) {
+>>>>>>> newrepo/main
         UUID transactionId = transaction.getTransactionId();
 
         boolean isPaymentSuccess = "00".equals(responseCode) && "00".equals(transactionStatus);
 
         if (isPaymentSuccess) {
+<<<<<<< HEAD
             // Cập nhật transaction
             transaction.setStatus("SUCCESS");
             transaction.setGatewayTransactionId(vnpTransactionNo);
@@ -575,14 +722,35 @@ public class VnpayServiceImpl implements IVnpayService {
                     transactionId, responseCode, transactionStatus);
         }
 
+=======
+            if (!"PENDING".equals(transaction.getStatus())) {
+                transaction.setStatus("PENDING");
+            }
+            log.info("VNPAY Return callback - Customer payment pending confirmation - TransactionId: {}", transactionId);
+        } else {
+            transaction.setStatus("FAILED");
+            log.warn("VNPAY Return callback - Customer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
+                    transactionId, responseCode, transactionStatus);
+        }
+
+        transaction.setGatewayTransactionId(vnpTransactionNo);
+        transactionRepository.save(transaction);
+>>>>>>> newrepo/main
         return transactionId;
     }
 
     private UUID handleDealerGatewayCallback(DealerTransaction transaction,
+<<<<<<< HEAD
             String responseCode,
             String transactionStatus,
             String transactionRef,
             String vnpTransactionNo) {
+=======
+                                             String responseCode,
+                                             String transactionStatus,
+                                             String transactionRef,
+                                             String vnpTransactionNo) {
+>>>>>>> newrepo/main
         UUID transactionId = transaction.getDealerTransactionId();
 
         if ("SUCCESS".equals(transaction.getStatus())) {
@@ -612,9 +780,13 @@ public class VnpayServiceImpl implements IVnpayService {
             }
 
             log.info("VNPAY IPN callback - Dealer payment successful - TransactionId: {}, InvoiceId: {}",
+<<<<<<< HEAD
                     transactionId,
                     transaction.getDealerInvoice() != null ? transaction.getDealerInvoice().getDealerInvoiceId()
                             : null);
+=======
+                    transactionId, transaction.getDealerInvoice() != null ? transaction.getDealerInvoice().getDealerInvoiceId() : null);
+>>>>>>> newrepo/main
             return transactionId;
         }
 
@@ -622,13 +794,18 @@ public class VnpayServiceImpl implements IVnpayService {
         transaction.setTransactionCode(vnpTransactionNo);
         dealerTransactionRepository.save(transaction);
 
+<<<<<<< HEAD
         log.warn(
                 "VNPAY IPN callback - Dealer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
+=======
+        log.warn("VNPAY IPN callback - Dealer payment failed - TransactionId: {}, ResponseCode: {}, TransactionStatus: {}",
+>>>>>>> newrepo/main
                 transactionRef, responseCode, transactionStatus);
         return null;
     }
 
     private UUID handleDealerReturnCallback(DealerTransaction transaction,
+<<<<<<< HEAD
             String responseCode,
             String transactionStatus,
             String vnpTransactionNo) {
@@ -637,6 +814,15 @@ public class VnpayServiceImpl implements IVnpayService {
         if ("PENDING_CONFIRMATION".equals(transaction.getStatus()) || "FAILED".equals(transaction.getStatus())) {
             log.warn("VNPAY Return callback - Dealer transaction already processed via return - TransactionId: {}",
                     transactionId);
+=======
+                                            String responseCode,
+                                            String transactionStatus,
+                                            String vnpTransactionNo) {
+        UUID transactionId = transaction.getDealerTransactionId();
+
+        if ("PENDING_CONFIRMATION".equals(transaction.getStatus()) || "FAILED".equals(transaction.getStatus())) {
+            log.warn("VNPAY Return callback - Dealer transaction already processed via return - TransactionId: {}", transactionId);
+>>>>>>> newrepo/main
             return transactionId;
         }
 

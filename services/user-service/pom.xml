@@ -172,13 +172,17 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+<<<<<<< HEAD
                             <version>1.18.30</version>
+=======
+>>>>>>> newrepo/main
                         </path>
                         <path>
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
                             <version>1.5.5.Final</version>
                         </path>
+<<<<<<< HEAD
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok-mapstruct-binding</artifactId>
@@ -188,6 +192,9 @@
                     <compilerArgs>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
                     </compilerArgs>
+=======
+                    </annotationProcessorPaths>
+>>>>>>> newrepo/main
                 </configuration>
             </plugin>
             <plugin>

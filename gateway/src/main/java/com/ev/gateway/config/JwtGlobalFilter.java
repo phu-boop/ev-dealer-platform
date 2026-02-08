@@ -29,8 +29,12 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     //  Danh sách path được bỏ qua xác thực (không yêu cầu token)
         private static final List<String> EXCLUDED_PATHS = List.of(
             "/auth",
+<<<<<<< HEAD
             "/users",           
             "/oauth2",  // OAuth2 authentication flow
+=======
+            "/users",
+>>>>>>> newrepo/main
             "/sendmail",
             "/ws",
             "/payments/payment/return",
@@ -38,6 +42,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             "/payments/payment/pay-url",
             "/payments/api/v1/payments/gateway/callback/vnpay-return",
             "/payments/api/v1/payments/gateway/callback/vnpay-ipn",
+<<<<<<< HEAD
             "/favicon.ico",
             // Vehicle service endpoints (after rewrite)
             "/vehicle-catalog",
@@ -61,6 +66,10 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             "/test-drives/public",
             // AI Chatbot endpoint (Gateway handles rate limiting)
             "/ai/chat/ask"
+=======
+            "/favicon.ico"
+
+>>>>>>> newrepo/main
         );
 
     public JwtGlobalFilter(JwtUtil jwtUtil, RedisService redisService) {
@@ -71,17 +80,24 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
+<<<<<<< HEAD
         
         log.info("[JwtGlobalFilter] Incoming request: {} {}", exchange.getRequest().getMethod(), path);
 
         // 1. Luôn cho phép các request OPTIONS (dùng cho CORS) đi qua
         if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
             log.info("[JwtGlobalFilter] OPTIONS request allowed: {}", path);
+=======
+
+        // 1. Luôn cho phép các request OPTIONS (dùng cho CORS) đi qua
+        if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
+>>>>>>> newrepo/main
             return chain.filter(exchange);
         }
 
 
          // Path được bỏ qua xác thực
+<<<<<<< HEAD
         boolean isExcluded = EXCLUDED_PATHS.stream().anyMatch(excludedPath -> path.startsWith(excludedPath));
         if (isExcluded) {
             log.info("[JwtGlobalFilter] Path excluded from authentication: {}", path);
@@ -89,6 +105,12 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
         }
         
         log.debug("[JwtGlobalFilter] Path requires authentication: {}", path);
+=======
+        if (EXCLUDED_PATHS.stream().anyMatch(path::contains)) {
+            log.debug("[JwtGlobalFilter] Path excluded from authentication: {}", path);
+            return chain.filter(exchange);
+        }
+>>>>>>> newrepo/main
 
         // Tất cả các path khác đều yêu cầu token (Gateway xác thực)
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);

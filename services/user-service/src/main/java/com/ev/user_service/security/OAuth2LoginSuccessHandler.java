@@ -14,15 +14,21 @@ import com.ev.user_service.dto.respond.UserRespond;
 import com.ev.user_service.entity.Role;
 import com.ev.user_service.entity.User;
 import com.ev.user_service.enums.RoleName;
+<<<<<<< HEAD
 import com.ev.user_service.enums.UserStatus;
+=======
+>>>>>>> newrepo/main
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.user_service.mapper.UserMapper;
 import com.ev.user_service.repository.RoleRepository;
 import com.ev.user_service.repository.UserRepository;
+<<<<<<< HEAD
 import com.ev.user_service.repository.CustomerProfileRepository;
 import com.ev.user_service.service.CustomerProfileService;
+=======
+>>>>>>> newrepo/main
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -36,18 +42,27 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final String urlFrontend;
+<<<<<<< HEAD
     private final CustomerProfileService customerProfileService;
     private final CustomerProfileRepository customerProfileRepository;
 
 
     OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, @Value("${frontend.url}") String urlFrontend, CustomerProfileService customerProfileService, CustomerProfileRepository customerProfileRepository) {
+=======
+
+
+    OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, @Value("${frontend.url}") String urlFrontend) {
+>>>>>>> newrepo/main
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.userMapper = userMapper;
         this.urlFrontend = urlFrontend;
+<<<<<<< HEAD
         this.customerProfileService = customerProfileService;
         this.customerProfileRepository = customerProfileRepository;
+=======
+>>>>>>> newrepo/main
     }
 
 
@@ -65,15 +80,21 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         Set<Role> roles = new HashSet<>();
         User user = userRepository.findByEmail(email).orElseGet(() -> {
+<<<<<<< HEAD
             // Assign CUSTOMER role for customer-app OAuth users
             roles.add(roleRepository.findByName(RoleName.CUSTOMER.getRoleName())
                     .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR)));
             
+=======
+            roles.add(roleRepository.findByName(RoleName.EVM_STAFF.getRoleName())
+                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR)));
+>>>>>>> newrepo/main
             User newUser = User.builder()
                     .email(email)
                     .name(givenName)
                     .fullName(name)
                     .roles(roles)
+<<<<<<< HEAD
                     .status(UserStatus.ACTIVE)
                     .build();
             
@@ -83,6 +104,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             customerProfileService.saveCustomerProfile(savedUser, null);
             
             return savedUser;
+=======
+                    .build();
+            return userRepository.save(newUser);
+>>>>>>> newrepo/main
         });
 
         String accessToken = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), null);
@@ -97,6 +122,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         cookie.setMaxAge(30 * 24 * 60 * 60);
         response.addCookie(cookie);
 
+<<<<<<< HEAD
         // Map user to UserRespond
         UserRespond userRespond = userMapper.usertoUserRespond(user);
         
@@ -117,10 +143,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             e.printStackTrace();
         }
         
+=======
+        UserRespond userRespond = userMapper.usertoUserRespond(user);
+>>>>>>> newrepo/main
         LoginRespond loginRespond = new LoginRespond(userRespond, accessToken);
 
         ApiRespond<Object> apiResponse = ApiRespond.success("Login with Google success", loginRespond);
 
+<<<<<<< HEAD
         // Lấy redirect_uri từ state parameter (format: originalState|base64(redirect_uri))
         String redirectUri = extractRedirectUriFromRequest(request);
         
@@ -163,4 +193,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             return null;
         }
     }
+=======
+        response.sendRedirect(urlFrontend + "/oauth-success?accessToken=" + accessToken);
+
+    }
+>>>>>>> newrepo/main
 }

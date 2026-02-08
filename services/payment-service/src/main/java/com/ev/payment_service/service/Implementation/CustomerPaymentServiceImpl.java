@@ -3,12 +3,18 @@ package com.ev.payment_service.service.Implementation;
 import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
+<<<<<<< HEAD
 import com.ev.payment_service.dto.external.CustomerInfo;
 import com.ev.payment_service.dto.external.SalesOrderData;
 import com.ev.payment_service.dto.request.InitiatePaymentRequest;
 import com.ev.payment_service.dto.response.InitiatePaymentResponse;
 import com.ev.payment_service.dto.response.PaymentRecordResponse;
 import com.ev.payment_service.dto.response.PaymentStatisticsResponse;
+=======
+import com.ev.payment_service.dto.external.SalesOrderData;
+import com.ev.payment_service.dto.request.InitiatePaymentRequest;
+import com.ev.payment_service.dto.response.InitiatePaymentResponse;
+>>>>>>> newrepo/main
 import com.ev.payment_service.dto.response.TransactionResponse;
 import com.ev.payment_service.entity.PaymentMethod;
 import com.ev.payment_service.entity.PaymentRecord;
@@ -33,7 +39,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+<<<<<<< HEAD
 import java.time.LocalDateTime;
+=======
+>>>>>>> newrepo/main
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +58,10 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     private final PaymentMethodRepository paymentMethodRepository;
     private final TransactionMapper transactionMapper;
     private final IPaymentRecordService paymentRecordService;
+<<<<<<< HEAD
     private final com.ev.payment_service.repository.CustomerRepository customerRepository;
+=======
+>>>>>>> newrepo/main
 
     // === DYNAMIC CALL (SỬ DỤNG RestTemplate) ===
     private final RestTemplate restTemplate;
@@ -57,6 +69,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     @Value("${sales-service.url}") // Lấy URL từ application.properties
     private String salesServiceUrl;
 
+<<<<<<< HEAD
     @Value("${customer-service.url}") // URL customer service
     private String customerServiceBaseUrl;
 
@@ -64,6 +77,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     @Transactional
     public InitiatePaymentResponse initiatePayment(UUID orderId, InitiatePaymentRequest request, String userEmail,
             UUID userProfileId) {
+=======
+    @Override
+    @Transactional
+    public InitiatePaymentResponse initiatePayment(UUID orderId, InitiatePaymentRequest request, String userEmail, UUID userProfileId) {
+>>>>>>> newrepo/main
 
         // 1. GỌI API ĐỘNG: Lấy thông tin đơn hàng từ sales-service (B2B hoặc B2C)
         log.info("Fetching order details from sales-service for orderId: {}", orderId);
@@ -73,7 +91,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
 
         // 2. Kiểm tra totalAmount của đơn hàng
         if (orderData.getTotalAmount() == null || orderData.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+<<<<<<< HEAD
             log.error("Invalid totalAmount in order - OrderId: {}, TotalAmount: {}",
+=======
+            log.error("Invalid totalAmount in order - OrderId: {}, TotalAmount: {}", 
+>>>>>>> newrepo/main
                     orderId, orderData.getTotalAmount());
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
@@ -83,6 +105,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         PaymentRecord record = paymentRecordService.findOrCreateRecord(
                 orderData.getOrderId(),
                 orderData.getCustomerId(), // customerId giờ đã là Long
+<<<<<<< HEAD
                 orderData.getTotalAmount());
 
         // Cập nhật totalAmount nếu SalesOrder có totalAmount khác (đồng bộ với
@@ -117,21 +140,67 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         }
 
         log.info("PaymentRecord found/created - RecordId: {}, OrderId: {}, TotalAmount: {}, RemainingAmount: {}",
+=======
+                orderData.getTotalAmount()
+        );
+        
+        // Cập nhật totalAmount nếu SalesOrder có totalAmount khác (đồng bộ với SalesOrder)
+        BigDecimal salesOrderTotalAmount = orderData.getTotalAmount();
+        if (salesOrderTotalAmount != null && 
+            (record.getTotalAmount() == null || record.getTotalAmount().compareTo(salesOrderTotalAmount) != 0)) {
+            log.info("Updating PaymentRecord totalAmount - RecordId: {}, Old TotalAmount: {}, New TotalAmount: {}", 
+                    record.getRecordId(), record.getTotalAmount(), salesOrderTotalAmount);
+            
+            // Tính lại remainingAmount dựa trên totalAmount mới và amountPaid hiện tại
+            BigDecimal currentAmountPaid = record.getAmountPaid() != null ? record.getAmountPaid() : BigDecimal.ZERO;
+            BigDecimal newRemainingAmount = salesOrderTotalAmount.subtract(currentAmountPaid);
+            
+            record.setTotalAmount(salesOrderTotalAmount);
+            record.setRemainingAmount(newRemainingAmount);
+            
+            // Cập nhật status nếu cần
+            if (newRemainingAmount.compareTo(BigDecimal.ZERO) <= 0 && !"PAID".equals(record.getStatus())) {
+                record.setStatus("PAID");
+            } else if (newRemainingAmount.compareTo(BigDecimal.ZERO) > 0 && 
+                      salesOrderTotalAmount.compareTo(currentAmountPaid) > 0 && 
+                      "PAID".equals(record.getStatus())) {
+                record.setStatus("PARTIALLY_PAID");
+            }
+            
+            record = paymentRecordRepository.save(record);
+            log.info("PaymentRecord updated - RecordId: {}, TotalAmount: {}, AmountPaid: {}, RemainingAmount: {}, Status: {}", 
+                    record.getRecordId(), record.getTotalAmount(), record.getAmountPaid(), 
+                    record.getRemainingAmount(), record.getStatus());
+        }
+        
+        log.info("PaymentRecord found/created - RecordId: {}, OrderId: {}, TotalAmount: {}, RemainingAmount: {}", 
+>>>>>>> newrepo/main
                 record.getRecordId(), record.getOrderId(), record.getTotalAmount(), record.getRemainingAmount());
 
         // 4. Xác thực số tiền
         BigDecimal remainingAmount = record.getRemainingAmount();
         log.info("Validating amount - Request Amount: {}, Remaining Amount: {}", request.getAmount(), remainingAmount);
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Kiểm tra số tiền phải > 0
         if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             log.error("Amount validation failed - Request amount must be greater than 0, got: {}", request.getAmount());
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
+<<<<<<< HEAD
 
         // Kiểm tra số tiền không được vượt quá số tiền còn lại
         if (request.getAmount().compareTo(remainingAmount) > 0) {
             log.error("Amount validation failed - Request amount {} is greater than remaining amount {}",
+=======
+        
+        // Kiểm tra số tiền không được vượt quá số tiền còn lại
+        if (request.getAmount().compareTo(remainingAmount) > 0) {
+            log.error("Amount validation failed - Request amount {} is greater than remaining amount {}", 
+>>>>>>> newrepo/main
                     request.getAmount(), remainingAmount);
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
@@ -149,11 +218,19 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     log.error("PaymentMethod not found with id: {}", request.getPaymentMethodId());
                     return new AppException(ErrorCode.DATA_NOT_FOUND);
                 });
+<<<<<<< HEAD
         log.info("PaymentMethod found - MethodId: {}, MethodName: {}, MethodType: {}",
                 method.getMethodId(), method.getMethodName(), method.getMethodType());
 
         // 6. Tạo Giao dịch (Transaction)
         log.info("Creating Transaction - OrderId: {}, Amount: {}, PaymentMethodId: {}",
+=======
+        log.info("PaymentMethod found - MethodId: {}, MethodName: {}, MethodType: {}", 
+                method.getMethodId(), method.getMethodName(), method.getMethodType());
+
+        // 6. Tạo Giao dịch (Transaction)
+        log.info("Creating Transaction - OrderId: {}, Amount: {}, PaymentMethodId: {}", 
+>>>>>>> newrepo/main
                 orderId, request.getAmount(), request.getPaymentMethodId());
         Transaction transaction = Transaction.builder()
                 .paymentRecord(record)
@@ -184,10 +261,15 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     }
 
     /**
+<<<<<<< HEAD
      * Fetch order từ Sales Service - Thử cả B2B và B2C, ưu tiên endpoint nào trả về
      * data hợp lệ
      * Logic: Thử B2B trước, nếu không tìm thấy (404) hoặc không có customerId (có
      * thể là B2B order nhưng payment service cần customerId),
+=======
+     * Fetch order từ Sales Service - Thử cả B2B và B2C, ưu tiên endpoint nào trả về data hợp lệ
+     * Logic: Thử B2B trước, nếu không tìm thấy (404) hoặc không có customerId (có thể là B2B order nhưng payment service cần customerId),
+>>>>>>> newrepo/main
      * thì thử B2C. Nếu cả 2 đều fail, throw error.
      */
     private SalesOrderData fetchOrderFromSalesService(UUID orderId) {
@@ -196,10 +278,16 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         try {
             log.info("Attempting to fetch order from B2B endpoint - OrderId: {}", orderId);
             b2bOrderData = fetchB2BOrder(orderId);
+<<<<<<< HEAD
             // Nếu B2B order có customerId (có thể là B2C order nhưng được trả về từ B2B
             // endpoint), sử dụng nó
             if (b2bOrderData != null && b2bOrderData.getCustomerId() != null) {
                 log.info("Found order from B2B endpoint with customerId - OrderId: {}, CustomerId: {}",
+=======
+            // Nếu B2B order có customerId (có thể là B2C order nhưng được trả về từ B2B endpoint), sử dụng nó
+            if (b2bOrderData != null && b2bOrderData.getCustomerId() != null) {
+                log.info("Found order from B2B endpoint with customerId - OrderId: {}, CustomerId: {}", 
+>>>>>>> newrepo/main
                         orderId, b2bOrderData.getCustomerId());
                 return b2bOrderData;
             }
@@ -207,17 +295,28 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.info("Found B2B order (no customerId) - OrderId: {}", orderId);
             return b2bOrderData;
         } catch (RestClientException e) {
+<<<<<<< HEAD
             log.warn(
                     "Failed to fetch from B2B endpoint (might be B2C order), trying B2C endpoint - OrderId: {}, Error: {}",
                     orderId, e.getMessage());
         }
 
+=======
+            log.warn("Failed to fetch from B2B endpoint (might be B2C order), trying B2C endpoint - OrderId: {}, Error: {}", 
+                    orderId, e.getMessage());
+        }
+        
+>>>>>>> newrepo/main
         // Thử B2C endpoint nếu B2B không tìm thấy
         try {
             log.info("Attempting to fetch order from B2C endpoint - OrderId: {}", orderId);
             SalesOrderData b2cOrderData = fetchB2COrder(orderId);
             // B2C order phải có customerId (đã validate trong fetchB2COrder)
+<<<<<<< HEAD
             log.info("Found order from B2C endpoint - OrderId: {}, CustomerId: {}",
+=======
+            log.info("Found order from B2C endpoint - OrderId: {}, CustomerId: {}", 
+>>>>>>> newrepo/main
                     orderId, b2cOrderData.getCustomerId());
             return b2cOrderData;
         } catch (RestClientException e) {
@@ -235,16 +334,25 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
      * Fetch B2B order từ Sales Service
      * Endpoint: GET /sales-orders/{orderId}
      * Response: ApiRespond<SalesOrderDtoB2B>
+<<<<<<< HEAD
      * 
+=======
+>>>>>>> newrepo/main
      * @throws RestClientException nếu order không tìm thấy hoặc có lỗi
      */
     private SalesOrderData fetchB2BOrder(UUID orderId) throws RestClientException {
         String url = salesServiceUrl + "/sales-orders/" + orderId;
         log.info("Calling B2B endpoint: {}", url);
 
+<<<<<<< HEAD
         ParameterizedTypeReference<ApiRespond<Map<String, Object>>> responseType = new ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {
         };
 
+=======
+        ParameterizedTypeReference<ApiRespond<Map<String, Object>>> responseType =
+                new ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {};
+        
+>>>>>>> newrepo/main
         ResponseEntity<ApiRespond<Map<String, Object>>> response;
         try {
             response = restTemplate.exchange(url, HttpMethod.GET, null, responseType);
@@ -252,16 +360,27 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.error("Failed to call B2B endpoint - OrderId: {}, Error: {}", orderId, e.getMessage());
             throw e; // Re-throw để caller có thể xử lý
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         ApiRespond<Map<String, Object>> apiResponse = response.getBody();
         if (apiResponse == null || apiResponse.getData() == null) {
             log.error("Failed to fetch B2B order: Response or data is null");
             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
+<<<<<<< HEAD
 
         Map<String, Object> salesOrderMap = apiResponse.getData();
         SalesOrderData orderData = mapB2BOrderToSalesOrderData(salesOrderMap);
         log.info("Successfully fetched B2B order - OrderId: {}, CustomerId: {}, TotalAmount: {}",
+=======
+        
+        Map<String, Object> salesOrderMap = apiResponse.getData();
+        SalesOrderData orderData = mapB2BOrderToSalesOrderData(salesOrderMap);
+        log.info("Successfully fetched B2B order - OrderId: {}, CustomerId: {}, TotalAmount: {}", 
+>>>>>>> newrepo/main
                 orderData.getOrderId(), orderData.getCustomerId(), orderData.getTotalAmount());
         return orderData;
     }
@@ -270,16 +389,25 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
      * Fetch B2C order từ Sales Service
      * Endpoint: GET /api/v1/sales-orders/b2c/{orderId}
      * Response: ApiRespond<SalesOrderB2CResponse>
+<<<<<<< HEAD
      * 
+=======
+>>>>>>> newrepo/main
      * @throws RestClientException nếu order không tìm thấy hoặc có lỗi
      */
     private SalesOrderData fetchB2COrder(UUID orderId) throws RestClientException {
         String url = salesServiceUrl + "/api/v1/sales-orders/b2c/" + orderId;
         log.info("Calling B2C endpoint: {}", url);
 
+<<<<<<< HEAD
         ParameterizedTypeReference<ApiRespond<Map<String, Object>>> responseType = new ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {
         };
 
+=======
+        ParameterizedTypeReference<ApiRespond<Map<String, Object>>> responseType =
+                new ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {};
+        
+>>>>>>> newrepo/main
         ResponseEntity<ApiRespond<Map<String, Object>>> response;
         try {
             response = restTemplate.exchange(url, HttpMethod.GET, null, responseType);
@@ -287,16 +415,27 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.error("Failed to call B2C endpoint - OrderId: {}, Error: {}", orderId, e.getMessage());
             throw e; // Re-throw để caller có thể xử lý
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         ApiRespond<Map<String, Object>> apiResponse = response.getBody();
         if (apiResponse == null || apiResponse.getData() == null) {
             log.error("Failed to fetch B2C order: Response or data is null");
             throw new AppException(ErrorCode.DOWNSTREAM_SERVICE_UNAVAILABLE);
         }
+<<<<<<< HEAD
 
         Map<String, Object> salesOrderMap = apiResponse.getData();
         SalesOrderData orderData = mapB2COrderToSalesOrderData(salesOrderMap);
         log.info("Successfully fetched B2C order - OrderId: {}, CustomerId: {}, TotalAmount: {}",
+=======
+        
+        Map<String, Object> salesOrderMap = apiResponse.getData();
+        SalesOrderData orderData = mapB2COrderToSalesOrderData(salesOrderMap);
+        log.info("Successfully fetched B2C order - OrderId: {}, CustomerId: {}, TotalAmount: {}", 
+>>>>>>> newrepo/main
                 orderData.getOrderId(), orderData.getCustomerId(), orderData.getTotalAmount());
         return orderData;
     }
@@ -306,7 +445,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
      */
     private SalesOrderData mapB2BOrderToSalesOrderData(Map<String, Object> salesOrderMap) {
         SalesOrderData data = new SalesOrderData();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Parse orderId
         if (salesOrderMap.get("orderId") != null) {
             try {
@@ -315,10 +458,17 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     data.setOrderId((UUID) orderIdObj);
                 } else {
                     String orderIdStr = orderIdObj.toString();
+<<<<<<< HEAD
                     data.setOrderId(UUID.fromString(orderIdStr));
                 }
             } catch (Exception e) {
                 log.error("Failed to parse orderId - Value: {}, Error: {}",
+=======
+            data.setOrderId(UUID.fromString(orderIdStr));
+                }
+            } catch (Exception e) {
+                log.error("Failed to parse orderId - Value: {}, Error: {}", 
+>>>>>>> newrepo/main
                         salesOrderMap.get("orderId"), e.getMessage());
                 throw new AppException(ErrorCode.BAD_REQUEST);
             }
@@ -326,22 +476,39 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.error("orderId is null in sales order response");
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Parse totalAmount
         if (salesOrderMap.get("totalAmount") != null) {
             Object totalAmountObj = salesOrderMap.get("totalAmount");
             try {
+<<<<<<< HEAD
                 if (totalAmountObj instanceof Number) {
                     data.setTotalAmount(BigDecimal.valueOf(((Number) totalAmountObj).doubleValue()));
                 } else if (totalAmountObj instanceof String) {
                     data.setTotalAmount(new BigDecimal((String) totalAmountObj));
                 } else {
                     log.warn("Cannot parse totalAmount - OrderId: {}, Type: {}",
+=======
+            if (totalAmountObj instanceof Number) {
+                data.setTotalAmount(BigDecimal.valueOf(((Number) totalAmountObj).doubleValue()));
+            } else if (totalAmountObj instanceof String) {
+                data.setTotalAmount(new BigDecimal((String) totalAmountObj));
+                } else {
+                    log.warn("Cannot parse totalAmount - OrderId: {}, Type: {}", 
+>>>>>>> newrepo/main
                             data.getOrderId(), totalAmountObj != null ? totalAmountObj.getClass().getName() : "null");
                     data.setTotalAmount(BigDecimal.ZERO);
                 }
             } catch (Exception e) {
+<<<<<<< HEAD
                 log.error("Failed to parse totalAmount - OrderId: {}, Error: {}",
+=======
+                log.error("Failed to parse totalAmount - OrderId: {}, Error: {}", 
+>>>>>>> newrepo/main
                         data.getOrderId(), e.getMessage());
                 data.setTotalAmount(BigDecimal.ZERO);
             }
@@ -349,7 +516,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.warn("totalAmount is null in sales order - OrderId: {}", data.getOrderId());
             data.setTotalAmount(BigDecimal.ZERO);
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Parse customerId (Long) từ SalesOrder hoặc quotation
         // SalesOrder.customerId bây giờ đã là Long (bigint), không phải UUID nữa
         data.setCustomerId(null);
@@ -390,11 +561,16 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                         data.getOrderId(), e.getMessage());
             }
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Nếu vẫn không có, log warning (có thể là B2B order)
         if (data.getCustomerId() == null) {
             log.warn("CustomerId is null for OrderId: {} (may be a B2B order)", data.getOrderId());
         }
+<<<<<<< HEAD
 
         // Parse orderStatus từ B2B order
         // SalesOrderDtoB2B có orderStatus (B2B) và có thể có orderStatusB2C (nếu là B2C
@@ -405,6 +581,17 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         log.info("Parsed B2B order - OrderId: {}, CustomerId: {}, TotalAmount: {}, Status: {}",
                 data.getOrderId(), data.getCustomerId(), data.getTotalAmount(), data.getOrderStatusB2C());
 
+=======
+        
+        // Parse orderStatus từ B2B order
+        // SalesOrderDtoB2B có orderStatus (B2B) và có thể có orderStatusB2C (nếu là B2C order nhưng được trả về từ B2B endpoint)
+        String orderStatus = parseOrderStatus(salesOrderMap, "orderStatusB2C", "orderStatus");
+        data.setOrderStatusB2C(orderStatus);
+        
+        log.info("Parsed B2B order - OrderId: {}, CustomerId: {}, TotalAmount: {}, Status: {}", 
+                data.getOrderId(), data.getCustomerId(), data.getTotalAmount(), data.getOrderStatusB2C());
+        
+>>>>>>> newrepo/main
         return data;
     }
 
@@ -413,7 +600,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
      */
     private SalesOrderData mapB2COrderToSalesOrderData(Map<String, Object> salesOrderMap) {
         SalesOrderData data = new SalesOrderData();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Parse orderId
         if (salesOrderMap.get("orderId") != null) {
             try {
@@ -425,7 +616,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     data.setOrderId(UUID.fromString(orderIdStr));
                 }
             } catch (Exception e) {
+<<<<<<< HEAD
                 log.error("Failed to parse orderId - Value: {}, Error: {}",
+=======
+                log.error("Failed to parse orderId - Value: {}, Error: {}", 
+>>>>>>> newrepo/main
                         salesOrderMap.get("orderId"), e.getMessage());
                 throw new AppException(ErrorCode.BAD_REQUEST);
             }
@@ -433,7 +628,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.error("orderId is null in B2C order response");
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Parse totalAmount
         if (salesOrderMap.get("totalAmount") != null) {
             Object totalAmountObj = salesOrderMap.get("totalAmount");
@@ -442,13 +641,22 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                     data.setTotalAmount(BigDecimal.valueOf(((Number) totalAmountObj).doubleValue()));
                 } else if (totalAmountObj instanceof String) {
                     data.setTotalAmount(new BigDecimal((String) totalAmountObj));
+<<<<<<< HEAD
                 } else {
                     log.warn("Cannot parse totalAmount - OrderId: {}, Type: {}",
+=======
+            } else {
+                    log.warn("Cannot parse totalAmount - OrderId: {}, Type: {}", 
+>>>>>>> newrepo/main
                             data.getOrderId(), totalAmountObj.getClass().getName());
                     data.setTotalAmount(BigDecimal.ZERO);
                 }
             } catch (Exception e) {
+<<<<<<< HEAD
                 log.error("Failed to parse totalAmount - OrderId: {}, Error: {}",
+=======
+                log.error("Failed to parse totalAmount - OrderId: {}, Error: {}", 
+>>>>>>> newrepo/main
                         data.getOrderId(), e.getMessage());
                 data.setTotalAmount(BigDecimal.ZERO);
             }
@@ -456,7 +664,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.warn("totalAmount is null in B2C order - OrderId: {}", data.getOrderId());
             data.setTotalAmount(BigDecimal.ZERO);
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Parse customerId (Long) từ B2C order
         // SalesOrderB2CResponse.customerId là Long
         if (salesOrderMap.get("customerId") != null) {
@@ -494,26 +706,42 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                         data.getOrderId(), e.getMessage());
             }
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // B2C order phải có customerId
         if (data.getCustomerId() == null) {
             log.error("CustomerId is null for B2C order - OrderId: {}", data.getOrderId());
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Parse orderStatusB2C từ B2C order
         // SalesOrderB2CResponse có orderStatusB2C
         String orderStatus = parseOrderStatus(salesOrderMap, "orderStatusB2C", null);
         data.setOrderStatusB2C(orderStatus);
+<<<<<<< HEAD
 
         log.info("Parsed B2C order - OrderId: {}, CustomerId: {}, TotalAmount: {}, Status: {}",
                 data.getOrderId(), data.getCustomerId(), data.getTotalAmount(), data.getOrderStatusB2C());
 
+=======
+        
+        log.info("Parsed B2C order - OrderId: {}, CustomerId: {}, TotalAmount: {}, Status: {}", 
+                data.getOrderId(), data.getCustomerId(), data.getTotalAmount(), data.getOrderStatusB2C());
+        
+>>>>>>> newrepo/main
         return data;
     }
 
     /**
      * Helper method để parse order status từ response map
+<<<<<<< HEAD
      * 
      * @param salesOrderMap       Map chứa order data
      * @param primaryStatusField  Field chính để lấy status (ưu tiên)
@@ -525,6 +753,16 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             String fallbackStatusField) {
         String status = null;
 
+=======
+     * @param salesOrderMap Map chứa order data
+     * @param primaryStatusField Field chính để lấy status (ưu tiên)
+     * @param fallbackStatusField Field fallback để lấy status (nếu primary không có)
+     * @return Status string
+     */
+    private String parseOrderStatus(Map<String, Object> salesOrderMap, String primaryStatusField, String fallbackStatusField) {
+        String status = null;
+        
+>>>>>>> newrepo/main
         // Ưu tiên lấy từ primary field
         if (primaryStatusField != null && salesOrderMap.get(primaryStatusField) != null) {
             Object statusObj = salesOrderMap.get(primaryStatusField);
@@ -536,7 +774,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                 status = statusObj.toString();
             }
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Nếu không có, thử fallback field
         if (status == null && fallbackStatusField != null && salesOrderMap.get(fallbackStatusField) != null) {
             Object statusObj = salesOrderMap.get(fallbackStatusField);
@@ -548,11 +790,16 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                 status = statusObj.toString();
             }
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         return status != null ? status : "UNKNOWN";
     }
 
     /**
+<<<<<<< HEAD
      * Update order status trong Sales Service - Thử B2C trước, nếu không tìm thấy
      * thì thử B2B
      * B2C endpoint: PUT /api/v1/sales-orders/b2c/{orderId}/status?status={status}
@@ -562,6 +809,15 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     private void updateOrderStatusInSalesService(UUID orderId, String status) {
         log.info("Updating order status in sales-service - OrderId: {}, Status: {}", orderId, status);
 
+=======
+     * Update order status trong Sales Service - Thử B2C trước, nếu không tìm thấy thì thử B2B
+     * B2C endpoint: PUT /api/v1/sales-orders/b2c/{orderId}/status?status={status}
+     * B2B endpoint: (Hiện tại chưa có endpoint update status riêng, có thể cần tạo hoặc skip)
+     */
+    private void updateOrderStatusInSalesService(UUID orderId, String status) {
+        log.info("Updating order status in sales-service - OrderId: {}, Status: {}", orderId, status);
+        
+>>>>>>> newrepo/main
         // Thử B2C endpoint trước (vì B2C orders phổ biến hơn trong payment flow)
         try {
             String b2cUrl = salesServiceUrl + "/api/v1/sales-orders/b2c/" + orderId + "/status?status=" + status;
@@ -570,7 +826,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
             log.info("Successfully updated B2C order status in sales-service for orderId: {}", orderId);
             return;
         } catch (RestClientException e) {
+<<<<<<< HEAD
             log.warn("Failed to update B2C order status, order might be B2B - OrderId: {}, Error: {}",
+=======
+            log.warn("Failed to update B2C order status, order might be B2B - OrderId: {}, Error: {}", 
+>>>>>>> newrepo/main
                     orderId, e.getMessage());
             // B2B orders thường không có endpoint update status riêng trong payment flow
             // Chỉ log warning, không throw error vì payment đã thành công
@@ -584,6 +844,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
      * Endpoint: PUT /api/v1/sales-orders/{orderId}/payment-status?status={status}
      */
     private void updateOrderPaymentStatusInSalesService(UUID orderId, String paymentStatus) {
+<<<<<<< HEAD
         log.info("Updating order payment status in sales-service - OrderId: {}, PaymentStatus: {}", orderId,
                 paymentStatus);
 
@@ -597,6 +858,18 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         } catch (RestClientException e) {
             log.error(
                     "Failed to update order payment status in sales-service - OrderId: {}, PaymentStatus: {}, Error: {}",
+=======
+        log.info("Updating order payment status in sales-service - OrderId: {}, PaymentStatus: {}", orderId, paymentStatus);
+        
+        try {
+            String url = salesServiceUrl + "/api/v1/sales-orders/" + orderId + "/payment-status?status=" + paymentStatus;
+            log.info("Attempting to update order payment status: {}", url);
+            restTemplate.put(url, null);
+            log.info("Successfully updated order payment status in sales-service for orderId: {}, PaymentStatus: {}", 
+                    orderId, paymentStatus);
+        } catch (RestClientException e) {
+            log.error("Failed to update order payment status in sales-service - OrderId: {}, PaymentStatus: {}, Error: {}", 
+>>>>>>> newrepo/main
                     orderId, paymentStatus, e.getMessage());
             // Log error nhưng không throw exception vì payment đã thành công
             // Payment status update là optional, không ảnh hưởng đến payment flow
@@ -607,7 +880,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         BigDecimal totalAmount = orderData.getTotalAmount() != null ? orderData.getTotalAmount() : BigDecimal.ZERO;
         BigDecimal amountPaid = BigDecimal.ZERO;
         BigDecimal remainingAmount = totalAmount.subtract(amountPaid);
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         PaymentRecord newRecord = PaymentRecord.builder()
                 .orderId(orderData.getOrderId())
                 .customerId(orderData.getCustomerId()) // Có thể null nếu không tìm thấy
@@ -616,19 +893,31 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                 .remainingAmount(remainingAmount) // Set explicitly
                 .status("PENDING")
                 .build();
+<<<<<<< HEAD
 
         log.info("Creating new PaymentRecord - OrderId: {}, TotalAmount: {}, RemainingAmount: {}, CustomerId: {}",
                 orderData.getOrderId(), totalAmount, remainingAmount, orderData.getCustomerId());
 
+=======
+        
+        log.info("Creating new PaymentRecord - OrderId: {}, TotalAmount: {}, RemainingAmount: {}, CustomerId: {}", 
+                orderData.getOrderId(), totalAmount, remainingAmount, orderData.getCustomerId());
+        
+>>>>>>> newrepo/main
         return paymentRecordRepository.save(newRecord);
     }
 
     @Override
     @Transactional
+<<<<<<< HEAD
     public TransactionResponse confirmManualPayment(UUID transactionId, String userEmail, UUID userProfileId,
             String notes, String action) {
         log.info("Processing manual payment - TransactionId: {}, Action: {}, UserEmail: {}, Notes: {}",
                 transactionId, action, userEmail, notes);
+=======
+    public TransactionResponse confirmManualPayment(UUID transactionId, String userEmail, UUID userProfileId, String notes) {
+        log.info("Confirming manual payment - TransactionId: {}, UserEmail: {}, Notes: {}", transactionId, userEmail, notes);
+>>>>>>> newrepo/main
 
         // 1. Tìm giao dịch
         Transaction transaction = transactionRepository.findById(transactionId)
@@ -639,11 +928,16 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
 
         // 2. Kiểm tra trạng thái giao dịch
         if (!"PENDING".equals(transaction.getStatus())) {
+<<<<<<< HEAD
             log.error("Transaction is not in PENDING status - TransactionId: {}, Status: {}",
+=======
+            log.error("Transaction is not in PENDING status - TransactionId: {}, Status: {}", 
+>>>>>>> newrepo/main
                     transactionId, transaction.getStatus());
             throw new AppException(ErrorCode.INVALID_STATE);
         }
 
+<<<<<<< HEAD
         // HANDLE REJECT
         if ("REJECT".equalsIgnoreCase(action)) {
             transaction.setStatus("FAILED");
@@ -661,6 +955,12 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         PaymentRecord record = transaction.getPaymentRecord();
         if ("PAID".equals(record.getStatus())) {
             log.error("PaymentRecord is already PAID - RecordId: {}, OrderId: {}",
+=======
+        // 3. Kiểm tra PaymentRecord không được đã thanh toán đầy đủ
+        PaymentRecord record = transaction.getPaymentRecord();
+        if ("PAID".equals(record.getStatus())) {
+            log.error("PaymentRecord is already PAID - RecordId: {}, OrderId: {}", 
+>>>>>>> newrepo/main
                     record.getRecordId(), record.getOrderId());
             throw new AppException(ErrorCode.INVALID_STATE);
         }
@@ -679,12 +979,17 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         BigDecimal newAmountPaid = record.getAmountPaid().add(transaction.getAmount());
         record.setAmountPaid(newAmountPaid);
 
+<<<<<<< HEAD
         // Tính remainingAmount để kiểm tra status (remainingAmount sẽ được tính tự động
         // bởi @PreUpdate khi save)
+=======
+        // Tính remainingAmount để kiểm tra status (remainingAmount sẽ được tính tự động bởi @PreUpdate khi save)
+>>>>>>> newrepo/main
         BigDecimal calculatedRemainingAmount = record.getTotalAmount().subtract(newAmountPaid);
 
         if (calculatedRemainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
             record.setStatus("PAID");
+<<<<<<< HEAD
             log.info("PaymentRecord updated to PAID - RecordId: {}, OrderId: {}",
                     record.getRecordId(), record.getOrderId());
         } else {
@@ -700,6 +1005,22 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
 
         // 6. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật payment status trong
         // sales-service
+=======
+            log.info("PaymentRecord updated to PAID - RecordId: {}, OrderId: {}", 
+                    record.getRecordId(), record.getOrderId());
+        } else {
+            record.setStatus("PARTIALLY_PAID");
+            log.info("PaymentRecord updated to PARTIALLY_PAID - RecordId: {}, OrderId: {}, RemainingAmount: {}", 
+                    record.getRecordId(), record.getOrderId(), calculatedRemainingAmount);
+        }
+        
+        // Save sẽ trigger @PreUpdate để tự động tính remainingAmount
+        PaymentRecord savedRecord = paymentRecordRepository.save(record);
+        log.info("PaymentRecord saved - RecordId: {}, AmountPaid: {}, RemainingAmount: {}", 
+                savedRecord.getRecordId(), savedRecord.getAmountPaid(), savedRecord.getRemainingAmount());
+
+        // 6. GỌI API ĐỘNG (DÙNG RestTemplate): Cập nhật payment status trong sales-service
+>>>>>>> newrepo/main
         // Cập nhật payment status dựa trên status của PaymentRecord
         String paymentStatus;
         if ("PAID".equals(savedRecord.getStatus())) {
@@ -711,7 +1032,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         } else {
             paymentStatus = "UNPAID";
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         // Update payment status in sales-service (works for both B2B and B2C)
         updateOrderPaymentStatusInSalesService(savedRecord.getOrderId(), paymentStatus);
 
@@ -732,30 +1057,54 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     @Transactional(readOnly = true)
     public BigDecimal getCustomerTotalDebt(Long customerId) {
         log.info("Calculating total debt for customer: {}", customerId);
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         if (customerId == null) {
             log.warn("CustomerId is null, returning zero debt");
             return BigDecimal.ZERO;
         }
+<<<<<<< HEAD
 
         // Lấy tất cả PaymentRecord của khách hàng
         List<PaymentRecord> records = paymentRecordRepository.findByCustomerId(customerId);
 
+=======
+        
+        // Lấy tất cả PaymentRecord của khách hàng
+        List<PaymentRecord> records = paymentRecordRepository.findByCustomerId(customerId);
+        
+>>>>>>> newrepo/main
         if (records == null || records.isEmpty()) {
             log.info("No payment records found for customer: {}", customerId);
             return BigDecimal.ZERO;
         }
+<<<<<<< HEAD
 
         // Tính tổng remainingAmount (công nợ còn lại)
         // Chỉ tính các record chưa thanh toán đầy đủ (status != PAID)
         BigDecimal totalDebt = records.stream()
                 .filter(record -> record != null &&
                         record.getRemainingAmount() != null &&
+=======
+        
+        // Tính tổng remainingAmount (công nợ còn lại)
+        // Chỉ tính các record chưa thanh toán đầy đủ (status != PAID)
+        BigDecimal totalDebt = records.stream()
+                .filter(record -> record != null && 
+                        record.getRemainingAmount() != null && 
+>>>>>>> newrepo/main
                         !"PAID".equals(record.getStatus()) &&
                         record.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0)
                 .map(PaymentRecord::getRemainingAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         log.info("Total debt for customer {}: {} (from {} records)", customerId, totalDebt, records.size());
         return totalDebt;
     }
@@ -768,6 +1117,7 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
         return transactions.map(transactionMapper::toResponse);
     }
 
+<<<<<<< HEAD
     @Override
     @Transactional(readOnly = true)
     public Page<PaymentRecordResponse> filterPaymentRecords(
@@ -1035,3 +1385,6 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
     }
 
 }
+=======
+}
+>>>>>>> newrepo/main

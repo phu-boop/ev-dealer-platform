@@ -30,7 +30,11 @@ export const markNotificationAsRead = (notificationId) => {
  */
 export const resolveOrderDispute = (orderId, payload) => {
   return apiConstSaleService.put(
+<<<<<<< HEAD
     `/api/v1/sales-orders/${orderId}/resolve-dispute`,
+=======
+    `/sales-orders/${orderId}/resolve-dispute`,
+>>>>>>> newrepo/main
     payload
   );
 };
@@ -62,5 +66,9 @@ export const deleteAllStaffNotifications = () => {
  * @param {string} orderId - UUID của đơn hàng
  */
 export const getOrderDetails = (orderId) => {
+<<<<<<< HEAD
   return apiConstSaleService.get(`/api/v1/sales-orders/${orderId}`);
+=======
+  return apiConstSaleService.get(`/sales-orders/${orderId}`);
+>>>>>>> newrepo/main
 };

@@ -106,12 +106,15 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
+<<<<<<< HEAD
         <!-- Cloudinary -->
         <dependency>
             <groupId>com.cloudinary</groupId>
             <artifactId>cloudinary-http44</artifactId>
             <version>1.39.0</version>
         </dependency>
+=======
+>>>>>>> newrepo/main
     </dependencies>
 
 	<build>

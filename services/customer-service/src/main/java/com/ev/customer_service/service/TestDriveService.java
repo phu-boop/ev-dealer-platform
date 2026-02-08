@@ -5,9 +5,12 @@ import com.ev.customer_service.dto.request.TestDriveFilterRequest;
 import com.ev.customer_service.dto.request.TestDriveRequest;
 import com.ev.customer_service.dto.request.TestDriveFeedbackRequest;
 import com.ev.customer_service.dto.request.UpdateTestDriveRequest;
+<<<<<<< HEAD
 import com.ev.customer_service.dto.request.PublicTestDriveRequest;
 import com.ev.customer_service.enums.CustomerStatus;
 import com.ev.customer_service.enums.CustomerType;
+=======
+>>>>>>> newrepo/main
 import com.ev.customer_service.dto.response.TestDriveCalendarResponse;
 import com.ev.customer_service.dto.response.TestDriveResponse;
 import com.ev.customer_service.dto.response.TestDriveStatisticsResponse;
@@ -25,10 +28,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+=======
+import java.util.List;
+import java.util.Map;
+>>>>>>> newrepo/main
 import java.util.stream.Collectors;
 
 @Service
@@ -43,13 +51,18 @@ public class TestDriveService {
     private final ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
+<<<<<<< HEAD
     public List<TestDriveResponse> getAppointmentsByDealerId(String dealerId) {
+=======
+    public List<TestDriveResponse> getAppointmentsByDealerId(Long dealerId) {
+>>>>>>> newrepo/main
         return appointmentRepository.findByDealerId(dealerId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
+<<<<<<< HEAD
     public List<TestDriveResponse> getAppointmentsByCustomerId(Long customerId) {
         return appointmentRepository.findByCustomerCustomerId(customerId).stream()
                 .map(this::mapToResponse)
@@ -81,6 +94,8 @@ public class TestDriveService {
     }
 
     @Transactional(readOnly = true)
+=======
+>>>>>>> newrepo/main
     public TestDriveResponse getAppointmentById(Long id) {
         TestDriveAppointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
@@ -160,6 +175,7 @@ public class TestDriveService {
         return mapToResponse(savedAppointment);
     }
 
+<<<<<<< HEAD
     /**
      * Create test drive appointment from public request (no authentication required)
      * Finds or creates customer based on phone/email
@@ -335,6 +351,8 @@ public class TestDriveService {
         return customerRepository.save(newCustomer);
     }
 
+=======
+>>>>>>> newrepo/main
     @Transactional
     public TestDriveResponse updateAppointment(Long id, UpdateTestDriveRequest request) {
         TestDriveAppointment appointment = appointmentRepository.findById(id)
@@ -364,9 +382,12 @@ public class TestDriveService {
         if (request.getAppointmentDate() != null) {
             appointment.setAppointmentDate(request.getAppointmentDate());
         }
+<<<<<<< HEAD
         if (request.getAppointmentTime() != null) {
             appointment.setAppointmentTime(request.getAppointmentTime());
         }
+=======
+>>>>>>> newrepo/main
         if (request.getDurationMinutes() != null) {
             appointment.setDurationMinutes(request.getDurationMinutes());
         }
@@ -547,6 +568,7 @@ public class TestDriveService {
     }
 
     @Transactional(readOnly = true)
+<<<<<<< HEAD
     public List<TestDriveCalendarResponse> getCalendarView(String dealerId, LocalDateTime startDate, LocalDateTime endDate) {
         List<TestDriveAppointment> appointments;
         
@@ -557,6 +579,12 @@ public class TestDriveService {
             // Dealer staff/manager viewing their dealer's appointments
             appointments = appointmentRepository.findByDealerIdAndDateRange(dealerId, startDate, endDate);
         }
+=======
+    public List<TestDriveCalendarResponse> getCalendarView(Long dealerId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<TestDriveAppointment> appointments = appointmentRepository.findByDealerIdAndDateRange(
+            dealerId, startDate, endDate
+        );
+>>>>>>> newrepo/main
 
         return appointments.stream()
                 .map(this::mapToCalendarResponse)
@@ -564,6 +592,7 @@ public class TestDriveService {
     }
 
     @Transactional(readOnly = true)
+<<<<<<< HEAD
     public TestDriveStatisticsResponse getStatistics(String dealerId, LocalDateTime startDate, LocalDateTime endDate) {
         List<TestDriveAppointment> appointments;
         
@@ -574,6 +603,12 @@ public class TestDriveService {
             // Dealer manager viewing their dealer's statistics
             appointments = appointmentRepository.findByDealerIdAndDateRange(dealerId, startDate, endDate);
         }
+=======
+    public TestDriveStatisticsResponse getStatistics(Long dealerId, LocalDateTime startDate, LocalDateTime endDate) {
+        List<TestDriveAppointment> appointments = appointmentRepository.findByDealerIdAndDateRange(
+            dealerId, startDate, endDate
+        );
+>>>>>>> newrepo/main
 
         long total = appointments.size();
         long scheduled = appointments.stream().filter(a -> "SCHEDULED".equals(a.getStatus())).count();
@@ -693,7 +728,10 @@ public class TestDriveService {
             .staffId(appointment.getStaffId())
             .staffName(appointment.getStaffName())
             .appointmentDate(appointment.getAppointmentDate())
+<<<<<<< HEAD
             .appointmentTime(appointment.getAppointmentTime())
+=======
+>>>>>>> newrepo/main
             .durationMinutes(appointment.getDurationMinutes())
             .endTime(appointment.getEndTime())
             .testDriveLocation(appointment.getTestDriveLocation())
@@ -790,7 +828,11 @@ public class TestDriveService {
      * Lấy danh sách appointments đã có feedback (để thống kê)
      */
     @Transactional(readOnly = true)
+<<<<<<< HEAD
     public List<TestDriveResponse> getAppointmentsWithFeedback(String dealerId) {
+=======
+    public List<TestDriveResponse> getAppointmentsWithFeedback(Long dealerId) {
+>>>>>>> newrepo/main
         return appointmentRepository.findByDealerId(dealerId).stream()
                 .filter(apt -> apt.getFeedbackRating() != null)
                 .map(this::mapToResponse)

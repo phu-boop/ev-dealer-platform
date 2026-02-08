@@ -1,6 +1,9 @@
 package com.ev.customer_service.entity;
 
+<<<<<<< HEAD
 import com.ev.customer_service.converter.BinaryUuidConverter;
+=======
+>>>>>>> newrepo/main
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,10 +34,15 @@ public class TestDriveAppointment {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
+<<<<<<< HEAD
     // dealer_id stored as binary UUID in DB, mapped to String (hex representation)
     @Column(name = "dealer_id", nullable = false, columnDefinition = "BINARY(16)")
     @Convert(converter = BinaryUuidConverter.class)
     private String dealerId;
+=======
+    @Column(name = "dealer_id", nullable = false)
+    private Long dealerId;
+>>>>>>> newrepo/main
 
     @Column(name = "model_id", nullable = false)
     private Long modelId;
@@ -57,9 +65,12 @@ public class TestDriveAppointment {
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDateTime appointmentDate;
+<<<<<<< HEAD
     
     @Column(name = "appointment_time", length = 50)
     private String appointmentTime; // Time slot: "09:00 - 11:00"
+=======
+>>>>>>> newrepo/main
 
     @Column(name = "duration_minutes")
     private Integer durationMinutes;

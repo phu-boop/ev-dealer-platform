@@ -18,6 +18,7 @@ import com.ev.user_service.security.JwtUtil;
 
 import com.ev.user_service.repository.DealerManagerProfileRepository;
 import com.ev.user_service.repository.DealerStaffProfileRepository;
+<<<<<<< HEAD
 import com.ev.user_service.repository.CustomerProfileRepository;
 import com.ev.user_service.repository.RoleRepository;
 import com.ev.user_service.entity.DealerManagerProfile;
@@ -29,6 +30,11 @@ import com.ev.user_service.dto.request.CustomerRegistrationRequest;
 import java.util.Optional;
 import java.util.HashSet;
 import java.util.Set;
+=======
+import com.ev.user_service.entity.DealerManagerProfile;
+import com.ev.user_service.entity.DealerStaffProfile;
+import java.util.Optional;
+>>>>>>> newrepo/main
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -47,9 +53,12 @@ public class AuthService {
 
     private final DealerManagerProfileRepository managerProfileRepository;
     private final DealerStaffProfileRepository staffProfileRepository;
+<<<<<<< HEAD
     private final CustomerProfileService customerProfileService;
     private final CustomerProfileRepository customerProfileRepository;
     private final RoleRepository roleRepository;
+=======
+>>>>>>> newrepo/main
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -58,10 +67,14 @@ public class AuthService {
                        RedisService redisService,
                        EmailService emailService,
                        DealerManagerProfileRepository managerProfileRepository,
+<<<<<<< HEAD
                        DealerStaffProfileRepository staffProfileRepository,
                        CustomerProfileService customerProfileService,
                        CustomerProfileRepository customerProfileRepository,
                        RoleRepository roleRepository) {
+=======
+                       DealerStaffProfileRepository staffProfileRepository) {
+>>>>>>> newrepo/main
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -71,9 +84,12 @@ public class AuthService {
 
         this.managerProfileRepository = managerProfileRepository;
         this.staffProfileRepository = staffProfileRepository;
+<<<<<<< HEAD
         this.customerProfileService = customerProfileService;
         this.customerProfileRepository = customerProfileRepository;
         this.roleRepository = roleRepository;
+=======
+>>>>>>> newrepo/main
     }
 
 
@@ -127,6 +143,7 @@ public class AuthService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         UserRespond userRespond = userMapper.usertoUserRespond(user);
+<<<<<<< HEAD
         
         // Fetch customer profile and set memberId if user is a CUSTOMER (matches OAuth handler logic)
         try {
@@ -143,6 +160,9 @@ public class AuthService {
             System.err.println("[AuthService.getCurrentUser] ❌ Error fetching customer profile: " + e.getMessage());
             e.printStackTrace();
         }
+=======
+
+>>>>>>> newrepo/main
 
         return new LoginRespond(userRespond, null);
     }
@@ -260,6 +280,7 @@ public class AuthService {
         userRepository.save(user);
     }
 
+<<<<<<< HEAD
     public UserRespond registerCustomer(CustomerRegistrationRequest request) {
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -301,4 +322,6 @@ public class AuthService {
         return userMapper.usertoUserRespond(savedUser);
     }
 
+=======
+>>>>>>> newrepo/main
 }

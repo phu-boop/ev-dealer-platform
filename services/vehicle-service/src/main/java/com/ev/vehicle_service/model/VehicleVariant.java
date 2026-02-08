@@ -11,6 +11,10 @@ import java.util.Set;
 import org.hibernate.annotations.CreationTimestamp;
 // import org.hibernate.annotations.UpdateTimestamp;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> newrepo/main
 @Entity
 @Table(name = "vehicle_variants")
 @Getter
@@ -20,8 +24,13 @@ public class VehicleVariant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "variant_id")
     private Long variantId;
+<<<<<<< HEAD
 
     // Mối quan hệ ngược lại: Nhiều Variants thuộc về một Model
+=======
+    
+    // Mối quan hệ ngược lại: Nhiều Variants thuộc về một Model 
+>>>>>>> newrepo/main
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "model_id", nullable = false)
     private VehicleModel vehicleModel;
@@ -30,12 +39,20 @@ public class VehicleVariant {
     private String versionName;
 
     private String color;
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> newrepo/main
     @Column(name = "sku_code", unique = true) // Mã định danh sản phẩm
     private String skuCode;
 
     @Column(name = "battery_capacity")
+<<<<<<< HEAD
     private Double batteryCapacity;
+=======
+    private Integer batteryCapacity;
+>>>>>>> newrepo/main
 
     @Column(name = "charging_time")
     private Float chargingTime;
@@ -46,6 +63,7 @@ public class VehicleVariant {
     @Column(name = "motor_power")
     private Integer motorPower;
 
+<<<<<<< HEAD
     // Additional technical specifications
     @Column(name = "seating_capacity")
     private Integer seatingCapacity;
@@ -86,6 +104,8 @@ public class VehicleVariant {
     @Column(name = "interior_images", columnDefinition = "TEXT")
     private String interiorImages;
 
+=======
+>>>>>>> newrepo/main
     private BigDecimal price;
 
     @Column(name = "wholesale_price")
@@ -104,7 +124,11 @@ public class VehicleVariant {
 
     @Column(name = "image_url")
     private String imageUrl;
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> newrepo/main
     // ... updatedBy, updatedDate ...
 
     // --- Relationships (đã được di chuyển) ---
@@ -112,6 +136,9 @@ public class VehicleVariant {
     private Set<PriceHistory> priceHistories = new HashSet<>();
 
     @OneToMany(mappedBy = "vehicleVariant", cascade = CascadeType.ALL, orphanRemoval = true)
+<<<<<<< HEAD
     @org.hibernate.annotations.BatchSize(size = 20)
+=======
+>>>>>>> newrepo/main
     private Set<VariantFeature> features = new HashSet<>();
 }

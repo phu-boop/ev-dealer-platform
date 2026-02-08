@@ -32,8 +32,12 @@ build/
 ### VS Code ###
 .vscode/
 
+<<<<<<< HEAD
 EMAIL_SETUP_GUIDE.md    
 .env*
 .flaskenv*
 !.env.project
 !.env.vault
+=======
+EMAIL_SETUP_GUIDE.md    
+>>>>>>> newrepo/main

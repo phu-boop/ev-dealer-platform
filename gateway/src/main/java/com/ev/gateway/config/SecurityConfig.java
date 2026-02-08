@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 // user-service
                                 "/auth/**",
                                 "/users/**",
+<<<<<<< HEAD
                                 "/oauth2/**",  // OAuth2 authentication flow
 
                                 // customer-service
@@ -46,6 +47,11 @@ public class SecurityConfig {
                                 "/feedback/**",
                                 "/complaints/**",
                                 "/charging-stations/**",
+=======
+
+                                // customer-service
+                                "/customers/**",
+>>>>>>> newrepo/main
 
                                 // dealer-service
                                 "/dealers/**",
@@ -55,17 +61,23 @@ public class SecurityConfig {
 
                                 // payment-service
                                 "/payments/**",
+<<<<<<< HEAD
                                 "/api/v1/payments/**",
+=======
+>>>>>>> newrepo/main
                                 "/favicon.ico",
                                 "/api/v1/payments/gateway/callback/vnpay-return",
                                 "/api/v1/payments/gateway/callback/vnpay-ipn",
 
                                 // "/sales/**"
                                 "/sales/**",
+<<<<<<< HEAD
                                 "/orders/**",
                                 
                                 "/sales-orders/**",
                                 "/api/v1/sales-orders/**",
+=======
+>>>>>>> newrepo/main
 
                                 // vehicle-service
                                 "/vehicles/**",

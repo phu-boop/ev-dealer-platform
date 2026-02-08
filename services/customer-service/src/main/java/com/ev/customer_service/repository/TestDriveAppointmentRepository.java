@@ -16,12 +16,20 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
 
     List<TestDriveAppointment> findByCustomerCustomerId(Long customerId);
 
+<<<<<<< HEAD
     List<TestDriveAppointment> findByDealerId(String dealerId);
+=======
+    List<TestDriveAppointment> findByDealerId(Long dealerId);
+>>>>>>> newrepo/main
 
     List<TestDriveAppointment> findByStatus(String status);
 
     @Query("SELECT t FROM TestDriveAppointment t WHERE t.dealerId = :dealerId AND t.status = :status")
+<<<<<<< HEAD
     List<TestDriveAppointment> findByDealerIdAndStatus(@Param("dealerId") String dealerId, @Param("status") String status);
+=======
+    List<TestDriveAppointment> findByDealerIdAndStatus(@Param("dealerId") Long dealerId, @Param("status") String status);
+>>>>>>> newrepo/main
 
     @Query("SELECT t FROM TestDriveAppointment t WHERE t.appointmentDate BETWEEN :startDate AND :endDate")
     List<TestDriveAppointment> findAppointmentsByDateRange(
@@ -66,6 +74,7 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
            "AND t.appointmentDate BETWEEN :startDate AND :endDate " +
            "ORDER BY t.appointmentDate ASC")
     List<TestDriveAppointment> findByDealerIdAndDateRange(
+<<<<<<< HEAD
             @Param("dealerId") String dealerId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
@@ -77,6 +86,9 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
            "WHERE t.appointmentDate BETWEEN :startDate AND :endDate " +
            "ORDER BY t.appointmentDate ASC")
     List<TestDriveAppointment> findByDateRange(
+=======
+            @Param("dealerId") Long dealerId,
+>>>>>>> newrepo/main
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 
@@ -96,7 +108,11 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
      * Đếm số lịch hẹn theo status của dealer
      */
     @Query("SELECT COUNT(t) FROM TestDriveAppointment t WHERE t.dealerId = :dealerId AND t.status = :status")
+<<<<<<< HEAD
     Long countByDealerIdAndStatus(@Param("dealerId") String dealerId, @Param("status") String status);
+=======
+    Long countByDealerIdAndStatus(@Param("dealerId") Long dealerId, @Param("status") String status);
+>>>>>>> newrepo/main
 
     /**
      * Tìm các lịch hẹn cần gửi nhắc nhở (trước 24h và chưa gửi)
@@ -116,7 +132,11 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
            "AND t.appointmentDate BETWEEN :startDate AND :endDate " +
            "GROUP BY t.modelId")
     List<Object[]> countAppointmentsByModel(
+<<<<<<< HEAD
             @Param("dealerId") String dealerId,
+=======
+            @Param("dealerId") Long dealerId,
+>>>>>>> newrepo/main
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 
@@ -128,7 +148,11 @@ public interface TestDriveAppointmentRepository extends JpaRepository<TestDriveA
            "AND t.appointmentDate BETWEEN :startDate AND :endDate " +
            "GROUP BY t.staffId")
     List<Object[]> countAppointmentsByStaff(
+<<<<<<< HEAD
             @Param("dealerId") String dealerId,
+=======
+            @Param("dealerId") Long dealerId,
+>>>>>>> newrepo/main
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 }

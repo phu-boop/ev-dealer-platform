@@ -1,10 +1,14 @@
 package com.ev.sales_service.repository;
 
 import com.ev.sales_service.entity.SalesOrder;
+<<<<<<< HEAD
 import com.ev.sales_service.enums.OrderStatusB2C;
 import com.ev.sales_service.enums.SaleOderType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+=======
+import com.ev.sales_service.enums.SaleOderType;
+>>>>>>> newrepo/main
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,10 +36,13 @@ public interface SalesOrderRepositoryB2C extends JpaRepository<SalesOrder, UUID>
     List<SalesOrder> findByDealerIdAndTypeOderAndStatus(@Param("dealerId") UUID dealerId,
                                                        @Param("typeOder") SaleOderType typeOder,
                                                        @Param("status") String status);
+<<<<<<< HEAD
 
     // Phân trang cho Admin lấy tất cả đơn hàng B2C
     Page<SalesOrder> findByTypeOder(SaleOderType typeOder, Pageable pageable);
 
     // Phân trang với filter theo status
     Page<SalesOrder> findByTypeOderAndOrderStatusB2C(SaleOderType typeOder, OrderStatusB2C orderStatusB2C, Pageable pageable);
+=======
+>>>>>>> newrepo/main
 }

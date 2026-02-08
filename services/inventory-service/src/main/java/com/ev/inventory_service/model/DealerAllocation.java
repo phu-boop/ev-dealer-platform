@@ -3,7 +3,10 @@ package com.ev.inventory_service.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.UUID;
+<<<<<<< HEAD
 import java.time.LocalDateTime;
+=======
+>>>>>>> newrepo/main
 
 @Entity
 @Table(name = "dealer_inventory")
@@ -29,7 +32,10 @@ public class DealerAllocation {
     private Integer reorderLevel; // Ngưỡng cảnh báo riêng của đại lý
 
     private String status; // Trạng thái xe tại kho đại lý (mới, cũ, đã qua sữa chữa,...)
+<<<<<<< HEAD
 
     @org.hibernate.annotations.UpdateTimestamp
     private LocalDateTime lastUpdated;
+=======
+>>>>>>> newrepo/main
 }

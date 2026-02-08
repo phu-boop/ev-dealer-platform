@@ -2,7 +2,10 @@ package com.ev.vehicle_service.dto.response;
 
 import com.ev.common_lib.model.enums.VehicleStatus;
 import lombok.Data;
+<<<<<<< HEAD
 import java.math.BigDecimal;
+=======
+>>>>>>> newrepo/main
 
 @Data
 public class ModelSummaryDto {
@@ -10,6 +13,7 @@ public class ModelSummaryDto {
     private String modelName;
     private String brand;
     private VehicleStatus status;
+<<<<<<< HEAD
     private String thumbnailUrl;
     private Integer baseRangeKm;
     private Integer baseBatteryCapacity;
@@ -17,4 +21,6 @@ public class ModelSummaryDto {
     private Integer baseMotorPower;
     // Giá thấp nhất từ các variants
     private BigDecimal basePrice;
+=======
+>>>>>>> newrepo/main
 }

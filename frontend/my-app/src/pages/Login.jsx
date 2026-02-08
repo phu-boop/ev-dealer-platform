@@ -364,7 +364,11 @@ export default function Login() {
             {/* reCAPTCHA */}
             <div className="flex justify-center">
               <ReCAPTCHA
+<<<<<<< HEAD
                 sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+=======
+                sitekey="6LddMtArAAAAACt_Fw82js63yEEUFnRGUpSkBn4Q"
+>>>>>>> newrepo/main
                 onChange={handleCaptchaChange}
                 theme="dark"
               />

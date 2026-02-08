@@ -85,11 +85,14 @@
             <artifactId>common-lib</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+<<<<<<< HEAD
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
+=======
+>>>>>>> newrepo/main
 	</dependencies>
 
 	<build>

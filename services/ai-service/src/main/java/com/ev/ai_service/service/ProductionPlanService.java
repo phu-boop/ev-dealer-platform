@@ -24,18 +24,28 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ProductionPlanService {
+<<<<<<< HEAD
 
     private final DemandForecastRepository forecastRepository;
     private final InventorySnapshotRepository inventoryRepository;
     private final ProductionPlanRepository productionPlanRepository;
     private final GeminiAIService geminiAIService;
 
+=======
+    
+    private final DemandForecastRepository forecastRepository;
+    private final InventorySnapshotRepository inventoryRepository;
+    private final ProductionPlanRepository productionPlanRepository;
+    private final OpenAIService openAIService;
+    
+>>>>>>> newrepo/main
     /**
      * Tạo kế hoạch sản xuất cho tháng cụ thể
      */
     @Transactional
     public List<ProductionPlanDto> generateProductionPlan(LocalDate planMonth) {
         log.info("Generating production plan for month: {}", planMonth);
+<<<<<<< HEAD
 
         // Lấy forecasts cho tháng này
         LocalDate monthStart = planMonth.withDayOfMonth(1);
@@ -44,12 +54,23 @@ public class ProductionPlanService {
         List<DemandForecast> forecasts = forecastRepository
                 .findTopForecastsByDateRange(monthStart, monthEnd);
 
+=======
+        
+        // Lấy forecasts cho tháng này
+        LocalDate monthStart = planMonth.withDayOfMonth(1);
+        LocalDate monthEnd = planMonth.withDayOfMonth(planMonth.lengthOfMonth());
+        
+        List<DemandForecast> forecasts = forecastRepository
+            .findTopForecastsByDateRange(monthStart, monthEnd);
+        
+>>>>>>> newrepo/main
         // 🚨 Kiểm tra nếu không có forecasts
         if (forecasts.isEmpty()) {
             log.warn("⚠️ No forecasts found for month {}. Cannot generate production plan.", planMonth);
             log.warn("💡 Please generate forecasts first using POST /api/ai/forecast");
             return Collections.emptyList();
         }
+<<<<<<< HEAD
 
         // Group theo variantId và tính tổng predicted demand
         var forecastsByVariant = forecasts.stream()
@@ -86,10 +107,50 @@ public class ProductionPlanService {
         return plans;
     }
 
+=======
+        
+        // Group theo variantId và tính tổng predicted demand
+        var forecastsByVariant = forecasts.stream()
+            .collect(Collectors.groupingBy(
+                DemandForecast::getVariantId,
+                Collectors.summingInt(DemandForecast::getPredictedDemand)
+            ));
+        
+        List<ProductionPlanDto> plans = new ArrayList<>();
+        
+        for (var entry : forecastsByVariant.entrySet()) {
+            Long variantId = entry.getKey();
+            Integer predictedDemand = entry.getValue();
+            
+            try {
+                ProductionPlanDto plan = createProductionPlan(
+                    variantId, 
+                    planMonth, 
+                    predictedDemand
+                );
+                plans.add(plan);
+            } catch (Exception e) {
+                log.error("Error creating production plan for variant {}: {}", 
+                    variantId, e.getMessage());
+            }
+        }
+        
+        // Sắp xếp theo priority
+        plans.sort((p1, p2) -> {
+            int priorityCompare = comparePriority(p1.getPriority(), p2.getPriority());
+            if (priorityCompare != 0) return priorityCompare;
+            return p2.getProductionGap().compareTo(p1.getProductionGap());
+        });
+        
+        return plans;
+    }
+    
+>>>>>>> newrepo/main
     /**
      * Tạo production plan cho một variant
      */
     private ProductionPlanDto createProductionPlan(
+<<<<<<< HEAD
             Long variantId,
             LocalDate planMonth,
             Integer predictedDemand) {
@@ -99,10 +160,23 @@ public class ProductionPlanService {
                 .map(InventorySnapshot::getAvailableQuantity)
                 .orElse(0);
 
+=======
+        Long variantId, 
+        LocalDate planMonth, 
+        Integer predictedDemand
+    ) {
+        // Lấy current inventory
+        Integer currentInventory = inventoryRepository
+            .findTopByVariantIdOrderBySnapshotDateDesc(variantId)
+            .map(InventorySnapshot::getAvailableQuantity)
+            .orElse(0);
+        
+>>>>>>> newrepo/main
         // Tính production gap
         // Gap = Predicted Demand + Safety Stock (20%) - Current Inventory
         int safetyStock = (int) (predictedDemand * 0.2);
         int productionGap = Math.max(0, predictedDemand + safetyStock - currentInventory);
+<<<<<<< HEAD
 
         // Xác định priority
         String priority = determinePriority(predictedDemand, currentInventory, productionGap);
@@ -125,6 +199,31 @@ public class ProductionPlanService {
             log.info("Updating existing production plan for variant {} month {}",
                     variantId, planMonth);
 
+=======
+        
+        // Xác định priority
+        String priority = determinePriority(predictedDemand, currentInventory, productionGap);
+        
+        // Tạo recommendations
+        String recommendations = generateRecommendations(
+            predictedDemand, 
+            currentInventory, 
+            productionGap, 
+            priority
+        );
+        
+        // 🔍 Kiểm tra xem đã có plan cho variant + tháng này chưa
+        ProductionPlan existingPlan = productionPlanRepository
+            .findByVariantIdAndPlanMonth(variantId, planMonth);
+        
+        ProductionPlan plan;
+        
+        if (existingPlan != null) {
+            // ♻️ UPDATE existing plan
+            log.info("Updating existing production plan for variant {} month {}", 
+                variantId, planMonth);
+            
+>>>>>>> newrepo/main
             existingPlan.setRecommendedProduction(productionGap);
             existingPlan.setPredictedDemand(predictedDemand);
             existingPlan.setCurrentInventory(currentInventory);
@@ -132,6 +231,7 @@ public class ProductionPlanService {
             existingPlan.setPriority(priority);
             existingPlan.setRecommendations(recommendations);
             existingPlan.setUpdatedAt(LocalDateTime.now());
+<<<<<<< HEAD
 
             plan = existingPlan;
         } else {
@@ -158,12 +258,44 @@ public class ProductionPlanService {
         return mapToDto(saved);
     }
 
+=======
+            
+            plan = existingPlan;
+        } else {
+            // ✨ CREATE new plan
+            log.info("Creating new production plan for variant {} month {}", 
+                variantId, planMonth);
+            
+            plan = ProductionPlan.builder()
+                .variantId(variantId)
+                .planMonth(planMonth)
+                .recommendedProduction(productionGap)
+                .predictedDemand(predictedDemand)
+                .currentInventory(currentInventory)
+                .productionGap(productionGap)
+                .priority(priority)
+                .recommendations(recommendations)
+                .status("DRAFT")
+                .createdAt(LocalDateTime.now())
+                .build();
+        }
+        
+        ProductionPlan saved = productionPlanRepository.save(plan);
+        
+        return mapToDto(saved);
+    }
+    
+>>>>>>> newrepo/main
     /**
      * Xác định mức độ ưu tiên
      */
     private String determinePriority(Integer demand, Integer inventory, Integer gap) {
         double stockRatio = inventory / (double) Math.max(1, demand);
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> newrepo/main
         if (stockRatio < 0.3 || gap > demand * 0.8) {
             return "HIGH"; // Tồn kho thấp hoặc gap lớn
         } else if (stockRatio < 0.6 || gap > demand * 0.5) {
@@ -172,11 +304,16 @@ public class ProductionPlanService {
             return "LOW";
         }
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> newrepo/main
     /**
      * Tạo recommendations - có thể sử dụng AI để tạo insights thông minh hơn
      */
     private String generateRecommendations(
+<<<<<<< HEAD
             Integer demand,
             Integer inventory,
             Integer gap,
@@ -184,6 +321,16 @@ public class ProductionPlanService {
         // Tạo recommendations cơ bản
         StringBuilder sb = new StringBuilder();
 
+=======
+        Integer demand, 
+        Integer inventory, 
+        Integer gap, 
+        String priority
+    ) {
+        // Tạo recommendations cơ bản
+        StringBuilder sb = new StringBuilder();
+        
+>>>>>>> newrepo/main
         if (priority.equals("HIGH")) {
             sb.append("⚠️ ƯU TIÊN CAO: ");
             if (inventory == 0) {
@@ -201,6 +348,7 @@ public class ProductionPlanService {
                 sb.append(String.format("Có thể cân nhắc sản xuất thêm %d đơn vị. ", gap));
             }
         }
+<<<<<<< HEAD
 
         double stockRatio = inventory / (double) Math.max(1, demand);
         sb.append(String.format("Tỷ lệ tồn kho/nhu cầu: %.1f%%. ", stockRatio * 100));
@@ -208,11 +356,21 @@ public class ProductionPlanService {
         return sb.toString();
     }
 
+=======
+        
+        double stockRatio = inventory / (double) Math.max(1, demand);
+        sb.append(String.format("Tỷ lệ tồn kho/nhu cầu: %.1f%%. ", stockRatio * 100));
+        
+        return sb.toString();
+    }
+    
+>>>>>>> newrepo/main
     /**
      * So sánh priority
      */
     private int comparePriority(String p1, String p2) {
         Map<String, Integer> priorityOrder = Map.of(
+<<<<<<< HEAD
                 "HIGH", 1,
                 "MEDIUM", 2,
                 "LOW", 3);
@@ -221,11 +379,23 @@ public class ProductionPlanService {
                 .compareTo(priorityOrder.getOrDefault(p2, 99));
     }
 
+=======
+            "HIGH", 1,
+            "MEDIUM", 2,
+            "LOW", 3
+        );
+        
+        return priorityOrder.getOrDefault(p1, 99)
+            .compareTo(priorityOrder.getOrDefault(p2, 99));
+    }
+    
+>>>>>>> newrepo/main
     /**
      * Lấy production plans theo tháng
      */
     public List<ProductionPlanDto> getProductionPlansByMonth(LocalDate month) {
         List<ProductionPlan> plans = productionPlanRepository
+<<<<<<< HEAD
                 .findPriorityPlansByMonth(month);
 
         return plans.stream()
@@ -233,12 +403,22 @@ public class ProductionPlanService {
                 .collect(Collectors.toList());
     }
 
+=======
+            .findPriorityPlansByMonth(month);
+        
+        return plans.stream()
+            .map(this::mapToDto)
+            .collect(Collectors.toList());
+    }
+    
+>>>>>>> newrepo/main
     /**
      * Approve production plan
      */
     @Transactional
     public ProductionPlanDto approveProductionPlan(Long planId) {
         ProductionPlan plan = productionPlanRepository.findById(planId)
+<<<<<<< HEAD
                 .orElseThrow(() -> new RuntimeException("Production plan not found"));
 
         plan.setStatus("APPROVED");
@@ -248,11 +428,23 @@ public class ProductionPlanService {
         return mapToDto(saved);
     }
 
+=======
+            .orElseThrow(() -> new RuntimeException("Production plan not found"));
+        
+        plan.setStatus("APPROVED");
+        plan.setApprovedAt(LocalDateTime.now());
+        
+        ProductionPlan saved = productionPlanRepository.save(plan);
+        return mapToDto(saved);
+    }
+    
+>>>>>>> newrepo/main
     /**
      * Map entity to DTO
      */
     private ProductionPlanDto mapToDto(ProductionPlan plan) {
         return ProductionPlanDto.builder()
+<<<<<<< HEAD
                 .id(plan.getId())
                 .variantId(plan.getVariantId())
                 .variantName(plan.getVariantName())
@@ -266,5 +458,20 @@ public class ProductionPlanService {
                 .recommendations(plan.getRecommendations())
                 .status(plan.getStatus())
                 .build();
+=======
+            .id(plan.getId())
+            .variantId(plan.getVariantId())
+            .variantName(plan.getVariantName())
+            .modelName(plan.getModelName())
+            .planMonth(plan.getPlanMonth())
+            .recommendedProduction(plan.getRecommendedProduction())
+            .predictedDemand(plan.getPredictedDemand())
+            .currentInventory(plan.getCurrentInventory())
+            .productionGap(plan.getProductionGap())
+            .priority(plan.getPriority())
+            .recommendations(plan.getRecommendations())
+            .status(plan.getStatus())
+            .build();
+>>>>>>> newrepo/main
     }
 }

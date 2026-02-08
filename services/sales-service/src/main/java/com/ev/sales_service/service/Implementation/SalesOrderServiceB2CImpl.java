@@ -4,7 +4,10 @@ import com.ev.common_lib.dto.respond.ApiRespond;
 import com.ev.common_lib.exception.AppException;
 import com.ev.common_lib.exception.ErrorCode;
 import com.ev.sales_service.client.CustomerClient;
+<<<<<<< HEAD
 import com.ev.sales_service.dto.request.CreateOrderFromDepositRequest;
+=======
+>>>>>>> newrepo/main
 import com.ev.sales_service.dto.request.SalesOrderB2CCreateRequest;
 import com.ev.sales_service.dto.response.*;
 import com.ev.sales_service.entity.*;
@@ -18,6 +21,7 @@ import com.ev.sales_service.service.Interface.SalesOrderServiceB2C;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,16 +29,25 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import java.util.concurrent.CompletableFuture;
 
+=======
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+>>>>>>> newrepo/main
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+<<<<<<< HEAD
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+=======
+import java.util.UUID;
+import java.util.stream.Collectors;
+>>>>>>> newrepo/main
 
 @Service
 @Transactional
@@ -48,6 +61,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     private final SalesContractService salesContractService;
     private final EmailService emailService;
     private final CustomerClient customerClient;
+<<<<<<< HEAD
     private final RestTemplate restTemplate;
 
     @org.springframework.beans.factory.annotation.Value("${payment-service.url}")
@@ -62,6 +76,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     @org.springframework.beans.factory.annotation.Value("${reporting-service.url}")
     private String reportingServiceUrl;
 
+=======
+>>>>>>> newrepo/main
 
     @Override
     public SalesOrderB2CResponse createSalesOrderFromQuotation(UUID quotationId) {
@@ -116,14 +132,18 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         SalesOrder savedSalesOrder = salesOrderRepository.save(salesOrder);
         log.info("Created B2C sales order from quotation: {}", quotationId);
 
+<<<<<<< HEAD
         // Async Report
         String modelName = fetchModelName(quotation.getModelId());
         sendSalesReport(savedSalesOrder, modelName, quotation.getVariantId(), null);
 
+=======
+>>>>>>> newrepo/main
         return mapToResponse(savedSalesOrder);
     }
 
     @Override
+<<<<<<< HEAD
     @Transactional
     public SalesOrderB2CResponse createOrderFromBookingDeposit(CreateOrderFromDepositRequest request) {
         log.info("Creating sales order from booking deposit - RecordId: {}", request.getRecordId());
@@ -381,6 +401,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     }
 
     @Override
+=======
+>>>>>>> newrepo/main
     public SalesOrderB2CResponse createSalesOrder(SalesOrderB2CCreateRequest request) {
         // TODO: Implement direct sales order creation without quotation
         throw new UnsupportedOperationException("Direct sales order creation not implemented yet");
@@ -448,9 +470,13 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         SalesOrder salesOrder = salesOrderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
 
+<<<<<<< HEAD
         if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED &&
                 salesOrder.getOrderStatusB2C() != OrderStatusB2C.PENDING &&
                 salesOrder.getOrderStatusB2C() != OrderStatusB2C.CONFIRMED) {
+=======
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED) {
+>>>>>>> newrepo/main
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
         }
 
@@ -478,6 +504,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         SalesOrder approvedSalesOrder = salesOrderRepository.save(salesOrder);
 
         // --- Lấy thông tin khách hàng ---
+<<<<<<< HEAD
         CustomerResponse customer;
         if (salesOrder.getCustomerId() != null) {
             customer = getCustomerInfo(salesOrder.getCustomerId());
@@ -493,6 +520,13 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         // --- Gửi email xác nhận ---
         try {
             emailService.sendOrderConfirmedEmail(salesOrder, customer, "EV Automotive Showroom");
+=======
+        CustomerResponse customer = getCustomerInfo(salesOrder.getCustomerId());
+
+        // --- Gửi email xác nhận ---
+        try {
+            emailService.sendOrderConfirmedEmail(salesOrder, customer);
+>>>>>>> newrepo/main
             log.info("Order confirmation email sent to customer: {}", customer.getEmail());
         } catch (Exception e) {
             log.error("Failed to send confirmation email for order: {}", orderId, e);
@@ -502,8 +536,12 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     }
 
     private SalesOrderB2CResponse mapToResponse(SalesOrder salesOrder) {
+<<<<<<< HEAD
         if (salesOrder == null)
             return null;
+=======
+        if (salesOrder == null) return null;
+>>>>>>> newrepo/main
 
         SalesOrderB2CResponse response = new SalesOrderB2CResponse();
         response.setOrderId(salesOrder.getOrderId());
@@ -521,6 +559,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         response.setApprovalDate(salesOrder.getApprovalDate());
         response.setPaymentStatus(salesOrder.getPaymentStatus()); // Payment status
 
+<<<<<<< HEAD
         response.setCustomerName(salesOrder.getCustomerName());
         response.setCustomerEmail(salesOrder.getCustomerEmail());
         response.setCustomerPhone(salesOrder.getCustomerPhone());
@@ -528,6 +567,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         response.setNotes(salesOrder.getNotes());
         response.setPaymentMethod(salesOrder.getPaymentMethod());
 
+=======
+>>>>>>> newrepo/main
         // Map Quotation
         if (salesOrder.getQuotation() != null) {
             QuotationResponse quotationResponse = new QuotationResponse();
@@ -562,6 +603,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
                     .map(item -> {
                         OrderItemResponse itemResponse = new OrderItemResponse();
                         itemResponse.setVariantId(item.getVariantId());
+<<<<<<< HEAD
                         itemResponse.setVariantName(item.getVariantName());
                         itemResponse.setModelName(item.getModelName());
                         itemResponse.setColor(item.getColor());
@@ -572,16 +614,25 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
                         }
                         itemResponse.setImageUrl(imageUrl);
 
+=======
+>>>>>>> newrepo/main
                         itemResponse.setQuantity(item.getQuantity());
                         itemResponse.setUnitPrice(item.getUnitPrice());
                         itemResponse.setDiscount(item.getDiscount());
                         itemResponse.setFinalPrice(item.getFinalPrice());
+<<<<<<< HEAD
                         itemResponse.setPrice(item.getFinalPrice()); // Frontend alias
+=======
+>>>>>>> newrepo/main
                         return itemResponse;
                     }).toList();
             response.setOrderItems(itemResponses);
         }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> newrepo/main
         // Map OrderTrackings
         if (salesOrder.getOrderTrackings() != null) {
             List<OrderTrackingResponse> trackingResponses = salesOrder.getOrderTrackings().stream()
@@ -717,6 +768,10 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         return totalAmount.multiply(downPaymentPercentage);
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> newrepo/main
     private CustomerResponse getCustomerInfo(Long customerId) {
         try {
             ApiRespond<CustomerResponse> response = customerClient.getCustomerById(customerId);
@@ -742,14 +797,20 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         }
 
         salesOrder.setOrderStatusB2C(OrderStatusB2C.REJECTED);
+<<<<<<< HEAD
         // xử lý khi khách hàng từ chối
         // salesOrder.setRejectReason(reason);
+=======
+        //xử lý khi khách hàng từ chối
+        //salesOrder.setRejectReason(reason);
+>>>>>>> newrepo/main
         salesOrderRepository.save(salesOrder);
 
         log.info("Sales order {} rejected. Reason: {}", orderId, reason);
         return ApiRespond.success("Đơn hàng đã bị từ chối bởi quản lý.", salesOrder);
     }
 
+<<<<<<< HEAD
     private UUID findDealerByName(String name) {
         try {
             String url = dealerServiceUrl + "/api/dealers/list-all";
@@ -782,6 +843,8 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
             return null;
         }
     }
+=======
+>>>>>>> newrepo/main
 
     @Override
     @Transactional
@@ -793,8 +856,12 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         // Kiểm tra trạng thái đơn hàng
         if (order.getOrderStatusB2C() != OrderStatusB2C.CONFIRMED) {
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+<<<<<<< HEAD
             // Nếu muốn thêm chi tiết, có thể dùng constructor: new
             // AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
+=======
+            // Nếu muốn thêm chi tiết, có thể dùng constructor: new AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
+>>>>>>> newrepo/main
         }
 
         // Kiểm tra hợp đồng đã tồn tại chưa
@@ -809,6 +876,10 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         return response;
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> newrepo/main
     @Override
     @Transactional
     public SalesOrderB2CResponse convertToComplete(UUID orderId) {
@@ -819,8 +890,12 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         // Kiểm tra trạng thái đơn hàng
         if (order.getOrderStatusB2C() != OrderStatusB2C.IN_PRODUCTION) {
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
+<<<<<<< HEAD
             // Nếu muốn thêm chi tiết, có thể dùng constructor: new
             // AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
+=======
+            // Nếu muốn thêm chi tiết, có thể dùng constructor: new AppException(ErrorCode.INVALID_ORDER_STATUS, "Chi tiết thêm")
+>>>>>>> newrepo/main
         }
 
         // Kiểm tra hợp đồng đã tồn tại chưa
@@ -850,6 +925,10 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         salesOrderRepository.save(order);
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> newrepo/main
     @Override
     @Transactional
     public SalesOrderB2CResponse markOrderAsEdited(UUID orderId, UUID staffId) {
@@ -875,6 +954,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         return mapToResponse(updatedOrder);
     }
 
+<<<<<<< HEAD
     @Override
     public Page<SalesOrderB2CResponse> getAllB2COrders(String status, Pageable pageable) {
         Page<SalesOrder> orderPage;
@@ -975,4 +1055,7 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
             }
         });
     }
+=======
+
+>>>>>>> newrepo/main
 }

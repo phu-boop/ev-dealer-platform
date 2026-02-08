@@ -18,7 +18,11 @@ public class TestDriveResponse {
     private String customerName;
     private String customerPhone;
     private String customerEmail;
+<<<<<<< HEAD
     private String dealerId; // Binary UUID as hex string
+=======
+    private Long dealerId;
+>>>>>>> newrepo/main
     private String dealerName;
     private Long modelId;
     private String modelName;
@@ -33,7 +37,10 @@ public class TestDriveResponse {
     private String staffName;
     private String staffPhone;
     private LocalDateTime appointmentDate;
+<<<<<<< HEAD
     private String appointmentTime; // Time slot: "09:00 - 11:00"
+=======
+>>>>>>> newrepo/main
     private Integer durationMinutes;
     private LocalDateTime endTime; // Tính toán từ appointmentDate + durationMinutes
     private String testDriveLocation;

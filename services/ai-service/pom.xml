@@ -16,6 +16,7 @@
     
     <properties>
         <java.version>21</java.version>
+<<<<<<< HEAD
         <spring-ai.version>1.0.0-M5</spring-ai.version>
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -32,6 +33,12 @@
             </snapshots>
         </repository>
     </repositories>
+=======
+
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
+    </properties>
+
+>>>>>>> newrepo/main
 
     <dependencyManagement>
         <dependencies>
@@ -42,6 +49,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+<<<<<<< HEAD
             <dependency>
                 <groupId>org.springframework.ai</groupId>
                 <artifactId>spring-ai-bom</artifactId>
@@ -49,6 +57,8 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+=======
+>>>>>>> newrepo/main
         </dependencies>
     </dependencyManagement>
 
@@ -98,6 +108,7 @@
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
+<<<<<<< HEAD
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
@@ -111,6 +122,13 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-redis-store-spring-boot-starter</artifactId>
+=======
+        <!-- OpenAI SDK -->
+        <dependency>
+            <groupId>com.theokanning.openai-gpt3-java</groupId>
+            <artifactId>service</artifactId>
+            <version>0.18.2</version>
+>>>>>>> newrepo/main
         </dependency>
 
         <dependency>

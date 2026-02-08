@@ -30,6 +30,7 @@ public class DevSecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+<<<<<<< HEAD
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll())
                 // .authorizeHttpRequests(auth -> auth
@@ -56,6 +57,29 @@ public class DevSecurityConfig {
                 // response.getWriter().write(body);
                 // })
                 // )
+=======
+                // .authorizeHttpRequests(auth -> auth
+                //      .anyRequest().permitAll()
+                // )
+                .authorizeHttpRequests(auth -> auth
+
+                    .requestMatchers(HttpMethod.GET, "/inventory/**").hasAnyRole("DEALER_STAFF", "EVM_STAFF", "ADMIN") 
+                    .requestMatchers(HttpMethod.GET, "/my-stock").hasAnyRole("DEALER_MANAGER", "DEALER_STAFF")
+                    .requestMatchers(HttpMethod.POST, "/inventory/transactions").hasAnyRole("EVM_STAFF", "ADMIN") 
+                    .requestMatchers(HttpMethod.PUT, "/inventory/dealer-stock/**").hasAnyRole("DEALER_MANAGER", "ADMIN") 
+                    .requestMatchers(HttpMethod.PUT, "/inventory/central-stock/**").hasAnyRole("EVM_STAFF", "ADMIN") 
+                    .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex.accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(ErrorCode.FORBIDDEN.getHttpStatus().value());
+                            response.setContentType("application/json");
+                            String body = String.format("{\"code\":\"%s\",\"message\":\"%s\"}",
+                                    ErrorCode.FORBIDDEN.getCode(),
+                                    ErrorCode.FORBIDDEN.getMessage());
+                            response.getWriter().write(body);
+                        })
+                )
+>>>>>>> newrepo/main
                 .addFilterBefore(gatewayHeaderFilter, UsernamePasswordAuthenticationFilter.class);
         ;
         return http.build();

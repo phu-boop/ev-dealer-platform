@@ -15,12 +15,20 @@ public class FirebaseConfig {
     @PostConstruct
     public void initFirebase() throws IOException {
         if (FirebaseApp.getApps().isEmpty()) {
+<<<<<<< HEAD
             InputStream serviceAccount = getClass().getClassLoader()
                     .getResourceAsStream("firebase-service-account.json");
 
             if (serviceAccount == null) {
                 System.err.println("⚠️ firebase-service-account.json not found. Firebase features will be disabled.");
                 return;
+=======
+            InputStream serviceAccount =
+                    getClass().getClassLoader().getResourceAsStream("firebase-service-account.json");
+
+            if (serviceAccount == null) {
+                throw new IOException("❌ firebase-service-account.json not found in resources folder!");
+>>>>>>> newrepo/main
             }
 
             FirebaseOptions options = FirebaseOptions.builder()

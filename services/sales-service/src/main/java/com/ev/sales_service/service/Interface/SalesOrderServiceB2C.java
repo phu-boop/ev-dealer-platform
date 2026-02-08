@@ -1,13 +1,19 @@
 package com.ev.sales_service.service.Interface;
 
 import com.ev.common_lib.dto.respond.ApiRespond;
+<<<<<<< HEAD
 import com.ev.sales_service.dto.request.CreateOrderFromDepositRequest;
+=======
+>>>>>>> newrepo/main
 import com.ev.sales_service.dto.request.OrderItemRequest;
 import com.ev.sales_service.dto.request.SalesOrderB2CCreateRequest;
 import com.ev.sales_service.dto.response.SalesContractResponse;
 import com.ev.sales_service.dto.response.SalesOrderB2CResponse;
+<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+=======
+>>>>>>> newrepo/main
 
 import java.util.List;
 import java.util.UUID;
@@ -15,8 +21,11 @@ import java.util.UUID;
 public interface SalesOrderServiceB2C {
     SalesOrderB2CResponse createSalesOrderFromQuotation(UUID quotationId);
 
+<<<<<<< HEAD
     SalesOrderB2CResponse createOrderFromBookingDeposit(CreateOrderFromDepositRequest request);
 
+=======
+>>>>>>> newrepo/main
     SalesOrderB2CResponse createSalesOrder(SalesOrderB2CCreateRequest request);
 
     SalesOrderB2CResponse getSalesOrderById(UUID orderId);
@@ -38,12 +47,17 @@ public interface SalesOrderServiceB2C {
 
     SalesContractResponse convertToContract(UUID orderId);
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> newrepo/main
     SalesOrderB2CResponse convertToComplete(UUID orderId);
 
     void handleCustomerOrderConfirmation(UUID orderId, boolean confirmed);
 
     SalesOrderB2CResponse markOrderAsEdited(UUID orderId, UUID staffId);
 
+<<<<<<< HEAD
     /**
      * Admin/Staff lấy tất cả đơn hàng B2C với phân trang và filter theo status
      * 
@@ -58,4 +72,6 @@ public interface SalesOrderServiceB2C {
      * @param since Optional: Fetch orders modified/created after this date
      */
     List<SalesOrderB2CResponse> getAllSalesForReporting(java.time.LocalDateTime since);
+=======
+>>>>>>> newrepo/main
 }

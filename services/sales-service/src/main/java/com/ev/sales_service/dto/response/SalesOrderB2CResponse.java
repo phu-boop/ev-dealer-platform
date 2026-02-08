@@ -27,6 +27,7 @@ public class SalesOrderB2CResponse {
     private LocalDateTime approvalDate;
     private PaymentStatus paymentStatus; // Trạng thái thanh toán
 
+<<<<<<< HEAD
     private String customerName;
     private String customerPhone;
     private String customerEmail;
@@ -43,6 +44,8 @@ public class SalesOrderB2CResponse {
         return orderDate;
     }
 
+=======
+>>>>>>> newrepo/main
     // Additional details
     private QuotationResponse quotation;
     private SalesContractResponse salesContract;

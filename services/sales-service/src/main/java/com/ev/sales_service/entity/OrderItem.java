@@ -24,6 +24,7 @@ public class OrderItem {
     @Column(name = "variant_id", nullable = false)
     private Long variantId;
 
+<<<<<<< HEAD
     @Column(name = "variant_name", length = 200)
     private String variantName;
 
@@ -36,6 +37,8 @@ public class OrderItem {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+=======
+>>>>>>> newrepo/main
     @Column(name = "quantity")
     private Integer quantity;
 

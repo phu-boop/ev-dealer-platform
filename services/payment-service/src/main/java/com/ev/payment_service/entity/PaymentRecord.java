@@ -29,6 +29,7 @@ public class PaymentRecord {
     @Column(name = "customer_id", nullable = true)
     private Long customerId; // << Khớp với customers.customer_id (bigint)
 
+<<<<<<< HEAD
     // --- Thông tin khách hàng cho guest booking (khi customerId = null) ---
     @Column(name = "customer_name", length = 255)
     private String customerName;
@@ -48,6 +49,8 @@ public class PaymentRecord {
     private String metadata; // JSON string chứa thông tin booking (variantId, modelId, colors, showroom,
                              // etc.)
 
+=======
+>>>>>>> newrepo/main
     // --- Khóa ngoại nội bộ ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id") // Có thể null nếu là trả thẳng

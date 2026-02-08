@@ -37,9 +37,12 @@ public class Customer {
     @Column(name = "email", unique = true, length = 100)
     private String email;
 
+<<<<<<< HEAD
     @Column(name = "profile_id", unique = true, length = 36)
     private String profileId; // UUID from User Service (links to user account)
 
+=======
+>>>>>>> newrepo/main
     @Column(name = "phone", length = 20)
     private String phone;
 

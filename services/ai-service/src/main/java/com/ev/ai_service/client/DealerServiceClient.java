@@ -4,7 +4,10 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+<<<<<<< HEAD
 import org.springframework.core.ParameterizedTypeReference;
+=======
+>>>>>>> newrepo/main
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -14,8 +17,11 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+<<<<<<< HEAD
 import java.util.Collections;
 import java.util.List;
+=======
+>>>>>>> newrepo/main
 import java.util.UUID;
 
 /**
@@ -63,7 +69,11 @@ public class DealerServiceClient {
                                 }
                                 return Mono.empty();
                             })
+<<<<<<< HEAD
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<DealerInfo>>() {})
+=======
+                    .bodyToMono(DealerResponse.class)
+>>>>>>> newrepo/main
                     .timeout(Duration.ofSeconds(5))
                     .map(response -> {
                         if (response != null && response.getData() != null) {
@@ -91,6 +101,7 @@ public class DealerServiceClient {
     }
 
     /**
+<<<<<<< HEAD
      * Lấy danh sách tất cả dealer
      */
     public List<DealerInfo> getAllDealers() {
@@ -122,6 +133,15 @@ public class DealerServiceClient {
         private String status;
         private String message;
         private T data;
+=======
+     * Response wrapper từ Dealer Service
+     */
+    @Data
+    private static class DealerResponse {
+        private String status;
+        private String message;
+        private DealerInfo data;
+>>>>>>> newrepo/main
     }
 
     /**

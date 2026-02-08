@@ -26,8 +26,11 @@ public interface VehicleVariantRepository extends JpaRepository<VehicleVariant, 
     @Query("SELECT v.variantId FROM VehicleVariant v")
     List<Long> findAllVariantIds();
 
+<<<<<<< HEAD
     @Override
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"vehicleModel"})
     org.springframework.data.domain.Page<VehicleVariant> findAll(org.springframework.data.jpa.domain.Specification<VehicleVariant> spec, org.springframework.data.domain.Pageable pageable);
 
+=======
+>>>>>>> newrepo/main
 }

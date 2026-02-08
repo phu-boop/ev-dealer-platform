@@ -1,27 +1,39 @@
 package com.ev.vehicle_service.repository;
 
 import com.ev.vehicle_service.model.VehicleModel;
+<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+=======
+>>>>>>> newrepo/main
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+<<<<<<< HEAD
+=======
+// import java.util.UUID;
+>>>>>>> newrepo/main
 import java.util.Optional;
 
 @Repository
 public interface VehicleModelRepository extends JpaRepository<VehicleModel, Long> {
     /**
+<<<<<<< HEAD
      * Lấy tất cả các Model và tải sẵn (eagerly fetch) danh sách các Variant của
      * chúng
+=======
+     * Lấy tất cả các Model và tải sẵn (eagerly fetch) danh sách các Variant của chúng
+>>>>>>> newrepo/main
      * để giải quyết vấn đề N+1 Select khi lấy danh sách.
      */
     @Query("SELECT DISTINCT m FROM VehicleModel m LEFT JOIN FETCH m.variants")
     List<VehicleModel> findAllWithVariants();
 
     /**
+<<<<<<< HEAD
      * Lấy một Model theo ID và tải sẵn tất cả các mối quan hệ liên quan (variants,
      * features)
      * để giải quyết vấn đề N+1 Select khi xem chi tiết.
@@ -66,4 +78,15 @@ public interface VehicleModelRepository extends JpaRepository<VehicleModel, Long
     List<VehicleModel> findModelsByRange(
             @Param("minRange") Integer minRange,
             @Param("maxRange") Integer maxRange);
+=======
+     * Lấy một Model theo ID và tải sẵn tất cả các mối quan hệ liên quan (variants, features)
+     * để giải quyết vấn đề N+1 Select khi xem chi tiết.
+     */
+    @Query("SELECT m FROM VehicleModel m " +
+           "LEFT JOIN FETCH m.variants v " +
+           "LEFT JOIN FETCH v.features f " +
+           "LEFT JOIN FETCH f.vehicleFeature " +
+           "WHERE m.modelId = :modelId")
+    Optional<VehicleModel> findModelWithDetailsById(@Param("modelId") Long modelId);
+>>>>>>> newrepo/main
 }

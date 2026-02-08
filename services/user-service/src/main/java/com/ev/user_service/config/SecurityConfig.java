@@ -30,6 +30,7 @@ public class SecurityConfig {
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final String urlFrontend;
     private final RateLimitFilter rateLimitFilter;
+<<<<<<< HEAD
     private final org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver;
 
     SecurityConfig(RateLimitFilter rateLimitFilter, OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
@@ -39,6 +40,14 @@ public class SecurityConfig {
         this.urlFrontend = urlFrontend;
         this.rateLimitFilter = rateLimitFilter;
         this.customAuthorizationRequestResolver = customAuthorizationRequestResolver;
+=======
+
+    SecurityConfig(RateLimitFilter rateLimitFilter, OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+            @Value("${frontend.url}") String urlFrontend) {
+        this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+        this.urlFrontend = urlFrontend;
+        this.rateLimitFilter = rateLimitFilter;
+>>>>>>> newrepo/main
     }
 
     @Bean
@@ -67,11 +76,15 @@ public class SecurityConfig {
                         .requestMatchers("/auth/oauth2/success").authenticated()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth
+<<<<<<< HEAD
                         .authorizationEndpoint(authorization -> authorization
                                 .authorizationRequestResolver(customAuthorizationRequestResolver))
                         .successHandler(oAuth2LoginSuccessHandler))
                 // .httpBasic(AbstractHttpConfigurer::disable)
                 // .formLogin(AbstractHttpConfigurer::disable)
+=======
+                        .successHandler(oAuth2LoginSuccessHandler))
+>>>>>>> newrepo/main
                 .exceptionHandling(ex -> ex.accessDeniedHandler((req, res, e) -> {
                     throw e;
                 }))

@@ -17,12 +17,17 @@ public enum PermissionName {
     APPROVE_ORDERS("APPROVE_ORDERS"),
     VIEW_ALL_DEALER_ORDERS("VIEW_ALL_DEALER_ORDERS"),
 
+<<<<<<< HEAD
     // Customer permissions (for dealers managing customers)
+=======
+    // Customer permissions
+>>>>>>> newrepo/main
     MANAGE_OWN_CUSTOMERS("MANAGE_OWN_CUSTOMERS"),
     CREATE_APPOINTMENT("CREATE_APPOINTMENT"),
     CREATE_FEEDBACK("CREATE_FEEDBACK"),
     VIEW_ALL_DEALER_CUSTOMERS("VIEW_ALL_DEALER_CUSTOMERS"),
 
+<<<<<<< HEAD
     // B2C Customer permissions (for end customers)
     VIEW_OWN_PROFILE("VIEW_OWN_PROFILE"),
     UPDATE_OWN_PROFILE("UPDATE_OWN_PROFILE"),
@@ -34,6 +39,8 @@ public enum PermissionName {
     REQUEST_TEST_DRIVE("REQUEST_TEST_DRIVE"),
     VIEW_PROMOTIONS("VIEW_PROMOTIONS"),
 
+=======
+>>>>>>> newrepo/main
     // Inventory permissions
     VIEW_DEALER_INVENTORY("VIEW_DEALER_INVENTORY"),
     REQUEST_STOCK("REQUEST_STOCK"),

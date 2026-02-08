@@ -1,6 +1,7 @@
 package com.ev.vehicle_service.controller;
 
 import com.ev.common_lib.dto.respond.ApiRespond;
+<<<<<<< HEAD
 import com.ev.common_lib.dto.vehicle.ComparisonDto;
 import com.ev.common_lib.dto.vehicle.VariantDetailDto;
 import com.ev.vehicle_service.dto.request.CreateFeatureRequest;
@@ -28,16 +29,55 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+=======
+import com.ev.common_lib.dto.vehicle.VariantDetailDto;
+import com.ev.common_lib.dto.vehicle.ComparisonDto;
+
+import com.ev.vehicle_service.dto.request.CreateModelRequest;
+import com.ev.vehicle_service.dto.request.UpdateModelRequest;
+import com.ev.vehicle_service.dto.request.UpdateVariantRequest;
+import com.ev.vehicle_service.dto.request.FeatureRequest;
+import com.ev.vehicle_service.dto.request.CreateVariantRequest;
+import com.ev.vehicle_service.dto.request.CreateFeatureRequest;
+import com.ev.vehicle_service.dto.request.UpdateFeatureRequest;
+// import com.ev.vehicle_service.dto.response.FeatureDto;
+import com.ev.vehicle_service.dto.response.ModelDetailDto;
+import com.ev.vehicle_service.dto.response.ModelSummaryDto;
+import com.ev.vehicle_service.model.VehicleModel;
+import com.ev.vehicle_service.model.VehicleVariant;
+import com.ev.vehicle_service.model.VehicleFeature;
+import com.ev.vehicle_service.services.Interface.VehicleCatalogService;
+
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpHeaders;
+>>>>>>> newrepo/main
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/vehicle-catalog")
+<<<<<<< HEAD
 @RequiredArgsConstructor
 public class VehicleCatalogController {
 
     private final VehicleCatalogService vehicleCatalogService;
+=======
+public class VehicleCatalogController {
+
+    @Autowired
+    private VehicleCatalogService vehicleCatalogService;
+>>>>>>> newrepo/main
 
     // ==========================================================
     // ENDPOINTS FOR MODELS
@@ -45,6 +85,7 @@ public class VehicleCatalogController {
 
     /**
      * Lấy danh sách tóm tắt tất cả các mẫu xe.
+<<<<<<< HEAD
      * OPTIMIZED: Có pagination và caching
      */
     @GetMapping("/models")
@@ -80,6 +121,14 @@ public class VehicleCatalogController {
         Page<ModelSummaryDto> models = vehicleCatalogService.searchModels(
                 keyword, status, minPrice, maxPrice, minRange, maxRange, pageable);
         return ResponseEntity.ok(ApiRespond.success("Search completed", models));
+=======
+     */
+    @GetMapping("/models")
+    public ResponseEntity<ApiRespond<List<ModelSummaryDto>>> getAllModels(
+            @RequestParam(required = false) Sort sort) {
+        List<ModelSummaryDto> allModels = vehicleCatalogService.getAllModels(sort);
+        return ResponseEntity.ok(ApiRespond.success("Fetched all models successfully", allModels));
+>>>>>>> newrepo/main
     }
 
     /**
@@ -95,7 +144,10 @@ public class VehicleCatalogController {
      * Tạo một mẫu xe mới kèm theo các phiên bản ban đầu.
      */
     @PostMapping("/models")
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+=======
+>>>>>>> newrepo/main
     public ResponseEntity<ApiRespond<ModelDetailDto>> createModelWithVariants(
             @Valid @RequestBody CreateModelRequest request) {
         VehicleModel createdModel = vehicleCatalogService.createModelWithVariants(request);
@@ -107,11 +159,15 @@ public class VehicleCatalogController {
      * Cập nhật thông tin chung của một mẫu xe.
      */
     @PutMapping("/models/{modelId}")
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+=======
+>>>>>>> newrepo/main
     public ResponseEntity<ApiRespond<ModelDetailDto>> updateModel(
             @PathVariable Long modelId,
             @Valid @RequestBody UpdateModelRequest request,
             @RequestHeader("X-User-Email") String email) {
+<<<<<<< HEAD
         VehicleModel updatedModel = vehicleCatalogService.updateModel(modelId, request, email);
         ModelDetailDto responseDto = vehicleCatalogService.getModelDetails(updatedModel.getModelId());
         return ResponseEntity.ok(ApiRespond.success("Model updated successfully", responseDto));
@@ -127,6 +183,22 @@ public class VehicleCatalogController {
             @RequestHeader("X-User-Email") String email) {
         vehicleCatalogService.deactivateModel(modelId, email);
         return ResponseEntity.ok(ApiRespond.success("Model deleted successfully", null));
+=======
+        vehicleCatalogService.updateModel(modelId, request, email);
+        ModelDetailDto updatedDto = vehicleCatalogService.getModelDetails(modelId);
+        return ResponseEntity.ok(ApiRespond.success("Model updated successfully", updatedDto));
+    }
+
+    /**
+     * Ngừng sản xuất một mẫu xe (deactivate tất cả các phiên bản của nó).
+     */
+    @DeleteMapping("/models/{modelId}")
+    public ResponseEntity<ApiRespond<Void>> deactivateModel(
+            @PathVariable Long modelId,
+            @RequestHeader("X-User-Email") String email) {
+        vehicleCatalogService.deactivateModel(modelId, email);
+        return ResponseEntity.ok(ApiRespond.success("Model and all its variants have been discontinued", null));
+>>>>>>> newrepo/main
     }
 
     // ==========================================================
@@ -137,7 +209,10 @@ public class VehicleCatalogController {
      * Tạo một phiên bản mới cho một mẫu xe đã có.
      */
     @PostMapping("/models/{modelId}/variants")
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+=======
+>>>>>>> newrepo/main
     public ResponseEntity<ApiRespond<VariantDetailDto>> createVariant(
             @PathVariable Long modelId,
             @Valid @RequestBody CreateVariantRequest request,
@@ -185,14 +260,21 @@ public class VehicleCatalogController {
     }
 
     /**
+<<<<<<< HEAD
      * Cập nhật thông tin một phiên bản xe.
      */
     @PutMapping("/variants/{variantId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
+=======
+     * Cập nhật thông tin của một phiên bản xe cụ thể.
+     */
+    @PutMapping("/variants/{variantId}")
+>>>>>>> newrepo/main
     public ResponseEntity<ApiRespond<VariantDetailDto>> updateVariant(
             @PathVariable Long variantId,
             @Valid @RequestBody UpdateVariantRequest request,
             @RequestHeader("X-User-Email") String email) {
+<<<<<<< HEAD
         VehicleVariant updatedVariant = vehicleCatalogService.updateVariant(variantId, request, email);
         VariantDetailDto responseDto = vehicleCatalogService.getVariantDetails(updatedVariant.getVariantId());
         return ResponseEntity.ok(ApiRespond.success("Variant updated successfully", responseDto));
@@ -204,6 +286,18 @@ public class VehicleCatalogController {
     @DeleteMapping("/variants/{variantId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
     public ResponseEntity<ApiRespond<Void>> deleteVariant(
+=======
+        vehicleCatalogService.updateVariant(variantId, request, email);
+        VariantDetailDto updatedDto = vehicleCatalogService.getVariantDetails(variantId);
+        return ResponseEntity.ok(ApiRespond.success("Variant updated successfully", updatedDto));
+    }
+
+    /**
+     * Ngừng sản xuất một phiên bản xe cụ thể.
+     */
+    @DeleteMapping("/variants/{variantId}")
+    public ResponseEntity<ApiRespond<Void>> deactivateVariant(
+>>>>>>> newrepo/main
             @PathVariable Long variantId,
             @RequestHeader("X-User-Email") String email) {
         vehicleCatalogService.deactivateVariant(variantId, email);
@@ -251,6 +345,7 @@ public class VehicleCatalogController {
     }
 
     /**
+<<<<<<< HEAD
      * Public endpoint for customers to compare vehicles
      * No authentication required
      */
@@ -265,6 +360,8 @@ public class VehicleCatalogController {
     }
 
     /**
+=======
+>>>>>>> newrepo/main
      * Lấy tất cả các phiên bản (variants) có phân trang và tìm kiếm.
      */
     @GetMapping("/variants/paginated")

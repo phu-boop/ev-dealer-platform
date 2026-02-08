@@ -27,7 +27,11 @@ export const getB2BModelDetails = (modelId) => {
  * @param {object} orderData - Cấu trúc: { items: [{ variantId: 1, quantity: 10 }, ...] }
  */
 export const createB2BOrder = (orderData) => {
+<<<<<<< HEAD
   return apiConstSaleService.post("/api/v1/sales-orders/b2b", orderData);
+=======
+  return apiConstSaleService.post("/sales-orders/b2b", orderData);
+>>>>>>> newrepo/main
 };
 
 /**
@@ -35,14 +39,22 @@ export const createB2BOrder = (orderData) => {
  */
 export const getMyB2BOrders = (params) => {
   // Giả sử có một endpoint an toàn cho đại lý xem đơn của chính họ
+<<<<<<< HEAD
   return apiConstSaleService.get("/api/v1/sales-orders/my-orders", { params });
+=======
+  return apiConstSaleService.get("/sales-orders/my-orders", { params });
+>>>>>>> newrepo/main
 };
 
 /**
  * Đại lý xác nhận đã nhận hàng
  */
 export const confirmDelivery = (orderId) => {
+<<<<<<< HEAD
   return apiConstSaleService.put(`/api/v1/sales-orders/${orderId}/deliver`);
+=======
+  return apiConstSaleService.put(`/sales-orders/${orderId}/deliver`);
+>>>>>>> newrepo/main
 };
 
 /**
@@ -57,7 +69,11 @@ export const getAllDealersList = () => {
  * @param {string} orderId
  */
 export const cancelOrderByDealer = (orderId) => {
+<<<<<<< HEAD
   return apiConstSaleService.put(`/api/v1/sales-orders/${orderId}/cancel-by-dealer`);
+=======
+  return apiConstSaleService.put(`/sales-orders/${orderId}/cancel-by-dealer`);
+>>>>>>> newrepo/main
 };
 
 /**
@@ -67,7 +83,11 @@ export const cancelOrderByDealer = (orderId) => {
  */
 export const reportOrderIssue = (orderId, payload) => {
   return apiConstSaleService.put(
+<<<<<<< HEAD
     `/api/v1/sales-orders/${orderId}/report-issue`,
+=======
+    `/sales-orders/${orderId}/report-issue`,
+>>>>>>> newrepo/main
     payload
   );
 };

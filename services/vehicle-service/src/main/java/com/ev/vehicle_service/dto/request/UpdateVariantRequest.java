@@ -9,7 +9,11 @@ import java.math.BigDecimal;
 
 @Data
 public class UpdateVariantRequest {
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> newrepo/main
     @NotBlank(message = "Version name cannot be blank")
     private String versionName;
 
@@ -25,11 +29,16 @@ public class UpdateVariantRequest {
     @NotNull(message = "Status is required")
     private VehicleStatus status;
 
+<<<<<<< HEAD
     private Double batteryCapacity;
+=======
+    private Integer batteryCapacity;
+>>>>>>> newrepo/main
     private Float chargingTime;
     private Integer rangeKm;
     private Integer motorPower;
 
+<<<<<<< HEAD
     // Additional technical specifications
     private Integer seatingCapacity;
     private Integer torque; // Nm
@@ -44,6 +53,8 @@ public class UpdateVariantRequest {
     private String exteriorImages; // JSON array of exterior image URLs
     private String interiorImages; // JSON array of interior image URLs
 
+=======
+>>>>>>> newrepo/main
     private BigDecimal wholesalePrice;
 
     private String reason;

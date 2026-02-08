@@ -75,7 +75,10 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.util.Collections;
+<<<<<<< HEAD
 import java.math.BigDecimal;
+=======
+>>>>>>> newrepo/main
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,6 +114,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     @Override
+<<<<<<< HEAD
     // Removed @Cacheable - Page objects don't serialize/deserialize well in Redis
     public Page<ModelSummaryDto> getAllModelsPaginated(Pageable pageable) {
         Page<VehicleModel> modelsPage = modelRepository.findAll(pageable);
@@ -201,6 +205,9 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
 
     @Override
     // Removed @Cacheable - Complex DTOs don't serialize/deserialize well in Redis
+=======
+    @Cacheable(value = "models", key = "#modelId")
+>>>>>>> newrepo/main
     public ModelDetailDto getModelDetails(Long modelId) {
         VehicleModel model = modelRepository.findModelWithDetailsById(modelId)
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
@@ -208,7 +215,11 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     }
 
     @Override
+<<<<<<< HEAD
     // Removed @Cacheable - Complex DTOs don't serialize/deserialize well in Redis
+=======
+    @Cacheable(value = "variants", key = "#variantId")
+>>>>>>> newrepo/main
     public VariantDetailDto getVariantDetails(Long variantId) {
         VehicleVariant variant = findVariantById(variantId);
         return mapToVariantDetailDto(variant);
@@ -291,6 +302,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newVariant.setSkuCode(request.getSkuCode());
         newVariant.setImageUrl(request.getImageUrl());
 
+<<<<<<< HEAD
         // Set technical specifications
         newVariant.setBatteryCapacity(request.getBatteryCapacity());
         newVariant.setChargingTime(request.getChargingTime());
@@ -310,6 +322,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         newVariant.setExteriorImages(request.getExteriorImages());
         newVariant.setInteriorImages(request.getInteriorImages());
 
+=======
+>>>>>>> newrepo/main
         // Thiết lập mối quan hệ với mẫu xe cha
         newVariant.setVehicleModel(parentModel);
 
@@ -405,6 +419,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         if (request.getMotorPower() != null)
             variant.setMotorPower(request.getMotorPower());
 
+<<<<<<< HEAD
         // Update additional technical specifications
         if (request.getSeatingCapacity() != null)
             variant.setSeatingCapacity(request.getSeatingCapacity());
@@ -429,6 +444,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         if (request.getInteriorImages() != null)
             variant.setInteriorImages(request.getInteriorImages());
 
+=======
+>>>>>>> newrepo/main
         VehicleVariant savedVariant = variantRepository.save(variant);
 
         // Gửi message lên kafka
@@ -739,6 +756,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setModelName(model.getModelName());
         dto.setBrand(model.getBrand());
         dto.setStatus(model.getStatus());
+<<<<<<< HEAD
         dto.setThumbnailUrl(model.getThumbnailUrl());
         dto.setBaseRangeKm(model.getBaseRangeKm());
         dto.setBaseBatteryCapacity(model.getBaseBatteryCapacity());
@@ -754,6 +772,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
                 .orElse(null);
         dto.setBasePrice(minPrice);
 
+=======
+>>>>>>> newrepo/main
         return dto;
     }
 
@@ -797,6 +817,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         VehicleModel model = variant.getVehicleModel();
         VariantDetailDto dto = new VariantDetailDto();
 
+<<<<<<< HEAD
         // Ensure model is not null before accessing its properties
         if (model == null) {
             // Handle orphan variant case if necessary, or just basic mapping
@@ -806,6 +827,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             return dto;
         }
 
+=======
+>>>>>>> newrepo/main
         // Map các thông tin cơ bản, không cần logic kế thừa
         dto.setVariantId(variant.getVariantId());
         dto.setVersionName(variant.getVersionName());
@@ -813,8 +836,12 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setColor(variant.getColor());
         dto.setSkuCode(variant.getSkuCode());
         dto.setPrice(variant.getPrice());
+<<<<<<< HEAD
         dto.setImageUrl((variant.getImageUrl() != null && !variant.getImageUrl().isBlank()) ? variant.getImageUrl()
                 : model.getThumbnailUrl());
+=======
+        dto.setImageUrl(variant.getImageUrl());
+>>>>>>> newrepo/main
         dto.setStatus(variant.getStatus());
         dto.setWholesalePrice(variant.getWholesalePrice()); // Giá sỉ là của riêng variant, không kế thừa
 
@@ -830,16 +857,22 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
                 (variant.getMotorPower() != null) ? variant.getMotorPower() : model.getBaseMotorPower());
 
         // Xử lý Battery Capacity
+<<<<<<< HEAD
         // Handle Integer to Double conversion explicitly
         dto.setBatteryCapacity(
                 (variant.getBatteryCapacity() != null) ? variant.getBatteryCapacity()
                         : (model.getBaseBatteryCapacity() != null ? model.getBaseBatteryCapacity().doubleValue()
                                 : null));
+=======
+        dto.setBatteryCapacity(
+                (variant.getBatteryCapacity() != null) ? variant.getBatteryCapacity() : model.getBaseBatteryCapacity());
+>>>>>>> newrepo/main
 
         // Xử lý Charging Time
         dto.setChargingTime(
                 (variant.getChargingTime() != null) ? variant.getChargingTime() : model.getBaseChargingTime());
 
+<<<<<<< HEAD
         // Map additional technical specifications (no inheritance from model)
         dto.setSeatingCapacity(variant.getSeatingCapacity());
         dto.setTorque(variant.getTorque());
@@ -853,6 +886,8 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
         dto.setExteriorImages(variant.getExteriorImages());
         dto.setInteriorImages(variant.getInteriorImages());
 
+=======
+>>>>>>> newrepo/main
         // Map các tính năng (features), logic này giữ nguyên
         if (variant.getFeatures() != null) {
             dto.setFeatures(variant.getFeatures().stream()
@@ -866,6 +901,7 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
     private FeatureDto mapToFeatureDto(VariantFeature variantFeature) {
         FeatureDto dto = new FeatureDto();
         VehicleFeature feature = variantFeature.getVehicleFeature();
+<<<<<<< HEAD
 
         if (feature != null) {
             dto.setFeatureId(feature.getFeatureId());
@@ -873,6 +909,11 @@ public class VehicleCatalogServiceImpl implements VehicleCatalogService {
             dto.setCategory(feature.getCategory());
         }
 
+=======
+        dto.setFeatureId(feature.getFeatureId());
+        dto.setFeatureName(feature.getFeatureName());
+        dto.setCategory(feature.getCategory());
+>>>>>>> newrepo/main
         dto.setStandard(variantFeature.isStandard());
         dto.setAdditionalCost(variantFeature.getAdditionalCost());
         return dto;

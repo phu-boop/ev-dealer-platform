@@ -19,7 +19,11 @@ public class TestDriveRequest {
     private Long customerId;
 
     @NotNull(message = "Dealer ID is required")
+<<<<<<< HEAD
     private String dealerId; // Binary UUID as hex string
+=======
+    private Long dealerId;
+>>>>>>> newrepo/main
 
     @NotNull(message = "Model ID is required")
     private Long modelId;

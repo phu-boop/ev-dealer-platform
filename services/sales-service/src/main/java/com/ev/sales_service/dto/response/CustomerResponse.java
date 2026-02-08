@@ -1,7 +1,10 @@
 package com.ev.sales_service.dto.response;
 
 import lombok.AllArgsConstructor;
+<<<<<<< HEAD
 import lombok.Builder;
+=======
+>>>>>>> newrepo/main
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
@@ -10,7 +13,10 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+<<<<<<< HEAD
 @Builder
+=======
+>>>>>>> newrepo/main
 public class CustomerResponse {
     private Long customerId;
     private String customerCode;
