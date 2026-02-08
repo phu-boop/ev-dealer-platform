@@ -28,7 +28,7 @@ services:
       - key: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
         value: 1
 
-  - type: redis
+  - type: keyvalue
     name: redis-db
     plan: free # Change to paid for Redis Stack if needed
     ipAllowList: [] # Required for security, empty list blocks all external access
