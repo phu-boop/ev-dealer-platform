@@ -31,6 +31,7 @@ services:
   - type: redis
     name: redis-db
     plan: free # Change to paid for Redis Stack if needed
+    ipAllowList: [] # Required for security, empty list blocks all external access
     # Note: Render Redis doesn't support Redis Stack Vector Search on Free.
     # If the user really needs Vector Search, we might need a custom Docker worker for Redis Stack.
     # For now, following the docker-compose requirement:
