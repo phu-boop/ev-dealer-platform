@@ -35,7 +35,7 @@ services:
     # Note: Render Redis doesn't support Redis Stack Vector Search on Free.
     # If the user really needs Vector Search, we might need a custom Docker worker for Redis Stack.
     # For now, following the docker-compose requirement:
-  - type: pvt # Redis Stack Worker (to support Vector Search)
+  - type: pserv # Redis Stack Worker (to support Vector Search)
     name: redis-stack
     runtime: docker
     image: redis/redis-stack-server:latest
@@ -46,7 +46,7 @@ services:
   # ==============================================================================
   # MICROSERVICES (Private Services)
   # ==============================================================================
-  - type: pvt
+  - type: pserv
     name: user-service
     runtime: docker
     dockerContext: .
@@ -60,7 +60,7 @@ services:
       - key: SPRING_REDIS_HOST
         value: redis-stack
 
-  - type: pvt
+  - type: pserv
     name: vehicle-service
     runtime: docker
     dockerContext: .
@@ -70,7 +70,7 @@ services:
       - key: SPRING_KAFKA_BOOTSTRAP_SERVERS
         value: kafka:29092
 
-  - type: pvt
+  - type: pserv
     name: inventory-service
     runtime: docker
     dockerContext: .
@@ -80,7 +80,7 @@ services:
       - key: SPRING_KAFKA_BOOTSTRAP_SERVERS
         value: kafka:29092
 
-  - type: pvt
+  - type: pserv
     name: sales-service
     runtime: docker
     dockerContext: .
@@ -90,7 +90,7 @@ services:
       - key: KAFKA_BOOTSTRAP_SERVERS
         value: kafka:29092
 
-  - type: pvt
+  - type: pserv
     name: ai-service
     runtime: docker
     dockerContext: .
