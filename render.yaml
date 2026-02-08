@@ -2,16 +2,15 @@ services:
   # ==============================================================================
   # INFRASTRUCTURE (Private Services)
   # ==============================================================================
-  - type: worker # Zookeeper
+  - type: pserv # Zookeeper
     name: zookeeper
     runtime: docker
-    dockerFilePath: ./docker/Dockerfile.zookeeper # Note: Need to verify if this exists or just use image
     image: confluentinc/cp-zookeeper:latest
     envVars:
       - key: ZOOKEEPER_CLIENT_PORT
         value: 2181
 
-  - type: worker # Kafka
+  - type: pserv # Kafka
     name: kafka
     runtime: docker
     image: confluentinc/cp-kafka:7.4.0
@@ -39,9 +38,8 @@ services:
     name: redis-stack
     runtime: docker
     image: redis/redis-stack-server:latest
-    ports:
-      - 6379
-      - 8001
+    # Note: ports property removed as it is not allowed for pserv in Render Blueprints.
+    # Services connect to redis-stack:6379 internally.
 
   # ==============================================================================
   # MICROSERVICES (Private Services)
