@@ -27,8 +27,6 @@ services:
         value: INTERNAL
       - key: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
         value: 1
-    dependsOn:
-      - name: zookeeper
 
   - type: redis
     name: redis-db
