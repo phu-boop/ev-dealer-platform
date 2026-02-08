@@ -4,16 +4,18 @@ services:
   # ==============================================================================
   - type: pserv # Zookeeper
     name: zookeeper
-    runtime: docker
-    image: confluentinc/cp-zookeeper:latest
+    runtime: image
+    image:
+      url: confluentinc/cp-zookeeper:latest
     envVars:
       - key: ZOOKEEPER_CLIENT_PORT
         value: 2181
 
   - type: pserv # Kafka
     name: kafka
-    runtime: docker
-    image: confluentinc/cp-kafka:7.4.0
+    runtime: image
+    image:
+      url: confluentinc/cp-kafka:7.4.0
     envVars:
       - key: KAFKA_ZOOKEEPER_CONNECT
         value: zookeeper:2181
@@ -36,8 +38,9 @@ services:
     # For now, following the docker-compose requirement:
   - type: pserv # Redis Stack Worker (to support Vector Search)
     name: redis-stack
-    runtime: docker
-    image: redis/redis-stack-server:latest
+    runtime: image
+    image:
+      url: redis/redis-stack-server:latest
     # Note: ports property removed as it is not allowed for pserv in Render Blueprints.
     # Services connect to redis-stack:6379 internally.
 
