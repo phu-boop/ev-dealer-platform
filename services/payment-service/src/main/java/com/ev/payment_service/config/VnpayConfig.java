@@ -21,8 +21,15 @@ public class VnpayConfig {
     @Value("${vnpay.url}")
     private String vnpUrl; // VNPAY Payment URL
 
-    @Value("${vnpay.return-url}")
-    private String vnpReturnUrl; // URL return sau khi thanh toán
+    @Value("${vnpay.return-url-customer}")
+    private String vnpReturnUrlCustomer; // URL return cho Customer App
+
+    @Value("${vnpay.return-url-dealer}")
+    private String vnpReturnUrlDealer; // URL return cho Dealer App
+
+    @Deprecated
+    @Value("${vnpay.return-url:}") // Giữ lại để tránh lỗi nếu còn chỗ dùng, nhưng nên remove sau
+    private String vnpReturnUrl;
 
     @Value("${vnpay.ipn-url}")
     private String vnpIpnUrl; // URL IPN callback từ VNPAY

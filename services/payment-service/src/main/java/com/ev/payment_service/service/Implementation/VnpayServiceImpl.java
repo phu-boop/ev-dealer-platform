@@ -132,8 +132,8 @@ public class VnpayServiceImpl implements IVnpayService {
 
             // Sử dụng configured return URL (đã được VNPay phê duyệt)
             // Frontend return URL sẽ được lưu trong metadata và xử lý trong IPN callback
-            String configuredReturnUrl = vnpayConfig.getVnpReturnUrl();
-            log.info("Using configured return URL: {}", configuredReturnUrl);
+            String configuredReturnUrl = vnpayConfig.getVnpReturnUrlCustomer();
+            log.info("Using configured CUSTOMER return URL: {}", configuredReturnUrl);
 
             String paymentUrl = createPaymentUrl(
                     savedTransaction.getTransactionId().toString(),
@@ -208,11 +208,16 @@ public class VnpayServiceImpl implements IVnpayService {
             long amountInLong = amount.setScale(0, RoundingMode.HALF_UP).longValueExact();
 
             String orderInfo = "ThanhToanHoaDon_" + invoiceId.toString();
+            
+            // SECURITY: Always use configured return URL for Dealer App
+            String configuredReturnUrl = vnpayConfig.getVnpReturnUrlDealer();
+            log.info("Using configured DEALER return URL: {}", configuredReturnUrl);
+
             String paymentUrl = createPaymentUrl(
                     savedTransaction.getDealerTransactionId().toString(),
                     orderInfo,
                     amountInLong,
-                    returnUrl,
+                    configuredReturnUrl,
                     ipAddr);
 
             log.info("Created VNPAY transaction for dealer invoice - InvoiceId: {}, TransactionId: {}", invoiceId,
@@ -290,10 +295,8 @@ public class VnpayServiceImpl implements IVnpayService {
         params.put("vnp_OrderInfo", sanitizedOrderInfo);
         params.put("vnp_OrderType", vnpayConfig.getVnpOrderType());
 
-        // Sử dụng returnUrl từ request
-        String returnUrlToUse = (returnUrl != null && !returnUrl.trim().isEmpty())
-                ? returnUrl
-                : vnpayConfig.getVnpReturnUrl();
+        // Sử dụng returnUrl từ request (đã được enforce từ caller)
+        String returnUrlToUse = returnUrl;
         params.put("vnp_ReturnUrl", returnUrlToUse);
 
         params.put("vnp_CreateDate", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
