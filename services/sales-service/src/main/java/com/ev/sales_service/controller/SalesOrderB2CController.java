@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -78,10 +79,20 @@ public class SalesOrderB2CController {
     }
 
     @GetMapping("/b2c/dealer/{dealerId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EVM_STAFF')")
     public ResponseEntity<ApiRespond<List<SalesOrderB2CResponse>>> getSalesOrdersByDealer(@PathVariable UUID dealerId) {
-        log.info("Fetching B2C sales orders for dealer: {}", dealerId);
+        log.info("Fetching B2C sales orders for dealer (Admin view): {}", dealerId);
         List<SalesOrderB2CResponse> responses = salesOrderServiceB2C.getSalesOrdersByDealer(dealerId);
         return ResponseEntity.ok(ApiRespond.success("Sales orders fetched successfully", responses));
+    }
+
+    @GetMapping("/b2c/my-sales")
+    @PreAuthorize("hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')")
+    public ResponseEntity<ApiRespond<List<SalesOrderB2CResponse>>> getMySalesOrders(
+            @RequestHeader("X-User-ProfileId") UUID dealerId) {
+        log.info("Fetching B2C sales orders for 'my' dealer: {}", dealerId);
+        List<SalesOrderB2CResponse> responses = salesOrderServiceB2C.getSalesOrdersByDealer(dealerId);
+        return ResponseEntity.ok(ApiRespond.success("My sales orders fetched successfully", responses));
     }
 
     @GetMapping("/b2c/customer/{customerId}")
@@ -135,11 +146,13 @@ public class SalesOrderB2CController {
     /**
      * ✅ Manager hoặc khách hàng từ chối đơn hàng (APPROVED → REJECTED)
      */
-    @PutMapping("/b2c/{orderId}/reject")
-    public ResponseEntity<ApiRespond> rejectOrder(@PathVariable String orderId,
-            @RequestParam(required = false) String reason) {
-        ApiRespond respond = salesOrderServiceB2C.rejectOrder(orderId, reason);
-        return ResponseEntity.ok(respond);
+    @PostMapping("/{orderId}/reject")
+    public ApiRespond<SalesOrderB2CResponse> rejectOrder(
+            @PathVariable UUID orderId,
+            @RequestBody Map<String, String> body) {
+        String reason = body.get("reason");
+        SalesOrderB2CResponse response = salesOrderServiceB2C.rejectSalesOrder(orderId, reason);
+        return ApiRespond.success("Order rejected successfully", response);
     }
 
     @PostMapping("/b2c/{orderId}/convert-to-contract")

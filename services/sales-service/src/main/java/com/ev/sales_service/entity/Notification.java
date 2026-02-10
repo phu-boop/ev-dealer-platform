@@ -48,4 +48,10 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private NotificationAudience audience;
+
+    @Column(name = "dealer_id")
+    private UUID dealerId;
+
+    @Column(name = "customer_id")
+    private Long customerId;
 }

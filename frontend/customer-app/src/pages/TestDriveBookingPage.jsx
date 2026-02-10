@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import testDriveService from '../services/testDriveService';
 import { getVehicles } from '../services/vehicleService';
+import { getAllDealers } from '../services/dealerService';
 
 const TestDriveBookingPage = () => {
   const navigate = useNavigate();
@@ -11,12 +12,16 @@ const TestDriveBookingPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState([]);
+  const [dealers, setDealers] = useState([]);
+  const [showroomData, setShowroomData] = useState({});
   const [formData, setFormData] = useState({
     vehicleId: vehicleIdFromUrl || '',
     appointmentDate: '',
     appointmentTime: '',
     durationMinutes: 60,
-    testDriveLocation: '',
+    showroomCity: '',
+    showroom: '',
+    dealerId: '',
     customerNotes: ''
   });
 
@@ -26,6 +31,7 @@ const TestDriveBookingPage = () => {
 
   useEffect(() => {
     loadVehicles();
+    loadDealers();
   }, []);
 
   const loadVehicles = async () => {
@@ -39,12 +45,60 @@ const TestDriveBookingPage = () => {
     }
   };
 
+  const loadDealers = async () => {
+    try {
+      const response = await getAllDealers();
+      if (response && response.data) {
+        const allDealers = response.data;
+        setDealers(allDealers);
+
+        // Group by city
+        const grouped = allDealers.reduce((acc, dealer) => {
+          const city = dealer.city || 'Khác';
+          if (!acc[city]) {
+            acc[city] = [];
+          }
+          acc[city].push({
+            id: dealer.dealerId, // UUID
+            name: dealer.dealerName,
+            address: dealer.address
+          });
+          return acc;
+        }, {});
+
+        setShowroomData(grouped);
+      }
+    } catch (error) {
+      console.error("Error fetching dealers:", error);
+      toast.error("Không thể tải danh sách đại lý");
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+
+      // Reset showroom when city changes
+      if (name === 'showroomCity') {
+        newData.showroom = '';
+        newData.dealerId = '';
+      }
+
+      // Capture dealer UUID when showroom name is selected
+      if (name === 'showroom') {
+        const cityDealers = showroomData[prev.showroomCity] || [];
+        const selectedDealer = cityDealers.find(d => d.name === value);
+        if (selectedDealer) {
+          newData.dealerId = selectedDealer.id;
+        }
+      }
+
+      return newData;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -57,8 +111,8 @@ const TestDriveBookingPage = () => {
     }
 
     // Validate form
-    if (!formData.vehicleId || !formData.appointmentDate || !formData.appointmentTime) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+    if (!formData.vehicleId || !formData.appointmentDate || !formData.appointmentTime || !formData.dealerId) {
+      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc (bao gồm đại lý)');
       return;
     }
 
@@ -77,14 +131,14 @@ const TestDriveBookingPage = () => {
 
       const appointmentData = {
         customerId,
-        dealerId: 1, // TODO: Get from selected location
+        dealerId: formData.dealerId, // Use selected dealer UUID
         modelId: selectedVehicle.modelId,
         variantId: null,
         vehicleModelName: selectedVehicle.modelName,
         vehicleVariantName: null,
         appointmentDate: appointmentDateTime.toISOString(),
         durationMinutes: parseInt(formData.durationMinutes),
-        testDriveLocation: formData.testDriveLocation,
+        testDriveLocation: formData.showroom, // Use showroom name for location display
         customerNotes: formData.customerNotes
       };
 
@@ -191,24 +245,47 @@ const TestDriveBookingPage = () => {
             </select>
           </div>
 
-          {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Địa điểm <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="testDriveLocation"
-              value={formData.testDriveLocation}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">-- Chọn địa điểm --</option>
-              <option value="Showroom Hà Nội">Showroom Hà Nội</option>
-              <option value="Showroom TP.HCM">Showroom TP.HCM</option>
-              <option value="Showroom Đà Nẵng">Showroom Đà Nẵng</option>
-              <option value="Showroom Hải Phòng">Showroom Hải Phòng</option>
-            </select>
+          {/* Dealer Selection (City & Showroom) */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tỉnh/Thành phố <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="showroomCity"
+                value={formData.showroomCity}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                {Object.keys(showroomData).map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Showroom <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="showroom"
+                value={formData.showroom}
+                onChange={handleInputChange}
+                required
+                disabled={!formData.showroomCity}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">-- Chọn Showroom --</option>
+                {formData.showroomCity && showroomData[formData.showroomCity]?.map((dealer) => (
+                  <option key={dealer.id} value={dealer.name}>
+                    {dealer.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Notes */}

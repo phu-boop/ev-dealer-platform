@@ -36,11 +36,25 @@ const VehicleCatalogPage = () => {
     try {
       setIsLoading(true);
       const response = await getModels();
-      setModels(response.data.data || []);
+      // Ensure data is an array
+      const responseData = response.data?.data;
+      
+      let modelsArray = [];
+      if (Array.isArray(responseData)) {
+        modelsArray = responseData;
+      } else if (responseData?.content && Array.isArray(responseData.content)) {
+        modelsArray = responseData.content;
+      } else {
+        console.warn("API did not return an array or paginated content:", responseData);
+      }
+      
+      setModels(modelsArray);
+      
       setError(null);
     } catch (err) {
       setError("Không thể tải danh mục xe. Vui lòng thử lại.");
       console.error(err);
+      setModels([]);
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +135,7 @@ const VehicleCatalogPage = () => {
     }
   };
 
-  const filteredModels = models.filter((model) => {
+  const filteredModels = (Array.isArray(models) ? models : []).filter((model) => {
     // Chuẩn hóa từ khóa tìm kiếm: xóa hết dấu cách và chuyển sang chữ thường
     const query = searchQuery.toLowerCase().replace(/\s+/g, "");
 
@@ -205,7 +219,7 @@ const VehicleCatalogPage = () => {
               className="bg-white rounded-2xl shadow-lg p-6 transition duration-300 hover:shadow-xl group"
             >
               <h2 className="text-2xl font-bold text-gray-900 truncate">
-                {model.brand} {model.modelName}
+                [{model.brand}] {model.modelName}
               </h2>
               <p className="text-gray-500 mt-2 text-sm">ID: {model.modelId}</p>
               <div className="mt-6 flex justify-end space-x-3">

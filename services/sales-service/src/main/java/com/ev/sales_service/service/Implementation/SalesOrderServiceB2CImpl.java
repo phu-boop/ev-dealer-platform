@@ -35,6 +35,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.ev.sales_service.entity.Outbox;
+import com.ev.sales_service.entity.Notification;
+import com.ev.sales_service.enums.NotificationAudience;
+
 
 @Service
 @Transactional
@@ -49,6 +53,11 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
     private final EmailService emailService;
     private final CustomerClient customerClient;
     private final RestTemplate restTemplate;
+    
+    // Injected for Outbox/Notification
+    private final com.ev.sales_service.repository.OutboxRepository outboxRepository;
+    private final com.ev.sales_service.repository.NotificationRepository notificationRepository;
+    private final ObjectMapper objectMapper;
 
     @org.springframework.beans.factory.annotation.Value("${payment-service.url}")
     private String paymentServiceUrl;
@@ -115,6 +124,46 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 
         SalesOrder savedSalesOrder = salesOrderRepository.save(salesOrder);
         log.info("Created B2C sales order from quotation: {}", quotationId);
+
+        // --- NOTIFICATION & EVENT ---
+        try {
+            // 1. Create Notification for Dealer
+            String message = String.format("Đơn hàng B2C mới (từ Báo giá). Khách: %s. Mã ĐH: %s", 
+                    savedSalesOrder.getCustomerName(), savedSalesOrder.getOrderId().toString().substring(0, 8));
+            
+            Notification notification = Notification.builder()
+                    .type("ORDER_PLACED")
+                    .message(message)
+                    .link("/evm/b2c-orders/" + savedSalesOrder.getOrderId())
+                    .audience(NotificationAudience.DEALER) // Audience is DEALER
+                    .dealerId(savedSalesOrder.getDealerId()) // Important: Set Dealer ID
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            notificationRepository.save(notification);
+            
+            // 2. Publish B2COrderPlacedEvent to Outbox
+            com.ev.common_lib.event.B2COrderPlacedEvent event = com.ev.common_lib.event.B2COrderPlacedEvent.builder()
+                    .orderId(savedSalesOrder.getOrderId())
+                    .dealerId(savedSalesOrder.getDealerId())
+                    .totalAmount(savedSalesOrder.getTotalAmount())
+                    .orderDate(savedSalesOrder.getOrderDate())
+                    .customerId(savedSalesOrder.getCustomerId())
+                    .customerName(savedSalesOrder.getCustomerName())
+                    .customerPhone(savedSalesOrder.getCustomerPhone())
+                    .modelName(fetchModelName(quotation.getModelId()))
+                    .variantName(fetchVariantName(quotation.getVariantId())) // Assuming helper exists or null
+                    .build();
+            
+            saveOutboxEvent(savedSalesOrder.getOrderId(), "SalesOrder", "B2COrderPlaced", event);
+            log.info("Published B2COrderPlacedEvent for Order {}", savedSalesOrder.getOrderId());
+            
+        } catch (Exception e) {
+            log.error("Failed to publish B2C Order Event: {}", e.getMessage(), e);
+            // Don't rollback transaction for notification failure
+        }
+
 
         // Async Report
         String modelName = fetchModelName(quotation.getModelId());
@@ -341,7 +390,47 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
         salesOrder.setOrderTrackings(List.of(tracking));
 
         // 7. Save
+        // 7. Save
         SalesOrder savedOrder = salesOrderRepository.save(salesOrder);
+
+        // --- NOTIFICATION & EVENT ---
+        try {
+            // 1. Create Notification for Dealer
+            String message = String.format("Đơn hàng B2C mới (Booking). Khách: %s. Mã ĐH: %s", 
+                    savedOrder.getCustomerName(), savedOrder.getOrderId().toString().substring(0, 8));
+            
+            Notification notification = Notification.builder()
+                    .type("ORDER_PLACED")
+                    .message(message)
+                    .link("/evm/b2c-orders/" + savedOrder.getOrderId())
+                    .audience(NotificationAudience.DEALER) 
+                    .dealerId(savedOrder.getDealerId())
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            
+            notificationRepository.save(notification);
+            
+            // 2. Publish B2COrderPlacedEvent to Outbox
+            com.ev.common_lib.event.B2COrderPlacedEvent event = com.ev.common_lib.event.B2COrderPlacedEvent.builder()
+                    .orderId(savedOrder.getOrderId())
+                    .dealerId(savedOrder.getDealerId())
+                    .totalAmount(savedOrder.getTotalAmount())
+                    .orderDate(savedOrder.getOrderDate())
+                    .customerId(savedOrder.getCustomerId())
+                    .customerName(savedOrder.getCustomerName())
+                    .customerPhone(savedOrder.getCustomerPhone())
+                    .modelName((String) metadata.get("modelName"))
+                    .variantName((String) metadata.get("variantName"))
+                    .build();
+            
+            saveOutboxEvent(savedOrder.getOrderId(), "SalesOrder", "B2COrderPlaced", event);
+            log.info("Published B2COrderPlacedEvent for Order {}", savedOrder.getOrderId());
+            
+        } catch (Exception e) {
+             log.error("Failed to publish B2C Order Event: {}", e.getMessage(), e);
+        }
+
 
         // Async Report
         Long rptVariantId = variantId;
@@ -777,27 +866,86 @@ public class SalesOrderServiceB2CImpl implements SalesOrderServiceB2C {
 
     @Override
     @Transactional
-    public ApiRespond rejectOrder(String orderId, String reason) {
-        SalesOrder salesOrder = salesOrderRepository.findById(UUID.fromString(orderId))
+    public SalesOrderB2CResponse rejectSalesOrder(UUID orderId, String reason) {
+        SalesOrder salesOrder = salesOrderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.SALES_ORDER_NOT_FOUND));
 
-        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED &&
-                salesOrder.getOrderStatusB2C() != OrderStatusB2C.APPROVED) {
+        if (salesOrder.getOrderStatusB2C() != OrderStatusB2C.PENDING &&
+            salesOrder.getOrderStatusB2C() != OrderStatusB2C.EDITED) {
             throw new AppException(ErrorCode.INVALID_ORDER_STATUS);
         }
 
-        salesOrder.setOrderStatusB2C(OrderStatusB2C.REJECTED);
-        // xử lý khi khách hàng từ chối
-        // salesOrder.setRejectReason(reason);
-        salesOrderRepository.save(salesOrder);
+        salesOrder.setOrderStatusB2C(OrderStatusB2C.CANCELLED);
+        
+         // Add tracking entry
+        OrderTracking tracking = OrderTracking.builder()
+                .salesOrder(salesOrder)
+                .statusB2C(OrderTrackingStatus.CANCELLED)
+                .updateDate(LocalDateTime.now())
+                .notes("Order rejected by manager. Reason: " + reason)
+                // .updatedBy(managerId) // TODO
+                .build();
 
-        log.info("Sales order {} rejected. Reason: {}", orderId, reason);
-        return ApiRespond.success("Đơn hàng đã bị từ chối bởi quản lý.", salesOrder);
+        salesOrder.getOrderTrackings().add(tracking);
+
+        salesOrderRepository.save(salesOrder);
+        return mapToResponse(salesOrder);
+    }
+
+    // =================================================================================================
+    // HELPER METHODS
+    // =================================================================================================
+
+    private void saveOutboxEvent(UUID aggregateId, String aggregateType, String eventType, Object payloadObject) {
+        try {
+            // 1. Convert DTO to JSON
+            String payload = objectMapper.writeValueAsString(payloadObject);
+            String eventId = UUID.randomUUID().toString();
+
+            // 2. Build Outbox entity
+            Outbox out = Outbox.builder()
+                    .id(eventId)
+                    .aggregateType(aggregateType)
+                    .aggregateId(aggregateId.toString())
+                    .eventType(eventType)
+                    .payload(payload)
+                    .status("NEW")
+                    .attempts(0)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            // 3. Save to DB
+            outboxRepository.save(out);
+
+        } catch (Exception e) {
+            log.error("CRITICAL: Failed to create and save outbox event for {}: {}", eventType, aggregateId, e);
+            throw new AppException(ErrorCode.DATABASE_ERROR);
+        }
+    }
+    
+    // Add helper if missing
+    private String fetchVariantName(Long variantId) {
+         try {
+            String url = vehicleServiceUri + "/vehicle-catalog/variants/" + variantId;
+            ApiRespond<Map<String, Object>> response = restTemplate.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    null,
+                    new org.springframework.core.ParameterizedTypeReference<ApiRespond<Map<String, Object>>>() {}
+            ).getBody();
+            if (response != null && response.getData() != null) {
+                return (String) response.getData().get("versionName");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch variant name: {}", e.getMessage());
+        }
+        return "Unknown Variant";
     }
 
     private UUID findDealerByName(String name) {
         try {
             String url = dealerServiceUrl + "/api/dealers/list-all";
+
             // Or use search endpoint: /api/dealers?search=name
             // We use list-all here as it returns simpler DTOs and we can filter.
             // Or better, search directly if API supports strict search.

@@ -52,9 +52,19 @@ const VariantManagementPage = () => {
       try {
         setIsLoadingModels(true);
         const response = await getModels();
-        setModels(response.data.data || []);
+        const responseData = response.data?.data;
+        
+        let modelsArray = [];
+        if (Array.isArray(responseData)) {
+          modelsArray = responseData;
+        } else if (responseData?.content && Array.isArray(responseData.content)) {
+          modelsArray = responseData.content;
+        }
+        
+        setModels(modelsArray);
       } catch (error) {
         console.error("Failed to fetch models", error);
+        setModels([]);
       } finally {
         setIsLoadingModels(false);
       }

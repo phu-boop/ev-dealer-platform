@@ -104,6 +104,46 @@ public class NotificationKafkaListener {
     }
 
     /**
+     * Lắng nghe sự kiện "Đơn hàng B2C mới"
+     */
+    @KafkaListener(topics = "sales.b2c.orders.placed", groupId = "${spring.kafka.consumer.group-id}")
+    public void handleB2COrderPlaced(String payload) {
+        log.info("Kafka Listener: Nhận được Đơn hàng B2C mới...");
+        try {
+            com.ev.common_lib.event.B2COrderPlacedEvent event = objectMapper.readValue(payload, com.ev.common_lib.event.B2COrderPlacedEvent.class);
+
+            // Dealer ID is mandatory for sending to the right topic
+            if (event.getDealerId() == null) {
+                log.warn("Sự kiện B2C Order {} không có Dealer ID. Không thể gửi thông báo.", event.getOrderId());
+                return;
+            }
+
+            // TÌM thông báo "thật" mà Service đã tạo
+            String expectedLink = "/evm/b2c-orders/" + event.getOrderId().toString();
+            String expectedType = "ORDER_PLACED";
+
+            Optional<Notification> notificationOpt = notificationRepository.findByLinkAndType(expectedLink,
+                    expectedType);
+
+            if (notificationOpt.isEmpty()) {
+                log.warn("Kafka listener không tìm thấy notification cho B2C Order: {}. Có thể do độ trễ DB.", event.getOrderId());
+                return;
+            }
+
+            Notification notificationEntity = notificationOpt.get();
+            NotificationDto notificationDto = notificationMapper.toDto(notificationEntity);
+
+            // Gửi đến Topic riêng của Dealer
+            String dealerTopic = "/topic/dealer/" + event.getDealerId().toString();
+            messagingTemplate.convertAndSend(dealerTopic, notificationDto);
+            log.info("Đã đẩy thông báo B2C Order (ID: {}) tới Dealer: {}", notificationEntity.getId(), dealerTopic);
+
+        } catch (Exception e) {
+            log.error("Lỗi khi parse hoặc xử lý B2COrderPlacedEvent: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
      * Lắng nghe sự kiện "Tồn kho thấp" từ inventory-service
      */
     @KafkaListener(topics = LOW_STOCK_TOPIC, groupId = "${spring.kafka.consumer.group-id}")
