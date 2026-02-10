@@ -9,6 +9,10 @@ const apiConstVehicleService = axios.create({
 apiConstVehicleService.interceptors.request.use((config) => {
   const token = sessionStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  
+  const userEmail = sessionStorage.getItem("email");
+  if (userEmail) config.headers["X-User-Email"] = userEmail;
+  
   return config;
 });
 

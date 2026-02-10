@@ -8,6 +8,7 @@ import { Footer } from './components/Footer/Footer';
 import { MainContent } from './components/MainContent/MainContent';
 import { dealerManagerMenuItems, dealerStaffMenuItems } from './data/menuItems.jsx';
 import Swal from "sweetalert2";
+import { useDealerNotificationSocket } from './hooks/useDealerNotificationSocket';
 
 const DealerLayout = () => {
   const { logout, email, name, fullName, roles } = useAuthContext();
@@ -16,6 +17,7 @@ const DealerLayout = () => {
   
   // Custom hooks
   const sidebar = useSidebar();
+  useDealerNotificationSocket(); // Enable Real-time Notifications for Dealer
   
   // Local state
   const [menuItems, setMenuItems] = useState([]);

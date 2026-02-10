@@ -29,6 +29,7 @@ public class OutboxProcessor {
     private static final String TOPIC_ORDER_DELIVERED = "sales.orders.delivered";
     private static final String TOPIC_UNKNOWN = "sales.unknown_events";
     private static final String TOPIC_ORDER_ISSUE_REPORTED = "sales.orders.issue_reported";
+    private static final String TOPIC_B2C_ORDER_PLACED = "sales.b2c.orders.placed";
 
     @Scheduled(fixedDelay = 10000)
     public void pollOutbox() {
@@ -81,6 +82,8 @@ public class OutboxProcessor {
                 return TOPIC_ORDER_APPROVED;
             case "B2BOrderPlaced":
                 return TOPIC_ORDER_PLACED;
+            case "B2COrderPlaced":
+                return TOPIC_B2C_ORDER_PLACED;
             case "OrderCancelled":
                 return TOPIC_ORDER_CANCELLED;
             case "OrderDelivered":

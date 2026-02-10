@@ -256,8 +256,7 @@ const ModelForm = ({ isOpen, onClose, onSuccess, model }) => {
         return obj;
       }, {});
 
-    const finalStatus =
-      !isEditMode && !formData.status ? "COMING_SOON" : formData.status;
+    const finalStatus = formData.status || "COMING_SOON";
 
     const payload = {
       modelName: formData.modelName,
