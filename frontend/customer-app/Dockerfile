@@ -30,15 +30,8 @@ COPY --from=builder /app/dist .
 # For now, we'll use a simple inline configuration trick or just default.
 # A better approach is to add a simple nginx.conf.
 
-# Create a simple nginx config for SPA
-RUN echo 'server { \
-    listen 80; \
-    location / { \
-    root /usr/share/nginx/html; \
-    index index.html index.htm; \
-    try_files $uri $uri/ /index.html; \
-    } \
-    }' > /etc/nginx/conf.d/default.conf
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
