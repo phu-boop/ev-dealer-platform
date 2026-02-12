@@ -71,6 +71,19 @@ public class SalesOrderB2CController {
         return ResponseEntity.ok(ApiRespond.success("Tạo đơn hàng từ booking deposit thành công", response));
     }
 
+    /**
+     * Internal endpoint - Payment Service tự động gọi sau khi thanh toán thành công
+     * POST /api/v1/sales-orders/internal/from-booking-deposit
+     * Không yêu cầu xác thực (chỉ gọi nội bộ giữa các service)
+     */
+    @PostMapping("/internal/from-booking-deposit")
+    public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> internalCreateOrderFromBookingDeposit(
+            @RequestBody @Valid CreateOrderFromDepositRequest request) {
+        log.info("[INTERNAL] Auto-creating sales order from successful payment - RecordId: {}", request.getRecordId());
+        SalesOrderB2CResponse response = salesOrderServiceB2C.createOrderFromBookingDeposit(request);
+        return ResponseEntity.ok(ApiRespond.success("Create order after payment succesfully", response));
+    }
+
     @GetMapping("/b2c/{orderId}")
     public ResponseEntity<ApiRespond<SalesOrderB2CResponse>> getSalesOrderById(@PathVariable UUID orderId) {
         log.info("Fetching B2C sales order by ID: {}", orderId);

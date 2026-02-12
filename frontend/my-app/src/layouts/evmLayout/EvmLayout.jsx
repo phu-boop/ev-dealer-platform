@@ -15,7 +15,7 @@ import { useSocketToggle } from "./hooks/useSocketToggle.js"; // Hook Tắt/Bậ
 import { useNotificationSocket } from "../../features/evm/notification/hooks/useNotificationSocket"; // Hook Socket B2B
 
 const EvmLayout = () => {
-  const { logout, email, name, fullName, roles } = useAuthContext();
+  const { logout, email, name, fullName, roles, avatarUrl } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -121,6 +121,7 @@ const EvmLayout = () => {
         handleNavigation={handleNavigation}
         handleLogout={handleLogout}
         user={user}
+        avatarUrl={avatarUrl}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300">
@@ -130,6 +131,7 @@ const EvmLayout = () => {
           activePath={sidebar.activePath}
           role={role}
           user={user}
+          avatarUrl={avatarUrl}
           // 1. Props cho chuông Firebase (Admin)
           firebaseNotifications={notifications}
           // 2. Props cho Tắt/Bật Socket (Admin)

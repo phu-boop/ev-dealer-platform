@@ -26,6 +26,13 @@ import com.ev.payment_service.repository.PaymentMethodRepository;
 import com.ev.payment_service.entity.PaymentMethod;
 import com.ev.payment_service.dto.request.VnpayInitiateRequest;
 import com.ev.payment_service.enums.PaymentScope;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -54,6 +61,10 @@ public class VnpayServiceImpl implements IVnpayService {
     private final DealerDebtRecordRepository dealerDebtRecordRepository;
     private final IPaymentRecordService paymentRecordService;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final RestTemplate restTemplate;
+
+    @Value("${sales-service.url}")
+    private String salesServiceUrl;
 
     @Override
     @Transactional
@@ -482,6 +493,9 @@ public class VnpayServiceImpl implements IVnpayService {
             try {
                 PaymentRecord paymentRecord = transaction.getPaymentRecord();
                 if (paymentRecord != null) {
+                    // Lưu lại status cũ trước khi cập nhật
+                    String previousStatus = paymentRecord.getStatus();
+
                     BigDecimal currentPaid = paymentRecord.getAmountPaid() != null ? paymentRecord.getAmountPaid()
                             : BigDecimal.ZERO;
                     BigDecimal currentRemaining = paymentRecord.getRemainingAmount() != null
@@ -503,6 +517,11 @@ public class VnpayServiceImpl implements IVnpayService {
                     paymentRecordRepository.save(paymentRecord);
                     log.info("VNPAY IPN callback - PaymentRecord updated - RecordId: {}, Status: {}",
                             paymentRecord.getRecordId(), paymentRecord.getStatus());
+
+                    // === TỰ ĐỘNG TẠO ĐƠN HÀNG NẾU LÀ BOOKING DEPOSIT ===
+                    if ("PENDING_DEPOSIT".equals(previousStatus)) {
+                        autoCreateSalesOrder(paymentRecord, transaction.getAmount());
+                    }
                 }
             } catch (Exception e) {
                 log.error("VNPAY IPN callback - Error updating PaymentRecord - TransactionId: {}, Error: {}",
@@ -543,6 +562,9 @@ public class VnpayServiceImpl implements IVnpayService {
             try {
                 PaymentRecord paymentRecord = transaction.getPaymentRecord();
                 if (paymentRecord != null) {
+                    // Lưu lại status cũ trước khi cập nhật
+                    String previousStatus = paymentRecord.getStatus();
+
                     BigDecimal currentPaid = paymentRecord.getAmountPaid() != null ? paymentRecord.getAmountPaid()
                             : BigDecimal.ZERO;
                     BigDecimal currentRemaining = paymentRecord.getRemainingAmount() != null
@@ -564,6 +586,11 @@ public class VnpayServiceImpl implements IVnpayService {
                     paymentRecordRepository.save(paymentRecord);
                     log.info("VNPAY Return callback - PaymentRecord updated - RecordId: {}, AmountPaid: {}, Status: {}",
                             paymentRecord.getRecordId(), newPaid, paymentRecord.getStatus());
+
+                    // === TỰ ĐỘNG TẠO ĐƠN HÀNG NẾU LÀ BOOKING DEPOSIT ===
+                    if ("PENDING_DEPOSIT".equals(previousStatus)) {
+                        autoCreateSalesOrder(paymentRecord, transaction.getAmount());
+                    }
                 }
             } catch (Exception e) {
                 log.error("VNPAY Return callback - Error updating PaymentRecord - TransactionId: {}, Error: {}",
@@ -717,5 +744,92 @@ public class VnpayServiceImpl implements IVnpayService {
         log.info(">>> [Verify] Hash match: {}", checkHash.equalsIgnoreCase(vnp_SecureHash));
 
         return checkHash.equalsIgnoreCase(vnp_SecureHash);
+    }
+
+    /**
+     * Tự động tạo Sales Order từ PaymentRecord (booking deposit) sau khi thanh toán thành công.
+     * Gọi sales-service qua REST API.
+     */
+    private void autoCreateSalesOrder(PaymentRecord paymentRecord, BigDecimal depositAmount) {
+        try {
+            log.info("=== AUTO-CREATE SALES ORDER === RecordId: {}, DepositAmount: {}",
+                    paymentRecord.getRecordId(), depositAmount);
+
+            String url = salesServiceUrl + "/api/v1/sales-orders/internal/from-booking-deposit";
+            log.info("Calling Sales Service: {}", url);
+
+            // Build request body
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("recordId", paymentRecord.getRecordId().toString());
+            requestBody.put("customerId", paymentRecord.getCustomerId());
+            requestBody.put("totalAmount", paymentRecord.getTotalAmount());
+            requestBody.put("depositAmount", depositAmount);
+
+            // Parse dealerId from metadata if available
+            if (paymentRecord.getMetadata() != null) {
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    Map<String, Object> metadata = mapper.readValue(paymentRecord.getMetadata(),
+                            new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+                    if (metadata.containsKey("dealerId") && metadata.get("dealerId") != null) {
+                        requestBody.put("dealerId", metadata.get("dealerId").toString());
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to parse metadata for dealerId: {}", e.getMessage());
+                }
+            }
+
+            // Set headers for internal call
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-User-Email", "system@vms.com");
+            headers.set("X-User-Role", "ADMIN");
+            headers.set("X-User-ProfileId", UUID.randomUUID().toString());
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            ResponseEntity<Map> responseEntity = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    Map.class);
+
+            Map<String, Object> response = responseEntity.getBody();
+            if (response != null && response.get("data") != null) {
+                Map<String, Object> orderData = (Map<String, Object>) response.get("data");
+                String orderId = orderData.get("orderId") != null ? orderData.get("orderId").toString() : null;
+
+                if (orderId != null) {
+                    // Cập nhật PaymentRecord với orderId thực
+                    paymentRecord.setOrderId(UUID.fromString(orderId));
+                    paymentRecordRepository.save(paymentRecord);
+                    log.info("=== AUTO-CREATE SUCCESS === SalesOrder created with orderId: {} for PaymentRecord: {}",
+                            orderId, paymentRecord.getRecordId());
+                }
+            } else {
+                log.warn("Auto-create sales order returned unexpected response: {}", response);
+            }
+
+        } catch (Exception e) {
+            // Không throw exception - để không ảnh hưởng đến callback response
+            log.error("=== AUTO-CREATE FAILED === Error auto-creating sales order for PaymentRecord: {} - Error: {}",
+                    paymentRecord.getRecordId(), e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String getOrderIdByTransactionId(UUID transactionId) {
+        try {
+            Optional<Transaction> transaction = transactionRepository.findById(transactionId);
+            if (transaction.isPresent() && transaction.get().getPaymentRecord() != null) {
+                UUID orderId = transaction.get().getPaymentRecord().getOrderId();
+                if (orderId != null) {
+                    return orderId.toString();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error getting orderId for transaction {}: {}", transactionId, e.getMessage());
+        }
+        return null;
     }
 }

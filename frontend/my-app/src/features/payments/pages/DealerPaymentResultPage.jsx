@@ -63,6 +63,7 @@ const DealerPaymentResultPage = () => {
             (isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"),
           amount,
           transactionId: searchParams.get("vnp_TxnRef") || "",
+          invoiceId: extractInvoiceIdFromOrderInfo(searchParams.get("vnp_OrderInfo") || ""),
           responseCode: vnpResponseCode || "",
           transactionStatus: vnpTransactionStatus || "",
         });
@@ -94,8 +95,11 @@ const DealerPaymentResultPage = () => {
   }
 
   const isSuccess = paymentResult?.success;
+  // Extract invoiceId from backend response, or from vnp_OrderInfo as fallback
   const invoiceId =
-    searchParams.get("invoiceId") || searchParams.get("vnp_TxnRef") || "";
+    paymentResult?.invoiceId ||
+    extractInvoiceIdFromOrderInfo(searchParams.get("vnp_OrderInfo") || "") ||
+    "";
   const invoicesListPath = "/dealer/manager/payments/invoices";
   const invoiceDetailPath = invoiceId
     ? `${invoicesListPath}/${invoiceId}`
@@ -268,6 +272,17 @@ const getBankName = (bankCode) => {
   };
 
   return bankNames[bankCode] || bankCode;
+};
+
+// Helper function to extract invoiceId from vnp_OrderInfo
+// Format: ThanhToanHoaDon_<invoiceId> or ThanhToanHoaDon<invoiceId> (sanitized)
+const extractInvoiceIdFromOrderInfo = (orderInfo) => {
+  if (!orderInfo) return "";
+  // Try with underscore first, then without
+  let id = orderInfo.replace("ThanhToanHoaDon_", "").replace("ThanhToanHoaDon", "");
+  // Validate it looks like a UUID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id) ? id : "";
 };
 
 export default DealerPaymentResultPage;

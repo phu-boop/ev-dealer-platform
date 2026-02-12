@@ -35,7 +35,7 @@ const BookingPage = () => {
 
       try {
         // Try to fetch existing customer by profileId
-        const response = await api.get(`/customers/api/customers/profile/${memberId}`);
+        const response = await api.get(`/customers/profile/${memberId}`);
         if (response.data?.data?.customerId) {
           setCustomerId(response.data.data.customerId);
           console.log('Fetched existing customerId:', response.data.data.customerId);
@@ -83,7 +83,7 @@ const BookingPage = () => {
             };
 
             console.log('Creating customer with data:', newCustomerData);
-            const createResponse = await api.post('/customers/api/customers', newCustomerData);
+            const createResponse = await api.post('/customers', newCustomerData);
             
             if (createResponse.data?.data?.customerId) {
               setCustomerId(createResponse.data.data.customerId);
@@ -163,6 +163,43 @@ const BookingPage = () => {
     };
 
     fetchDealers();
+  }, []);
+
+  // Handle manual scrolling to avoid passive event listener errors
+  useEffect(() => {
+    const handleVehicleListWheel = (e) => {
+      if (vehicleListRef.current) {
+        e.preventDefault();
+        vehicleListRef.current.scrollBy({ top: e.deltaY, behavior: 'auto' });
+      }
+    };
+
+    const handleSidebarWheel = (e) => {
+      if (sidebarRef.current) {
+        e.preventDefault();
+        sidebarRef.current.scrollBy({ top: e.deltaY, behavior: 'auto' });
+      }
+    };
+
+    const vehicleListEl = vehicleListRef.current;
+    const sidebarEl = sidebarRef.current;
+
+    if (vehicleListEl) {
+      vehicleListEl.addEventListener('wheel', handleVehicleListWheel, { passive: false });
+    }
+
+    if (sidebarEl) {
+      sidebarEl.addEventListener('wheel', handleSidebarWheel, { passive: false });
+    }
+
+    return () => {
+      if (vehicleListEl) {
+        vehicleListEl.removeEventListener('wheel', handleVehicleListWheel);
+      }
+      if (sidebarEl) {
+        sidebarEl.removeEventListener('wheel', handleSidebarWheel);
+      }
+    };
   }, []);
 
   const handleInputChange = (e) => {
@@ -522,12 +559,6 @@ const BookingPage = () => {
 
             <div
               ref={vehicleListRef}
-              onWheel={(e) => {
-                if (vehicleListRef.current) {
-                  e.preventDefault();
-                  vehicleListRef.current.scrollBy({ top: e.deltaY, behavior: 'auto' });
-                }
-              }}
               className="space-y-3 overflow-y-hidden pr-2"
               style={{
                 overflowY: 'scroll',
@@ -661,12 +692,6 @@ const BookingPage = () => {
           {/* Right Sidebar - Configuration */}
           <div
             ref={sidebarRef}
-            onWheel={(e) => {
-              if (sidebarRef.current) {
-                e.preventDefault();
-                sidebarRef.current.scrollBy({ top: e.deltaY, behavior: 'auto' });
-              }
-            }}
             className="lg:col-span-3 space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto"
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e0 #f7fafc' }}
           >

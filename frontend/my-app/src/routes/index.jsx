@@ -336,6 +336,14 @@ export default function AppRoutes() {
                 path="staff/reports/forecast"
                 element={<ForecastDashboard />}
               />
+              <Route
+                path="staff/reports/forecast/demand"
+                element={<DemandForecastPage />}
+              />
+              <Route
+                path="staff/reports/forecast/production"
+                element={<ProductionPlanPage />}
+              />
             </Route>
           </Route>
         </Route>

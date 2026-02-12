@@ -55,6 +55,11 @@ public interface IVnpayService {
      */
     boolean validateChecksum(java.util.Map<String, String> vnpParams, String vnpSecureHash);
     boolean verifyVnpayHash(Map<String, String> params);
+
+    /**
+     * Lấy orderId từ PaymentRecord liên kết với transaction
+     * @param transactionId Transaction ID
+     * @return orderId string nếu có, null nếu không
+     */
+    String getOrderIdByTransactionId(UUID transactionId);
 }
-
-

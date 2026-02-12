@@ -144,6 +144,14 @@ public class VnpayGatewayController {
         String vnpTransactionStatus = vnpParams.getOrDefault("vnp_TransactionStatus", "");
         String vnpTxnRef = vnpParams.getOrDefault("vnp_TxnRef", "");
         String vnpAmount = vnpParams.getOrDefault("vnp_Amount", "0");
+        String vnpOrderInfo = vnpParams.getOrDefault("vnp_OrderInfo", "");
+
+        // Extract invoiceId from vnp_OrderInfo (format: ThanhToanHoaDon_<invoiceId> or ThanhToanHoaDon<invoiceId>)
+        String invoiceId = "";
+        if (vnpOrderInfo.contains("ThanhToanHoaDon")) {
+            invoiceId = vnpOrderInfo.replace("ThanhToanHoaDon_", "").replace("ThanhToanHoaDon", "");
+        }
+        log.info("VNPAY Return - Extracted invoiceId: {} from OrderInfo: {}", invoiceId, vnpOrderInfo);
 
         // Convert amount từ VNPAY format (nhân 100) về định dạng bình thường
         long amount = 0;
@@ -157,7 +165,7 @@ public class VnpayGatewayController {
             boolean isValid = vnpayService.verifyVnpayHash(vnpParams);
             if (!isValid) {
                 log.error("VNPAY Return - Invalid checksum");
-                return ResponseEntity.ok(createResponse(false, vnpTxnRef, vnpResponseCode,
+                return ResponseEntity.ok(createResponse(false, vnpTxnRef, invoiceId, vnpResponseCode,
                         vnpTransactionStatus, amount, "Invalid checksum"));
             }
 
@@ -165,23 +173,40 @@ public class VnpayGatewayController {
             UUID updatedTransaction = vnpayService.processReturnResult(vnpParams);
             log.info("VNPAY Return - Transaction {} updated via return handler", updatedTransaction);
 
-            return ResponseEntity.ok(createResponse(
+            Map<String, Object> response = createResponse(
                     isPaymentSuccess,
                     vnpTxnRef,
+                    invoiceId,
                     vnpResponseCode,
                     vnpTransactionStatus,
                     amount,
                     isPaymentSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"
-            ));
+            );
+
+            // Thêm orderId vào response nếu thanh toán thành công
+            if (isPaymentSuccess && updatedTransaction != null) {
+                try {
+                    String orderId = vnpayService.getOrderIdByTransactionId(updatedTransaction);
+                    if (orderId != null) {
+                        response.put("orderId", orderId);
+                        log.info("VNPAY Return - Including orderId {} in response", orderId);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to get orderId for transaction: {}", updatedTransaction);
+                }
+            }
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Error processing VNPAY return - Error: {}", e.getMessage(), e);
-            return ResponseEntity.ok(createResponse(false, vnpTxnRef, vnpResponseCode,
+            return ResponseEntity.ok(createResponse(false, vnpTxnRef, invoiceId, vnpResponseCode,
                     vnpTransactionStatus, amount, "Internal error"));
         }
     }
 
     private Map<String, Object> createResponse(boolean success,
                                                String transactionId,
+                                               String invoiceId,
                                                String responseCode,
                                                String transactionStatus,
                                                long amount,
@@ -189,6 +214,7 @@ public class VnpayGatewayController {
         Map<String, Object> response = new HashMap<>();
         response.put("success", success);
         response.put("transactionId", transactionId != null ? transactionId : "");
+        response.put("invoiceId", invoiceId != null ? invoiceId : "");
         response.put("responseCode", responseCode != null ? responseCode : "");
         response.put("transactionStatus", transactionStatus != null ? transactionStatus : "");
         response.put("amount", amount);

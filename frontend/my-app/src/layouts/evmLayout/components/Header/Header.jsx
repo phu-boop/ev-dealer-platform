@@ -11,6 +11,7 @@ export const Header = ({
   activePath,
   role,
   user,
+  avatarUrl,
   firebaseNotifications,
   socketToggle,
   // Props cho Profile Dropdown
@@ -66,11 +67,11 @@ export const Header = ({
           setIsOpen={setIsProfileDropdownOpen}
           handleLogout={handleLogout}
           navigate={navigate}
-          profileDropdownRef={profileDropdownRef} // Truyền ref vào
-          // Truyền props Tắt/Bật vào
+          profileDropdownRef={profileDropdownRef}
           isAdmin={socketToggle.isAdmin}
           isSocketEnabled={socketToggle.isSocketEnabled}
           toggleSocket={socketToggle.toggleSocket}
+          avatarUrl={avatarUrl}
         />
       </div>
     </header>

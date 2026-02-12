@@ -19,9 +19,10 @@ export const ProfileDropdown = ({
   isAdmin,
   isSocketEnabled,
   toggleSocket,
+  avatarUrl: avatarUrlProp,
 }) => {
   const { email, name, fullName, roles } = user;
-  const avatarUrl = sessionStorage.getItem("avatarUrl");
+  const avatarUrl = avatarUrlProp || sessionStorage.getItem("avatarUrl");
   const hasValidAvatar = avatarUrl && avatarUrl !== "null";
 
   return (

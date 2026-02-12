@@ -10,11 +10,12 @@ export const Header = ({
   activePath, 
   role, 
   user,
+  avatarUrl,
   isProfileDropdownOpen,
   setIsProfileDropdownOpen,
   handleLogout,
   navigate,
-  isSidebarCollapsed // Thêm prop mới để xác định trạng thái sidebar
+  isSidebarCollapsed
 }) => {
   return (
     <header className="h-20 mx-6 my-4 rounded-2xl bg-white/90 backdrop-blur-xl shadow-sm border border-gray-200/80 px-7 flex items-center justify-between sticky top-0 z-10">
@@ -59,6 +60,7 @@ export const Header = ({
           setIsOpen={setIsProfileDropdownOpen}
           handleLogout={handleLogout}
           navigate={navigate}
+          avatarUrl={avatarUrl}
         />
       </div>
     </header>
