@@ -41,12 +41,8 @@ WORKDIR /app/gateway
 # Copy JAR
 COPY --from=builder /app/gateway/target/gateway-0.0.1-SNAPSHOT.jar app.jar
 
-# Copy file env vào container
-COPY config/gateway.env ./config/gateway.env
-
 # Expose port
 EXPOSE 8080
 
-# Spring Boot đọc trực tiếp từ file env
-# Ghi chú: "--spring.config.import" đọc file env từ classpath, "--spring.profiles.active=docker" để tách config docker
-ENTRYPOINT ["sh", "-c", "java -jar app.jar --spring.config.import=optional:classpath:config/gateway.env --spring.profiles.active=docker"]
+# Spring Boot đọc trực tiếp từ environment variables trên Railway
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --spring.profiles.active=docker"]

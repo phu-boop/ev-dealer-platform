@@ -32,7 +32,8 @@ replay_pid*
 # Maven wrapper binaries
 .mvn/wrapper/maven-wrapper.jar
 
-# Ignore custom local config
+# Ignore custom local/config/
+/config/
 application-local.properties
 application-docker.properties
 application-dev.properties
@@ -135,4 +136,3 @@ services/user-service/src/main/resources/firebase-service-account.json
 *_DRAFT.md
 
 # Configuration files
-/config/
