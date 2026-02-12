@@ -18,6 +18,7 @@ import {
   cancelOrderByDealer, // Import hàm hủy
   reportOrderIssue, // Import hàm báo cáo
 } from "../services/dealerSalesService";
+import { getVariantDetailsByIds } from "../services/vehicleCatalogService";
 
 import OrderDetailModal from "../components/OrderDetailModal.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
@@ -28,6 +29,7 @@ const DealerOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [variantMap, setVariantMap] = useState(new Map());
   const [pagination, setPagination] = useState({
     page: 0,
     size: 10,
@@ -66,6 +68,35 @@ const DealerOrdersPage = () => {
   useEffect(() => {
     fetchOrders(activeTab, pagination.page);
   }, [activeTab, fetchOrders, pagination.page]); // Thêm pagination.page dependency
+
+  // Fetch variant details when orders change
+  useEffect(() => {
+    if (orders.length > 0) {
+      const allVariantIds = [...new Set(
+        orders.flatMap((order) =>
+          (order.orderItems || []).map((item) => item.variantId)
+        )
+      )];
+      if (allVariantIds.length > 0) {
+        getVariantDetailsByIds(allVariantIds)
+          .then((response) => {
+            const map = new Map(
+              response.data.data.map((detail) => [detail.variantId, detail])
+            );
+            setVariantMap(map);
+          })
+          .catch((err) => console.error("Failed to fetch variant details:", err));
+      }
+    }
+  }, [orders]);
+
+  const getVariantDisplayName = (variantId) => {
+    const detail = variantMap.get(variantId);
+    if (detail) {
+      return detail.skuCode || detail.versionName || `Variant #${variantId}`;
+    }
+    return `Variant #${variantId}`;
+  };
 
   // Hàm đổi trang (cho component Pagination)
   const handlePageChange = (newPage) => {
@@ -279,7 +310,7 @@ const DealerOrdersPage = () => {
                     <ul className="list-disc list-inside text-sm text-gray-600 mt-2 pl-4">
                       {order.orderItems.map((item) => (
                         <li key={item.orderItemId}>
-                          {item.quantity} x (Variant: {item.variantId}) - Đơn
+                          {item.quantity} x {getVariantDisplayName(item.variantId)} - Đơn
                           giá:{" "}
                           {new Intl.NumberFormat("vi-VN", {
                             style: "currency",

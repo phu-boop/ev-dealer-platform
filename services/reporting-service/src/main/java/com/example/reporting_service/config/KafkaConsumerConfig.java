@@ -2,6 +2,7 @@ package com.example.reporting_service.config;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -29,18 +30,22 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.consumer.auto-offset-reset}")
     private String offsetReset;
 
+    @Value("${spring.kafka.consumer.properties.spring.json.trusted.packages:*}")
+    private String trustedPackages;
+
     /**
-     * Định nghĩa ConsumerFactory với String Deserializer BẮT BUỘC.
-     * Consumer này sẽ nhận Key/Value là String.
+     * Định nghĩa ConsumerFactory với String Key và JSON Value.
      */
     @Bean
-    public ConsumerFactory<String, String> consumerFactory() {
+    public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        // BẮT BUỘC: ÉP BUỘC Consumer phải dùng String Deserializer
+        // Key là String
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        // Value là JSON
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, trustedPackages);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offsetReset);
         
         return new DefaultKafkaConsumerFactory<>(props);
@@ -48,11 +53,10 @@ public class KafkaConsumerConfig {
 
     /**
      * Định nghĩa ContainerFactory để cho phép @KafkaListener hoạt động 
-     * với ConsumerFactory đã được cấu hình cứng.
      */
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }

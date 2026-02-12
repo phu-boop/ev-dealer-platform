@@ -68,7 +68,9 @@ public class ProfileService {
         Optional<DealerStaffProfile> staffOpt = dealerStaffProfileRepository.findById(idMember);
         Optional<DealerManagerProfile> managerOpt = dealerManagerProfileRepository.findById(idMember);
         if (staffOpt.isPresent() && managerOpt.isPresent()) {
-            throw new AppException(ErrorCode.DATABASE_ERROR);
+            // Log warning instead of throwing exception
+            System.err.println("Duplicate profile found for ID: " + idMember + ". Preferring Manager Profile.");
+            return managerOpt.get().getDealerId();
         }
 
         if (staffOpt.isEmpty() && managerOpt.isEmpty()) {

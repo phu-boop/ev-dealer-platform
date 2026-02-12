@@ -33,6 +33,11 @@ public class DealerInventoryDto {
 
     // Hàm helper để gộp 2 đối tượng
     public static DealerInventoryDto merge(VariantDetailDto variant, DealerAllocation allocation) {
+        // Nếu variant null (không tìm thấy từ vehicle-catalog), bỏ qua
+        if (variant == null) {
+            return null;
+        }
+        
         InventoryLevelStatus status = InventoryLevelStatus.OUT_OF_STOCK;
         int available = (allocation != null) ? allocation.getAvailableQuantity() : 0;
         int reorder = (allocation != null && allocation.getReorderLevel() != null) ? allocation.getReorderLevel() : 0;

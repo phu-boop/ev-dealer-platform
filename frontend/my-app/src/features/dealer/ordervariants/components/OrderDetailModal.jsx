@@ -1,8 +1,33 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
 import StatusBadge from "./StatusBadge.jsx";
+import { getVariantDetailsByIds } from "../services/vehicleCatalogService";
 
 const OrderDetailModal = ({ order, onClose }) => {
+  const [variantMap, setVariantMap] = useState(new Map());
+
+  useEffect(() => {
+    if (order?.orderItems?.length > 0) {
+      const variantIds = order.orderItems.map((item) => item.variantId);
+      getVariantDetailsByIds(variantIds)
+        .then((response) => {
+          const map = new Map(
+            response.data.data.map((detail) => [detail.variantId, detail])
+          );
+          setVariantMap(map);
+        })
+        .catch((err) => console.error("Failed to fetch variant details:", err));
+    }
+  }, [order]);
+
+  const getVariantDisplayName = (variantId) => {
+    const detail = variantMap.get(variantId);
+    if (detail) {
+      return detail.skuCode || detail.versionName || `Variant #${variantId}`;
+    }
+    return `Variant #${variantId}`;
+  };
+
   if (!order) return null;
 
   return (
@@ -57,7 +82,7 @@ const OrderDetailModal = ({ order, onClose }) => {
               {order.orderItems?.map((item) => (
                 <li key={item.orderItemId}>
                   <span className="font-medium">{item.quantity} x</span>{" "}
-                  (Variant: {item.variantId}) - Đơn giá:{" "}
+                  {getVariantDisplayName(item.variantId)} - Đơn giá:{" "}
                   <span className="font-medium">
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",

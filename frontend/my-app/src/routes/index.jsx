@@ -321,9 +321,20 @@ export default function AppRoutes() {
                 element={<DealerInvoiceDetailsPage />}
               />
 
+
               <Route
                 path="staff/payments/cash-payments"
                 element={<CashPaymentsManagementPage />}
+              />
+              {/* Báo cáo & phân tích (Staff) */}
+              <Route path="staff/reports/sales" element={<SalesReportPage />} />
+              <Route
+                path="staff/reports/inventory"
+                element={<InventoryReportPage />}
+              />
+              <Route
+                path="staff/reports/forecast"
+                element={<ForecastDashboard />}
               />
             </Route>
           </Route>

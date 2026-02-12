@@ -988,6 +988,7 @@ public class InventoryServiceImpl implements InventoryService {
                     DealerAllocation stock = inventoryMap.get(id);
                     return DealerInventoryDto.merge(details, stock);
                 })
+                .filter(dto -> dto != null) // Bỏ qua các variant null (không tìm thấy từ catalog)
                 .filter(dto -> { // Lọc client-side (vì số lượng ít)
                     if (search == null || search.isBlank())
                         return true;

@@ -86,6 +86,12 @@ public class AuthService {
             // Lấy thông tin cơ bản
             String role = user.getRoleToString();
             UUID profileId = user.getProfileId(); // Đây là staffId hoặc managerId
+            
+            if (profileId == null) {
+                // Profile chưa được tạo hoặc lỗi dữ liệu
+                throw new AppException(ErrorCode.DATA_NOT_FOUND); 
+            }
+            
             UUID userId = user.getId();
             UUID dealerId = null; // Biến để lưu dealerId
 
@@ -104,7 +110,8 @@ public class AuthService {
                 }
             }
             // === KẾT THÚC LOGIC MỚI ===
-            String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
+            // === KẾT THÚC LOGIC MỚI ===
+            String token = jwtUtil.generateAccessToken(user.getEmail(), user.getRoleToString(), profileId.toString(), dealerId != null ? dealerId.toString() : null);
             UserRespond userRespond = userMapper.usertoUserRespond(user);
             userRespond.setMemberId(user.getProfileId());
             userRespond.setUrl(user.getUrl());
@@ -150,7 +157,7 @@ public class AuthService {
     public String generateRefreshToken(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return jwtUtil.generateRefreshToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString());
+        return jwtUtil.generateRefreshToken(user.getEmail(), user.getRoleToString(), user.getProfileId().toString(), null);
     }
 
     public TokenPair newRefreshTokenAndAccessToken(HttpServletRequest request) {
@@ -165,12 +172,14 @@ public class AuthService {
         String newAccessToken = jwtUtil.generateAccessToken(
                 jwtUtil.extractEmail(refreshToken),
                 jwtUtil.extractRole(refreshToken),
-                jwtUtil.extractProfileId(refreshToken)
+                jwtUtil.extractProfileId(refreshToken),
+                jwtUtil.extractDealerId(refreshToken)
         );
         String newRefreshToken = jwtUtil.generateRefreshToken(
                 jwtUtil.extractEmail(refreshToken),
                 jwtUtil.extractRole(refreshToken),
-                jwtUtil.extractProfileId(refreshToken)
+                jwtUtil.extractProfileId(refreshToken),
+                jwtUtil.extractDealerId(refreshToken)
         );
         return new TokenPair(newAccessToken, newRefreshToken);
     }
