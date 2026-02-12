@@ -29,7 +29,9 @@ RUN mvn clean package -DskipTests
 
 
 # -------- Stage 3: Chạy ứng dụng ----------
-FROM eclipse-temurin:21-jdk-alpine
+# Use Debian-based image instead of Alpine for glibc compatibility (required by DJL/tokenizers)
+FROM eclipse-temurin:21-jdk
+
 WORKDIR /app
 
 # Copy file JAR từ stage build
