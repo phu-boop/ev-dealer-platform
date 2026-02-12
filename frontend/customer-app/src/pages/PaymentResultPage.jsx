@@ -41,7 +41,7 @@ const PaymentResultPage = () => {
     // VNPay response code: 00 = thành công, khác = thất bại
     if (responseCode === '00' && transactionStatus === '00') {
       setPaymentStatus('success');
-      
+
       // GỌI CALLBACK API để update PaymentRecord
       callPaymentCallback();
     } else if (responseCode) {
@@ -53,10 +53,11 @@ const PaymentResultPage = () => {
 
   const callPaymentCallback = async () => {
     try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
       const response = await fetch(
-        `http://localhost:8080/api/v1/payments/gateway/callback/vnpay-return?${searchParams.toString()}`
+        `${baseUrl}/api/v1/payments/gateway/callback/vnpay-return?${searchParams.toString()}`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('Payment callback successful:', data);
@@ -71,14 +72,14 @@ const PaymentResultPage = () => {
   const formatPayDate = (dateString) => {
     // Format: YYYYMMDDHHmmss -> DD/MM/YYYY HH:mm:ss
     if (!dateString || dateString.length !== 14) return dateString;
-    
+
     const year = dateString.substring(0, 4);
     const month = dateString.substring(4, 6);
     const day = dateString.substring(6, 8);
     const hour = dateString.substring(8, 10);
     const minute = dateString.substring(10, 12);
     const second = dateString.substring(12, 14);
-    
+
     return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
   };
 

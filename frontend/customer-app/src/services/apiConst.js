@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+  import.meta.env.VITE_API_BASE_URL;
 
 const apiConst = axios.create({
   baseURL: API_BASE_URL,
@@ -49,7 +49,7 @@ apiConst.interceptors.response.use(
         // Không redirect nếu đang ở trang public như trang chủ
         const publicPaths = ['/', '/login', '/register'];
         const currentPath = window.location.pathname;
-        
+
         if (!publicPaths.includes(currentPath)) {
           sessionStorage.clear();
           window.location.href = "/login";

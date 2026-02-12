@@ -4,9 +4,9 @@ import { FiCheckCircle, FiXCircle, FiRefreshCw, FiActivity, FiServer } from "rea
 const ServiceHealthCheck = () => {
   // --- LOGIC GIỮ NGUYÊN 100% ---
   const [services, setServices] = useState({
-    gateway: { status: 'checking', url: 'http://localhost:8080' },
-    customerService: { status: 'checking', url: 'http://localhost:8082' },
-    frontend: { status: 'running', url: 'http://localhost:5173' }
+    gateway: { status: 'checking', url: import.meta.env.VITE_API_BASE_URL },
+    customerService: { status: 'checking', url: import.meta.env.VITE_CUSTOMER_SERVICE_URL },
+    frontend: { status: 'running', url: window.location.origin }
   });
 
   const [checking, setChecking] = useState(false);
@@ -15,7 +15,7 @@ const ServiceHealthCheck = () => {
     setChecking(true);
     // Check Gateway
     try {
-      const response = await fetch('http://localhost:8080/auth/health', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/health`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -33,7 +33,7 @@ const ServiceHealthCheck = () => {
     // Check Customer Service
     try {
       const token = sessionStorage.getItem('token');
-      const response = await fetch('http://localhost:8080/customers', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/customers`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ const ServiceHealthCheck = () => {
                 </code>
               </div>
             </div>
-            
+
             <div className="text-right">
               <span className="text-xs font-bold uppercase tracking-wider opacity-75">
                 {service.status}
@@ -133,15 +133,15 @@ const ServiceHealthCheck = () => {
         </div>
         <ul className="space-y-2">
           <li className="flex gap-2">
-            <span className="text-red-500">➜</span> 
+            <span className="text-red-500">➜</span>
             <span>Gateway Offline? Run: <span className="text-yellow-400">cd gateway && mvn spring-boot:run</span></span>
           </li>
           <li className="flex gap-2">
-            <span className="text-red-500">➜</span> 
+            <span className="text-red-500">➜</span>
             <span>Service Offline? Run: <span className="text-yellow-400">cd services/customer && mvn spring-boot:run</span></span>
           </li>
           <li className="flex gap-2">
-            <span className="text-blue-500">ℹ</span> 
+            <span className="text-blue-500">ℹ</span>
             <span>Auth Error (401)? Check sessionStorage or Re-login.</span>
           </li>
         </ul>
