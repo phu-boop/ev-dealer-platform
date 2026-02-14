@@ -33,15 +33,16 @@ public class SecurityConfig {
                                 "/error",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
+                                "/actuator/health",
 
                                 // user-service
                                 "/auth/**",
                                 "/users/**",
-                                "/oauth2/**",  // OAuth2 authentication flow
+                                "/oauth2/**", // OAuth2 authentication flow
 
                                 // customer-service
                                 "/customers/**",
-                                "/cart/**",  // Cart endpoints
+                                "/cart/**", // Cart endpoints
                                 "/test-drives/**",
                                 "/feedback/**",
                                 "/complaints/**",
@@ -63,7 +64,7 @@ public class SecurityConfig {
                                 // "/sales/**"
                                 "/sales/**",
                                 "/orders/**",
-                                
+
                                 "/sales-orders/**",
                                 "/api/v1/sales-orders/**",
 
@@ -90,6 +91,7 @@ public class SecurityConfig {
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .build();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfig = new CorsConfiguration();
@@ -113,6 +115,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", corsConfig);
         return source;
     }
-
 
 }

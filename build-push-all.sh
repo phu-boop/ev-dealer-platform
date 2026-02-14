@@ -6,15 +6,15 @@ ROOT_DIR="/home/devphu/Documents/complete-project/VoltNexus-EV-Enterprise-Ecosys
 
 cd "$ROOT_DIR" || exit
 
-# 1. Gateway (at root level)
-echo "----------------------------------------------------"
-echo "Building & Pushing: gateway"
-echo "----------------------------------------------------"
-docker build -f gateway/Dockerfile -t "$DOCKER_USERNAME/gateway:latest" .
-docker push "$DOCKER_USERNAME/gateway:latest"
+# # 1. Gateway (at root level)
+# echo "----------------------------------------------------"
+# echo "Building & Pushing: gateway"
+# echo "----------------------------------------------------"
+# docker build -f gateway/Dockerfile -t "$DOCKER_USERNAME/gateway:latest" .
+# docker push "$DOCKER_USERNAME/gateway:latest"
 
 # 2. Services inside services/ directory
-services=("user-service" "customer-service" "dealer-service" "inventory-service" "payment-service" "sales-service" "vehicle-service" "reporting-service" "ai-service")
+services=("user-service")
 
 for service in "${services[@]}"; do
     echo "----------------------------------------------------"
@@ -24,19 +24,19 @@ for service in "${services[@]}"; do
     docker push "$DOCKER_USERNAME/$service:latest"
 done
 
-# 3. Frontend Apps
-echo "----------------------------------------------------"
-echo "Building & Pushing: frontend-my-app"
-echo "----------------------------------------------------"
-docker build -t "$DOCKER_USERNAME/frontend-my-app:latest" ./frontend/my-app
-docker push "$DOCKER_USERNAME/frontend-my-app:latest"
+# # 3. Frontend Apps
+# echo "----------------------------------------------------"
+# echo "Building & Pushing: frontend-my-app"
+# echo "----------------------------------------------------"
+# docker build -t "$DOCKER_USERNAME/frontend-my-app:latest" ./frontend/my-app
+# docker push "$DOCKER_USERNAME/frontend-my-app:latest"
 
-echo "----------------------------------------------------"
-echo "Building & Pushing: customer-app"
-echo "----------------------------------------------------"
-docker build -t "$DOCKER_USERNAME/customer-app:latest" ./frontend/customer-app
-docker push "$DOCKER_USERNAME/customer-app:latest"
+# echo "----------------------------------------------------"
+# echo "Building & Pushing: customer-app"
+# echo "----------------------------------------------------"
+# docker build -t "$DOCKER_USERNAME/customer-app:latest" ./frontend/customer-app
+# docker push "$DOCKER_USERNAME/customer-app:latest"
 
-echo "----------------------------------------------------"
-echo "ALL BUILDS AND PUSHES COMPLETED!"
-echo "----------------------------------------------------"
+# echo "----------------------------------------------------"
+# echo "ALL BUILDS AND PUSHES COMPLETED!"
+# echo "----------------------------------------------------"
