@@ -59,6 +59,10 @@ public class JwtUtil {
         return extractClaims(token).get("profileId", String.class);
     }
 
+    public String extractDealerId(String token) {
+        return extractClaims(token).get("dealerId", String.class);
+    }
+
     // ============================================================
     // 🧩 Validation
     // ============================================================

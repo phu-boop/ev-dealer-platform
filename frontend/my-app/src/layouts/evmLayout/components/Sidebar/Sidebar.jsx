@@ -12,7 +12,8 @@ export const Sidebar = ({
   toggleSubmenu, 
   handleNavigation, 
   handleLogout,
-  user 
+  user,
+  avatarUrl,
 }) => {
   return (
     <>
@@ -91,7 +92,8 @@ export const Sidebar = ({
           {/* User Profile */}
           <UserProfile 
             isSidebarOpen={isSidebarOpen} 
-            user={user} 
+            user={user}
+            avatarUrl={avatarUrl}
           />
 
           {/* Navigation */}

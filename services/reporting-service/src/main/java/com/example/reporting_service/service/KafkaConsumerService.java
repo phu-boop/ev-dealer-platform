@@ -4,6 +4,7 @@ import com.example.reporting_service.dto.EnrichedInventoryStockEvent;
 import com.example.reporting_service.dto.SaleEventDTO;
 import com.example.reporting_service.model.DealerCache;
 import com.example.reporting_service.model.VehicleCache;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +15,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import com.ev.common_lib.event.DealerStockUpdatedEvent;
 import com.ev.common_lib.event.OrderDeliveredEvent;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 
 @Slf4j
 @Service
@@ -22,20 +25,32 @@ public class KafkaConsumerService {
 
     private final InventoryPersistenceService persistenceService;
     private final SalesPersistenceService salesPersistenceService;
-    private final CacheService cacheService; // <-- BẮT BUỘC PHẢI INJECT CACHE
+    private final CentralInventoryPersistenceService centralInventoryPersistenceService;
+    private final CacheService cacheService;
     private final ObjectMapper objectMapper;
 
     /**
-     * Lắng nghe sự kiện TỒN KHO từ inventory-service
-     *
+     * Lắng nghe sự kiện TỒN KHO ĐẠI LÝ từ inventory-service
      */
     @KafkaListener(topics = "stock_events_dealerEVM", groupId = "reporting-service-group")
-    public void handleInventoryEvent(String message) {
-        log.info("Nhận được chuỗi JSON (Tồn kho): " + message);
+    public void handleInventoryEvent(ConsumerRecord<String, Object> record) {
+        Object value = record.value();
+        log.info("Nhận được message (Tồn kho) - offset={}: {}", record.offset(), value);
+
+        // Skip nếu value là null (deserialization error đã được ErrorHandlingDeserializer xử lý)
+        if (value == null) {
+            log.warn("Received null value at offset {} (deserialization error), skipping...", record.offset());
+            return;
+        }
 
         try {
-            // 1. Parse sang DTO GỐC (từ common-lib)
-            DealerStockUpdatedEvent event = objectMapper.readValue(message, DealerStockUpdatedEvent.class);
+            // Convert LinkedHashMap hoặc String sang DTO
+            DealerStockUpdatedEvent event;
+            if (value instanceof String) {
+                event = objectMapper.readValue((String) value, DealerStockUpdatedEvent.class);
+            } else {
+                event = objectMapper.convertValue(value, DealerStockUpdatedEvent.class);
+            }
             
             // 2. Tra cứu Cache (Lazy-loading)
             DealerCache dealer = cacheService.getDealerInfo(event.getDealerId());
@@ -53,8 +68,7 @@ public class KafkaConsumerService {
             enrichedEvent.setVariantId(event.getVariantId());
             enrichedEvent.setVariantName(event.getVariantName());
             
-            // 4. --- SỬA LỖI NULLPOINTER TẠI ĐÂY ---
-            // Gán giá trị từ DTO gốc -> DTO nội bộ
+            // 4. Gán giá trị từ DTO gốc -> DTO nội bộ
             enrichedEvent.setStockOnHand(Long.valueOf(event.getNewAvailableQuantity()));
             
             // 5. GỌI LỚP PERSISTENCE
@@ -70,15 +84,26 @@ public class KafkaConsumerService {
 
     /**
      * Lắng nghe sự kiện DOANH SỐ từ sales-service
-     *
      */
     @KafkaListener(topics = "sales.orders.delivered", groupId = "reporting-service-group")
-    public void handleSaleEvent(String message) {
-        log.info("Nhận được chuỗi JSON (Doanh số): " + message);
+    public void handleSaleEvent(ConsumerRecord<String, Object> record) {
+        Object value = record.value();
+        log.info("Nhận được message (Doanh số) - offset={}: {}", record.offset(), value);
+
+        // Skip nếu value là null (deserialization error đã được ErrorHandlingDeserializer xử lý)
+        if (value == null) {
+            log.warn("Received null value at offset {} (deserialization error), skipping...", record.offset());
+            return;
+        }
 
         try {
-            // 1. Parse sang DTO GỐC (từ common-lib)
-            OrderDeliveredEvent event = objectMapper.readValue(message, OrderDeliveredEvent.class);
+            // Convert LinkedHashMap hoặc String sang DTO
+            OrderDeliveredEvent event;
+            if (value instanceof String) {
+                event = objectMapper.readValue((String) value, OrderDeliveredEvent.class);
+            } else {
+                event = objectMapper.convertValue(value, OrderDeliveredEvent.class);
+            }
             
             // 2. Tra cứu Cache (Lazy-loading)
             DealerCache dealer = cacheService.getDealerInfo(event.getDealerId());
@@ -122,5 +147,122 @@ public class KafkaConsumerService {
             log.error("LỖI GIAO DỊCH/LƯU MESSAGE (Doanh số): " + e.getMessage());
             throw new RuntimeException("Failed to process Kafka message for DB save (Sales).", e);
         }
+    }
+
+    /**
+     * Lắng nghe sự kiện GIAO DỊCH KHO TRUNG TÂM từ inventory-service
+     * Topic: inventory_events
+     * Event chứa: InventoryTransaction entity (variantId, transactionType, quantity, staffId, notes, etc.)
+     */
+    @KafkaListener(topics = "inventory_events", groupId = "reporting-service-group")
+    public void handleCentralInventoryEvent(ConsumerRecord<String, Object> record) {
+        Object value = record.value();
+        log.info("Nhận được message (Kho trung tâm) - offset={}: {}", record.offset(), value);
+
+        if (value == null) {
+            log.warn("Received null value at offset {} (deserialization error), skipping...", record.offset());
+            return;
+        }
+
+        try {
+            // Convert message sang LinkedHashMap
+            LinkedHashMap<String, Object> eventMap;
+            if (value instanceof String) {
+                eventMap = objectMapper.readValue((String) value, LinkedHashMap.class);
+            } else if (value instanceof LinkedHashMap) {
+                eventMap = (LinkedHashMap<String, Object>) value;
+            } else {
+                eventMap = objectMapper.convertValue(value, LinkedHashMap.class);
+            }
+
+            // Trích xuất fields từ InventoryTransaction
+            Long variantId = toLong(eventMap.get("variantId"));
+            String transactionType = (String) eventMap.get("transactionType");
+            Integer quantity = toInt(eventMap.get("quantity"));
+            String staffId = (String) eventMap.get("staffId");
+            String notes = (String) eventMap.get("notes");
+            String referenceId = (String) eventMap.get("referenceId");
+            String toDealerId = eventMap.get("toDealerId") != null ? eventMap.get("toDealerId").toString() : null;
+            String fromDealerId = eventMap.get("fromDealerId") != null ? eventMap.get("fromDealerId").toString() : null;
+
+            // Parse transactionDate
+            LocalDateTime transactionDate = LocalDateTime.now();
+            if (eventMap.get("transactionDate") != null) {
+                try {
+                    transactionDate = objectMapper.convertValue(eventMap.get("transactionDate"), LocalDateTime.class);
+                } catch (Exception e) {
+                    log.warn("Không parse được transactionDate, dùng thời gian hiện tại");
+                }
+            }
+
+            if (variantId == null || transactionType == null || quantity == null) {
+                log.error("Event thiếu thông tin bắt buộc (variantId, transactionType, quantity). Bỏ qua.");
+                return;
+            }
+
+            // Enrich với thông tin vehicle từ cache
+            String variantName = null;
+            Long modelId = null;
+            String modelName = null;
+
+            VehicleCache vehicle = cacheService.getVehicleInfo(variantId);
+            if (vehicle != null) {
+                variantName = vehicle.getVariantName();
+                modelId = vehicle.getModelId();
+                modelName = vehicle.getModelName();
+            } else {
+                log.warn("Không tìm thấy thông tin vehicle cho variantId={}. Lưu với thông tin rỗng.", variantId);
+            }
+
+            // Dispatch theo transactionType
+            switch (transactionType) {
+                case "RESTOCK":
+                case "INITIAL_STOCK":
+                    centralInventoryPersistenceService.handleRestock(
+                            variantId, variantName, modelId, modelName,
+                            quantity, staffId, notes, referenceId, transactionDate);
+                    break;
+
+                case "ALLOCATE":
+                    centralInventoryPersistenceService.handleAllocate(
+                            variantId, variantName, modelId, modelName,
+                            quantity, staffId, notes, referenceId, transactionDate);
+                    break;
+
+                case "TRANSFER_TO_DEALER":
+                    centralInventoryPersistenceService.handleTransferToDealer(
+                            variantId, variantName, modelId, modelName,
+                            quantity, toDealerId, staffId, notes, referenceId, transactionDate);
+                    break;
+
+                default:
+                    centralInventoryPersistenceService.handleOtherTransaction(
+                            variantId, variantName, modelId, modelName,
+                            transactionType, quantity, fromDealerId, toDealerId,
+                            staffId, notes, referenceId, transactionDate);
+                    break;
+            }
+
+            log.info("-> Đã xử lý event kho trung tâm: type={}, variant={}, qty={}",
+                    transactionType, variantId, quantity);
+
+        } catch (Exception e) {
+            log.error("LỖI xử lý message (Kho trung tâm): " + e.getMessage(), e);
+            throw new RuntimeException("Failed to process Kafka message for DB save (Central Inventory).", e);
+        }
+    }
+
+    // ========== HELPER METHODS ==========
+
+    private Long toLong(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Number) return ((Number) obj).longValue();
+        try { return Long.parseLong(obj.toString()); } catch (Exception e) { return null; }
+    }
+
+    private Integer toInt(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Number) return ((Number) obj).intValue();
+        try { return Integer.parseInt(obj.toString()); } catch (Exception e) { return null; }
     }
 }

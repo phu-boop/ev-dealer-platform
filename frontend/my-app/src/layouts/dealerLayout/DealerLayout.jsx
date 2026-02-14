@@ -11,7 +11,7 @@ import Swal from "sweetalert2";
 import { useDealerNotificationSocket } from './hooks/useDealerNotificationSocket';
 
 const DealerLayout = () => {
-  const { logout, email, name, fullName, roles } = useAuthContext();
+  const { logout, email, name, fullName, roles, avatarUrl } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -140,6 +140,7 @@ useEffect(() => {
         handleNavigation={handleNavigation}
         handleLogout={handleLogout}
         user={user}
+        avatarUrl={avatarUrl}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300">
@@ -149,6 +150,7 @@ useEffect(() => {
           activePath={sidebar.activePath}
           role={role}
           user={user}
+          avatarUrl={avatarUrl}
           isProfileDropdownOpen={isProfileDropdownOpen}
           setIsProfileDropdownOpen={setIsProfileDropdownOpen}
           handleLogout={handleLogout}

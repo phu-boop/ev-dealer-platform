@@ -1,9 +1,10 @@
 // ví dụ file /src/pages/evm/B2BOrderDetailsPage.jsx
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import ResolveDisputeModal from "../components/ResolveDisputeModal";
 import { useB2BOrderDetails } from "../hooks/useStaffNotifications";
+import { getVariantDetailsByIds } from "../../catalog/services/vehicleCatalogService";
 import {
   FiLoader,
   FiAlertTriangle,
@@ -37,8 +38,32 @@ const formatDate = (isoString) => {
 const B2BOrderDetailsPage = () => {
   const { orderId } = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [variantMap, setVariantMap] = useState(new Map());
 
   const { data: order, isLoading, isError } = useB2BOrderDetails(orderId);
+
+  // Fetch variant details when order loads
+  useEffect(() => {
+    if (order?.orderItems?.length > 0) {
+      const variantIds = order.orderItems.map((item) => item.variantId);
+      getVariantDetailsByIds(variantIds)
+        .then((response) => {
+          const map = new Map(
+            response.data.data.map((detail) => [detail.variantId, detail])
+          );
+          setVariantMap(map);
+        })
+        .catch((err) => console.error("Failed to fetch variant details:", err));
+    }
+  }, [order]);
+
+  const getVariantDisplayName = (variantId) => {
+    const detail = variantMap.get(variantId);
+    if (detail) {
+      return detail.skuCode || detail.versionName || `Variant #${variantId}`;
+    }
+    return `Variant #${variantId}`;
+  };
 
   const disputeReason = useMemo(() => {
     if (!order || !order.orderTrackings) return null;
@@ -129,7 +154,7 @@ const B2BOrderDetailsPage = () => {
               className="p-3 bg-blue-50 rounded-md border border-blue-200"
             >
               <p className="font-semibold text-blue-900">
-                {item.quantity} x (Variant: {item.variantId})
+                {item.quantity} x {getVariantDisplayName(item.variantId)}
               </p>
               <p className="text-sm text-blue-700">
                 Đơn giá: {formatCurrency(item.unitPrice)}

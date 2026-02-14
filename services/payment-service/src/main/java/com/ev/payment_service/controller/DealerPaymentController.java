@@ -411,7 +411,7 @@ public class DealerPaymentController {
         }
 
         try {
-            String url = userServiceUrl + "/profile/idDealer";
+            String url = userServiceUrl + "/users/profile/idDealer";
             log.info("[DealerPaymentController] Calling User Service to get dealerId - URL: {}, ManagerId: {}", url,
                     managerId);
 

@@ -2,6 +2,7 @@ import profileService from "../services/profileService.js";
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuthContext } from "../../auth/AuthProvider.jsx";
 import { Save, Shield } from "lucide-react";
+import Swal from "sweetalert2";
 
 // Import components
 import { AvatarSection } from "./components/AvatarSection";
@@ -12,7 +13,7 @@ import { RoleSpecificInfo } from "./components/RoleSpecificInfo";
 import { InfoField } from "./components/InfoField";
 
 const ProfileForm = () => {
-  const { id_user } = useAuthContext();
+  const { id_user, updateProfile } = useAuthContext();
   const [formData, setFormData] = useState({
     name: "",
     fullName: "",
@@ -114,6 +115,27 @@ const ProfileForm = () => {
       const response = await profileService.updateProfile(updateData);
       if (response.data.code === "1000") {
         setMessage("Cập nhật thông tin thành công!");
+        // Sync name, fullName, avatar to context + sessionStorage
+        // so Header/Sidebar re-render immediately
+        if (updateProfile) {
+          updateProfile({
+            name: formData.name,
+            fullName: formData.fullName,
+            avatarUrl: formData.url || null,
+          });
+        }
+
+        // Show success toast
+        Swal.fire({
+          icon: "success",
+          title: "Thành công!",
+          text: "Thông tin cá nhân đã được cập nhật.",
+          timer: 2000,
+          showConfirmButton: false,
+          toast: true,
+          position: "top-end",
+        });
+
         setTimeout(() => setMessage(""), 3000);
       } else {
         setMessage(

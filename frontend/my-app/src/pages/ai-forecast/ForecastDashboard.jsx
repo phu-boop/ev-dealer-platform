@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -41,6 +41,11 @@ const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 export default function ForecastDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Detect if we're in admin or staff context from URL
+  const basePath = location.pathname.includes("/evm/staff/")
+    ? "/evm/staff/reports/forecast"
+    : "/evm/admin/reports/forecast";
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [daysBack, setDaysBack] = useState(30);
@@ -221,7 +226,7 @@ export default function ForecastDashboard() {
       {/* Quick Action Buttons */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <button
-          onClick={() => navigate("/evm/admin/reports/forecast/demand")}
+          onClick={() => navigate(`${basePath}/demand`)}
           className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors"
         >
           <BarChart3 className="h-8 w-8 text-blue-600" />
@@ -234,7 +239,7 @@ export default function ForecastDashboard() {
         </button>
 
         <button
-          onClick={() => navigate("/evm/admin/reports/forecast/production")}
+          onClick={() => navigate(`${basePath}/production`)}
           className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors"
         >
           <Calendar className="h-8 w-8 text-green-600" />

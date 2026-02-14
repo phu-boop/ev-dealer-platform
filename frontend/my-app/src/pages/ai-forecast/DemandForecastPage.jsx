@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -35,6 +35,10 @@ import forecastService from "../../services/ai/forecastService";
 
 export default function DemandForecastPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.includes("/evm/staff/")
+    ? "/evm/staff/reports/forecast"
+    : "/evm/admin/reports/forecast";
   const [loading, setLoading] = useState(false);
   const [forecastData, setForecastData] = useState(null);
   const [formData, setFormData] = useState({
@@ -116,7 +120,7 @@ export default function DemandForecastPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => navigate("/evm/admin/reports/forecast")}
+            onClick={() => navigate(basePath)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -124,7 +128,7 @@ export default function DemandForecastPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => navigate("/evm/admin/reports/forecast/production")}
+            onClick={() => navigate(`${basePath}/production`)}
             className="flex items-center gap-2"
           >
             <Calendar className="h-4 w-4" />

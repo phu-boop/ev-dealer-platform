@@ -51,4 +51,9 @@ public interface ICustomerPaymentService {
          * Lấy thống kê payment (Admin)
          */
         PaymentStatisticsResponse getPaymentStatistics(LocalDateTime startDate, LocalDateTime endDate);
+
+        /**
+         * Lấy danh sách PaymentRecord theo customerId (cho customer xem deposits)
+         */
+        List<com.ev.payment_service.entity.PaymentRecord> getPaymentRecordsByCustomerId(Long customerId);
 }

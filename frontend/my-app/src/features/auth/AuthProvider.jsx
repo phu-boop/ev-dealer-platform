@@ -15,20 +15,34 @@ export function AuthProvider({children}) {
         }
     });
 
-    const [token, setToken] = useState(sessionStorage.getItem("token") || null);
-    const [id_user, setIdUser] = useState(sessionStorage.getItem("id_user") || null);
-    const [email, setEmail] = useState(sessionStorage.getItem("email") || null);
-    const [name, setName] = useState(sessionStorage.getItem("name") || null);
-    const [fullName, setFullName] = useState(sessionStorage.getItem("fullName") || null);
-    const [memberId, setMemberId] = useState(sessionStorage.getItem("memberId") || null);
-    const [avatarUrl, setAvatarUrl] = useState(sessionStorage.getItem("avatarUrl") || null);
+    // Helper để đọc/ghi sessionStorage an toàn, tránh chuỗi "null"
+    const safeGetItem = (key) => {
+        const item = sessionStorage.getItem(key);
+        return (item && item !== "null" && item !== "undefined") ? item : null;
+    };
 
-    const [dealerId, setDealerId] = useState(sessionStorage.getItem("dealerId") || null);
+    const safeSetItem = (key, value) => {
+        if (value && value !== "null" && value !== "undefined") {
+            sessionStorage.setItem(key, value);
+        } else {
+            sessionStorage.removeItem(key);
+        }
+    };
+
+    const [token, setToken] = useState(safeGetItem("token"));
+    const [id_user, setIdUser] = useState(safeGetItem("id_user"));
+    const [email, setEmail] = useState(safeGetItem("email"));
+    const [name, setName] = useState(safeGetItem("name"));
+    const [fullName, setFullName] = useState(safeGetItem("fullName"));
+    const [memberId, setMemberId] = useState(safeGetItem("memberId"));
+    const [avatarUrl, setAvatarUrl] = useState(safeGetItem("avatarUrl"));
+
+    const [dealerId, setDealerId] = useState(safeGetItem("dealerId"));
 
     const [userData, setUserData] = useState(() => {
         try {
             const storedUserData = sessionStorage.getItem("userData");
-            return storedUserData ? JSON.parse(storedUserData) : null;
+            return storedUserData && storedUserData !== "null" ? JSON.parse(storedUserData) : null;
         } catch (error) {
             console.error("Failed to parse userData from sessionStorage:", error);
             return null;
@@ -36,19 +50,19 @@ export function AuthProvider({children}) {
     });
 
     const login = (newToken, newRoles, newId, newEmail, newName, newFullName, newMemberId, newUserData, newAvataUrl) => {
-        sessionStorage.setItem("id_user", newId);
-        sessionStorage.setItem("token", newToken);
-        sessionStorage.setItem("roles", JSON.stringify(newRoles));
-        sessionStorage.setItem("email", newEmail);
-        sessionStorage.setItem("name", newName);
-        sessionStorage.setItem("fullName", newFullName);
-        sessionStorage.setItem("userData", JSON.stringify(newUserData));
-        sessionStorage.setItem("memberId", newMemberId);
-        sessionStorage.setItem("avatarUrl", newAvataUrl);
+        safeSetItem("id_user", newId);
+        safeSetItem("token", newToken);
+        if (newRoles) safeSetItem("roles", JSON.stringify(newRoles));
+        safeSetItem("email", newEmail);
+        safeSetItem("name", newName);
+        safeSetItem("fullName", newFullName);
+        if (newUserData) safeSetItem("userData", JSON.stringify(newUserData));
+        safeSetItem("memberId", newMemberId);
+        safeSetItem("avatarUrl", newAvataUrl);
 
         setEmail(newEmail);
         setToken(newToken);
-        setRoles(newRoles);
+        setRoles(newRoles || []);
         setIdUser(newId);
         setName(newName);
         setFullName(newFullName);
@@ -60,9 +74,30 @@ export function AuthProvider({children}) {
         let newDealerId = null;
         if (newUserData && newUserData.dealerId) {
             newDealerId = newUserData.dealerId;
-            sessionStorage.setItem("dealerId", newDealerId);
+            safeSetItem("dealerId", newDealerId);
         }
         setDealerId(newDealerId);
+    };
+
+    const updateAvatar = (newAvatarUrl) => {
+        safeSetItem("avatarUrl", newAvatarUrl);
+        setAvatarUrl(newAvatarUrl);
+    };
+
+    // Cập nhật thông tin profile (name, fullName, avatar) sau khi user chỉnh sửa
+    const updateProfile = ({ name: newName, fullName: newFullName, avatarUrl: newAvatarUrl } = {}) => {
+        if (newName !== undefined) {
+             safeSetItem("name", newName);
+            setName(newName);
+        }
+        if (newFullName !== undefined) {
+             safeSetItem("fullName", newFullName);
+            setFullName(newFullName);
+        }
+        if (newAvatarUrl !== undefined) {
+             safeSetItem("avatarUrl", newAvatarUrl);
+            setAvatarUrl(newAvatarUrl);
+        }
     };
 
     const logout = () => {
@@ -80,16 +115,16 @@ export function AuthProvider({children}) {
     };
 
     useEffect(() => {
-        const storedToken = sessionStorage.getItem("token");
+        const storedToken = safeGetItem("token");
         const storedRoles = sessionStorage.getItem("roles");
-        const storedEmail = sessionStorage.getItem("email");
-        const storedId = sessionStorage.getItem("id_user");
-        const storedName = sessionStorage.getItem("name");
-        const storedFullName = sessionStorage.getItem("fullName");
-        const storedMemberId = sessionStorage.getItem("memberId");
+        const storedEmail = safeGetItem("email");
+        const storedId = safeGetItem("id_user");
+        const storedName = safeGetItem("name");
+        const storedFullName = safeGetItem("fullName");
+        const storedMemberId = safeGetItem("memberId");
         const storedUserData = sessionStorage.getItem("userData");
-        const storedAvatarUrl = sessionStorage.getItem("avatarUrl");
-        const storedDealerId = sessionStorage.getItem("dealerId"); // Lấy dealerId từ session
+        const storedAvatarUrl = safeGetItem("avatarUrl");
+        const storedDealerId = safeGetItem("dealerId"); 
 
         if (storedToken) setToken(storedToken);
         if (storedEmail) setEmail(storedEmail);
@@ -98,9 +133,9 @@ export function AuthProvider({children}) {
         if (storedFullName) setFullName(storedFullName);
         if (storedMemberId) setMemberId(storedMemberId);
         if (storedAvatarUrl) setAvatarUrl(storedAvatarUrl);
-        if (storedDealerId) setDealerId(storedDealerId); // Tải dealerId vào state
+        if (storedDealerId) setDealerId(storedDealerId);
 
-        if (storedRoles) {
+        if (storedRoles && storedRoles !== "null") {
             try {
                 setRoles(JSON.parse(storedRoles));
             } catch (error) {
@@ -109,7 +144,7 @@ export function AuthProvider({children}) {
             }
         }
 
-        if (storedUserData) {
+        if (storedUserData && storedUserData !== "null") {
             try {
                 setUserData(JSON.parse(storedUserData));
             } catch (error) {
@@ -131,8 +166,11 @@ export function AuthProvider({children}) {
                 memberId,
                 dealerId,   //Cung cấp dealerId
                 userData,
+                avatarUrl,
                 login,
-                logout
+                logout,
+                updateAvatar,
+                updateProfile,
             }}
         >
             {children}

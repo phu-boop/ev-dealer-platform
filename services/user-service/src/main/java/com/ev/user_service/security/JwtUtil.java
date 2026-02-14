@@ -30,10 +30,13 @@ public class JwtUtil {
     }
 
     // Generate Access Token
-    public String generateAccessToken(String email, String role, String profileId) {
+    public String generateAccessToken(String email, String role, String profileId, String dealerId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
         claims.put("profileId", profileId);
+        if (dealerId != null) {
+            claims.put("dealerId", dealerId);
+        }
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(email)
@@ -44,10 +47,13 @@ public class JwtUtil {
     }
 
     // Generate Refresh Token
-    public String generateRefreshToken(String email, String role, String profileId) {
+    public String generateRefreshToken(String email, String role, String profileId, String dealerId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
         claims.put("profileId", profileId);
+        if (dealerId != null) {
+            claims.put("dealerId", dealerId);
+        }
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(email)
@@ -79,6 +85,11 @@ public class JwtUtil {
     // Extract role
     public String extractProfileId(String token) {
         return extractClaims(token).get("profileId", String.class);
+    }
+
+    // Extract dealerId
+    public String extractDealerId(String token) {
+        return extractClaims(token).get("dealerId", String.class);
     }
 
     // Validate token

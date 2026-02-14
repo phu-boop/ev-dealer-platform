@@ -74,6 +74,7 @@ public class DataInitializer implements ApplicationRunner {
         initializeAdminRole();
         initializeDealerManagerRole();
         initializeDealerStaffRole();
+        initializeEvmStaffRole();
         initializeCustomerRole();
 
         // ========== INITIALIZE USERS ==========
@@ -88,6 +89,8 @@ public class DataInitializer implements ApplicationRunner {
         if (userRepository.findByEmail("TrongStaff@gmail.com").isEmpty()) {
             initializeDealerStaffUser();
         }
+
+        initializeEvmStaffUser();
     }
 
     private void initializeAdminRole() {
@@ -162,6 +165,26 @@ public class DataInitializer implements ApplicationRunner {
         }
     }
 
+    private void initializeEvmStaffRole() {
+        if (roleRepository.findFirstByName(RoleName.EVM_STAFF.getName()).isEmpty()) {
+            Set<Permission> permissions = new HashSet<>();
+
+            // Quyền của EVM_STAFF
+            permissions.add(createPermission(PermissionName.VIEW_VEHICLES));
+            permissions.add(createPermission(PermissionName.MANAGE_VEHICLES));
+            permissions.add(createPermission(PermissionName.MANAGE_PRICING));
+            permissions.add(createPermission(PermissionName.VIEW_ALL_DEALER_ORDERS));
+            permissions.add(createPermission(PermissionName.VIEW_DEALER_REPORTS));
+            permissions.add(createPermission(PermissionName.MANAGE_PROMOTIONS));
+            
+            permissionRepository.saveAll(permissions);
+            Role role = new Role();
+            role.setName(RoleName.EVM_STAFF.getName());
+            role.setPermissions(permissions);
+            roleRepository.save(role);
+        }
+    }
+
     private void initializeAdminUser() {
         Set<Role> roles = new HashSet<>();
         Role adminRole = roleRepository.findFirstByName(RoleName.ADMIN.getRoleName())
@@ -224,6 +247,28 @@ public class DataInitializer implements ApplicationRunner {
                 new BigDecimal("10000000"), // salary
                 new BigDecimal("2.5") // commissionRate
         );
+    }
+
+    private void initializeEvmStaffUser() {
+        if (userRepository.findByEmail("StafffEVM@gmail.com").isEmpty()) {
+            Set<Role> roles = new HashSet<>();
+            Role evmStaffRole = roleRepository.findFirstByName(RoleName.EVM_STAFF.getRoleName())
+                    .orElseThrow(() -> new AppException(ErrorCode.DATABASE_ERROR));
+            roles.add(evmStaffRole);
+
+            User evmStaff = new User();
+            evmStaff.setEmail("StafffEVM@gmail.com");
+            evmStaff.setPassword(passwordEncoder.encode("123123123"));
+            evmStaff.setRoles(new HashSet<>(roles));
+            evmStaff.setStatus(UserStatus.ACTIVE);
+            userRepository.save(evmStaff);
+
+            evmStaffProfileService.SaveEvmStaffProfile(
+                    evmStaff,
+                    "Technical Support",
+                    "System Analysis"
+            );
+        }
     }
 
     private void initializeCustomerRole() {
