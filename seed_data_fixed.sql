@@ -22,7 +22,7 @@ USE user_db;
 
 -- ========== USERS ==========
 -- Password hash for "123123123" (BCrypt)
-SET @default_password = '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iwK8pJwC';
+SET @default_password = '$2a$10$eaFOntfhEneo9ShG0DPPFeT5jZq4FL248mHC1A1GjmgSWQzsEcPOq';
 
 -- Admin User (Đã được tạo bởi DataInitializer với email admin@gmail.com)
 -- Không cần insert lại nữa
@@ -30,48 +30,48 @@ SET @default_password = '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iwK
 -- EVM Staff Users
 INSERT INTO user (id, email, password, name, full_name, phone, address, birthday, city, country, status) VALUES
     (UNHEX(REPLACE('20000000-0000-0000-0000-000000000002', '-', '')), 'evm.staff@vms.com', @default_password, 'EVM Staff', 'EVM Staff Member', '0900000002', '456 EVM Street, Ho Chi Minh City', '1992-05-15', 'Ho Chi Minh City', 'Vietnam', 'ACTIVE')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password);
 
 -- Dealer Manager Users  
 -- UUID khớp với Dealer IDs để dễ quản lý
 -- Dealer Manager 1 (cho Dealer Ha Noi - UUID từ DataInitializer)
 INSERT INTO user (id, email, password, name, full_name, phone, address, birthday, city, country, status) VALUES
     (UNHEX(REPLACE('3ec76f92-7d44-49f4-ada1-b47d4f55b418', '-', '')), 'manager.dealer.hn@vms.com', @default_password, 'Manager HN', 'Nguyễn Văn Manager', '0901000001', '789 Dealer 1 Street, Hanoi', '1985-03-20', 'Hanoi', 'Vietnam', 'ACTIVE')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password);
 
 -- Dealer Manager 2 (cho Dealer HCM)
 INSERT INTO user (id, email, password, name, full_name, phone, address, birthday, city, country, status) VALUES
     (UNHEX(REPLACE('30000000-0000-0000-0000-000000000002', '-', '')), 'manager.dealer.hcm@vms.com', @default_password, 'Manager HCM', 'Trần Thị Manager', '0902000001', '321 Dealer 2 Street, Ho Chi Minh City', '1987-07-10', 'Ho Chi Minh City', 'Vietnam', 'ACTIVE')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password);
 
 -- Dealer Manager 3 (cho Dealer Da Nang)
 INSERT INTO user (id, email, password, name, full_name, phone, address, birthday, city, country, status) VALUES
     (UNHEX(REPLACE('30000000-0000-0000-0000-000000000003', '-', '')), 'manager.dealer.dn@vms.com', @default_password, 'Manager DN', 'Lê Văn Manager', '0903000001', '456 Dealer 3 Street, Da Nang', '1986-09-15', 'Da Nang', 'Vietnam', 'ACTIVE')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password);
 
 -- Dealer Staff Users
 -- Dealer 1 (Hanoi) Staff (đã được tạo bởi DataInitializer với email TrongStaff@gmail.com)
 INSERT INTO user (id, email, password, name, full_name, phone, address, birthday, city, country, status) VALUES
     (UNHEX(REPLACE('40000000-0000-0000-0000-000000000002', '-', '')), 'staff2.dealer.hn@vms.com', @default_password, 'Staff2 HN', 'Phạm Thị Staff', '0901000003', '789 Dealer 1 Street, Hanoi', '1993-09-12', 'Hanoi', 'Vietnam', 'ACTIVE')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password);
 
 -- Dealer 2 (HCM) Staff
 INSERT INTO user (id, email, password, name, full_name, phone, address, birthday, city, country, status) VALUES
     (UNHEX(REPLACE('40000000-0000-0000-0000-000000000003', '-', '')), 'staff.dealer.hcm@vms.com', @default_password, 'Staff HCM', 'Hoàng Văn Staff', '0902000002', '321 Dealer 2 Street, Ho Chi Minh City', '1994-04-18', 'Ho Chi Minh City', 'Vietnam', 'ACTIVE'),
     (UNHEX(REPLACE('40000000-0000-0000-0000-000000000004', '-', '')), 'staff2.dealer.hcm@vms.com', @default_password, 'Staff2 HCM', 'Ngô Thị Staff', '0902000003', '321 Dealer 2 Street, Ho Chi Minh City', '1995-06-22', 'Ho Chi Minh City', 'Vietnam', 'ACTIVE')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password);
 
 -- Dealer 3 (Da Nang) Staff
 INSERT INTO user (id, email, password, name, full_name, phone, address, birthday, city, country, status) VALUES
     (UNHEX(REPLACE('40000000-0000-0000-0000-000000000005', '-', '')), 'staff.dealer.dn@vms.com', @default_password, 'Staff DN', 'Võ Văn Staff', '0903000002', '456 Dealer 3 Street, Da Nang', '1996-03-10', 'Da Nang', 'Vietnam', 'ACTIVE')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password);
 
 -- Customer Users
 INSERT INTO user (id, email, password, name, full_name, phone, address, birthday, city, country, status) VALUES
     (UNHEX(REPLACE('50000000-0000-0000-0000-000000000001', '-', '')), 'customer1@example.com', @default_password, 'Customer 1', 'Nguyễn Văn Khách', '0910000001', '123 Customer Street, Hanoi', '1998-02-14', 'Hanoi', 'Vietnam', 'ACTIVE'),
     (UNHEX(REPLACE('50000000-0000-0000-0000-000000000002', '-', '')), 'customer2@example.com', @default_password, 'Customer 2', 'Trần Thị Khách', '0910000002', '456 Customer Street, Ho Chi Minh City', '1996-08-30', 'Ho Chi Minh City', 'Vietnam', 'ACTIVE'),
     (UNHEX(REPLACE('50000000-0000-0000-0000-000000000003', '-', '')), 'customer3@example.com', @default_password, 'Customer 3', 'Lê Văn Khách', '0910000003', '789 Customer Street, Da Nang', '1997-12-05', 'Da Nang', 'Vietnam', 'ACTIVE')
-ON DUPLICATE KEY UPDATE email = VALUES(email);
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password);
 
 -- ========== USER_ROLE ==========
 -- Gán role cho users (sử dụng role names để tìm role IDs)
@@ -147,28 +147,40 @@ INSERT INTO dealers (dealer_id, dealer_code, dealer_name, address, city, region,
     (UNHEX(REPLACE('30000000-0000-0000-0000-000000000003', '-', '')), 'DLR-003', 'Đại Lý Xe Điện Đà Nẵng', '456 Đường Trần Phú, Quận Hải Châu, Đà Nẵng', 'Da Nang', 'Miền Trung', '0236123456', 'dealer.dn@vms.com', '0405555555', 'ACTIVE', NOW(), NOW())
 ON DUPLICATE KEY UPDATE dealer_name = VALUES(dealer_name);
 
--- ========== DEALER_STAFF_PROFILES ==========
+-- ========== DEALER_MANAGER_PROFILES ==========
 USE user_db;
 
+-- Dealer 1 (Hanoi) - Manager Profile
+INSERT INTO dealer_manager_profiles (manager_id, user_id, dealer_id, management_level, approval_limit, department) VALUES
+    (UNHEX(REPLACE('70000000-0000-0000-0000-000000000001', '-', '')), UNHEX(REPLACE('3ec76f92-7d44-49f4-ada1-b47d4f55b418', '-', '')), UNHEX(REPLACE('3ec76f92-7d44-49f4-ada1-b47d4f55b418', '-', '')), 'MANAGER', 1000000000, 'Management')
+ON DUPLICATE KEY UPDATE user_id = VALUES(user_id);
+
+-- Dealer 2 (HCM) - Manager Profile
+INSERT INTO dealer_manager_profiles (manager_id, user_id, dealer_id, management_level, approval_limit, department) VALUES
+    (UNHEX(REPLACE('70000000-0000-0000-0000-000000000003', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000002', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000002', '-', '')), 'MANAGER', 1000000000, 'Management')
+ON DUPLICATE KEY UPDATE user_id = VALUES(user_id);
+
+-- Dealer 3 (Da Nang) - Manager Profile
+INSERT INTO dealer_manager_profiles (manager_id, user_id, dealer_id, management_level, approval_limit, department) VALUES
+    (UNHEX(REPLACE('70000000-0000-0000-0000-000000000006', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000003', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000003', '-', '')), 'MANAGER', 1000000000, 'Management')
+ON DUPLICATE KEY UPDATE user_id = VALUES(user_id);
+
+
+-- ========== DEALER_STAFF_PROFILES ==========
 -- Link Staff Users với Dealers
--- Dealer 1 (Hanoi) - Manager Profile (đã được tạo bởi DataInitializer)
 -- Staff Profiles for Dealer 1
 INSERT INTO dealer_staff_profiles (staff_id, user_id, dealer_id, position, department, hire_date, salary, commission_rate) VALUES
     (UNHEX(REPLACE('70000000-0000-0000-0000-000000000002', '-', '')), UNHEX(REPLACE('40000000-0000-0000-0000-000000000002', '-', '')), UNHEX(REPLACE('3ec76f92-7d44-49f4-ada1-b47d4f55b418', '-', '')), 'Sales Staff', 'Sales', '2021-06-15', 12000000, 1.5)
 ON DUPLICATE KEY UPDATE user_id = VALUES(user_id);
 
--- Dealer 2 (HCM) - Manager Profile
+-- Staff Profiles for Dealer 2
 INSERT INTO dealer_staff_profiles (staff_id, user_id, dealer_id, position, department, hire_date, salary, commission_rate) VALUES
-    (UNHEX(REPLACE('70000000-0000-0000-0000-000000000003', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000002', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000002', '-', '')), 'Manager', 'Management', '2019-11-20', 28000000, 3.0),
-    -- Staff Profiles for Dealer 2
     (UNHEX(REPLACE('70000000-0000-0000-0000-000000000004', '-', '')), UNHEX(REPLACE('40000000-0000-0000-0000-000000000003', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000002', '-', '')), 'Sales Staff', 'Sales', '2022-01-10', 13000000, 1.8),
     (UNHEX(REPLACE('70000000-0000-0000-0000-000000000005', '-', '')), UNHEX(REPLACE('40000000-0000-0000-0000-000000000004', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000002', '-', '')), 'Sales Staff', 'Sales', '2022-03-15', 13000000, 1.8)
 ON DUPLICATE KEY UPDATE user_id = VALUES(user_id);
 
--- Dealer 3 (Da Nang) - Manager Profile
+-- Staff Profile for Dealer 3
 INSERT INTO dealer_staff_profiles (staff_id, user_id, dealer_id, position, department, hire_date, salary, commission_rate) VALUES
-    (UNHEX(REPLACE('70000000-0000-0000-0000-000000000006', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000003', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000003', '-', '')), 'Manager', 'Management', '2020-05-10', 26000000, 2.8),
-    -- Staff Profile for Dealer 3
     (UNHEX(REPLACE('70000000-0000-0000-0000-000000000007', '-', '')), UNHEX(REPLACE('40000000-0000-0000-0000-000000000005', '-', '')), UNHEX(REPLACE('30000000-0000-0000-0000-000000000003', '-', '')), 'Sales Staff', 'Sales', '2021-08-20', 12500000, 1.6)
 ON DUPLICATE KEY UPDATE user_id = VALUES(user_id);
 

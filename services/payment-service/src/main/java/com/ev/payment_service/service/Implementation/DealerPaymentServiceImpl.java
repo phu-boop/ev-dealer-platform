@@ -204,7 +204,7 @@ public class DealerPaymentServiceImpl implements IDealerPaymentService {
      * @throws AppException nếu order không tồn tại hoặc không phải B2B
      */
     private Map<String, Object> validateB2BOrder(UUID orderId) {
-        String url = salesServiceUrl + "/sales-orders/" + orderId;
+        String url = salesServiceUrl + "/api/v1/sales-orders/" + orderId;
         log.info("Calling Sales Service to validate order - URL: {}", url);
 
         ParameterizedTypeReference<ApiRespond<Map<String, Object>>> responseType =
@@ -517,7 +517,7 @@ public class DealerPaymentServiceImpl implements IDealerPaymentService {
      * @param paymentStatus Payment status (UNPAID, PARTIALLY_PAID, PAID, NONE)
      */
     private void updateOrderPaymentStatus(UUID orderId, String paymentStatus) {
-        String url = salesServiceUrl + "/sales-orders/" + orderId + "/payment-status?status=" + paymentStatus;
+        String url = salesServiceUrl + "/api/v1/sales-orders/" + orderId + "/payment-status?status=" + paymentStatus;
         log.info("Calling Sales Service to update payment status - URL: {}, OrderId: {}, Status: {}", 
                 url, orderId, paymentStatus);
 

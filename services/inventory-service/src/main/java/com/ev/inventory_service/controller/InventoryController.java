@@ -75,20 +75,29 @@ public class InventoryController {
      */
     @GetMapping("/my-stock")
     @PreAuthorize("hasAnyRole('DEALER_MANAGER', 'DEALER_STAFF')")
-    // @PreAuthorize("permitAll()") // Tạm thời cho phép tất cả để test
     public ResponseEntity<ApiRespond<List<DealerInventoryDto>>> getMyInventory(
-            @RequestHeader("X-User-ProfileId") UUID dealerId,
-            @RequestHeader("X-User-Email") String email, // Cần để chuyển tiếp
-            @RequestHeader("X-User-Role") String role, // Cần để chuyển tiếp
-            @RequestHeader("X-User-Id") String userId, // Cần để chuyển tiếp
+            @RequestHeader(value = "X-User-DealerId", required = false) UUID dealerIdHeader,
+            @RequestHeader(value = "X-User-ProfileId", required = false) UUID profileIdHeader,
+            @RequestHeader("X-User-Email") String email,
+            @RequestHeader("X-User-Role") String role,
+            @RequestHeader("X-User-Id") String userId,
             @RequestParam(required = false) String search) {
+        
+        // Ưu tiên dùng DealerId (ID tổ chức đại lý), fallback sang ProfileId
+        UUID dealerId = (dealerIdHeader != null) ? dealerIdHeader : profileIdHeader;
+        
+        System.out.println("[my-stock] X-User-DealerId=" + dealerIdHeader 
+                + " | X-User-ProfileId=" + profileIdHeader 
+                + " | Using dealerId=" + dealerId);
         
         // Tạo một đối tượng HttpHeaders để chuyển tiếp xác thực
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-User-Email", email);
         headers.set("X-User-Role", role);
         headers.set("X-User-Id", userId);
-        headers.set("X-User-ProfileId", dealerId.toString());
+        if (dealerId != null) {
+            headers.set("X-User-DealerId", dealerId.toString());
+        }
 
         List<DealerInventoryDto> results = inventoryService.getDealerInventory(dealerId, search, headers);
         return ResponseEntity.ok(ApiRespond.success("Fetched dealer inventory", results));

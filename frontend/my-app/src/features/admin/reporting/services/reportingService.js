@@ -34,3 +34,27 @@ export const getInventorySummary = (filters) => {
     params: filters,
   });
 };
+
+/**
+ * Lấy Báo cáo Tồn kho Trung tâm (Central Inventory Summary).
+ * Tương ứng với: GET /reports/central-inventory
+ *
+ * @param {object} filters - Đối tượng chứa các filter (modelId, variantId)
+ */
+export const getCentralInventory = (filters) => {
+  return apiConstReportService.get("/reports/central-inventory", {
+    params: filters,
+  });
+};
+
+/**
+ * Lấy Lịch sử giao dịch kho trung tâm.
+ * Tương ứng với: GET /reports/central-inventory/transactions
+ *
+ * @param {object} filters - Đối tượng chứa các filter (transactionType, variantId)
+ */
+export const getCentralTransactionHistory = (filters) => {
+  return apiConstReportService.get("/reports/central-inventory/transactions", {
+    params: filters,
+  });
+};

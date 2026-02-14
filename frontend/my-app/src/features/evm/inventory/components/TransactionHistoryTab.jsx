@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getTransactionHistory } from "../services/inventoryService";
 import { getVariantDetailsByIds } from "../../catalog/services/vehicleCatalogService";
+import { dealerService } from "../../../admin/manageDealer/dealers/services/dealerService"; // Fix path
 // import Pagination from '../../../../components/Pagination';
 
 const TRANSACTION_TYPE_LABELS = {
@@ -20,6 +21,38 @@ const TransactionHistoryTab = () => {
   const [filters, setFilters] = useState({ startDate: "", endDate: "" });
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [dealersMap, setDealersMap] = useState(new Map()); // Map lưu tên đại lý
+
+  // Fetch danh sách đại lý 1 lần khi mount
+  useEffect(() => {
+    const fetchDealers = async () => {
+      try {
+        const response = await dealerService.getBasicList();
+
+        // Check code loosely (1000 or "1000")
+        if (response.data && (response.data.code == 1000 || response.data.code === "1000")) {
+            // Try different field names for the list
+            const dealers = response.data.data || response.data.result || response.data.payload;
+
+            const map = new Map();
+            if (Array.isArray(dealers)) {
+                dealers.forEach(d => {
+                    // Ưu tiên dealerId/dealerName, fallback về id/name
+                    const id = d.dealerId || d.id;
+                    const name = d.dealerName || d.name;
+                    if (id && name) {
+                        map.set(id, name);
+                    }
+                });
+            }
+            setDealersMap(map);
+        }
+      } catch (error) {
+        error.message();
+      }
+    };
+    fetchDealers();
+  }, []);
 
   const fetchHistory = useCallback(async () => {
     setIsLoading(true);
@@ -57,7 +90,7 @@ const TransactionHistoryTab = () => {
         setHistory({ content: [], totalPages: 0 });
       }
     } catch (error) {
-      console.error("Failed to fetch transaction history", error);
+      error.message();
     } finally {
       setIsLoading(false);
     }
@@ -149,15 +182,15 @@ const TransactionHistoryTab = () => {
                   <td className="p-3 text-center font-medium">{tx.quantity}</td>
                   <td className="p-3">
                     {tx.fromDealerId
-                      ? `Đại lý #${tx.fromDealerId}`
+                      ? (dealersMap.get(tx.fromDealerId) || `Đại lý #${tx.fromDealerId}`)
                       : "Kho Trung Tâm"}
                   </td>
                   <td className="p-3">
                     {tx.toDealerId
-                      ? `Đại lý #${tx.toDealerId}`
+                      ? (dealersMap.get(tx.toDealerId) || `Đại lý #${tx.toDealerId}`)
                       : "Kho Trung Tâm"}
                   </td>
-                  <td className="p-3">{tx.staffId}</td>{" "}
+                  <td className="p-3">{tx.staffId}</td>
                 </tr>
               ))}
             </tbody>

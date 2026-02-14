@@ -10,17 +10,18 @@ cd "$ROOT_DIR" || exit
 # echo "----------------------------------------------------"
 # echo "Building & Pushing: gateway"
 # echo "----------------------------------------------------"
-# docker build -f gateway/Dockerfile -t "$DOCKER_USERNAME/gateway:latest" .
+# docker build --no-cache -f gateway/Dockerfile -t "$DOCKER_USERNAME/gateway:latest" .
 # docker push "$DOCKER_USERNAME/gateway:latest"
 
-# 2. Services inside services/ directory
-services=("user-service")
+2. Services inside services/ directory
+services=("gateway")
 
 for service in "${services[@]}"; do
     echo "----------------------------------------------------"
-    echo "Building & Pushing: $service"
+    echo "Building & Pushing: $service (NO CACHE)"
     echo "----------------------------------------------------"
-    docker build -f "services/$service/Dockerfile" -t "$DOCKER_USERNAME/$service:latest" .
+    
+    docker build --no-cache -f "services/$service/Dockerfile" -t "$DOCKER_USERNAME/$service:latest" .
     docker push "$DOCKER_USERNAME/$service:latest"
 done
 
@@ -28,15 +29,15 @@ done
 # echo "----------------------------------------------------"
 # echo "Building & Pushing: frontend-my-app"
 # echo "----------------------------------------------------"
-# docker build -t "$DOCKER_USERNAME/frontend-my-app:latest" ./frontend/my-app
+# docker build --no-cache -t "$DOCKER_USERNAME/frontend-my-app:latest" ./frontend/my-app
 # docker push "$DOCKER_USERNAME/frontend-my-app:latest"
 
 # echo "----------------------------------------------------"
 # echo "Building & Pushing: customer-app"
 # echo "----------------------------------------------------"
-# docker build -t "$DOCKER_USERNAME/customer-app:latest" ./frontend/customer-app
+# docker build --no-cache -t "$DOCKER_USERNAME/customer-app:latest" ./frontend/customer-app
 # docker push "$DOCKER_USERNAME/customer-app:latest"
 
-# echo "----------------------------------------------------"
-# echo "ALL BUILDS AND PUSHES COMPLETED!"
-# echo "----------------------------------------------------"
+echo "----------------------------------------------------"
+echo "ALL BUILDS AND PUSHES COMPLETED!"
+echo "----------------------------------------------------"

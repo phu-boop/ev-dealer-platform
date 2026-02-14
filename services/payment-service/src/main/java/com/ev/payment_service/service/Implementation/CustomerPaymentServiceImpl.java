@@ -1034,4 +1034,11 @@ public class CustomerPaymentServiceImpl implements ICustomerPaymentService {
                 .build();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<PaymentRecord> getPaymentRecordsByCustomerId(Long customerId) {
+        log.info("[CustomerPaymentServiceImpl] getPaymentRecordsByCustomerId - customerId: {}", customerId);
+        return paymentRecordRepository.findByCustomerId(customerId);
+    }
+
 }

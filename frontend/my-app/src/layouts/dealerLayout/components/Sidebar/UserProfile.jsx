@@ -1,8 +1,9 @@
 import React from 'react';
 
-export const UserProfile = ({ isSidebarOpen, user }) => {
+export const UserProfile = ({ isSidebarOpen, user, avatarUrl: avatarUrlProp }) => {
   const { email, name, fullName, roles } = user;
-
+  const avatarUrl = avatarUrlProp || sessionStorage.getItem('avatarUrl');
+  const hasValidAvatar = avatarUrl && avatarUrl !== 'null';
 
   return (
     <div
@@ -16,18 +17,18 @@ export const UserProfile = ({ isSidebarOpen, user }) => {
         {/* Avatar với fallback */}
         <div className="relative group">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center text-white font-semibold text-xl shadow-2xl border-2 border-white/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-blue-500/25 overflow-hidden">
-            {sessionStorage.getItem('avatarUrl')!="null"
-            ? (
+            {hasValidAvatar ? (
               <img
-                src={sessionStorage.getItem('avatarUrl')}
+                src={avatarUrl}
                 alt="Avatar"
                 className="w-full h-full object-cover rounded-2xl"
               />
             ) : null}
-            <span className={`${sessionStorage.getItem('avatarUrl')!="null" ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
+            <span className={`${hasValidAvatar ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
               {name?.charAt(0).toUpperCase() || email?.charAt(0).toUpperCase()}
             </span>
           </div>
+
           
           {/* Glow effect */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-20 blur-md transition-opacity duration-500 -z-10"></div>

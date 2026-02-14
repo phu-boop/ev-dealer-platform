@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -22,6 +22,10 @@ import forecastService from "../../services/ai/forecastService";
 
 export default function ProductionPlanPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.includes("/evm/staff/")
+    ? "/evm/staff/reports/forecast"
+    : "/evm/admin/reports/forecast";
   const [loading, setLoading] = useState(false);
   const [plans, setPlans] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState("");
@@ -171,7 +175,7 @@ export default function ProductionPlanPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => navigate("/evm/admin/reports/forecast")}
+            onClick={() => navigate(basePath)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -179,7 +183,7 @@ export default function ProductionPlanPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => navigate("/evm/admin/reports/forecast/demand")}
+            onClick={() => navigate(`${basePath}/demand`)}
             className="flex items-center gap-2"
           >
             <BarChart3 className="h-4 w-4" />

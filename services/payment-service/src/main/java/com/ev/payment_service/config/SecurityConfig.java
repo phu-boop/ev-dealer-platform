@@ -47,6 +47,8 @@ public class SecurityConfig {
                                 "/favicon.ico").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/payments/gateway/callback/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/payments/gateway/callback/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/payments/gateway/initiate-b2c").permitAll() 
+                        .requestMatchers(HttpMethod.GET, "/api/v1/payments/customer/my-deposits").permitAll()
                         .requestMatchers(HttpMethod.GET, "/payment/**").permitAll()
                         .requestMatchers("/payment/return").permitAll()
 

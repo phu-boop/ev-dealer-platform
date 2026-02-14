@@ -505,7 +505,14 @@ public class InventoryServiceImpl implements InventoryService {
             tx.setQuantity(item.getQuantity());
             tx.setStaffId(staffEmail);
             tx.setReferenceId(request.getOrderId().toString());
-            transactionRepo.save(tx);
+            InventoryTransaction savedAllocateTx = transactionRepo.save(tx);
+
+            // Gửi sự kiện Kafka cho ALLOCATE
+            try {
+                kafkaTemplate.send("inventory_events", savedAllocateTx);
+            } catch (Exception e) {
+                System.err.println("WARN: Failed to send ALLOCATE event to Kafka. " + e.getMessage());
+            }
         }
     }
 
@@ -596,7 +603,14 @@ public class InventoryServiceImpl implements InventoryService {
             tx.setStaffId(staffEmail);
             tx.setReferenceId(request.getOrderId().toString());
             tx.setNotes("Đã giao các VIN: " + String.join(", ", vins));
-            transactionRepo.save(tx);
+            InventoryTransaction savedTransferTx = transactionRepo.save(tx);
+
+            // Gửi sự kiện Kafka cho TRANSFER_TO_DEALER
+            try {
+                kafkaTemplate.send("inventory_events", savedTransferTx);
+            } catch (Exception e) {
+                System.err.println("WARN: Failed to send TRANSFER_TO_DEALER event to Kafka. " + e.getMessage());
+            }
         }
     }
 
@@ -988,6 +1002,7 @@ public class InventoryServiceImpl implements InventoryService {
                     DealerAllocation stock = inventoryMap.get(id);
                     return DealerInventoryDto.merge(details, stock);
                 })
+                .filter(dto -> dto != null) // Bỏ qua các variant null (không tìm thấy từ catalog)
                 .filter(dto -> { // Lọc client-side (vì số lượng ít)
                     if (search == null || search.isBlank())
                         return true;

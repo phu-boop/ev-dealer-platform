@@ -2,8 +2,12 @@ package com.example.reporting_service.controller;
 
 import com.example.reporting_service.model.InventorySummaryByRegion;
 import com.example.reporting_service.model.SalesSummaryByDealership;
+import com.example.reporting_service.model.CentralInventorySummary;
+import com.example.reporting_service.model.CentralInventoryTransactionLog;
 import com.example.reporting_service.repository.InventorySummaryRepository;
 import com.example.reporting_service.repository.SalesSummaryRepository;
+import com.example.reporting_service.repository.CentralInventorySummaryRepository;
+import com.example.reporting_service.repository.CentralInventoryTransactionLogRepository;
 import com.example.reporting_service.service.ReportingService;
 import com.example.reporting_service.dto.InventoryVelocityDTO;
 
@@ -29,6 +33,12 @@ public class ReportController {
 
     @Autowired
     private ReportingService reportingService;
+
+    @Autowired
+    private CentralInventorySummaryRepository centralInventoryRepo;
+
+    @Autowired
+    private CentralInventoryTransactionLogRepository centralTransactionLogRepo;
 
     /**
      * API: GET /reports/inventory
@@ -132,6 +142,53 @@ public class ReportController {
         // Gọi service tính toán
         List<InventoryVelocityDTO> results = reportingService.calculateInventoryVelocity(inventorySpec, salesSpec);
         
+        return ResponseEntity.ok(results);
+    }
+
+    /**
+     * API: GET /reports/central-inventory
+     * Phục vụ task: "Tồn kho trung tâm theo mẫu xe" (EVM Admin/Staff)
+     */
+    @GetMapping("/central-inventory")
+    public ResponseEntity<List<CentralInventorySummary>> getCentralInventoryReport(
+        @RequestParam(required = false) String modelId,
+        @RequestParam(required = false) String variantId
+    ) {
+        Specification<CentralInventorySummary> spec = (root, query, cb) -> cb.conjunction();
+
+        if (modelId != null && !modelId.isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("modelId"), Long.valueOf(modelId)));
+        }
+        if (variantId != null && !variantId.isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("variantId"), Long.valueOf(variantId)));
+        }
+
+        List<CentralInventorySummary> results = centralInventoryRepo.findAll(spec);
+        return ResponseEntity.ok(results);
+    }
+
+    /**
+     * API: GET /reports/central-inventory/transactions
+     * Phục vụ task: "Lịch sử giao dịch kho trung tâm" (EVM Admin/Staff)
+     */
+    @GetMapping("/central-inventory/transactions")
+    public ResponseEntity<List<CentralInventoryTransactionLog>> getCentralTransactionHistory(
+        @RequestParam(required = false) String transactionType,
+        @RequestParam(required = false) String variantId
+    ) {
+        Specification<CentralInventoryTransactionLog> spec = (root, query, cb) -> {
+            query.orderBy(cb.desc(root.get("transactionDate")));
+            return cb.conjunction();
+        };
+
+        if (transactionType != null && !transactionType.isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("transactionType"), transactionType));
+        }
+        if (variantId != null && !variantId.isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("variantId"), Long.valueOf(variantId)));
+        }
+
+        List<CentralInventoryTransactionLog> results = centralTransactionLogRepo.findAll(spec);
         return ResponseEntity.ok(results);
     }
 }

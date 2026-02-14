@@ -1,11 +1,11 @@
-// File: InventoryReportPage.jsx (COMMIT ĐỢT 4: Thêm nút Xuất Excel - Hoàn tất)
+﻿// File: InventoryReportPage.jsx (COMMIT ĐỢT 4: Thêm nút Xuất Excel - Hoàn tất)
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { getInventoryVelocity } from "../services/reportingService";
+import { getInventoryVelocity, getCentralInventory, getCentralTransactionHistory } from "../services/reportingService";
 import InventoryReportTable from "../components/InventoryReportTable";
 
 // --- Import Ant Design ---
-import { Card, Row, Col, Typography, Space, Select, Button } from "antd"; // Đã thêm Button
+import { Card, Row, Col, Typography, Space, Select, Button, Tabs, Table, Tag, Statistic } from "antd";
 
 // --- Import Chart.js ---
 import { Bar, Doughnut } from 'react-chartjs-2';
@@ -66,6 +66,13 @@ const InventoryReportPage = () => {
   const [error, setError] = useState(null);
   const [apiFilters, setApiFilters] = useState({ region: "", modelId: "" });
   const [selectedModel, setSelectedModel] = useState(null);
+  const [activeTab, setActiveTab] = useState("dealer");
+
+  // --- Central Inventory State ---
+  const [centralData, setCentralData] = useState([]);
+  const [centralTransactions, setCentralTransactions] = useState([]);
+  const [centralLoading, setCentralLoading] = useState(false);
+  const [centralError, setCentralError] = useState(null);
 
   // --- CALL API ---
   const fetchReport = useCallback(async () => {
@@ -86,6 +93,33 @@ const InventoryReportPage = () => {
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
+
+  // --- CENTRAL INVENTORY FETCH ---
+  const fetchCentralReport = useCallback(async () => {
+    setCentralLoading(true);
+    setCentralError(null);
+    try {
+      const [invRes, txRes] = await Promise.all([
+        getCentralInventory({}),
+        getCentralTransactionHistory({})
+      ]);
+      const invData = Array.isArray(invRes) ? invRes : (invRes.data || []);
+      const txData = Array.isArray(txRes) ? txRes : (txRes.data || []);
+      setCentralData(invData);
+      setCentralTransactions(txData);
+    } catch (err) {
+      setCentralError("Không thể tải báo cáo kho trung tâm.");
+      console.error(err);
+    } finally {
+      setCentralLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "central") {
+      fetchCentralReport();
+    }
+  }, [activeTab, fetchCentralReport]);
 
   // --- LOCAL FILTER ---
   const handleRegionChange = (val) => setApiFilters(prev => ({ ...prev, region: val }));
@@ -291,95 +325,217 @@ const InventoryReportPage = () => {
     XLSX.writeFile(wb, 'BaoCaoTonKho.xlsx');
   };
 
+  // === CENTRAL INVENTORY COMPUTED DATA ===
+  const centralSummary = useMemo(() => {
+    return centralData.reduce(
+      (acc, item) => ({
+        totalImported: acc.totalImported + (Number(item.totalImported) || 0),
+        // Merge Allocated into Transferred for display
+        totalTransferred: acc.totalTransferred + (Number(item.totalTransferred) || 0) + (Number(item.totalAllocated) || 0),
+        availableStock: acc.availableStock + (Number(item.availableStock) || 0),
+      }),
+      { totalImported: 0, totalTransferred: 0, availableStock: 0 }
+    );
+  }, [centralData]);
+
+  const chartCentralStock = useMemo(() => {
+    const labels = centralData.map(item => item.variantName || `Variant ${item.variantId}`);
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Tồn khả dụng',
+          data: centralData.map(item => Number(item.availableStock) || 0),
+          backgroundColor: '#52c41a',
+        },
+        {
+          label: 'Đã điều phối',
+          // Merge Allocated into Transferred for chart
+          data: centralData.map(item => (Number(item.totalTransferred) || 0) + (Number(item.totalAllocated) || 0)),
+          backgroundColor: '#1890ff',
+        },
+      ],
+    };
+  }, [centralData]);
+
+  const txColumns = [
+    {
+      title: 'Thời gian', dataIndex: 'transactionDate', key: 'transactionDate',
+      render: (val) => val ? new Date(val).toLocaleString('vi-VN') : '-',
+      width: 160,
+    },
+    {
+      title: 'Loại GD', dataIndex: 'transactionType', key: 'transactionType',
+      render: (type) => {
+        const colorMap = { RESTOCK: 'green', INITIAL_STOCK: 'cyan', ALLOCATE: 'orange', TRANSFER_TO_DEALER: 'blue' };
+        return <Tag color={colorMap[type] || 'default'}>{type}</Tag>;
+      },
+      width: 150,
+    },
+    { title: 'Biến thể', dataIndex: 'variantName', key: 'variantName', ellipsis: true },
+    { title: 'Mẫu xe', dataIndex: 'modelName', key: 'modelName', ellipsis: true },
+    { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity', width: 100, align: 'center' },
+    { title: 'Nhân viên', dataIndex: 'staffId', key: 'staffId', ellipsis: true },
+    { title: 'Ghi chú', dataIndex: 'notes', key: 'notes', ellipsis: true },
+  ];
+
 
   // --- RENDER ---
   return (
     <div style={{ padding: "24px", background: "#f9fbfd", minHeight: "100vh" }}>
       
-      {/* HEADER & FILTERS */}
+      {/* HEADER */}
       <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
         <Col><Title level={4} style={{ margin: 0 }}>📊 Báo cáo Tồn kho & Tốc độ tiêu thụ</Title></Col>
-        <Col>
-          <Space>
-             <Select placeholder="Chọn khu vực" style={{ width: 150 }} onChange={handleRegionChange} allowClear>
-                <Option value="Miền Bắc">Miền Bắc</Option>
-                <Option value="Miền Trung">Miền Trung</Option>
-                <Option value="Miền Nam">Miền Nam</Option>
-             </Select>
-             <Select placeholder="Chọn mẫu xe" style={{ width: 150 }} onChange={handleModelFilterLocal} allowClear value={selectedModel}>
-                {uniqueModels.map(m => <Option key={m} value={m}>{m}</Option>)}
-             </Select>
-             
-             {/* NÚT XUẤT EXCEL (ĐÃ THÊM) */}
-             <Button 
-               type="primary" 
-               onClick={handleExportExcel} 
-               disabled={loading || displayData.length === 0}
-             >
-               Xuất Excel
-             </Button>
-          </Space>
-        </Col>
       </Row>
 
-      {/* HÀNG 1 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-        <Col xs={24} md={8}>
-          <Card title="Tỷ lệ Tồn kho (Khu vực)">
-             <div style={{ height: 250 }}><Doughnut data={chartStockByRegion} options={commonOptions} /></div>
-          </Card>
-        </Col>
-        <Col xs={24} md={16}>
-          <Card title="Số lượng Tồn kho (Theo Mẫu xe)">
-             <div style={{ height: 250 }}><Bar data={chartStockByModel.data} options={chartStockByModel.options} /></div>
-          </Card>
-        </Col>
-      </Row>
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={[
+        {
+          key: 'dealer',
+          label: '🏪 Tồn kho Đại lý',
+          children: (
+            <>
+              {/* FILTERS */}
+              <Row justify="end" style={{ marginBottom: 16 }}>
+                <Space>
+                  <Select placeholder="Chọn khu vực" style={{ width: 150 }} onChange={handleRegionChange} allowClear>
+                    <Option value="Miền Bắc">Miền Bắc</Option>
+                    <Option value="Miền Trung">Miền Trung</Option>
+                    <Option value="Miền Nam">Miền Nam</Option>
+                  </Select>
+                  <Select placeholder="Chọn mẫu xe" style={{ width: 150 }} onChange={handleModelFilterLocal} allowClear value={selectedModel}>
+                    {uniqueModels.map(m => <Option key={m} value={m}>{m}</Option>)}
+                  </Select>
+                  <Button type="primary" onClick={handleExportExcel} disabled={loading || displayData.length === 0}>
+                    Xuất Excel
+                  </Button>
+                </Space>
+              </Row>
 
-      {/* HÀNG 2 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-        <Col xs={24} md={12}>
-          <Card title="Đã bán trong 30 ngày qua">
-             <div style={{ height: 250 }}><Bar data={chartSales30Days.data} options={chartSales30Days.options} /></div>
-          </Card>
-        </Col>
-        <Col xs={24} md={12}>
-          <Card title="Tốc độ bán trung bình (Xe/Ngày)">
-             <div style={{ height: 250 }}><Bar data={chartAvgDailySales.data} options={chartAvgDailySales.options} /></div>
-          </Card>
-        </Col>
-      </Row>
+              {/* HÀNG 1 */}
+              <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+                <Col xs={24} md={8}>
+                  <Card title="Tỷ lệ Tồn kho (Khu vực)">
+                    <div style={{ height: 250 }}><Doughnut data={chartStockByRegion} options={commonOptions} /></div>
+                  </Card>
+                </Col>
+                <Col xs={24} md={16}>
+                  <Card title="Số lượng Tồn kho (Theo Mẫu xe)">
+                    <div style={{ height: 250 }}><Bar data={chartStockByModel.data} options={chartStockByModel.options} /></div>
+                  </Card>
+                </Col>
+              </Row>
 
-       {/* HÀNG 3 */}
-       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-        <Col xs={24} md={12}>
-          <Card title="📉 Dự báo ngày hàng còn lại (Days of Supply)">
-             <div style={{ height: 250 }}><Bar data={chartDaysOfSupply.data} options={chartDaysOfSupply.options} /></div>
-          </Card>
-        </Col>
-        <Col xs={24} md={12}>
-          <Card title="⚠️ Cảnh báo sắp hết hàng (Dưới 10 xe)">
-             <div style={{ height: 250 }}>
-               {chartLowStock.data.labels.length > 0 ? 
-                 <Bar data={chartLowStock.data} options={chartLowStock.options} /> :
-                 <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100%', color:'green'}}>
-                    Không có xe nào dưới mức cảnh báo!
-                 </div>
-               }
-             </div>
-          </Card>
-        </Col>
-      </Row>
+              {/* HÀNG 2 */}
+              <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+                <Col xs={24} md={12}>
+                  <Card title="Đã bán trong 30 ngày qua">
+                    <div style={{ height: 250 }}><Bar data={chartSales30Days.data} options={chartSales30Days.options} /></div>
+                  </Card>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Card title="Tốc độ bán trung bình (Xe/Ngày)">
+                    <div style={{ height: 250 }}><Bar data={chartAvgDailySales.data} options={chartAvgDailySales.options} /></div>
+                  </Card>
+                </Col>
+              </Row>
 
-      {/* TABLE DETAIL */}
-      <Title level={5}>Chi tiết Tồn kho</Title>
-      <div style={{ background: "#fff", borderRadius: 8, padding: 1 }}>
-        {loading ? <TableSkeleton /> : 
-         error ? <div style={errorBoxStyle}>{error}</div> :
-         displayData.length === 0 ? <p style={{padding: 20}}>Không có dữ liệu.</p> :
-         <InventoryReportTable data={displayData} />
-        }
-      </div>
+              {/* HÀNG 3 */}
+              <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+                <Col xs={24} md={12}>
+                  <Card title="📉 Dự báo ngày hàng còn lại (Days of Supply)">
+                    <div style={{ height: 250 }}><Bar data={chartDaysOfSupply.data} options={chartDaysOfSupply.options} /></div>
+                  </Card>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Card title="⚠️ Cảnh báo sắp hết hàng (Dưới 10 xe)">
+                    <div style={{ height: 250 }}>
+                      {chartLowStock.data.labels.length > 0 ? 
+                        <Bar data={chartLowStock.data} options={chartLowStock.options} /> :
+                        <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100%', color:'green'}}>
+                          Không có xe nào dưới mức cảnh báo!
+                        </div>
+                      }
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+
+              {/* TABLE DETAIL */}
+              <Title level={5}>Chi tiết Tồn kho</Title>
+              <div style={{ background: "#fff", borderRadius: 8, padding: 1 }}>
+                {loading ? <TableSkeleton /> : 
+                 error ? <div style={errorBoxStyle}>{error}</div> :
+                 displayData.length === 0 ? <p style={{padding: 20}}>Không có dữ liệu.</p> :
+                 <InventoryReportTable data={displayData} />
+                }
+              </div>
+            </>
+          ),
+        },
+        {
+          key: 'central',
+          label: '🏭 Kho Trung Tâm',
+          children: (
+            <>
+              {centralLoading ? <TableSkeleton /> : centralError ? (
+                <div style={errorBoxStyle}>{centralError}</div>
+              ) : (
+                <>
+                  {/* SUMMARY CARDS */}
+                  <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+                    <Col xs={12} md={8}>
+                      <Card>
+                        <Statistic title="Tổng nhập kho" value={centralSummary.totalImported} suffix="xe" valueStyle={{ color: '#1890ff' }} />
+                      </Card>
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Card>
+                        <Statistic title="Đã điều phối" value={centralSummary.totalTransferred} suffix="xe" valueStyle={{ color: '#1890ff' }} />
+                      </Card>
+                    </Col>
+                    <Col xs={12} md={8}>
+                      <Card>
+                        <Statistic title="Tồn khả dụng" value={centralSummary.availableStock} suffix="xe" valueStyle={{ color: '#52c41a' }} />
+                      </Card>
+                    </Col>
+                  </Row>
+
+                  {/* CHART */}
+                  {centralData.length > 0 && (
+                    <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+                      <Col xs={24}>
+                        <Card title="Tồn kho Trung tâm theo Biến thể">
+                          <div style={{ height: 300 }}>
+                            <Bar data={chartCentralStock} options={{
+                              ...barOptions,
+                              plugins: { ...barOptions.plugins, legend: { position: 'top' } },
+                            }} />
+                          </div>
+                        </Card>
+                      </Col>
+                    </Row>
+                  )}
+
+                  {/* TRANSACTION LOG */}
+                  <Title level={5}>Lịch sử Giao dịch Kho Trung Tâm</Title>
+                  <Card style={{ marginBottom: 20 }}>
+                    <Table
+                      columns={txColumns}
+                      dataSource={centralTransactions}
+                      rowKey="id"
+                      pagination={{ pageSize: 10 }}
+                      size="small"
+                      scroll={{ x: 900 }}
+                      locale={{ emptyText: 'Chưa có giao dịch nào.' }}
+                    />
+                  </Card>
+                </>
+              )}
+            </>
+          ),
+        },
+      ]} />
     </div>
   );
 };

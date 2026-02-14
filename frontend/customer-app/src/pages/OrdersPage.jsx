@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Clock, CheckCircle, XCircle, Package, Truck, FileCheck, ShoppingCart, DollarSign, AlertCircle, RefreshCw } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Package, Truck, FileCheck, ShoppingCart, DollarSign, AlertCircle, RefreshCw, CreditCard } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { getOrdersByProfileId, getOrderById, cancelOrder } from "../services/orderService";
+import { getMyDeposits } from "../services/paymentService";
 import { toast } from "react-toastify";
 
 export default function OrdersPage() {
@@ -30,6 +31,21 @@ export default function OrdersPage() {
         if (profileId) {
           toast.error("Không thể tải danh sách đơn hàng");
         }
+        return [];
+      }
+    },
+    enabled: !!profileId,
+  });
+
+  // Fetch booking deposits from payment-service
+  const { data: depositsData, isLoading: isLoadingDeposits } = useQuery({
+    queryKey: ['my-deposits'],
+    queryFn: async () => {
+      try {
+        const response = await getMyDeposits();
+        return response || [];
+      } catch (error) {
+        console.error("Error fetching deposits:", error);
         return [];
       }
     },
@@ -127,7 +143,18 @@ export default function OrdersPage() {
     return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
   };
 
-  if (isLoading && profileId) {
+  const getDepositStatusInfo = (status) => {
+    const statusMap = {
+      PENDING_DEPOSIT: { label: 'Chờ thanh toán cọc', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      PARTIALLY_PAID: { label: 'Đã đặt cọc', color: 'bg-blue-100 text-blue-800', icon: DollarSign },
+      PAID: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      PENDING: { label: 'Đang xử lý', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      FAILED: { label: 'Thất bại', color: 'bg-red-100 text-red-800', icon: XCircle },
+    };
+    return statusMap[status] || { label: status || 'Không rõ', color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
+  };
+
+  if ((isLoading || isLoadingDeposits) && profileId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
@@ -136,6 +163,10 @@ export default function OrdersPage() {
   }
 
   const orders = ordersData || [];
+  const deposits = depositsData || [];
+  // Filter out deposits that already have a corresponding sales order
+  const orderIds = new Set(orders.map(o => o.orderId));
+  const standaloneDeposits = deposits.filter(d => !orderIds.has(d.orderId?.toString()));
   
   // Combine customer orders and searched order
   const displayOrders = searchedOrder 
@@ -476,6 +507,124 @@ export default function OrdersPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Booking Deposits Section */}
+        {profileId && standaloneDeposits.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <CreditCard className="w-6 h-6 text-indigo-600" />
+              Đơn đặt cọc xe
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Các đơn đặt cọc trước đây chưa được tạo đơn hàng chính thức.
+            </p>
+            <div className="space-y-4">
+              {standaloneDeposits.map((deposit) => {
+                const statusInfo = getDepositStatusInfo(deposit.status);
+                const meta = deposit.metadata || {};
+                
+                return (
+                  <div key={deposit.recordId} className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-indigo-500">
+                    {/* Deposit Header */}
+                    <div className="bg-indigo-50 px-6 py-4 border-b flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <div className="text-sm text-gray-600">
+                          Mã đặt cọc: <span className="font-mono font-semibold text-gray-900">{deposit.recordId?.substring(0, 8)}...</span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Ngày đặt: {formatDate(deposit.createdAt)}
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 ${statusInfo.color}`}>
+                        <statusInfo.icon size={16} />
+                        {statusInfo.label}
+                      </span>
+                    </div>
+
+                    {/* Deposit Body */}
+                    <div className="p-6">
+                      <div className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg mb-4">
+                        <div className="w-20 h-20 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                          {meta.imageUrl ? (
+                            <img 
+                              src={meta.imageUrl} 
+                              alt={meta.modelName || 'Xe điện'}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                              <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 10a1 1 0 10-2 0v2a1 1 0 002 0v-2z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-gray-900 text-lg mb-1">
+                            {meta.modelName || 'Xe điện'}
+                          </div>
+                          {meta.variantName && (
+                            <div className="text-sm text-gray-700 mb-1">
+                              Phiên bản: {meta.variantName}
+                            </div>
+                          )}
+                          {meta.exteriorColor && (
+                            <div className="text-sm text-gray-600 mb-1">
+                              Màu ngoại thất: {meta.exteriorColor}
+                            </div>
+                          )}
+                          {meta.interiorColor && (
+                            <div className="text-sm text-gray-600 mb-1">
+                              Màu nội thất: {meta.interiorColor}
+                            </div>
+                          )}
+                          {meta.showroom && (
+                            <div className="text-sm text-gray-600">
+                              🏢 Showroom: {meta.showroom}{meta.showroomCity ? ` - ${meta.showroomCity}` : ''}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Deposit Amount Summary */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t">
+                        <div className="space-y-2">
+                          <div className="text-sm">
+                            <span className="text-gray-600">Đã cọc:</span>
+                            <span className="ml-2 font-semibold text-green-600">
+                              {formatPrice(deposit.amountPaid)}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Tổng giá trị xe:</div>
+                            <div className="text-2xl font-bold text-blue-600">
+                              {formatPrice(deposit.totalAmount)}
+                            </div>
+                          </div>
+                          {deposit.remainingAmount > 0 && (
+                            <div className="text-sm">
+                              <span className="text-gray-600">Còn lại:</span>
+                              <span className="ml-2 font-semibold text-orange-600">
+                                {formatPrice(deposit.remainingAmount)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg">
+                          <AlertCircle size={16} />
+                          <span>Đơn đặt cọc - Nhân viên sẽ liên hệ xác nhận</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

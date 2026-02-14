@@ -8,6 +8,7 @@ const PaymentResultPage = () => {
   const navigate = useNavigate();
   const [paymentStatus, setPaymentStatus] = useState('processing'); // 'success', 'failed', 'processing'
   const [paymentData, setPaymentData] = useState(null);
+  const [orderId, setOrderId] = useState(null);
 
   useEffect(() => {
     // Scroll to top
@@ -61,6 +62,12 @@ const PaymentResultPage = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('Payment callback successful:', data);
+        
+        // Lấy orderId từ response (tự động tạo đơn hàng)
+        if (data.orderId) {
+          setOrderId(data.orderId);
+          console.log('Auto-created order ID:', data.orderId);
+        }
       } else {
         console.error('Payment callback failed:', response.status);
       }
@@ -206,6 +213,12 @@ const PaymentResultPage = () => {
           {paymentStatus === 'success' ? (
             <>
               <Button
+                onClick={() => navigate('/orders')}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 font-semibold"
+              >
+                📦 Xem đơn hàng của tôi
+              </Button>
+              <Button
                 onClick={() => navigate('/')}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold"
               >
@@ -219,17 +232,28 @@ const PaymentResultPage = () => {
                 <ArrowLeft className="w-4 h-4" />
                 Về trang chủ
               </Button>
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800 mb-2">
-                  <strong>📌 Lưu ý quan trọng:</strong>
-                </p>
-                <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-                  <li>Đây là giao dịch <strong>đặt cọc xe</strong>, chưa phải đơn hàng chính thức</li>
-                  <li>Đơn hàng sẽ được tạo sau khi staff xử lý booking của bạn</li>
-                  <li>Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất để hoàn tất</li>
-                  <li className="text-red-600 font-medium">⚠️ Mã giao dịch trên không thể dùng để theo dõi đơn hàng</li>
-                </ul>
-              </div>
+              {orderId ? (
+                <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                  <p className="text-sm text-green-800 mb-2">
+                    <strong>✅ Đơn hàng đã được tạo tự động!</strong>
+                  </p>
+                  <p className="text-sm text-green-700">
+                    Mã đơn hàng: <strong>{orderId.substring(0, 8)}...</strong>
+                  </p>
+                  <p className="text-sm text-green-700 mt-1">
+                    Bạn có thể theo dõi đơn hàng trong mục "Đơn hàng của tôi".
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800 mb-2">
+                    <strong>📌 Lưu ý:</strong>
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    Đơn hàng đang được xử lý. Vui lòng kiểm tra lại trong mục "Đơn hàng của tôi".
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <>

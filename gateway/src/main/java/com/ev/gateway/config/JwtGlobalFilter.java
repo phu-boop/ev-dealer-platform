@@ -109,6 +109,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             String role = jwtUtil.extractRole(token);
             Long userId = jwtUtil.extractUserId(token);
             String profileId = jwtUtil.extractProfileId(token);
+            String dealerId = jwtUtil.extractDealerId(token);
 
 
             // Log debug cho payment service
@@ -131,13 +132,16 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
                         headers.add("X-User-Role", role);
                         headers.add("X-User-Id", String.valueOf(userId));
                         headers.add("X-User-ProfileId", profileId);
+                        if (dealerId != null) {
+                            headers.add("X-User-DealerId", dealerId);
+                        }
                         headers.add("X-Forwarded-For", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
 
 
                         // Log debug cho payment service
                         if (path.startsWith("/payments")) {
-                            log.debug("[JwtGlobalFilter] [PAYMENT_SERVICE] Added headers to request - X-User-Email: {}, X-User-Role: {}, X-User-Id: {}, X-User-ProfileId: {}",
-                                    email, role, userId, profileId);
+                            log.debug("[JwtGlobalFilter] [PAYMENT_SERVICE] Added headers to request - X-User-Email: {}, X-User-Role: {}, X-User-Id: {}, X-User-ProfileId: {}, X-User-DealerId: {}",
+                                    email, role, userId, profileId, dealerId);
                         } else {
                             log.debug("[JwtGlobalFilter] Added headers - X-User-Email: {}, X-User-Role: {}, X-User-ProfileId: {}",
                                     email, role, profileId);

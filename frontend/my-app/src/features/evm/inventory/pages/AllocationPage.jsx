@@ -72,6 +72,7 @@ const AllocationPage = () => {
 
   const [dealerMap, setDealerMap] = useState(new Map());
   const [isLoadingDealers, setIsLoadingDealers] = useState(false);
+  const [variantMap, setVariantMap] = useState(new Map());
 
   const [enrichingOrderId, setEnrichingOrderId] = useState(null);
 
@@ -129,6 +130,35 @@ const AllocationPage = () => {
   useEffect(() => {
     fetchOrders(activeTab, 0); // Fetch orders khi tab thay đổi, reset về trang 0
   }, [activeTab, fetchOrders]); // fetchOrders giờ ổn định hơn
+
+  // Fetch variant details for list display
+  useEffect(() => {
+    if (orders.length > 0) {
+      const allVariantIds = [...new Set(
+        orders.flatMap((order) =>
+          (order.orderItems || []).map((item) => item.variantId)
+        )
+      )];
+      if (allVariantIds.length > 0) {
+        getVariantDetailsByIds(allVariantIds)
+          .then((response) => {
+            const map = new Map(
+              response.data.data.map((detail) => [detail.variantId, detail])
+            );
+            setVariantMap(map);
+          })
+          .catch((err) => console.error("Failed to fetch variant details:", err));
+      }
+    }
+  }, [orders]);
+
+  const getVariantDisplayName = (variantId) => {
+    const detail = variantMap.get(variantId);
+    if (detail) {
+      return detail.skuCode || detail.versionName || `Variant #${variantId}`;
+    }
+    return `Variant #${variantId}`;
+  };
 
   // --- Các hàm xử lý hành động ---
   const handleApprove = async (orderId) => {
@@ -368,7 +398,7 @@ const AllocationPage = () => {
                     <ul className="list-disc list-inside text-sm text-gray-600 mt-2 pl-4">
                       {order.orderItems.map((item) => (
                         <li key={item.orderItemId}>
-                          {item.quantity} x (Variant: {item.variantId}) - Đơn
+                          {item.quantity} x {getVariantDisplayName(item.variantId)} - Đơn
                           giá:{" "}
                           {new Intl.NumberFormat("vi-VN", {
                             style: "currency",

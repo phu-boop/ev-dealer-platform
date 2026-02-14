@@ -1,12 +1,9 @@
 import React from "react";
 
-export const UserProfile = ({ isSidebarOpen, user }) => {
+export const UserProfile = ({ isSidebarOpen, user, avatarUrl: avatarUrlProp }) => {
   const { email, name, fullName, roles } = user;
 
-  // Lấy giá trị 1 lần duy nhất
-  const avatarUrl = sessionStorage.getItem("avatarUrl");
-
-  // Kiểm tra chặt chẽ: Phải có giá trị (không rỗng, không null) VÀ không phải là chuỗi "null"
+  const avatarUrl = avatarUrlProp || sessionStorage.getItem("avatarUrl");
   const hasValidAvatar = avatarUrl && avatarUrl !== "null";
 
   return (

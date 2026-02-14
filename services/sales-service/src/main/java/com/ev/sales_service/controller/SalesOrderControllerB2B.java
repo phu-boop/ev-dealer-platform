@@ -46,7 +46,7 @@ public class SalesOrderControllerB2B {
     public ResponseEntity<ApiRespond<SalesOrderDtoB2B>> createB2BOrder(
             @Valid @RequestBody CreateB2BOrderRequest request,
             @RequestHeader("X-User-Email") String email,
-            @RequestHeader("X-User-ProfileId") UUID dealerId) {
+            @RequestHeader("X-User-DealerId") UUID dealerId) {
 
         SalesOrder createdOrder = salesOrderServiceB2B.createB2BOrder(request, email, dealerId);
         SalesOrderDtoB2B responseDto = salesOrderMapperB2B.toDto(createdOrder);
@@ -157,7 +157,7 @@ public class SalesOrderControllerB2B {
     public ResponseEntity<ApiRespond<Void>> deliverOrder(
             @PathVariable UUID orderId,
             @RequestHeader("X-User-Email") String email,
-            @RequestHeader("X-User-ProfileId") UUID dealerId) {
+            @RequestHeader("X-User-DealerId") UUID dealerId) {
 
         salesOrderServiceB2B.confirmDelivery(orderId, email, dealerId);
         return ResponseEntity.ok(ApiRespond.success("Order delivery confirmed", null));
@@ -170,7 +170,7 @@ public class SalesOrderControllerB2B {
             @PathVariable UUID orderId,
             @Valid @RequestBody ReportIssueRequest request,
             @RequestHeader("X-User-Email") String email,
-            @RequestHeader("X-User-ProfileId") UUID dealerId) {
+            @RequestHeader("X-User-DealerId") UUID dealerId) {
 
         salesOrderServiceB2B.reportOrderIssue(orderId, dealerId, request, email);
         return ResponseEntity.ok(ApiRespond.success("Issue reported successfully", null));
@@ -182,7 +182,7 @@ public class SalesOrderControllerB2B {
     public ResponseEntity<ApiRespond<Page<SalesOrderDtoB2B>>> getMyB2BOrders(
             @RequestParam(value = "status", required = false) String statusString,
             // Lấy dealerId từ header (được Gateway thêm vào sau khi xác thực)
-            @RequestHeader("X-User-ProfileId") UUID dealerId,
+            @RequestHeader("X-User-DealerId") UUID dealerId,
             @PageableDefault(size = 10, sort = "orderDate") Pageable pageable) {
 
         // 1. Chuyển đổi status (logic giống hệt GET /b2b)
@@ -211,7 +211,7 @@ public class SalesOrderControllerB2B {
     public ResponseEntity<ApiRespond<Void>> cancelOrderByDealer(
             @PathVariable UUID orderId,
             @RequestHeader("X-User-Email") String email,
-            @RequestHeader("X-User-ProfileId") UUID dealerId) { // ProfileId chính là dealerId của họ
+            @RequestHeader("X-User-DealerId") UUID dealerId) { // ProfileId chính là dealerId của họ
 
         salesOrderServiceB2B.cancelOrderByDealer(orderId, email, dealerId);
         return ResponseEntity.ok(ApiRespond.success("Đơn hàng đã được hủy thành công", null));

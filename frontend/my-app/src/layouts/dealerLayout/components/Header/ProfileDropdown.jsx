@@ -8,10 +8,13 @@ export const ProfileDropdown = ({
   isOpen,
   setIsOpen,
   handleLogout,
-  navigate
+  navigate,
+  avatarUrl: avatarUrlProp,
 }) => {
   const dropdownRef = useRef(null);
   const { email, name, fullName, roles } = user;
+  const avatarUrl = avatarUrlProp || sessionStorage.getItem('avatarUrl');
+  const hasValidAvatar = avatarUrl && avatarUrl !== 'null';
 
   useClickOutside(dropdownRef, () => setIsOpen(false));
 
@@ -25,9 +28,9 @@ export const ProfileDropdown = ({
           <span className="text-white font-semibold text-lg">
             <div className="flex-shrink-0">
                 <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg avatar-glow">
-                    {sessionStorage.getItem('avatarUrl')!="null" ? (
+                    {hasValidAvatar ? (
                         <img
-                            src={sessionStorage.getItem('avatarUrl')}
+                            src={avatarUrl}
                             alt="Avatar"
                             className="w-full h-full rounded-full object-cover"
                         />
@@ -59,9 +62,9 @@ export const ProfileDropdown = ({
         <div className="px-5 pb-3 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center overflow-hidden">
-              {sessionStorage.getItem('avatarUrl') ? (
+              {hasValidAvatar ? (
                 <img
-                  src={sessionStorage.getItem('avatarUrl')}
+                  src={avatarUrl}
                   alt="Avatar"
                   className="w-full h-full object-cover"
                   onError={(e) => (e.target.style.display = 'none')}

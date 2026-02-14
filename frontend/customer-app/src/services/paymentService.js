@@ -54,3 +54,7 @@ export const confirmPaymentTransaction = (transactionId) =>
 // Get customer debt
 export const getCustomerDebt = (customerId) =>
   api.get(`/payments/${customerId}/debt`).then((res) => res.data);
+
+// Get my booking deposits (for "My Orders" page)
+export const getMyDeposits = () =>
+  api.get('/payments/api/v1/payments/customer/my-deposits').then((res) => res.data);

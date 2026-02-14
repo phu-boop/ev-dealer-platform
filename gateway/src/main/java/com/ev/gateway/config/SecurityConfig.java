@@ -98,11 +98,17 @@ public class SecurityConfig {
 
         // Nhiều origin (tách bởi dấu phẩy)
         for (String origin : allowedOrigins.split(",")) {
-            if (!origin.trim().isEmpty()) {
-                corsConfig.addAllowedOrigin(origin.trim());
+            String trimmed = origin.trim();
+
+            if (!trimmed.isEmpty()) {
+                corsConfig.addAllowedOrigin(trimmed);
+
+                // 👇 LOG RA
+                System.out.println("✅ CORS allowed origin: " + trimmed);
+            } else {
+                System.out.println("⚠️ Found empty origin entry!");
             }
         }
-
         corsConfig.addAllowedMethod("*");
         corsConfig.addAllowedHeader("*");
         corsConfig.setAllowCredentials(true);
