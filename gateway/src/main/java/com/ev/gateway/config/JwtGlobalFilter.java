@@ -31,6 +31,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
             "/auth",
             "/users",           
             "/oauth2",  // OAuth2 authentication flow
+            "/login",   // OAuth2 login callback
             "/sendmail",
             "/ws",
             "/payments/payment/return",
