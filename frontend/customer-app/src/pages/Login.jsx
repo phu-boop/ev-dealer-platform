@@ -19,10 +19,9 @@ export default function Login() {
   const handleCaptchaChange = (token) => {
     setForm((prev) => ({ ...prev, captchaToken: token }));
   };
-
+  console.log("VITE_RECAPTCHA_SITE_KEY", import.meta.env.VITE_RECAPTCHA_SITE_KEY);
   const handleGoogleLogin = () => {
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
     const redirectUri = window.location.origin;
     window.location.href = `${baseUrl}/oauth2/authorization/google?redirect_uri=${encodeURIComponent(
       redirectUri
@@ -48,7 +47,7 @@ export default function Login() {
         // Handle both response structures
         const userData = response.result?.userRespond || response.data?.userRespond;
         const jwtToken = response.result?.token || response.data?.token;
-        
+
         // Get roleName - handle both structures
         let roleName;
         if (userData.roleName) {
@@ -58,25 +57,25 @@ export default function Login() {
           // Old structure: roles array with objects containing 'name' property
           roleName = userData.roles[0].name;
         }
-        
+
         // Check if user has appropriate role for customer app
         const allowedRoles = ["ADMIN", "EVM_STAFF", "DEALER_MANAGER", "CUSTOMER"];
-        
+
         if (!roleName || !allowedRoles.includes(roleName)) {
           setError(`Tài khoản không có quyền truy cập hệ thống. Role: ${roleName || 'undefined'}`);
           setLoading(false);
           return;
         }
-        
+
         // Get memberId (UUID from user-service) and phone
         const memberId = userData.memberId || userData.id || null;
         const phone = userData.phone || '';
-        
+
         // Store phone in sessionStorage for customer creation
         if (phone) {
           sessionStorage.setItem('phone', phone);
         }
-        
+
         login(
           jwtToken,
           [roleName], // Convert single role to array for consistency
@@ -90,10 +89,10 @@ export default function Login() {
         );
 
         toast.success("Đăng nhập thành công!");
-        
+
         // Redirect based on role
         const redirectPath = ["ADMIN", "EVM_STAFF", "DEALER_MANAGER"].includes(roleName) ? "/admin" : "/";
-        
+
         setTimeout(() => {
           navigate(redirectPath);
         }, 100);

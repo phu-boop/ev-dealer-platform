@@ -43,16 +43,16 @@ public class SalesReportingService {
     private final VehicleCacheRepository vehicleCacheRepository;
     private final DealerStockSnapshotRepository dealerStockSnapshotRepository;
 
-    @Value("${app.services.sales.url:http://localhost:8086}")
+    @Value("${app.services.sales.url}")
     private String salesServiceUrl;
 
-    @Value("${app.services.catalog.url:http://localhost:8087}")
+    @Value("${app.services.catalog.url}")
     private String vehicleServiceUrl;
 
-    @Value("${app.services.dealer.url:http://localhost:8083}")
+    @Value("${app.services.dealer.url}")
     private String dealerServiceUrl;
 
-    @Value("${app.services.inventory.url:http://localhost:8084}")
+    @Value("${app.services.inventory.url}")
     private String inventoryServiceUrl;
 
     // ===========================================
@@ -81,20 +81,21 @@ public class SalesReportingService {
         }
 
         SalesRecord record = SalesRecord.builder()
-                .id(orderUuid) 
+                .id(orderUuid)
                 .orderId(orderUuid)
                 .dealerName(event.getDealershipName())
                 .region(event.getRegion())
                 .modelName(event.getModelName())
                 .variantId(event.getVariantId())
                 .totalAmount(BigDecimal.valueOf(event.getSalePrice() != null ? event.getSalePrice() : 0.0))
-                .orderDate(event.getSaleTimestamp() != null ? event.getSaleTimestamp().toLocalDateTime() : LocalDateTime.now())
+                .orderDate(event.getSaleTimestamp() != null ? event.getSaleTimestamp().toLocalDateTime()
+                        : LocalDateTime.now())
                 .reportedAt(LocalDateTime.now())
                 .build();
 
         salesRecordRepository.save(record);
     }
-    
+
     public void syncSalesData() {
         try {
             LocalDateTime lastSync = salesRecordRepository.findMaxOrderDate();
@@ -103,12 +104,12 @@ public class SalesReportingService {
                 url += "?since=" + lastSync.toString();
             }
             log.info("Syncing sales data from: {}", url);
-            
-            ParameterizedTypeReference<List<SaleEventDTO>> responseType = 
-                new ParameterizedTypeReference<>() {};
 
-            ResponseEntity<List<SaleEventDTO>> responseEntity = 
-                restTemplate.exchange(url, HttpMethod.GET, null, responseType);
+            ParameterizedTypeReference<List<SaleEventDTO>> responseType = new ParameterizedTypeReference<>() {
+            };
+
+            ResponseEntity<List<SaleEventDTO>> responseEntity = restTemplate.exchange(url, HttpMethod.GET, null,
+                    responseType);
 
             List<SaleEventDTO> dataList = responseEntity.getBody();
 
@@ -120,7 +121,7 @@ public class SalesReportingService {
 
                 int count = 0;
                 for (SaleEventDTO dto : dataList) {
-                    
+
                     UUID orderUuid;
                     try {
                         orderUuid = UUID.fromString(dto.getOrderId());
@@ -130,12 +131,13 @@ public class SalesReportingService {
                     }
 
                     if (!salesRecordRepository.existsById(orderUuid)) {
-                        
+
                         SalesRecord record = SalesRecord.builder()
                                 .id(orderUuid)
                                 .orderId(orderUuid)
                                 .totalAmount(BigDecimal.valueOf(dto.getSalePrice() != null ? dto.getSalePrice() : 0.0))
-                                .orderDate(dto.getSaleTimestamp() != null ? dto.getSaleTimestamp().toLocalDateTime() : LocalDateTime.now())
+                                .orderDate(dto.getSaleTimestamp() != null ? dto.getSaleTimestamp().toLocalDateTime()
+                                        : LocalDateTime.now())
                                 .dealerName(dto.getDealershipName() != null ? dto.getDealershipName() : "Unknown")
                                 .modelName(dto.getModelName() != null ? dto.getModelName() : "Unknown")
                                 .variantId(dto.getVariantId())
@@ -184,7 +186,7 @@ public class SalesReportingService {
     }
 
     public String generateDemandForecast(String modelName) {
-         return getDemandForecast(modelName);
+        return getDemandForecast(modelName);
     }
 
     public boolean checkForecastCache(String modelName) {
@@ -205,11 +207,11 @@ public class SalesReportingService {
             String url = vehicleServiceUrl + "/vehicle-catalog/variants/all-for-backfill";
             log.info("Syncing Vehicle Cache from: {}", url);
 
-            ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>> responseType =
-                new ParameterizedTypeReference<>() {};
+            ParameterizedTypeReference<ApiRespond<List<VariantDetailDto>>> responseType = new ParameterizedTypeReference<>() {
+            };
 
-            ResponseEntity<ApiRespond<List<VariantDetailDto>>> response =
-                restTemplate.exchange(url, HttpMethod.GET, null, responseType);
+            ResponseEntity<ApiRespond<List<VariantDetailDto>>> response = restTemplate.exchange(url, HttpMethod.GET,
+                    null, responseType);
 
             if (response.getBody() != null && response.getBody().getData() != null) {
                 List<VariantDetailDto> variants = response.getBody().getData();
@@ -235,19 +237,19 @@ public class SalesReportingService {
             String url = dealerServiceUrl + "/api/dealers";
             log.info("Syncing Dealer Cache from: {}", url);
 
-            ParameterizedTypeReference<ApiRespond<List<DealerResponse>>> responseType =
-                new ParameterizedTypeReference<>() {};
+            ParameterizedTypeReference<ApiRespond<List<DealerResponse>>> responseType = new ParameterizedTypeReference<>() {
+            };
 
-            ResponseEntity<ApiRespond<List<DealerResponse>>> response =
-                restTemplate.exchange(url, HttpMethod.GET, null, responseType);
+            ResponseEntity<ApiRespond<List<DealerResponse>>> response = restTemplate.exchange(url, HttpMethod.GET, null,
+                    responseType);
 
             if (response.getBody() != null && response.getBody().getData() != null) {
                 List<DealerResponse> dealers = response.getBody().getData();
                 List<DealerCache> cacheList = dealers.stream().map(d -> {
                     DealerCache dc = new DealerCache();
-                    dc.setDealerId(d.getDealerId()); 
+                    dc.setDealerId(d.getDealerId());
                     dc.setDealerName(d.getDealerName());
-                    dc.setRegion(d.getCity()); 
+                    dc.setRegion(d.getCity());
                     return dc;
                 }).collect(Collectors.toList());
 
@@ -268,33 +270,32 @@ public class SalesReportingService {
             String url = inventoryServiceUrl + "/inventory/analytics/snapshots?limit=1000";
             log.info("Syncing inventory data from: {}", url);
 
-            ParameterizedTypeReference<ApiRespond<List<DealerInventoryDto>>> responseType = 
-                new ParameterizedTypeReference<>() {};
+            ParameterizedTypeReference<ApiRespond<List<DealerInventoryDto>>> responseType = new ParameterizedTypeReference<>() {
+            };
 
-            ResponseEntity<ApiRespond<List<DealerInventoryDto>>> responseEntity = 
-                restTemplate.exchange(url, HttpMethod.GET, null, responseType);
+            ResponseEntity<ApiRespond<List<DealerInventoryDto>>> responseEntity = restTemplate.exchange(url,
+                    HttpMethod.GET, null, responseType);
 
             ApiRespond<List<DealerInventoryDto>> apiResponse = responseEntity.getBody();
 
             if (apiResponse != null && apiResponse.getData() != null) {
                 List<DealerInventoryDto> dtos = apiResponse.getData();
-                
+
                 List<DealerStockSnapshot> entities = dtos.stream()
                         .filter(dto -> dto.getDealerId() != null && dto.getVariantId() != null)
                         .map(dto -> new DealerStockSnapshot(
-                            dto.getDealerId(),
-                            dto.getVariantId(),
-                            (long) dto.getAvailableQuantity()
-                        ))
+                                dto.getDealerId(),
+                                dto.getVariantId(),
+                                (long) dto.getAvailableQuantity()))
                         .collect(Collectors.toList());
 
                 if (!entities.isEmpty()) {
                     dealerStockSnapshotRepository.saveAll(entities);
                 }
-                
+
                 log.info("Synced {} inventory snapshots to live table.", entities.size());
             } else {
-                 log.warn("Inventory API returned empty data.");
+                log.warn("Inventory API returned empty data.");
             }
 
         } catch (Exception e) {

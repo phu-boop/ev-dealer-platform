@@ -14,6 +14,14 @@ RUN npm install
 # Copy toàn bộ source (bao gồm .env.production)
 COPY . .
 
+# Build-time arguments
+ARG VITE_API_BASE_URL=VITE_API_BASE_URL_PLACEHOLDER
+ARG VITE_CUSTOMER_SERVICE_URL=VITE_CUSTOMER_SERVICE_URL_PLACEHOLDER
+
+# Set environment variables for Vite
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_CUSTOMER_SERVICE_URL=$VITE_CUSTOMER_SERVICE_URL
+
 # Build với mode production (sẽ tự động đọc .env.production)
 RUN npm run build
 

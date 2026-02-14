@@ -33,16 +33,21 @@ public class SecurityConfig {
                                 "/error",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
+                                "/actuator/health",
 
                                 // user-service
                                 "/auth/**",
                                 "/users/**",
+<<<<<<< HEAD
                                 "/oauth2/**",  // OAuth2 authentication flow
                                 "/login/**",   // OAuth2 login callback
+=======
+                                "/oauth2/**", // OAuth2 authentication flow
+>>>>>>> 1914768b0af6d7fc497d65a3d5cdbc4f7f6a96ff
 
                                 // customer-service
                                 "/customers/**",
-                                "/cart/**",  // Cart endpoints
+                                "/cart/**", // Cart endpoints
                                 "/test-drives/**",
                                 "/feedback/**",
                                 "/complaints/**",
@@ -64,7 +69,7 @@ public class SecurityConfig {
                                 // "/sales/**"
                                 "/sales/**",
                                 "/orders/**",
-                                
+
                                 "/sales-orders/**",
                                 "/api/v1/sales-orders/**",
 
@@ -91,17 +96,24 @@ public class SecurityConfig {
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .build();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfig = new CorsConfiguration();
 
         // Nhiều origin (tách bởi dấu phẩy)
         for (String origin : allowedOrigins.split(",")) {
-            if (!origin.trim().isEmpty()) {
-                corsConfig.addAllowedOrigin(origin.trim());
+            String trimmed = origin.trim();
+
+            if (!trimmed.isEmpty()) {
+                corsConfig.addAllowedOrigin(trimmed);
+
+                // 👇 LOG RA
+                System.out.println("✅ CORS allowed origin: " + trimmed);
+            } else {
+                System.out.println("⚠️ Found empty origin entry!");
             }
         }
-
         corsConfig.addAllowedMethod("*");
         corsConfig.addAllowedHeader("*");
         corsConfig.setAllowCredentials(true);
@@ -114,6 +126,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", corsConfig);
         return source;
     }
-
 
 }

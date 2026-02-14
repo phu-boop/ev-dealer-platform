@@ -10,6 +10,7 @@ import com.ev.payment_service.repository.PaymentRecordRepository;
 import com.ev.payment_service.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +31,9 @@ public class AdminPaymentController {
     private final PaymentRecordRepository paymentRecordRepository;
     private final TransactionRepository transactionRepository;
     private final RestTemplate restTemplate;
+
+    @Value("${customer-service.url}")
+    private String customerServiceBaseUrl;
 
     /**
      * Lấy danh sách booking deposits
@@ -134,7 +138,7 @@ public class AdminPaymentController {
         } else if (record.getCustomerId() != null) {
             // Nếu có customerId, lấy từ customer-service
             try {
-                String customerServiceUrl = "http://localhost:8082/api/v1/customers/" + record.getCustomerId();
+                String customerServiceUrl = customerServiceBaseUrl + "/api/v1/customers/" + record.getCustomerId();
                 ResponseEntity<Map> customerResponse = restTemplate.getForEntity(customerServiceUrl, Map.class);
                 if (customerResponse.getStatusCode().is2xxSuccessful() && customerResponse.getBody() != null) {
                     Map<String, Object> responseBody = customerResponse.getBody();

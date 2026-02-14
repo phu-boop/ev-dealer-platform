@@ -11,6 +11,14 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
+# Build-time arguments
+ARG VITE_API_BASE_URL=VITE_API_BASE_URL_PLACEHOLDER
+ARG VITE_RECAPTCHA_SITE_KEY=VITE_RECAPTCHA_SITE_KEY_PLACEHOLDER
+
+# Set environment variables for Vite
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_RECAPTCHA_SITE_KEY=$VITE_RECAPTCHA_SITE_KEY
+
 # Build the application
 RUN npm run build
 
